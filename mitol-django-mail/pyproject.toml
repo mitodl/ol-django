@@ -1,0 +1,73 @@
+[tool.poetry]
+name = "mitol-django-mail"
+version = "0.1.0"
+description = "MIT Open Learning django app extensions for mail"
+authors = [
+  "MIT Office of Open Learning <mitx-devops@mit.edu>"
+]
+keywords = [
+]
+classifiers = [
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8"
+]
+packages = [
+    { include = "mitol" },
+]
+include = [
+  "../LICENSE",
+  "./README.md"
+]
+
+[tool.poetry.dependencies]
+python = "~3.6 || ~3.7 || ~3.8"
+Django = "^2.2.12"
+django-anymail = "^6.1.0"
+premailer = "^3.7.0"
+html5lib = "^1.1"
+beautifulsoup4 = "^4.6.0"
+toolz = "^0.9.0"
+
+[tool.poetry.dev-dependencies]
+# Testers
+pytest = "^6.0.2"
+pytest-cov = "*"
+pytest-mock = "1.10.1"
+pytest-django = "3.10.0"
+codecov = "*"
+
+# Formatters
+isort = "^4.3.21"
+black = "^19.10b0"
+
+# Linters
+pylint = "^2.0"
+pylint-django = "^2.0.2"
+mypy = "~0.770"
+django-stubs = "1.5.0"
+
+# Misc
+ipython = "^7.13.0"
+
+[tool.isort]
+not_skip = "__init__.py"
+
+multi_line_output = 3
+
+known_standard_library = "dataclasses,typing_extensions"
+known_first_party = ["mitol", "testapp"]
+
+combine_as_imports = true
+force_grid_wrap = false
+include_trailing_comma = true
+
+lines_after_imports = 2
+line_length = 88
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
