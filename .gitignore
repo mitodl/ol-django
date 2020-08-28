@@ -31,6 +31,9 @@ dist/
 # Eclipse
 .settings
 
+# Pycharm/IDEA
+.idea/
+
 # OSX
 *.DS_Store
 
@@ -47,3 +50,10 @@ coverage/
 # poetry
 pip-wheel-metadata/
 setup.py
+
+# django
+db.sqlite3
+**/testapp/settings/dev.py
+
+# mypy
+.mypy_cache/

@@ -1,0 +1,19 @@
+coverage:
+  status:
+    project:
+      default:
+        enabled: no
+    patch:
+      default:
+        enabled: no
+    changes:
+      default:
+        enabled: no
+    mitol-django-mail:
+      target: auto
+      flags:
+        - mitol-django-mail
+flags:
+  mitol-django-mail:
+    paths:
+      - mitol-django-mail/
