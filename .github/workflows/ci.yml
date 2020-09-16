@@ -1,0 +1,73 @@
+name: CI
+on: [push]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+        app-name:
+          - mitol-django-mail
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: abatilo/actions-poetry@1f9adef0261964471fcf93ba269e1762a33a8a26
+        with:
+          poetry-version: 1.0.10
+
+      - name: Install dependencies
+        run: |
+          cd ${{ matrix.app-name }}
+          poetry install
+
+      - name: Lints
+        run: |
+          cd ${{ matrix.app-name }}
+          poetry run black --check .
+          poetry run isort -c
+          poetry run mypy --show-error-codes mitol/
+
+      - name: Tests
+        run: |
+          cd ${{ matrix.app-name }}
+          poetry run pytest
+
+      - name: Upload coverage to CodeCov
+        uses: codecov/codecov-action@v1
+        with:
+          directory: ${{ matrix.app-name }}/coverage/
+          flags: ${{ matrix.app-name }}
+
+  release:
+    needs: tests
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - uses: abatilo/actions-poetry@1f9adef0261964471fcf93ba269e1762a33a8a26
+      with:
+        poetry-version: 1.0.10
+
+    # extract the app name out of the tag's ref value
+    - id: get-app-name
+      uses: actions/github-script@v3
+      with:
+        script: |
+          const appName = context.github.ref.value.split('/v')[0]
+          core.setOutput('app-name', appName)
+
+    - name: Release to PyPI
+      run: |
+        cd ${{steps.get-app-name.outputs.app-name}}
+        poetry config pypi-token.pypi $${{ secrets.PYPI_TOKEN }}
+        poetry publish

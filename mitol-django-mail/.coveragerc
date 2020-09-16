@@ -17,3 +17,6 @@ precision = 2
 
 [html]
 directory = coverage/
+
+[xml]
+output = coverage/coverage.xml
