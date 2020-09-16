@@ -9,11 +9,11 @@ coverage:
     changes:
       default:
         enabled: no
-    mitol-django-mail:
+    mitol_django_mail:
       target: auto
       flags:
-        - mitol-django-mail
+        - mitol_django_mail
 flags:
-  mitol-django-mail:
+  mitol_django_mail:
     paths:
       - mitol-django-mail/

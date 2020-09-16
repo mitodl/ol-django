@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mitol-django-mail"
-version = "0.1.0"
+version = "0.0.0"
 description = "MIT Open Learning django app extensions for mail"
 authors = [
   "MIT Office of Open Learning <mitx-devops@mit.edu>"
@@ -38,7 +38,6 @@ pytest = "^6.0.2"
 pytest-cov = "*"
 pytest-mock = "1.10.1"
 pytest-django = "3.10.0"
-codecov = "*"
 
 # Formatters
 isort = "^4.3.21"
