@@ -98,8 +98,8 @@ def version(c, app_name, version):
                 # rewrite the unreleased line and add a line for this version
                 f.writelines(
                     [
-                        f"[Unreleased]: {COMPARE_URL.format(from_ref=next_ref, to_ref='HEAD')}",
-                        f"[{new_version}]: {COMPARE_URL.format(from_ref=base_ref, to_ref=next_ref)}",
+                        f"[Unreleased]: {COMPARE_URL.format(from_ref=next_ref, to_ref='HEAD')}\n",
+                        f"[{new_version}]: {COMPARE_URL.format(from_ref=base_ref, to_ref=next_ref)}\n",
                     ]
                 )
             else:
