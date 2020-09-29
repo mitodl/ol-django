@@ -63,7 +63,7 @@ jobs:
       uses: actions/github-script@v3
       with:
         script: |
-          const appName = context.github.ref.value.split('/v')[0]
+          const appName = context.ref.split('/v')[0]
           core.setOutput('app-name', appName)
 
     - name: Release to PyPI
