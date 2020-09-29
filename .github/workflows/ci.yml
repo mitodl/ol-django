@@ -70,4 +70,4 @@ jobs:
       run: |
         cd ${{steps.get-app-name.outputs.app-name}}
         poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
-        poetry publish
+        poetry publish --build
