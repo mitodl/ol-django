@@ -5,18 +5,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Add support for `anymail` versions 6.x, 7.x, 8.x
+- Add support for `toolz` 0.10.x
 
 ## [0.1.4] - 2020-09-29
+### Fixed
+- Added `--build` flag to `poetry publish`
 
 ## [0.1.3] - 2020-09-29
+### Fixed
+- Removed erroneous `$` character in CI workflow
 
 ## [0.1.2] - 2020-09-29
 ### Fixed
-- Fix release workflow version extraction
+- Fixed release workflow version extraction
 
 ## [0.1.1] - 2020-09-29
 ### Fixed
-- Attempt fix of GitHub CI pipeline
+- Attempted fix of GitHub CI pipeline
 
 ## [0.1.0] - 2020-09-29
 ### Added

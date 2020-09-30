@@ -26,11 +26,11 @@ include = [
 [tool.poetry.dependencies]
 python = "~3.6 || ~3.7 || ~3.8"
 Django = "^2.2.12"
-django-anymail = "^6.1.0"
+django-anymail = "~6.1.0 | ~7.0 | ~8.0"
 premailer = "^3.7.0"
 html5lib = "^1.1"
 beautifulsoup4 = "^4.6.0"
-toolz = "^0.9.0"
+toolz = "^0.9.0 || ^0.10.0"
 
 [tool.poetry.dev-dependencies]
 # Testers
