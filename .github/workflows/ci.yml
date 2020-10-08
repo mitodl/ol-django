@@ -8,6 +8,7 @@ jobs:
         python-version: [3.6, 3.7, 3.8]
         app-name:
           - mitol-django-common
+          - mitol-django-digital-credentials
           - mitol-django-mail
     steps:
       - uses: actions/checkout@v2

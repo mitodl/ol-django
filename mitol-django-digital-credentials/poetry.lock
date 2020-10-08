@@ -64,23 +64,6 @@ python-versions = "*"
 version = "0.2.0"
 
 [[package]]
-category = "main"
-description = "Screen-scraping library"
-name = "beautifulsoup4"
-optional = false
-python-versions = "*"
-version = "4.9.3"
-
-[package.dependencies]
-[package.dependencies.soupsieve]
-python = ">=3.0"
-version = ">1.2"
-
-[package.extras]
-html5lib = ["html5lib"]
-lxml = ["lxml"]
-
-[[package]]
 category = "dev"
 description = "The uncompromising code formatter."
 name = "black"
@@ -99,14 +82,6 @@ typed-ast = ">=1.4.0"
 
 [package.extras]
 d = ["aiohttp (>=3.3.2)", "aiohttp-cors"]
-
-[[package]]
-category = "main"
-description = "Extensible memoizing collections and decorators"
-name = "cachetools"
-optional = false
-python-versions = "~=3.5"
-version = "4.1.1"
 
 [[package]]
 category = "main"
@@ -153,22 +128,6 @@ version = "5.3"
 toml = ["toml"]
 
 [[package]]
-category = "main"
-description = "cssselect parses CSS3 Selectors and translates them to XPath 1.0"
-name = "cssselect"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "1.1.0"
-
-[[package]]
-category = "main"
-description = "A CSS Cascading Style Sheets library for Python"
-name = "cssutils"
-optional = false
-python-versions = "*"
-version = "1.0.2"
-
-[[package]]
 category = "dev"
 description = "Decorators for Humans"
 name = "decorator"
@@ -194,18 +153,16 @@ bcrypt = ["bcrypt"]
 
 [[package]]
 category = "main"
-description = "Django email integration for Amazon SES, Mailgun, Mailjet, Postmark, SendGrid, SendinBlue, SparkPost and other transactional ESPs"
-name = "django-anymail"
+description = "OAuth2 Provider for Django"
+name = "django-oauth-toolkit"
 optional = false
-python-versions = ">=3.5"
-version = "8.1"
+python-versions = "*"
+version = "1.3.3"
 
 [package.dependencies]
-django = ">=2.0"
-requests = ">=2.4.3"
-
-[package.extras]
-amazon_ses = ["boto3"]
+django = ">=2.1"
+oauthlib = ">=3.1.0"
+requests = ">=2.13.0"
 
 [[package]]
 category = "dev"
@@ -222,21 +179,62 @@ typing-extensions = "*"
 
 [[package]]
 category = "main"
-description = "HTML parser based on the WHATWG HTML specification"
-name = "html5lib"
+description = "Web APIs for Django, made easy."
+name = "djangorestframework"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-version = "1.1"
+python-versions = ">=3.5"
+version = "3.12.1"
 
 [package.dependencies]
-six = ">=1.9"
-webencodings = "*"
+django = ">=2.2"
+
+[[package]]
+category = "main"
+description = "Camel case JSON support for Django REST framework."
+name = "djangorestframework-camel-case"
+optional = false
+python-versions = ">=3.5"
+version = "1.2.0"
+
+[[package]]
+category = "dev"
+description = "PEP-484 stubs for django-rest-framework"
+name = "djangorestframework-stubs"
+optional = false
+python-versions = "*"
+version = "1.2.0"
+
+[package.dependencies]
+django-stubs = ">=1.3.0"
+mypy = ">=0.750"
+typing-extensions = "*"
+
+[[package]]
+category = "dev"
+description = "A versatile test fixtures replacement based on thoughtbot's factory_bot for Ruby."
+name = "factory-boy"
+optional = false
+python-versions = ">=3.5"
+version = "3.1.0"
+
+[package.dependencies]
+Faker = ">=0.7.0"
 
 [package.extras]
-all = ["genshi", "chardet (>=2.2)", "lxml"]
-chardet = ["chardet (>=2.2)"]
-genshi = ["genshi"]
-lxml = ["lxml"]
+dev = ["coverage", "django", "flake8", "isort", "pillow", "sqlalchemy", "mongoengine", "wheel (>=0.32.0)", "tox", "zest.releaser"]
+doc = ["sphinx", "sphinx-rtd-theme"]
+
+[[package]]
+category = "dev"
+description = "Faker is a Python package that generates fake data for you."
+name = "faker"
+optional = false
+python-versions = ">=3.5"
+version = "4.14.0"
+
+[package.dependencies]
+python-dateutil = ">=2.4"
+text-unidecode = "1.3"
 
 [[package]]
 category = "main"
@@ -348,20 +346,6 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.4.3"
 
 [[package]]
-category = "main"
-description = "Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API."
-name = "lxml"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, != 3.4.*"
-version = "4.6.1"
-
-[package.extras]
-cssselect = ["cssselect (>=0.7)"]
-html5 = ["html5lib"]
-htmlsoup = ["beautifulsoup4"]
-source = ["Cython (>=0.29.7)"]
-
-[[package]]
 category = "dev"
 description = "McCabe checker, plugin for flake8"
 name = "mccabe"
@@ -375,7 +359,7 @@ description = "MIT Open Learning django app extensions for common utilities"
 name = "mitol-django-common"
 optional = false
 python-versions = ">=3.6,<3.9"
-version = "0.1.1"
+version = "0.2.0"
 
 [package.dependencies]
 Django = ">=2.2.12,<3.0.0"
@@ -405,6 +389,19 @@ name = "mypy-extensions"
 optional = false
 python-versions = "*"
 version = "0.4.3"
+
+[[package]]
+category = "main"
+description = "A generic, spec-compliant, thorough implementation of the OAuth request-signing logic"
+name = "oauthlib"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "3.1.0"
+
+[package.extras]
+rsa = ["cryptography"]
+signals = ["blinker"]
+signedtoken = ["cryptography", "pyjwt (>=1.0.0)"]
 
 [[package]]
 category = "dev"
@@ -472,25 +469,6 @@ version = ">=0.12"
 
 [package.extras]
 dev = ["pre-commit", "tox"]
-
-[[package]]
-category = "main"
-description = "Turns CSS blocks into style attributes"
-name = "premailer"
-optional = false
-python-versions = "*"
-version = "3.7.0"
-
-[package.dependencies]
-cachetools = "*"
-cssselect = "*"
-cssutils = "*"
-lxml = "*"
-requests = "*"
-
-[package.extras]
-dev = ["tox", "twine", "therapist", "black", "flake8", "wheel"]
-test = ["nose", "mock"]
 
 [[package]]
 category = "dev"
@@ -657,6 +635,17 @@ pytest = ">=2.7"
 dev = ["pre-commit", "tox"]
 
 [[package]]
+category = "dev"
+description = "Extensions to the standard Python datetime module"
+name = "python-dateutil"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
+version = "2.8.1"
+
+[package.dependencies]
+six = ">=1.5"
+
+[[package]]
 category = "main"
 description = "World timezone definitions, modern and historical"
 name = "pytz"
@@ -691,21 +680,28 @@ security = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)"]
 socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7)", "win-inet-pton"]
 
 [[package]]
-category = "main"
+category = "dev"
+description = "A utility library for mocking out the `requests` Python library."
+name = "responses"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+version = "0.12.0"
+
+[package.dependencies]
+requests = ">=2.0"
+six = "*"
+urllib3 = ">=1.25.10"
+
+[package.extras]
+tests = ["coverage (>=3.7.1,<6.0.0)", "pytest-cov", "pytest-localserver", "flake8", "pytest (>=4.6,<5.0)", "pytest (>=4.6)"]
+
+[[package]]
+category = "dev"
 description = "Python 2 and 3 compatibility utilities"
 name = "six"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 version = "1.15.0"
-
-[[package]]
-category = "main"
-description = "A modern CSS selector implementation for Beautiful Soup."
-marker = "python_version >= \"3.0\""
-name = "soupsieve"
-optional = false
-python-versions = ">=3.5"
-version = "2.0.1"
 
 [[package]]
 category = "main"
@@ -717,19 +713,19 @@ version = "0.4.1"
 
 [[package]]
 category = "dev"
+description = "The most basic Text::Unidecode port"
+name = "text-unidecode"
+optional = false
+python-versions = "*"
+version = "1.3"
+
+[[package]]
+category = "dev"
 description = "Python Library for Tom's Obvious, Minimal Language"
 name = "toml"
 optional = false
 python-versions = "*"
 version = "0.10.1"
-
-[[package]]
-category = "main"
-description = "List processing tools and functional utilities"
-name = "toolz"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.10.0"
 
 [[package]]
 category = "dev"
@@ -785,14 +781,6 @@ python-versions = "*"
 version = "0.2.5"
 
 [[package]]
-category = "main"
-description = "Character encoding aliases for legacy web content"
-name = "webencodings"
-optional = false
-python-versions = "*"
-version = "0.5.1"
-
-[[package]]
 category = "dev"
 description = "Module for decorators, wrappers and monkey patching."
 name = "wrapt"
@@ -814,7 +802,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pytest-cov", "jaraco.test (>=3.2.0)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [metadata]
-content-hash = "b255edafbcebeaa2089a3c076aa9763a1f8b7377a8f42856c6c411c361dcca16"
+content-hash = "8b821d2b94b314be98bdaf2b1edec54d51f3efab60fff99b0c6a7e19ea0e2b4f"
 lock-version = "1.0"
 python-versions = "~3.6 || ~3.7 || ~3.8"
 
@@ -843,18 +831,9 @@ backcall = [
     {file = "backcall-0.2.0-py2.py3-none-any.whl", hash = "sha256:fbbce6a29f263178a1f7915c1940bde0ec2b2a967566fe1c65c1dfb7422bd255"},
     {file = "backcall-0.2.0.tar.gz", hash = "sha256:5cbdbf27be5e7cfadb448baf0aa95508f91f2bbc6c6437cd9cd06e2a4c215e1e"},
 ]
-beautifulsoup4 = [
-    {file = "beautifulsoup4-4.9.3-py2-none-any.whl", hash = "sha256:4c98143716ef1cb40bf7f39a8e3eec8f8b009509e74904ba3a7b315431577e35"},
-    {file = "beautifulsoup4-4.9.3-py3-none-any.whl", hash = "sha256:fff47e031e34ec82bf17e00da8f592fe7de69aeea38be00523c04623c04fb666"},
-    {file = "beautifulsoup4-4.9.3.tar.gz", hash = "sha256:84729e322ad1d5b4d25f805bfa05b902dd96450f43842c4e99067d5e1369eb25"},
-]
 black = [
     {file = "black-19.10b0-py36-none-any.whl", hash = "sha256:1b30e59be925fafc1ee4565e5e08abef6b03fe455102883820fe5ee2e4734e0b"},
     {file = "black-19.10b0.tar.gz", hash = "sha256:c2edb73a08e9e0e6f65a0e6af18b059b8b1cdd5bef997d7a0b181df93dc81539"},
-]
-cachetools = [
-    {file = "cachetools-4.1.1-py3-none-any.whl", hash = "sha256:513d4ff98dd27f85743a8dc0e92f55ddb1b49e060c2d5961512855cda2c01a98"},
-    {file = "cachetools-4.1.1.tar.gz", hash = "sha256:bbaa39c3dede00175df2dc2b03d0cf18dd2d32a7de7beb68072d13043c9edb20"},
 ]
 certifi = [
     {file = "certifi-2020.6.20-py2.py3-none-any.whl", hash = "sha256:8fc0819f1f30ba15bdb34cceffb9ef04d99f420f68eb75d901e9560b8749fc41"},
@@ -907,14 +886,6 @@ coverage = [
     {file = "coverage-5.3-cp39-cp39-win_amd64.whl", hash = "sha256:47a11bdbd8ada9b7ee628596f9d97fbd3851bd9999d398e9436bd67376dbece7"},
     {file = "coverage-5.3.tar.gz", hash = "sha256:280baa8ec489c4f542f8940f9c4c2181f0306a8ee1a54eceba071a449fb870a0"},
 ]
-cssselect = [
-    {file = "cssselect-1.1.0-py2.py3-none-any.whl", hash = "sha256:f612ee47b749c877ebae5bb77035d8f4202c6ad0f0fc1271b3c18ad6c4468ecf"},
-    {file = "cssselect-1.1.0.tar.gz", hash = "sha256:f95f8dedd925fd8f54edb3d2dfb44c190d9d18512377d3c1e2388d16126879bc"},
-]
-cssutils = [
-    {file = "cssutils-1.0.2-py3-none-any.whl", hash = "sha256:c74dbe19c92f5052774eadb15136263548dd013250f1ed1027988e7fef125c8d"},
-    {file = "cssutils-1.0.2.tar.gz", hash = "sha256:a2fcf06467553038e98fea9cfe36af2bf14063eb147a70958cfcaa8f5786acaf"},
-]
 decorator = [
     {file = "decorator-4.4.2-py2.py3-none-any.whl", hash = "sha256:41fa54c2a0cc4ba648be4fd43cff00aedf5b9465c9bf18d64325bc225f08f760"},
     {file = "decorator-4.4.2.tar.gz", hash = "sha256:e3a62f0520172440ca0dcc823749319382e377f37f140a0b99ef45fecb84bfe7"},
@@ -923,17 +894,32 @@ django = [
     {file = "Django-2.2.16-py3-none-any.whl", hash = "sha256:83ced795a0f239f41d8ecabf51cc5fad4b97462a6008dc12e5af3cb9288724ec"},
     {file = "Django-2.2.16.tar.gz", hash = "sha256:62cf45e5ee425c52e411c0742e641a6588b7e8af0d2c274a27940931b2786594"},
 ]
-django-anymail = [
-    {file = "django-anymail-8.1.tar.gz", hash = "sha256:0c3e56a339a37e654b7511572564fe0949f4fbb12c072761c9e35cfc49cb4dc1"},
-    {file = "django_anymail-8.1-py3-none-any.whl", hash = "sha256:0301f2ea1dde7840e5276a5e2d1ca2a56fd558e2b71800e89ca895c18aa3c615"},
+django-oauth-toolkit = [
+    {file = "django-oauth-toolkit-1.3.3.tar.gz", hash = "sha256:48a45d9ec23b50646b14b4b93988bd0d35ad5cf933edfcb833a8527f86329f28"},
+    {file = "django_oauth_toolkit-1.3.3-py2.py3-none-any.whl", hash = "sha256:a67ab96089b96540e34dc8d1ee6e6305a80ee01a36f7688108cd94b77406bdd3"},
 ]
 django-stubs = [
     {file = "django-stubs-1.6.0.tar.gz", hash = "sha256:5257eaedf50e9a294d45618a878baaa1fc6f21b72ebb927c2a87d37a55ca6c50"},
     {file = "django_stubs-1.6.0-py3-none-any.whl", hash = "sha256:20759904040bd29783a5ff879b48ad965964b8a9ea9e405cc49a435423d0d5ba"},
 ]
-html5lib = [
-    {file = "html5lib-1.1-py2.py3-none-any.whl", hash = "sha256:0d78f8fde1c230e99fe37986a60526d7049ed4bf8a9fadbad5f00e22e58e041d"},
-    {file = "html5lib-1.1.tar.gz", hash = "sha256:b2e5b40261e20f354d198eae92afc10d750afb487ed5e50f9c4eaf07c184146f"},
+djangorestframework = [
+    {file = "djangorestframework-3.12.1-py3-none-any.whl", hash = "sha256:5c5071fcbad6dce16f566d492015c829ddb0df42965d488b878594aabc3aed21"},
+    {file = "djangorestframework-3.12.1.tar.gz", hash = "sha256:d54452aedebb4b650254ca092f9f4f5df947cb1de6ab245d817b08b4f4156249"},
+]
+djangorestframework-camel-case = [
+    {file = "djangorestframework-camel-case-1.2.0.tar.gz", hash = "sha256:9714d43fba5bb654057c29501649684d3d9f11a92319ae417fd4d65e80d1159d"},
+]
+djangorestframework-stubs = [
+    {file = "djangorestframework-stubs-1.2.0.tar.gz", hash = "sha256:cd98afa2a7a718689c8aafe162120074976c996f755b0c03d106b6c6c73b95f7"},
+    {file = "djangorestframework_stubs-1.2.0-py3-none-any.whl", hash = "sha256:5df991dcdf28b2b761645282dfcae53f41d58200291ff7d5c0d028925fd9f215"},
+]
+factory-boy = [
+    {file = "factory_boy-3.1.0-py2.py3-none-any.whl", hash = "sha256:d8626622550c8ba31392f9e19fdbcef9f139cf1ad643c5923f20490a7b3e2e3d"},
+    {file = "factory_boy-3.1.0.tar.gz", hash = "sha256:ded73e49135c24bd4d3f45bf1eb168f8d290090f5cf4566b8df3698317dc9c08"},
+]
+faker = [
+    {file = "Faker-4.14.0-py3-none-any.whl", hash = "sha256:a7a36c3c657f06bd1e3e3821b9480f2a92017d8a26e150e464ab6b97743cbc92"},
+    {file = "Faker-4.14.0.tar.gz", hash = "sha256:30afa8f564350770373f299d2d267bff42aaba699a7ae0a3b6f378b2a8170569"},
 ]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
@@ -985,51 +971,13 @@ lazy-object-proxy = [
     {file = "lazy_object_proxy-1.4.3-cp38-cp38-win32.whl", hash = "sha256:5541cada25cd173702dbd99f8e22434105456314462326f06dba3e180f203dfd"},
     {file = "lazy_object_proxy-1.4.3-cp38-cp38-win_amd64.whl", hash = "sha256:59f79fef100b09564bc2df42ea2d8d21a64fdcda64979c0fa3db7bdaabaf6239"},
 ]
-lxml = [
-    {file = "lxml-4.6.1-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:4b7572145054330c8e324a72d808c8c8fbe12be33368db28c39a255ad5f7fb51"},
-    {file = "lxml-4.6.1-cp27-cp27m-manylinux1_i686.whl", hash = "sha256:302160eb6e9764168e01d8c9ec6becddeb87776e81d3fcb0d97954dd51d48e0a"},
-    {file = "lxml-4.6.1-cp27-cp27m-manylinux1_x86_64.whl", hash = "sha256:d4ad7fd3269281cb471ad6c7bafca372e69789540d16e3755dd717e9e5c9d82f"},
-    {file = "lxml-4.6.1-cp27-cp27m-win32.whl", hash = "sha256:189ad47203e846a7a4951c17694d845b6ade7917c47c64b29b86526eefc3adf5"},
-    {file = "lxml-4.6.1-cp27-cp27m-win_amd64.whl", hash = "sha256:56eff8c6fb7bc4bcca395fdff494c52712b7a57486e4fbde34c31bb9da4c6cc4"},
-    {file = "lxml-4.6.1-cp27-cp27mu-manylinux1_i686.whl", hash = "sha256:23c83112b4dada0b75789d73f949dbb4e8f29a0a3511647024a398ebd023347b"},
-    {file = "lxml-4.6.1-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:0e89f5d422988c65e6936e4ec0fe54d6f73f3128c80eb7ecc3b87f595523607b"},
-    {file = "lxml-4.6.1-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:2358809cc64394617f2719147a58ae26dac9e21bae772b45cfb80baa26bfca5d"},
-    {file = "lxml-4.6.1-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:be1ebf9cc25ab5399501c9046a7dcdaa9e911802ed0e12b7d620cd4bbf0518b3"},
-    {file = "lxml-4.6.1-cp35-cp35m-manylinux2014_aarch64.whl", hash = "sha256:4fff34721b628cce9eb4538cf9a73d02e0f3da4f35a515773cce6f5fe413b360"},
-    {file = "lxml-4.6.1-cp35-cp35m-win32.whl", hash = "sha256:475325e037fdf068e0c2140b818518cf6bc4aa72435c407a798b2db9f8e90810"},
-    {file = "lxml-4.6.1-cp35-cp35m-win_amd64.whl", hash = "sha256:f98b6f256be6cec8dd308a8563976ddaff0bdc18b730720f6f4bee927ffe926f"},
-    {file = "lxml-4.6.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:be7c65e34d1b50ab7093b90427cbc488260e4b3a38ef2435d65b62e9fa3d798a"},
-    {file = "lxml-4.6.1-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:d18331ea905a41ae71596502bd4c9a2998902328bbabd29e3d0f5f8569fabad1"},
-    {file = "lxml-4.6.1-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:3d9b2b72eb0dbbdb0e276403873ecfae870599c83ba22cadff2db58541e72856"},
-    {file = "lxml-4.6.1-cp36-cp36m-manylinux2014_aarch64.whl", hash = "sha256:d20d32cbb31d731def4b1502294ca2ee99f9249b63bc80e03e67e8f8e126dea8"},
-    {file = "lxml-4.6.1-cp36-cp36m-win32.whl", hash = "sha256:d182eada8ea0de61a45a526aa0ae4bcd222f9673424e65315c35820291ff299c"},
-    {file = "lxml-4.6.1-cp36-cp36m-win_amd64.whl", hash = "sha256:c0dac835c1a22621ffa5e5f999d57359c790c52bbd1c687fe514ae6924f65ef5"},
-    {file = "lxml-4.6.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:d84d741c6e35c9f3e7406cb7c4c2e08474c2a6441d59322a00dcae65aac6315d"},
-    {file = "lxml-4.6.1-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:8862d1c2c020cb7a03b421a9a7b4fe046a208db30994fc8ff68c627a7915987f"},
-    {file = "lxml-4.6.1-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:3a7a380bfecc551cfd67d6e8ad9faa91289173bdf12e9cfafbd2bdec0d7b1ec1"},
-    {file = "lxml-4.6.1-cp37-cp37m-manylinux2014_aarch64.whl", hash = "sha256:2d6571c48328be4304aee031d2d5046cbc8aed5740c654575613c5a4f5a11311"},
-    {file = "lxml-4.6.1-cp37-cp37m-win32.whl", hash = "sha256:803a80d72d1f693aa448566be46ffd70882d1ad8fc689a2e22afe63035eb998a"},
-    {file = "lxml-4.6.1-cp37-cp37m-win_amd64.whl", hash = "sha256:24e811118aab6abe3ce23ff0d7d38932329c513f9cef849d3ee88b0f848f2aa9"},
-    {file = "lxml-4.6.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:2e311a10f3e85250910a615fe194839a04a0f6bc4e8e5bb5cac221344e3a7891"},
-    {file = "lxml-4.6.1-cp38-cp38-manylinux1_i686.whl", hash = "sha256:a71400b90b3599eb7bf241f947932e18a066907bf84617d80817998cee81e4bf"},
-    {file = "lxml-4.6.1-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:211b3bcf5da70c2d4b84d09232534ad1d78320762e2c59dedc73bf01cb1fc45b"},
-    {file = "lxml-4.6.1-cp38-cp38-manylinux2014_aarch64.whl", hash = "sha256:e65c221b2115a91035b55a593b6eb94aa1206fa3ab374f47c6dc10d364583ff9"},
-    {file = "lxml-4.6.1-cp38-cp38-win32.whl", hash = "sha256:d6f8c23f65a4bfe4300b85f1f40f6c32569822d08901db3b6454ab785d9117cc"},
-    {file = "lxml-4.6.1-cp38-cp38-win_amd64.whl", hash = "sha256:573b2f5496c7e9f4985de70b9bbb4719ffd293d5565513e04ac20e42e6e5583f"},
-    {file = "lxml-4.6.1-cp39-cp39-manylinux1_i686.whl", hash = "sha256:1d87936cb5801c557f3e981c9c193861264c01209cb3ad0964a16310ca1b3301"},
-    {file = "lxml-4.6.1-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:2d5896ddf5389560257bbe89317ca7bcb4e54a02b53a3e572e1ce4226512b51b"},
-    {file = "lxml-4.6.1-cp39-cp39-manylinux2014_aarch64.whl", hash = "sha256:9b06690224258db5cd39a84e993882a6874676f5de582da57f3df3a82ead9174"},
-    {file = "lxml-4.6.1-cp39-cp39-win32.whl", hash = "sha256:bb252f802f91f59767dcc559744e91efa9df532240a502befd874b54571417bd"},
-    {file = "lxml-4.6.1-cp39-cp39-win_amd64.whl", hash = "sha256:7ecaef52fd9b9535ae5f01a1dd2651f6608e4ec9dc136fc4dfe7ebe3c3ddb230"},
-    {file = "lxml-4.6.1.tar.gz", hash = "sha256:c152b2e93b639d1f36ec5a8ca24cde4a8eefb2b6b83668fcd8e83a67badcb367"},
-]
 mccabe = [
     {file = "mccabe-0.6.1-py2.py3-none-any.whl", hash = "sha256:ab8a6258860da4b6677da4bd2fe5dc2c659cff31b3ee4f7f5d64e79735b80d42"},
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
 ]
 mitol-django-common = [
-    {file = "mitol-django-common-0.1.1.tar.gz", hash = "sha256:c86e81a2cbf096e3211d5d343c19a60d991b494bd2941357a0a2dddd17de0a09"},
-    {file = "mitol_django_common-0.1.1-py3-none-any.whl", hash = "sha256:7844f55fd13fdefe24c3ffef3ceb036f328e2ab36d966fb096fc1b050f072a32"},
+    {file = "mitol-django-common-0.2.0.tar.gz", hash = "sha256:7db4e27fcb0a2216da2610df5f250d6a4066b04c7dbbd24d6740aa19afd797ba"},
+    {file = "mitol_django_common-0.2.0-py3-none-any.whl", hash = "sha256:b7dc2a4c31d0648117389b13e3eadce7a6df55210fe448d44edc928b5a4879a8"},
 ]
 mypy = [
     {file = "mypy-0.782-cp35-cp35m-macosx_10_6_x86_64.whl", hash = "sha256:2c6cde8aa3426c1682d35190b59b71f661237d74b053822ea3d748e2c9578a7c"},
@@ -1050,6 +998,10 @@ mypy = [
 mypy-extensions = [
     {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
+]
+oauthlib = [
+    {file = "oauthlib-3.1.0-py2.py3-none-any.whl", hash = "sha256:df884cd6cbe20e32633f1db1072e9356f53638e4361bef4e8b03c9127c9328ea"},
+    {file = "oauthlib-3.1.0.tar.gz", hash = "sha256:bee41cc35fcca6e988463cacc3bcb8a96224f470ca547e697b604cc697b2f889"},
 ]
 packaging = [
     {file = "packaging-20.4-py2.py3-none-any.whl", hash = "sha256:998416ba6962ae7fbd6596850b80e17859a5753ba17c32284f67bfff33784181"},
@@ -1074,10 +1026,6 @@ pickleshare = [
 pluggy = [
     {file = "pluggy-0.13.1-py2.py3-none-any.whl", hash = "sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"},
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
-]
-premailer = [
-    {file = "premailer-3.7.0-py2.py3-none-any.whl", hash = "sha256:c7ac48986984a810afea5147bc8410a8fe0659bf52f357e78b28a1b949209b91"},
-    {file = "premailer-3.7.0.tar.gz", hash = "sha256:5eec9603e84cee583a390de69c75192e50d76e38ef0292b027bd64923766aca7"},
 ]
 prompt-toolkit = [
     {file = "prompt_toolkit-3.0.3-py3-none-any.whl", hash = "sha256:c93e53af97f630f12f5f62a3274e79527936ed466f038953dfa379d4941f651a"},
@@ -1161,6 +1109,10 @@ pytest-mock = [
     {file = "pytest-mock-1.10.1.tar.gz", hash = "sha256:4d0d06d173eecf172703219a71dbd4ade0e13904e6bbce1ce660e2e0dc78b5c4"},
     {file = "pytest_mock-1.10.1-py2.py3-none-any.whl", hash = "sha256:bfdf02789e3d197bd682a758cae0a4a18706566395fbe2803badcd1335e0173e"},
 ]
+python-dateutil = [
+    {file = "python-dateutil-2.8.1.tar.gz", hash = "sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c"},
+    {file = "python_dateutil-2.8.1-py2.py3-none-any.whl", hash = "sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a"},
+]
 pytz = [
     {file = "pytz-2020.1-py2.py3-none-any.whl", hash = "sha256:a494d53b6d39c3c6e44c3bec237336e14305e4f29bbf800b599253057fbb79ed"},
     {file = "pytz-2020.1.tar.gz", hash = "sha256:c35965d010ce31b23eeb663ed3cc8c906275d6be1a34393a1d73a41febf4a048"},
@@ -1198,24 +1150,25 @@ requests = [
     {file = "requests-2.24.0-py2.py3-none-any.whl", hash = "sha256:fe75cc94a9443b9246fc7049224f75604b113c36acb93f87b80ed42c44cbb898"},
     {file = "requests-2.24.0.tar.gz", hash = "sha256:b3559a131db72c33ee969480840fff4bb6dd111de7dd27c8ee1f820f4f00231b"},
 ]
+responses = [
+    {file = "responses-0.12.0-py2.py3-none-any.whl", hash = "sha256:0de50fbf600adf5ef9f0821b85cc537acca98d66bc7776755924476775c1989c"},
+    {file = "responses-0.12.0.tar.gz", hash = "sha256:e80d5276011a4b79ecb62c5f82ba07aa23fb31ecbc95ee7cad6de250a3c97444"},
+]
 six = [
     {file = "six-1.15.0-py2.py3-none-any.whl", hash = "sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced"},
     {file = "six-1.15.0.tar.gz", hash = "sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259"},
-]
-soupsieve = [
-    {file = "soupsieve-2.0.1-py3-none-any.whl", hash = "sha256:1634eea42ab371d3d346309b93df7870a88610f0725d47528be902a0d95ecc55"},
-    {file = "soupsieve-2.0.1.tar.gz", hash = "sha256:a59dc181727e95d25f781f0eb4fd1825ff45590ec8ff49eadfd7f1a537cc0232"},
 ]
 sqlparse = [
     {file = "sqlparse-0.4.1-py3-none-any.whl", hash = "sha256:017cde379adbd6a1f15a61873f43e8274179378e95ef3fede90b5aa64d304ed0"},
     {file = "sqlparse-0.4.1.tar.gz", hash = "sha256:0f91fd2e829c44362cbcfab3e9ae12e22badaa8a29ad5ff599f9ec109f0454e8"},
 ]
+text-unidecode = [
+    {file = "text-unidecode-1.3.tar.gz", hash = "sha256:bad6603bb14d279193107714b288be206cac565dfa49aa5b105294dd5c4aab93"},
+    {file = "text_unidecode-1.3-py2.py3-none-any.whl", hash = "sha256:1311f10e8b895935241623731c2ba64f4c455287888b18189350b67134a822e8"},
+]
 toml = [
     {file = "toml-0.10.1-py2.py3-none-any.whl", hash = "sha256:bda89d5935c2eac546d648028b9901107a595863cb36bae0c73ac804a9b4ce88"},
     {file = "toml-0.10.1.tar.gz", hash = "sha256:926b612be1e5ce0634a2ca03470f95169cf16f939018233a670519cb4ac58b0f"},
-]
-toolz = [
-    {file = "toolz-0.10.0.tar.gz", hash = "sha256:08fdd5ef7c96480ad11c12d472de21acd32359996f69a5259299b540feba4560"},
 ]
 traitlets = [
     {file = "traitlets-4.3.3-py2.py3-none-any.whl", hash = "sha256:70b4c6a1d9019d7b4f6846832288f86998aa3b9207c6821f3578a6a6a467fe44"},
@@ -1256,10 +1209,6 @@ urllib3 = [
 wcwidth = [
     {file = "wcwidth-0.2.5-py2.py3-none-any.whl", hash = "sha256:beb4802a9cebb9144e99086eff703a642a13d6a0052920003a230f3294bbe784"},
     {file = "wcwidth-0.2.5.tar.gz", hash = "sha256:c4d647b99872929fdb7bdcaa4fbe7f01413ed3d98077df798530e5b04f116c83"},
-]
-webencodings = [
-    {file = "webencodings-0.5.1-py2.py3-none-any.whl", hash = "sha256:a0af1213f3c2226497a97e2b3aa01a7e4bee4f403f95be16fc9acd2947514a78"},
-    {file = "webencodings-0.5.1.tar.gz", hash = "sha256:b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923"},
 ]
 wrapt = [
     {file = "wrapt-1.12.1.tar.gz", hash = "sha256:b62ffa81fb85f4332a4f609cab4ac40709470da05643a082ec1eb88e6d9b97d7"},
