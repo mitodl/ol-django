@@ -32,6 +32,14 @@ We use `poetry` and `invoke` to manage apps and releases
 - Install [`poetry`](https://python-poetry.org/docs/#installation) (best practice is to not use `pip install`)
 - Install `invoke` and other repo-level deps via `pip install -r requirements.txt`
 
+### Testing and Linting
+In each reusable app:
+```
+poetry run pytest
+poetry run black .
+poetry run isort -y
+poetry run mypy --show-error-codes mitol/
+```
 
 #### Adding a new app
 

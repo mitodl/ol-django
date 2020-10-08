@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "mitol-django-mail"
-version = "0.1.5"
-description = "MIT Open Learning django app extensions for mail"
+name = "mitol-django-common"
+version = "0.0.0"
+description = "MIT Open Learning django app extensions for common utilities"
 authors = [
   "MIT Office of Open Learning <mitx-devops@mit.edu>"
 ]
@@ -26,11 +26,8 @@ include = [
 [tool.poetry.dependencies]
 python = "~3.6 || ~3.7 || ~3.8"
 Django = "^2.2.12"
-django-anymail = "^6.1 || ^7.0 || ^8.0"
-premailer = "^3.7.0"
-html5lib = "^1.1"
-beautifulsoup4 = "^4.6.0"
-toolz = "^0.9.0 || ^0.10.0"
+psycopg2-binary = "^2.8.3"
+requests = "^2.20.0"
 
 [tool.poetry.dev-dependencies]
 # Testers
@@ -38,6 +35,7 @@ pytest = "^6.0.2"
 pytest-cov = "*"
 pytest-mock = "1.10.1"
 pytest-django = "3.10.0"
+freezegun = "^1.0.0"
 
 # Formatters
 isort = "^4.3.21"
