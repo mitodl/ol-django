@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2020-10-09
+
 ### Added
 - Added the `mitol-django-common` app
 
-[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-mail/v0.1.5...HEAD
+[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.1.0...HEAD
+[0.1.0]: https://github.com/mitodl/ol-django/compare/ffca0142e4bfea14881047d3af168bd4aa32f6fa...mitol-django-common/v0.1.0
