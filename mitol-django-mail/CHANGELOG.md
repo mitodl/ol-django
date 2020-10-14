@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Removed `LICENSE` explicitly added in `pyproject.toml`
+- Added `py.typed` marker file per [PEP 561](https://www.python.org/dev/peps/pep-0561/#packaging-type-information)
+
 ## [0.1.5] - 2020-09-30
 ### Added
 - Add support for `anymail` versions 6.x, 7.x, 8.x
