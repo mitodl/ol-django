@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.6] - 2020-10-14
+
 ### Fixed
 - Removed `LICENSE` explicitly added in `pyproject.toml`
 - Added `py.typed` marker file per [PEP 561](https://www.python.org/dev/peps/pep-0561/#packaging-type-information)
@@ -35,7 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial port of the `mail` app
 
-[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-mail/v0.1.5...HEAD
+[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-mail/v0.1.6...HEAD
+[0.1.6]: https://github.com/mitodl/ol-django/compare/mitol-django-mail/v0.1.0...mitol-django-mail/v0.1.6
 [0.1.5]: https://github.com/mitodl/ol-django/compare/mitol-django-mail/v0.1.0...mitol-django-mail/v0.1.5
 [0.1.4]: https://github.com/mitodl/ol-django/compare/mitol-django-mail/v0.1.0...mitol-django-mail/v0.1.4
 [0.1.3]: https://github.com/mitodl/ol-django/compare/mitol-django-mail/v0.1.0...mitol-django-mail/v0.1.3
