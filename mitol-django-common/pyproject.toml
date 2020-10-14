@@ -19,7 +19,6 @@ packages = [
     { include = "mitol" },
 ]
 include = [
-  "./LICENSE",
   "./README.md"
 ]
 
