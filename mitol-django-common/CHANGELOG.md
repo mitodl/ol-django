@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added `mitol.common.factories.UserFactory` for our apps to have a consistent place to find the user factory
 
 ## [0.1.1] - 2020-10-14
 
