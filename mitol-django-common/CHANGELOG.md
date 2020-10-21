@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.2.0] - 2020-10-21
 ### Added
 - Added `mitol.common.factories.UserFactory` for our apps to have a consistent place to find the user factory
 
@@ -19,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added the `mitol-django-common` app
 
-[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.1.1...HEAD
+[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.2.0...HEAD
+[0.2.0]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.1.0...mitol-django-common/v0.2.0
 [0.1.1]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.1.0...mitol-django-common/v0.1.1
 [0.1.0]: https://github.com/mitodl/ol-django/compare/ffca0142e4bfea14881047d3af168bd4aa32f6fa...mitol-django-common/v0.1.0
