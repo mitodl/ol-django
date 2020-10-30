@@ -1,5 +1,4 @@
 """Digital credentials factories"""
-from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from factory import LazyAttribute, SelfAttribute, Sequence, SubFactory
 from factory.django import DjangoModelFactory

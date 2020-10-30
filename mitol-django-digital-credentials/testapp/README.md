@@ -12,52 +12,65 @@ Ensure the [`sign-and-verify`](https://github.com/digitalcredentials/sign-and-ve
 In the `mitol-django-digital-credentials directory`, you can test this app out by running:
 
 - `poetry run python manage.py migrate` - migrates sqlite db (gitignored)
+- `poetry run python manage.py runserver`
 - `poetry run python manage.py shell`:
 
 ```python
+import json
+import requests
 from datetime import timedelta
 from oauth2_provider.models import AccessToken, get_application_model
-from mitol.common.factories import UserFactory
+from django.contrib.auth.models import User
 from mitol.common.utils import now_in_utc
 from testapp.factories import DemoCoursewareDigitalCredentialRequestFactory
 
 Application = get_application_model()
 
 ### Create a user
-learner = UserFactory.create()
+learner, _ = User.objects.get_or_create(
+  username="myuser",
+  defaults=dict(email="myuser@example.com")
+)
 
 # create oauth2 app and access token
-application = Application.objects.create(
+application, _ = Application.objects.get_or_create(
     name="Test Application",
-    redirect_uris="http://localhost",
-    user=learner,
-    client_type=Application.CLIENT_CONFIDENTIAL,
-    authorization_grant_type=Application.GRANT_AUTHORIZATION_CODE,
+    defaults=dict(
+      redirect_uris="http://localhost",
+      user=learner,
+      client_type=Application.CLIENT_CONFIDENTIAL,
+      authorization_grant_type=Application.GRANT_AUTHORIZATION_CODE,
+    )
 )
-access_token = AccessToken.objects.create(
+access_token, _ = AccessToken.objects.update_or_create(
     user=learner,
     token="1234567890",
     application=application,
-    expires=now_in_utc() + timedelta(days=1),
-    scope="read write digitalcredentials",
+    defaults=dict(
+      expires=now_in_utc() + timedelta(days=1),
+      scope="read write digitalcredentials",
+    )
 )
 
 request = DemoCoursewareDigitalCredentialRequestFactory.create(learner=learner)
 
-print(f"export ACCESS_TOKEN={access_token.token}")
-print(f"export UUID={request.uuid}")
+did = "did:example:456"
+response = requests.post(
+  "http://localhost:5000/generate/controlproof",
+  json={
+    "presentationId": did,
+    "holder": "did:web:digitalcredentials.github.io",
+    "verificationMethod": "did:web:digitalcredentials.github.io#96K4BSIWAkhcclKssb8yTWMQSz4QzPWBy-JsAFlwoIs",
+    "challenge": str(request.uuid)
+  }
+)
+data = json.dumps(response.json())
+print(f"""curl \
+  -H 'Authorization: Bearer {access_token.token}' \
+  -H 'Accept: application/json' \
+  -H 'Content-Type: application/json' \
+  --data '{data}' \
+  http://localhost:8000/api/credentials/request/{request.uuid}/""")
 ```
 
-- Copy/paste and run the exports printed above
-- `poetry run python manage.py runserver`
-
-- Run a test request:
-
-```
-curl \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -H "Accept: application/json" \
-  -H "Content-Type: application/json" \
-  --data '{"learnerDid": "did:example:123"}'\
-  http://localhost:8000/api/credentials/request/$UUID/
-```
+- Copy/paste and run curl command printed above

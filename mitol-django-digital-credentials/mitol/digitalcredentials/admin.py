@@ -1,3 +1,4 @@
+"""Digital credentials admin app"""
 from django.contrib import admin
 
 from mitol.digitalcredentials.models import (

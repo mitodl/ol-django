@@ -2,21 +2,10 @@
 import json
 
 from django.db import transaction
-from djangorestframework_camel_case.parser import (
-    CamelCaseFormParser,
-    CamelCaseJSONParser,
-    CamelCaseMultiPartParser,
-)
-from djangorestframework_camel_case.render import (
-    CamelCaseBrowsableAPIRenderer,
-    CamelCaseJSONRenderer,
-)
 from oauth2_provider.contrib.rest_framework import (
     OAuth2Authentication,
     TokenHasReadWriteScope,
-    TokenHasScope,
 )
-from requests import Response as RequestsResponse
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -31,15 +20,6 @@ class DigitalCredentialRequestView(GenericAPIView):
     authentication_classes = [OAuth2Authentication]
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
     required_scopes = ["digitalcredentials"]
-    parser_classes = [
-        CamelCaseFormParser,
-        CamelCaseMultiPartParser,
-        CamelCaseJSONParser,
-    ]
-    renderer_classes = [
-        CamelCaseJSONRenderer,
-        CamelCaseBrowsableAPIRenderer,
-    ]
     serializer_class = DigitalCredentialRequestSerializer
     lookup_field = "uuid"
 
@@ -49,7 +29,9 @@ class DigitalCredentialRequestView(GenericAPIView):
 
         return learner.digital_credential_requests.filter(consumed=False)
 
-    def post(self, request: Request, *args, **kwargs):
+    def post(
+        self, request: Request, *args, **kwargs
+    ):  # pylint: disable=unused-argument
         """Consume the credential request for a verified credential"""
         # normally POST is only supported for DRF create operations
         # but we need to map the verb to an update, hence this custom view code

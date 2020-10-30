@@ -1,6 +1,4 @@
 """Digital credentials proxy to sign-and-verify service"""
-import json
-from copy import deepcopy
 from typing import Dict
 from urllib.parse import urljoin
 
@@ -10,7 +8,11 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import import_string
 
 from mitol.common.utils import now_in_utc
-from mitol.digitalcredentials.models import LearnerDID
+from mitol.digitalcredentials.models import DigitalCredentialRequest, LearnerDID
+from mitol.digitalcredentials.requests_utils import (
+    prepare_request_digest,
+    prepare_request_hmac_signature,
+)
 
 
 def build_api_url(path: str) -> str:
@@ -21,6 +23,37 @@ def build_api_url(path: str) -> str:
             "MITOL_DIGITAL_CREDENTIALS_VERIFY_SERVICE_BASE_URL is not set"
         )
     return urljoin(base_url, path)
+
+
+def _extract_verification_method(presentation: Dict) -> str:
+    """Extract the verification method from the presentation"""
+    proof = presentation.get("proof", {})
+
+    for key, value in proof.items():
+        if key.endswith("verificationMethod"):
+            if isinstance(value, str):
+                return value
+            elif isinstance(value, dict):
+                return value.get("id", "")
+
+    # fail-safe value
+    return ""
+
+
+def verify_presentations(
+    credential_request: DigitalCredentialRequest, presentation: Dict
+) -> requests.Response:
+    """Verifies the learner's presentation against the backend service"""
+    return requests.post(
+        build_api_url("/verify/presentations"),
+        json={
+            "verifiablePresentation": presentation,
+            "options": {
+                "verificationMethod": _extract_verification_method(presentation),
+                "challenge": str(credential_request.uuid),
+            },
+        },
+    )
 
 
 def build_credential(courseware_object: Dict, learner_did: LearnerDID) -> Dict:
@@ -40,6 +73,20 @@ def build_credential(courseware_object: Dict, learner_did: LearnerDID) -> Dict:
 
 def issue_credential(credential: Dict) -> Dict:
     """Request signed credential from the sign-and-verify service"""
-    response = requests.post(build_api_url("/issue/credentials"), json=credential)
+    request = requests.Request(
+        "POST",
+        build_api_url("/issue/credentials"),
+        json=credential,
+        headers={"Date": now_in_utc().strftime("%a, %d %b %Y %H:%M:%S GMT")},
+    ).prepare()
+    # compute the digest after the request is prepared because we need the JSON body serialized
+    request = prepare_request_digest(request)
+    if settings.MITOL_DIGITAL_CREDENTIALS_HMAC_SECRET:
+        request = prepare_request_hmac_signature(
+            request, settings.MITOL_DIGITAL_CREDENTIALS_HMAC_SECRET
+        )
+
+    with requests.Session() as session:
+        response = session.send(request)
     response.raise_for_status()
     return response.json()

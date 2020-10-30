@@ -7,7 +7,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
-from mitol.common.models import TimestampedModel, TimestampedModelQuerySet
+from mitol.common.models import TimestampedModel
 
 
 class DigitalCredentialRequest(TimestampedModel):
@@ -45,7 +45,7 @@ class LearnerDID(TimestampedModel):
         """Hashes a DID into sha256"""
         return sha256(did.encode("ascii")).hexdigest()
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):  # pylint: disable=signature-differs
         """Override save() to hash the did"""
         self.did_sha256 = self.sha256_hash_did(self.did)
         return super().save(*args, **kwargs)
