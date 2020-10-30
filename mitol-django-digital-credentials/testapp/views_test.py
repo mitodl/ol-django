@@ -22,6 +22,12 @@ def test_request_credential(learner_and_oauth2):
     response_json = {"result": True}
     responses.add(
         responses.POST,
+        "http://localhost:5000/verify/presentations",
+        json={},
+        status=200,
+    )
+    responses.add(
+        responses.POST,
         "http://localhost:5000/issue/credentials",
         json=response_json,
         status=200,
@@ -31,7 +37,7 @@ def test_request_credential(learner_and_oauth2):
             "digital-credentials:credentials-request",
             kwargs={"uuid": credential_request.uuid},
         ),
-        {"learnerDid": "did:example:abc"},
+        {"id": "did:example:abc"},
         HTTP_AUTHORIZATION=f"Bearer {learner_and_oauth2.access_token.token}",
     )
 
@@ -49,7 +55,7 @@ def test_request_credential_anonymous():
             "digital-credentials:credentials-request",
             kwargs={"uuid": credential_request.uuid},
         ),
-        {"learnerDid": "did:example:abc"},
+        {"id": "did:example:abc"},
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
@@ -64,7 +70,7 @@ def test_request_credential_wrong_learner(learner_and_oauth2):
             "digital-credentials:credentials-request",
             kwargs={"uuid": credential_request.uuid},
         ),
-        {"learnerDid": "did:example:abc"},
+        {"id": "did:example:abc"},
         HTTP_AUTHORIZATION=f"Bearer {learner_and_oauth2.access_token.token}",
     )
     assert response.status_code == HTTPStatus.NOT_FOUND

@@ -28,12 +28,18 @@ def test_digital_credential_request_serializer(learner_did_exists):
     response_json = {"result": True}
     responses.add(
         responses.POST,
+        "http://localhost:5000/verify/presentations",
+        json={},
+        status=200,
+    )
+    responses.add(
+        responses.POST,
         "http://localhost:5000/issue/credentials",
         json=response_json,
         status=200,
     )
 
-    serializer = DigitalCredentialRequestSerializer(request, data={"learner_did": did,})
+    serializer = DigitalCredentialRequestSerializer(request, data={"id": did,})
     serializer.is_valid(raise_exception=True)
 
     result = serializer.save()
@@ -50,16 +56,45 @@ def test_digital_credential_request_serializer(learner_did_exists):
     assert request.consumed is True
 
 
+@responses.activate
 def test_digital_credential_request_serializer_other_user_did():
     learner = UserFactory.create()
     learner_did = LearnerDIDFactory.create()
     request = DemoCoursewareDigitalCredentialRequestFactory.create(learner=learner)
 
+    responses.add(
+        responses.POST,
+        "http://localhost:5000/verify/presentations",
+        json={},
+        status=200,
+    )
     serializer = DigitalCredentialRequestSerializer(
-        request, data={"learner_did": learner_did.did,}
+        request, data={"id": learner_did.did,}
     )
     assert serializer.is_valid() is False
-    assert serializer.errors == {"learner_did": ["DID is associated with someone else"]}
+    assert serializer.errors == {"id": ["DID is associated with someone else"]}
+
+
+@responses.activate
+def test_digital_credential_request_serializer_presentation_verify_failed():
+    learner_did = LearnerDIDFactory.create()
+    request = DemoCoursewareDigitalCredentialRequestFactory.create(
+        learner=learner_did.learner
+    )
+
+    responses.add(
+        responses.POST,
+        "http://localhost:5000/verify/presentations",
+        json={},
+        status=400,
+    )
+    serializer = DigitalCredentialRequestSerializer(
+        request, data={"id": learner_did.did,}
+    )
+    assert serializer.is_valid() is False
+    assert serializer.errors == {
+        "non_field_errors": ["Unable to verify digital credential presentation"]
+    }
 
 
 @responses.activate
@@ -70,11 +105,17 @@ def test_digital_credential_request_serializer_error():
     request = DemoCoursewareDigitalCredentialRequestFactory.create(learner=learner)
 
     responses.add(
+        responses.POST,
+        "http://localhost:5000/verify/presentations",
+        json={},
+        status=200,
+    )
+    responses.add(
         responses.POST, "http://localhost:5000/issue/credentials", json={}, status=500,
     )
 
     serializer = DigitalCredentialRequestSerializer(
-        request, data={"learner_did": learner_did.did,}
+        request, data={"id": learner_did.did,}
     )
     serializer.is_valid(raise_exception=True)
 

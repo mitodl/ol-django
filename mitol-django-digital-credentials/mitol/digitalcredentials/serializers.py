@@ -1,24 +1,28 @@
 """Serializers for digital credentials"""
 import json
+import logging
 from typing import Dict, cast
 
 from rest_framework.serializers import CharField, Serializer, ValidationError
 
-from mitol.digitalcredentials.backend import build_credential, issue_credential
-from mitol.digitalcredentials.models import (
-    DigitalCredential,
-    DigitalCredentialRequest,
-    LearnerDID,
+from mitol.digitalcredentials.backend import (
+    build_credential,
+    issue_credential,
+    verify_presentations,
 )
+from mitol.digitalcredentials.models import DigitalCredential, LearnerDID
+
+
+log = logging.getLogger(__name__)
 
 
 class DigitalCredentialRequestSerializer(Serializer):
     """Serializer for digital credential requests"""
 
-    learner_did = CharField(write_only=True)
+    id = CharField(write_only=True)
 
-    def validate_learner_did(self, value: str):
-        """Validate the learner_did"""
+    def validate_id(self, value: str):
+        """Validate the id (DID)"""
         assert self.instance is not None
         learner = self.instance.learner
         learner_did, _ = LearnerDID.objects.get_or_create(
@@ -31,11 +35,25 @@ class DigitalCredentialRequestSerializer(Serializer):
 
         return value
 
+    def to_internal_value(self, data):
+        """Override to_internal_value"""
+        return {**data, **super().to_internal_value(data)}
+
+    def validate(self, attrs):
+        """Validate the data"""
+        result = verify_presentations(self.instance, attrs)
+
+        if not result.ok:
+            log.debug("Failed to verify presentation: %s", result.json())
+            raise ValidationError("Unable to verify digital credential presentation")
+
+        return attrs
+
     def update(self, instance, validated_data: Dict):
         """Perform an update by consuming the credentials request"""
 
         # we associate the learner DID with the request's learner
-        did = cast(str, validated_data.get("learner_did"))
+        did = cast(str, validated_data.get("id"))
         learner_did = LearnerDID.objects.get(did_sha256=LearnerDID.sha256_hash_did(did))
 
         credential = build_credential(instance.courseware_object, learner_did)

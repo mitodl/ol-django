@@ -6,7 +6,6 @@ from hashlib import sha256
 import pytest
 
 from mitol.digitalcredentials.factories import LearnerDIDFactory
-from mitol.digitalcredentials.models import LearnerDID
 
 
 pytestmark = pytest.mark.django_db

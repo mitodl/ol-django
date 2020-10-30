@@ -10,18 +10,16 @@ def build_credential(courseware_object, learner_did):  # pylint: disable=unused-
                 "https://www.w3.org/2018/credentials/examples/v1",
             ],
             "id": "http://example.gov/credentials/3732",
-            "type": ["VerifiableCredential", "Assertion"],
+            "type": ["VerifiableCredential", "UniversityDegreeCredential"],
             "issuer": "did:web:digitalcredentials.github.io",
             "issuanceDate": "2020-03-10T04:24:12.164Z",
             "credentialSubject": {
                 "type": "Person",
                 "id": learner_did.did,
                 "name": f"{learner_did.learner.first_name} {learner_did.learner.last_name}",
-                "hasAchieved": {
-                    "type": "EducationalOccupationalCredential",
-                    "id": "https://xpro.mit.edu/courses/course-v1:xPRO+AMx/​",
-                    "name": courseware_object.title,
-                    "description": courseware_object.description,
+                "degree": {
+                    "type": "BachelorDegree",
+                    "name": "Bachelor of Science and Arts",
                 },
             },
         },
