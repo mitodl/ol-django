@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added `mitol.common.envs` module
+
 ## [0.2.0] - 2020-10-21
 ### Added
 - Added `mitol.common.factories.UserFactory` for our apps to have a consistent place to find the user factory

@@ -1,7 +1,7 @@
 """Tests for test utils"""
 import pytest
 
-from mitol.common.test_utils import MockResponse, any_instance_of, assert_not_raises
+from mitol.common.pytest_utils import MockResponse, any_instance_of, assert_not_raises
 
 
 def test_any_instance_of():
