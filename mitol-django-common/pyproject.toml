@@ -50,6 +50,9 @@ django-stubs = "1.6.0"
 # Misc
 ipython = "^7.13.0"
 
+[tool.poetry.extras]
+celery = ["celery"]
+
 [tool.isort]
 not_skip = "__init__.py"
 

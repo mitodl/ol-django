@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pytest
 import pytz
 
-from mitol.common.test_utils import MockResponse
+from mitol.common.pytest_utils import MockResponse
 from mitol.common.utils import (
     all_equal,
     all_unique,
