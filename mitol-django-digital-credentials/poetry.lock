@@ -222,7 +222,7 @@ description = "Faker is a Python package that generates fake data for you."
 name = "faker"
 optional = false
 python-versions = ">=3.5"
-version = "4.15.0"
+version = "4.16.0"
 
 [package.dependencies]
 python-dateutil = ">=2.4"
@@ -351,7 +351,7 @@ description = "MIT Open Learning django app extensions for common utilities"
 name = "mitol-django-common"
 optional = false
 python-versions = ">=3.6,<3.9"
-version = "0.2.0"
+version = "0.3.0"
 
 [package.dependencies]
 Django = ">=2.2.12,<3.0.0"
@@ -794,7 +794,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pytest-cov", "jaraco.test (>=3.2.0)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [metadata]
-content-hash = "f8c15f5d2827cddb31adeb6059d3922e6920b582a218cb04ea18443c73f0c991"
+content-hash = "b5fa0bb3ce28dd29b15e02b24d80bb8b3a2320dac6d5743223618621c8c25fe7"
 lock-version = "1.0"
 python-versions = "~3.6 || ~3.7 || ~3.8"
 
@@ -906,8 +906,8 @@ factory-boy = [
     {file = "factory_boy-3.1.0.tar.gz", hash = "sha256:ded73e49135c24bd4d3f45bf1eb168f8d290090f5cf4566b8df3698317dc9c08"},
 ]
 faker = [
-    {file = "Faker-4.15.0-py3-none-any.whl", hash = "sha256:2bf1078afc3db2dbab40ed4a353c21179e9703e57e9aa460f3d16ebade21d782"},
-    {file = "Faker-4.15.0.tar.gz", hash = "sha256:71eae67c12497da9e64b259306e3f145b6bbda9cc0a70de9f1b8860c3c9fca86"},
+    {file = "Faker-4.16.0-py3-none-any.whl", hash = "sha256:4d038ba51ae5e0a956d79cadd684d856e5750bfd608b61dad1807f8f08b1da49"},
+    {file = "Faker-4.16.0.tar.gz", hash = "sha256:f260f0375a44cd1e1a735c9b8c9b914304f607b5eef431d20e098c7c2f5b50a6"},
 ]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
@@ -964,8 +964,8 @@ mccabe = [
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
 ]
 mitol-django-common = [
-    {file = "mitol-django-common-0.2.0.tar.gz", hash = "sha256:7db4e27fcb0a2216da2610df5f250d6a4066b04c7dbbd24d6740aa19afd797ba"},
-    {file = "mitol_django_common-0.2.0-py3-none-any.whl", hash = "sha256:b7dc2a4c31d0648117389b13e3eadce7a6df55210fe448d44edc928b5a4879a8"},
+    {file = "mitol-django-common-0.3.0.tar.gz", hash = "sha256:a21a6f842c8400c16e73697c34a43b6aabcf8bc60abeb97987e3bf783ff56483"},
+    {file = "mitol_django_common-0.3.0-py3-none-any.whl", hash = "sha256:be906ae9191a1af4cb72b6c7a11b5bced9670bba204e1af0f4cdb326ca122800"},
 ]
 mypy = [
     {file = "mypy-0.782-cp35-cp35m-macosx_10_6_x86_64.whl", hash = "sha256:2c6cde8aa3426c1682d35190b59b71f661237d74b053822ea3d748e2c9578a7c"},
