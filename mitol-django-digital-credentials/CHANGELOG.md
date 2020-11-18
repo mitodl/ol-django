@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added boilerplate settings/environment variable parsing as `mitol.digitalcredentials.settings`
+
+### Changed
+- `mitol.digitalcredentials.apps.DigitalCredentialsApp` now validates required settings
+
 ## [0.2.0] - 2020-11-16
 
 ### Changed
