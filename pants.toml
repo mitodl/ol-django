@@ -1,0 +1,28 @@
+[GLOBAL]
+pants_version = "2.1.0"
+backend_packages = [
+  'pants.backend.python',
+  'pants.backend.python.lint.isort',
+  'pants.backend.python.lint.black',
+  'pants.backend.python.lint.pylint',
+  'pants.backend.python.typecheck.mypy'
+]
+
+[source]
+root_patterns = ['src/']
+
+[python-setup]
+interpreter_constraints = ['>=3.6']
+requirement_constraints = './requirements.txt'
+
+[black]
+config = "pyproject.toml"
+
+[isort]
+config = "pyproject.toml"
+
+[mypy]
+config = "mypy.ini"
+
+[pylint]
+config = "pylintrc"

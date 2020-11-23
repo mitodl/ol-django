@@ -57,3 +57,9 @@ db.sqlite3
 
 # mypy
 .mypy_cache/
+
+# Pants workspace files
+/.pants.d/
+/dist/
+/.pids
+/.pants.workdir.file_lock*

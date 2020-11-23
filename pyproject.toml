@@ -1,0 +1,63 @@
+[tool.poetry]
+name = "ol-django"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+Django = "^2.2.12"
+psycopg2-binary = "^2.8.3"
+requests = "^2.20.0"
+djangorestframework = "^3.9"
+django-oauth-toolkit = "^1.2.0"
+django-anymail = "^6.1 || ^7.0 || ^8.0"
+premailer = "^3.7.0"
+html5lib = "^1.1"
+beautifulsoup4 = "4.6.0"
+toolz = "^0.9.0 || ^0.10.0"
+
+[tool.poetry.dev-dependencies]
+# Testers
+pytest = "^6.0.2"
+pytest-cov = "*"
+pytest-mock = "1.10.1"
+pytest-django = "3.10.0"
+responses = "^0.12.0"
+freezegun = "^1.0.0"
+factory_boy = "^3.0.0"
+
+# Formatters
+isort = "^4.3.21"
+black = "^19.10b0"
+
+# Linters
+pylint = "^2.0"
+pylint-django = "^2.0.2"
+mypy = "^0.782"
+django-stubs = "1.6.0"
+djangorestframework-stubs = "^1.2.0"
+
+# Misc
+ipython = "^7.13.0"
+
+[tool.poetry.extras]
+celery = ["celery"]
+
+[tool.isort]
+not_skip = "__init__.py"
+
+multi_line_output = 3
+combine_as_imports = true
+force_grid_wrap = false
+include_trailing_comma = true
+
+lines_after_imports = 2
+line_length = 88
+
+known_standard_library = "dataclasses,typing_extensions"
+known_first_party = ["mitol", "testapp"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
