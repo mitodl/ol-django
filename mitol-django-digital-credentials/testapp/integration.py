@@ -1,7 +1,9 @@
 """Integration test code"""
 
 
-def build_credential(courseware_object, learner_did):  # pylint: disable=unused-argument
+def build_credential(
+    credentialed_object, learner_did
+):  # pylint: disable=unused-argument
     """Test func for building credentials"""
     return {
         "credential": {

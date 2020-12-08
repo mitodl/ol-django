@@ -56,7 +56,7 @@ class DigitalCredentialRequestSerializer(Serializer):
         did = cast(str, validated_data.get("id"))
         learner_did = LearnerDID.objects.get(did_sha256=LearnerDID.sha256_hash_did(did))
 
-        credential = build_credential(instance.courseware_object, learner_did)
+        credential = build_credential(instance.credentialed_object, learner_did)
         credential_json = issue_credential(credential)
 
         # consume the request
@@ -66,6 +66,6 @@ class DigitalCredentialRequestSerializer(Serializer):
         return DigitalCredential.objects.create(
             learner=instance.learner,
             learner_did=learner_did,
-            courseware_object=instance.courseware_object,
+            credentialed_object=instance.credentialed_object,
             credential_json=json.dumps(credential_json),
         )

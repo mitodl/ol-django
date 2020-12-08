@@ -19,10 +19,10 @@ class DemoCoursewareFactory(DjangoModelFactory):
 class DemoCoursewareDigitalCredentialFactory(DigitalCredentialFactory):
     """Factory for a DigitalCredential of DemoCourseware"""
 
-    courseware_object = SubFactory(DemoCoursewareFactory)
+    credentialed_object = SubFactory(DemoCoursewareFactory)
 
 
 class DemoCoursewareDigitalCredentialRequestFactory(DigitalCredentialRequestFactory):
     """Factory for a DigitalCredentialRequest of DemoCourseware"""
 
-    courseware_object = SubFactory(DemoCoursewareFactory)
+    credentialed_object = SubFactory(DemoCoursewareFactory)

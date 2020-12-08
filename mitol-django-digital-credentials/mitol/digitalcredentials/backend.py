@@ -56,7 +56,7 @@ def verify_presentations(
     )
 
 
-def build_credential(courseware_object: Dict, learner_did: LearnerDID) -> Dict:
+def build_credential(credentialed_object: Dict, learner_did: LearnerDID) -> Dict:
     """Build the credential"""
     build_credendial_func_name = (
         settings.MITOL_DIGITAL_CREDENTIALS_BUILD_CREDENTIAL_FUNC
@@ -68,7 +68,7 @@ def build_credential(courseware_object: Dict, learner_did: LearnerDID) -> Dict:
 
     build_credendial_func = import_string(build_credendial_func_name)
 
-    return build_credendial_func(courseware_object, learner_did)
+    return build_credendial_func(credentialed_object, learner_did)
 
 
 def issue_credential(credential: Dict) -> Dict:
