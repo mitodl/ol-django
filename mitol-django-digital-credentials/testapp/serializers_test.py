@@ -47,7 +47,7 @@ def test_digital_credential_request_serializer(learner_did_exists):
     learner_did = LearnerDID.objects.get(learner=learner, did=did)
 
     assert isinstance(result, DigitalCredential)
-    assert result.courseware_object == request.courseware_object
+    assert result.credentialed_object == request.credentialed_object
     assert result.learner == learner
     assert result.learner_did == learner_did
     assert json.loads(result.credential_json) == response_json

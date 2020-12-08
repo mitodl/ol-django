@@ -20,16 +20,16 @@ class DigitalCredentialRequest(TimestampedModel):
         related_name="digital_credential_requests",
     )
 
-    courseware_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    courseware_object_id = models.PositiveIntegerField()
-    courseware_object = GenericForeignKey(
-        "courseware_content_type", "courseware_object_id"
+    credentialed_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    credentialed_object_id = models.PositiveIntegerField()
+    credentialed_object = GenericForeignKey(
+        "credentialed_content_type", "credentialed_object_id"
     )
 
     consumed = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Credential request uuid={self.uuid} learner={self.learner} courseware={self.courseware_object}"
+        return f"Credential request uuid={self.uuid} learner={self.learner} courseware={self.credentialed_object}"
 
 
 class LearnerDID(TimestampedModel):
@@ -57,13 +57,13 @@ class DigitalCredential(TimestampedModel):
     learner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     learner_did = models.ForeignKey(LearnerDID, on_delete=models.CASCADE)
 
-    courseware_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    courseware_object_id = models.PositiveIntegerField()
-    courseware_object = GenericForeignKey(
-        "courseware_content_type", "courseware_object_id"
+    credentialed_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    credentialed_object_id = models.PositiveIntegerField()
+    credentialed_object = GenericForeignKey(
+        "credentialed_content_type", "credentialed_object_id"
     )
 
     credential_json = models.TextField()  # for now, just store the JSON as plaintext
 
     def __str__(self):
-        return f"Digital credential learner={self.learner} did={self.learner_did.did} courseware={self.courseware_object}"
+        return f"Digital credential learner={self.learner} did={self.learner_did.did} courseware={self.credentialed_object}"

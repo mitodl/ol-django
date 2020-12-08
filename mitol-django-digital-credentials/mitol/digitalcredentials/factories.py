@@ -15,9 +15,9 @@ class DigitalCredentialRequestFactory(DjangoModelFactory):
 
     learner = SubFactory("mitol.common.factories.UserFactory")
 
-    courseware_object_id = SelfAttribute("courseware_object.id")
-    courseware_content_type = LazyAttribute(
-        lambda o: ContentType.objects.get_for_model(o.courseware_object)
+    credentialed_object_id = SelfAttribute("credentialed_object.id")
+    credentialed_content_type = LazyAttribute(
+        lambda o: ContentType.objects.get_for_model(o.credentialed_object)
     )
 
     class Meta:
@@ -40,9 +40,9 @@ class DigitalCredentialFactory(DjangoModelFactory):
     learner = SubFactory("mitol.common.factories.UserFactory")
     learner_did = SubFactory(LearnerDIDFactory, learner=SelfAttribute("..learner"))
 
-    courseware_object_id = SelfAttribute("courseware_object.id")
-    courseware_content_type = LazyAttribute(
-        lambda o: ContentType.objects.get_for_model(o.courseware_object)
+    credentialed_object_id = SelfAttribute("credentialed_object.id")
+    credentialed_content_type = LazyAttribute(
+        lambda o: ContentType.objects.get_for_model(o.credentialed_object)
     )
 
     credential_json = "{}"
