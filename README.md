@@ -30,7 +30,14 @@ To perform a release, run:
 We use `poetry` and `invoke` to manage apps and releases
 
 - Install [`poetry`](https://python-poetry.org/docs/#installation) (best practice is to not use `pip install`)
-- Install `invoke` and other repo-level deps via `pip install -r requirements.txt`
+- Install `invoke` and other repo-level deps via `pip install -r requirements.build.txt`
+- Install `tox` and other testing deps via `pip install -r requirements.test.txt`
+
+In each project, you'll want to:
+
+```
+poetry install -E test -E dev
+```
 
 ### Migrations
 
@@ -50,6 +57,10 @@ poetry run black .
 poetry run isort -y
 poetry run mypy --show-error-codes mitol/
 ```
+
+To run the full test suite against all python/django versions, you should run `tox` instead of `pytest` directly.
+
+You'll also need to install the necessary versions of python if they're not already installed locally. `pyenv` is a good tool to manage these and you can set the versions used locally in this project using `pyenv local 3.6.10 3.7.7 3.8.2` for example. `tox-pyenv` is in the dependency list so it'll pick these up if you use it.
 
 #### Adding a new app
 
