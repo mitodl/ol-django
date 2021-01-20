@@ -1,0 +1,101 @@
+[tool.poetry]
+name = "mitol-django-oauth-toolkit-extensions"
+version = "0.4.0"
+description = "MIT Open Learning django app extensions for oauth toolkit"
+authors = [
+  "MIT Office of Open Learning <mitx-devops@mit.edu>"
+]
+keywords = [
+]
+classifiers = [
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8"
+]
+packages = [
+    { include = "mitol" },
+]
+include = [
+  "./README.md"
+]
+
+[tool.poetry.dependencies]
+python = "~3.6 || ~3.7 || ~3.8"
+Django = "^2.2.12 || ~3.0 || ~3.1"
+psycopg2-binary = "^2.8.3"
+requests = "^2.20.0"
+mitol-django-common = "^0.4.0"
+django-oauth-toolkit = "^1.2.0"
+
+# Testers
+pytest = {version = "^6.0.2", optional = true}
+pytest-cov = {version = "*", optional = true}
+pytest-mock = {version = "1.10.1", optional = true}
+pytest-django = {version = "3.10.0", optional = true}
+factory_boy = {version = "^3.0.0", optional = true}
+
+# Formatters
+isort = {version = "^4.3.21", optional = true}
+black = {version = "^19.10b0", optional = true}
+
+# Linters
+pylint = {version = "^2.0", optional = true}
+pylint-django = {version = "^2.0.2", optional = true}
+mypy = {version = "^0.782", optional = true}
+django-stubs = {version = "1.6.0", optional = true}
+
+# Misc
+ipython = {version = "^7.13.0", optional = true}
+
+[tool.poetry.extras]
+celery = ["celery"]
+test = [
+  "pytest", "pytest-cov", "pytest-mock", "pytest-django", "freezegun", "factory_boy",
+  "isort", "black",
+  "pylint", "pylint-django", "mypy", "django-stubs",
+]
+dev = ["ipython"]
+
+[tool.isort]
+not_skip = "__init__.py"
+
+multi_line_output = 3
+combine_as_imports = true
+force_grid_wrap = false
+include_trailing_comma = true
+
+lines_after_imports = 2
+line_length = 88
+
+known_standard_library = "dataclasses,typing_extensions"
+known_first_party = ["mitol", "testapp"]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py{36,37,38}-django{22,30,31}
+isolated_build = True
+alwayscopy = True
+
+[gh-actions]
+python =
+    3.6: py36
+    3.7: py37
+    3.8: py38
+
+[testenv]
+deps =
+  django22: Django==2.2
+  django30: Django==3.0
+  django31: Django==3.1
+whitelist_externals = pytest
+commands = pytest
+extras = test
+"""
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

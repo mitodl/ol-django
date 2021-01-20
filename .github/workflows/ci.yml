@@ -10,6 +10,7 @@ jobs:
           - mitol-django-common
           - mitol-django-digital-credentials
           - mitol-django-mail
+          - mitol-django-oauth-toolkit-extensions
     steps:
       - uses: actions/checkout@v2
 
