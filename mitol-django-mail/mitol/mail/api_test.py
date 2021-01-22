@@ -6,7 +6,7 @@ from anymail.message import AnymailMessage
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 
-from mitol.common.test_utils import any_instance_of
+from mitol.common.pytest_utils import any_instance_of
 from mitol.mail.api import (
     build_message,
     can_email_user,

@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Updated `mitol-django-common` to `0.4.0`
+
 ### Added
 - Support Django 3.x
 
