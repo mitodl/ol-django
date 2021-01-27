@@ -1,59 +1,30 @@
 """Utils tests"""
-import datetime
 import operator as op
-from decimal import Decimal
-from http import HTTPStatus
+from math import ceil
 from types import SimpleNamespace
 
 import pytest
-import pytz
 
-from mitol.common.pytest_utils import MockResponse
-from mitol.common.utils import (
+from mitol.common.utils.collections import (
     all_equal,
     all_unique,
+    chunks,
     dict_without_keys,
     filter_dict_by_key_set,
     find_object_with_matching_attr,
     first_matching_item,
     first_or_none,
-    format_price,
-    get_error_response_summary,
     group_into_dict,
     has_all_keys,
     has_equal_properties,
-    is_json_response,
-    is_near_now,
     item_at_index_or_blank,
     item_at_index_or_none,
     max_or_none,
-    now_in_utc,
     partition,
     partition_to_lists,
-    remove_password_from_url,
-    request_get_with_timeout_retry,
     unique,
     unique_ignore_case,
 )
-
-
-def test_now_in_utc():
-    """now_in_utc() should return the current time set to the UTC time zone"""
-    now = now_in_utc()
-    assert is_near_now(now)
-    assert now.tzinfo == pytz.UTC
-
-
-def test_is_near_now():
-    """
-    Test is_near_now for now
-    """
-    now = datetime.datetime.now(tz=pytz.UTC)
-    assert is_near_now(now) is True
-    later = now + datetime.timedelta(0, 6)
-    assert is_near_now(later) is False
-    earlier = now - datetime.timedelta(0, 6)
-    assert is_near_now(earlier) is False
 
 
 def test_dict_without_keys():
@@ -132,19 +103,6 @@ def test_partition_to_lists():
     falsey, truthy = partition_to_lists(nums)
     assert falsey == [0, None, None]
     assert truthy == [1, 2, 1, 3, 1, 4]
-
-
-@pytest.mark.parametrize(
-    "url, expected",
-    [
-        ["", ""],
-        ["http://url.com/url/here#other", "http://url.com/url/here#other"],
-        ["https://user:pass@sentry.io/12345", "https://user@sentry.io/12345"],
-    ],
-)
-def test_remove_password_from_url(url, expected):
-    """Assert that the url is parsed and the password is not present in the returned value, if provided"""
-    assert remove_password_from_url(url) == expected
 
 
 def test_first_or_none():
@@ -268,76 +226,39 @@ def test_group_into_dict():
     assert set(grouped_nums[False]) == {1, 3, 5}
 
 
-@pytest.mark.parametrize(
-    "price,expected",
-    [[Decimal("0"), "$0.00"], [Decimal("1234567.89"), "$1,234,567.89"]],
-)
-def test_format_price(price, expected):
-    """Format a decimal value into a price"""
-    assert format_price(price) == expected
-
-
-@pytest.mark.parametrize(
-    "content,content_type,exp_summary_content,exp_url_in_summary",
-    [
-        ['{"bad": "response"}', "application/json", '{"bad": "response"}', False],
-        ["plain text", "text/plain", "plain text", False],
-        [
-            "<div>HTML content</div>",
-            "text/html; charset=utf-8",
-            "(HTML body ignored)",
-            True,
-        ],
-    ],
-)
-def test_get_error_response_summary(
-    content, content_type, exp_summary_content, exp_url_in_summary
-):
+def test_chunks():
     """
-    get_error_response_summary should provide a summary of an error HTTP response object with the correct bits of
-    information depending on the type of content.
+    test for chunks
     """
-    status_code = 400
-    url = "http://example.com"
-    mock_response = MockResponse(
-        status_code=status_code, content=content, content_type=content_type, url=url
-    )
-    summary = get_error_response_summary(mock_response)
-    assert f"Response - code: {status_code}" in summary
-    assert f"content: {exp_summary_content}" in summary
-    assert (f"url: {url}" in summary) is exp_url_in_summary
+    input_list = list(range(113))
+    output_list = []
+    for nums in chunks(input_list):
+        output_list += nums
+    assert output_list == input_list
+
+    output_list = []
+    for nums in chunks(input_list, chunk_size=1):
+        output_list += nums
+    assert output_list == input_list
+
+    output_list = []
+    for nums in chunks(input_list, chunk_size=124):
+        output_list += nums
+    assert output_list == input_list
 
 
-@pytest.mark.parametrize(
-    "content,content_type,expected",
-    [
-        ['{"bad": "response"}', "application/json", True],
-        ["plain text", "text/plain", False],
-        ["<div>HTML content</div>", "text/html; charset=utf-8", False],
-    ],
-)
-def test_is_json_response(content, content_type, expected):
+def test_chunks_iterable():
     """
-    is_json_response should return True if the given response's content type indicates JSON content
+    test that chunks works on non-list iterables too
     """
-    mock_response = MockResponse(
-        status_code=400, content=content, content_type=content_type
-    )
-    assert is_json_response(mock_response) is expected
+    count = 113
+    input_range = range(count)
+    chunk_output = []
+    for chunk in chunks(input_range, chunk_size=10):
+        chunk_output.append(chunk)
+    assert len(chunk_output) == ceil(113 / 10)
 
-
-def test_request_get_with_timeout_retry(mocker):
-    """request_get_with_timeout_retry should make a GET request and retry if the response status is 504 (timeout)"""
-    mock_response = mocker.Mock(status_code=HTTPStatus.GATEWAY_TIMEOUT)
-    patched_request_get = mocker.patch(
-        "mitol.common.utils.requests.get", return_value=mock_response
-    )
-    patched_log = mocker.patch("mitol.common.utils.log")
-    url = "http://example.com/retry"
-    retries = 4
-
-    result = request_get_with_timeout_retry(url, retries=retries)
-    assert patched_request_get.call_count == retries
-    assert patched_log.warning.call_count == (retries - 1)
-    mock_response.raise_for_status.assert_called_once()
-    assert result == mock_response
+    range_list = []
+    for chunk in chunk_output:
+        range_list += chunk
+    assert range_list == list(range(count))

@@ -1,39 +1,6 @@
-"""Common utilities"""
-import datetime
-import itertools
-import logging
-from http import HTTPStatus
-from urllib.parse import ParseResult, urlparse, urlunparse
-
-import pytz
-import requests
-
-
-log = logging.getLogger(__name__)
-
-
-def is_near_now(time):
-    """
-    Returns true if time is within five seconds or so of now
-    Args:
-        time (datetime.datetime):
-            The time to test
-    Returns:
-        bool:
-            True if near now, false otherwise
-    """
-    now = datetime.datetime.now(tz=pytz.UTC)
-    five_seconds = datetime.timedelta(0, 5)
-    return now - five_seconds < time < now + five_seconds
-
-
-def now_in_utc():
-    """
-    Get the current time in UTC
-    Returns:
-        datetime.datetime: A datetime object for the current time
-    """
-    return datetime.datetime.now(tz=pytz.UTC)
+"""Collections utilities"""
+from collections.abc import Iterable
+from itertools import groupby, islice, tee
 
 
 def dict_without_keys(d, *omitkeys):
@@ -134,7 +101,7 @@ def partition(items, predicate=bool):
     Returns:
         tuple of iterables: An iterable of non-matching items, paired with an iterable of matching items
     """
-    a, b = itertools.tee((predicate(item), item) for item in items)
+    a, b = tee((predicate(item), item) for item in items)
     return (item for pred, item in a if not pred), (item for pred, item in b if pred)
 
 
@@ -276,109 +243,25 @@ def group_into_dict(items, key_fn):
     """
     sorted_items = sorted(items, key=key_fn)
     return {
-        key: list(values_iter)
-        for key, values_iter in itertools.groupby(sorted_items, key=key_fn)
+        key: list(values_iter) for key, values_iter in groupby(sorted_items, key=key_fn)
     }
 
 
-def get_error_response_summary(response):
+def chunks(iterable: Iterable, *, chunk_size: int = 20):
     """
-    Returns a summary of an error raised from a failed HTTP request using the requests library
+    Yields chunks of an iterable as sub lists each of max size chunk_size.
 
     Args:
-        response (requests.models.Response): The requests library response object
+        iterable (iterable): iterable of elements to chunk
+        chunk_size (int): Max size of each sublist
 
-    Returns:
-        str: A summary of the error response
+    Yields:
+        list: List containing a slice of list_to_chunk
     """
-    # If the response is an HTML document, include the URL in the summary but not the raw HTML
-    if "text/html" in response.headers.get("Content-Type", ""):
-        summary_dict = {"url": response.url, "content": "(HTML body ignored)"}
-    else:
-        summary_dict = {"content": response.text}
-    summary_dict_str = ", ".join([f"{k}: {v}" for k, v in summary_dict.items()])
-    return f"Response - code: {response.status_code}, {summary_dict_str}"
+    chunk_size = max(1, chunk_size)
+    iterable = iter(iterable)
+    chunk = list(islice(iterable, chunk_size))
 
-
-def is_json_response(response):
-    """
-    Returns True if the given response object is JSON-parseable
-
-    Args:
-        response (requests.models.Response): The requests library response object
-
-    Returns:
-        bool: True if this response is JSON-parseable
-    """
-    return response.headers.get("Content-Type") == "application/json"
-
-
-def remove_password_from_url(url):
-    """
-    Remove a password from a URL
-
-    Args:
-        url (str): A URL
-
-    Returns:
-        str: A URL without a password
-    """
-    pieces = urlparse(url)
-    netloc = pieces.netloc
-    userinfo, delimiter, hostinfo = netloc.rpartition("@")
-    if delimiter:
-        username, _, _ = userinfo.partition(":")
-        rejoined_netloc = f"{username}{delimiter}{hostinfo}"
-    else:
-        rejoined_netloc = netloc
-
-    return urlunparse(
-        ParseResult(
-            scheme=pieces.scheme,
-            netloc=rejoined_netloc,
-            path=pieces.path,
-            params=pieces.params,
-            query=pieces.query,
-            fragment=pieces.fragment,
-        )
-    )
-
-
-def format_price(amount):
-    """
-    Format a price in USD
-
-    Args:
-        amount (decimal.Decimal): A decimal value
-
-    Returns:
-        str: A currency string
-    """
-    return f"${amount:0,.2f}"
-
-
-def request_get_with_timeout_retry(url, retries):
-    """
-    Makes a GET request, and retries if the server responds with a 504 (timeout)
-
-    Args:
-        url (str): The URL of the Mailgun API endpoint
-        retries (int): The number of times to retry the request
-
-    Returns:
-        response (requests.models.Response): The requests library response object
-
-    Raises:
-        requests.exceptions.HTTPError: Raised if the response has a status code indicating an error
-    """
-    resp = requests.get(url)
-    # If there was a timeout (504), retry before giving up
-    tries = 1
-    while resp.status_code == HTTPStatus.GATEWAY_TIMEOUT and tries < retries:
-        tries += 1
-        log.warning(
-            "GET request timed out (%s). Retrying for attempt %d...", url, tries
-        )
-        resp = requests.get(url)
-    resp.raise_for_status()
-    return resp
+    while len(chunk) > 0:
+        yield chunk
+        chunk = list(islice(iterable, chunk_size))
