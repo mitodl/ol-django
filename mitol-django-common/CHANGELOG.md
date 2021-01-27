@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added `admin.py` class for `TimestampedModel`
+- Added more utilities from downstream apps, particularly `mitol.common.utils.webpack`
+- Refactored `mitol.common.utils` into a set of smaller subpackages
+- Configured `mitol.common.utils` to re-export utils for backwards compatibility (deprecated for the future though)
+
 ## [0.4.0] - 2021-01-15
 
 ### Added

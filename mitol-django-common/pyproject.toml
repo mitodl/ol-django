@@ -27,6 +27,7 @@ python = "~3.6 || ~3.7 || ~3.8"
 Django = "^2.2.12 || ~3.0 || ~3.1"
 psycopg2-binary = "^2.8.3"
 requests = "^2.20.0"
+django-webpack-loader = "^0.7.0"
 
 # Testers
 pytest = {version = "^6.0.2", optional = true}
@@ -35,6 +36,8 @@ pytest-mock = {version = "1.10.1", optional = true}
 pytest-django = {version = "3.10.0", optional = true}
 freezegun = {version = "^1.0.0", optional = true}
 factory_boy = {version = "^3.0.0", optional = true}
+responses = {version = "^0.12.0", optional = true}
+coverage = {version= "5.3.1", optional = true}
 
 # Formatters
 isort = {version = "^4.3.21", optional = true}
@@ -52,7 +55,7 @@ ipython = {version = "^7.13.0", optional = true}
 [tool.poetry.extras]
 celery = ["celery"]
 test = [
-  "pytest", "pytest-cov", "pytest-mock", "pytest-django", "freezegun", "factory_boy",
+  "pytest", "pytest-cov", "pytest-mock", "pytest-django", "freezegun", "factory_boy", "responses", "coverage",
   "isort", "black",
   "pylint", "pylint-django", "mypy", "django-stubs",
 ]

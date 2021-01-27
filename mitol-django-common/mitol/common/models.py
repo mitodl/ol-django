@@ -2,12 +2,12 @@
 Common model classes
 """
 import copy
-from typing import Iterable
+from typing import Dict, Iterable, List, Type, TypeVar, Union
 
-from django.db.models import DateTimeField, Model, prefetch_related_objects
+from django.db.models import DateTimeField, ForeignKey, Model, prefetch_related_objects
 from django.db.models.query import QuerySet
 
-from mitol.common.utils import now_in_utc
+from mitol.common.utils.datetime import now_in_utc
 
 
 class TimestampedModelQuerySet(QuerySet):
@@ -37,7 +37,15 @@ class TimestampedModel(Model):
         abstract = True
 
 
-def _items_for_class(content_type_field, items, model_cls):
+_ModelClass = TypeVar("_ModelClass", bound=Model)
+_PrefetchGenericQuerySet = TypeVar(
+    "_PrefetchGenericQuerySet", bound="PrefetchGenericQuerySet"
+)
+
+
+def _items_for_class(
+    content_type_field: str, items: Iterable[_ModelClass], model_cls: Type[_ModelClass]
+) -> Iterable[_ModelClass]:
     """Returns a list of items that matches a class by content_type"""
     return [
         item
@@ -54,7 +62,13 @@ class PrefetchGenericQuerySet(QuerySet):
         self._prefetch_generic_related_lookups = {}
         self._prefetch_generic_done = False
 
-    def prefetch_generic_related(self, content_type_field, model_lookups):
+    def prefetch_generic_related(
+        self,
+        content_type_field: str,
+        model_lookups: Dict[
+            Union[List[Type[_ModelClass]], Type[_ModelClass]], List[str]
+        ],
+    ) -> _PrefetchGenericQuerySet:
         """
         Configure prefetch_related over generic relations
 
@@ -67,7 +81,7 @@ class PrefetchGenericQuerySet(QuerySet):
             QuerySet: the new queryset with prefetching configured
 
         """
-        qs = self._chain()
+        qs = self._chain()  # type: ignore
 
         for model_classes, lookups in model_lookups.items():
             model_classes = (
