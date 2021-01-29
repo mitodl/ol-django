@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2021-01-29
+
 ### Added
 - Added `admin.py` class for `TimestampedModel`
 - Added more utilities from downstream apps, particularly `mitol.common.utils.webpack`
@@ -37,7 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added the `mitol-django-common` app
 
-[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.4.0...HEAD
+[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.5.0...HEAD
+[0.5.0]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.1.0...mitol-django-common/v0.5.0
 [0.4.0]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.1.0...mitol-django-common/v0.4.0
 [0.3.0]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.1.0...mitol-django-common/v0.3.0
 [0.2.0]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.1.0...mitol-django-common/v0.2.0
