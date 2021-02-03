@@ -2,10 +2,7 @@
 import json
 
 from django.db import transaction
-from oauth2_provider.contrib.rest_framework import (
-    OAuth2Authentication,
-    TokenHasReadWriteScope,
-)
+from oauth2_provider.contrib.rest_framework import OAuth2Authentication, TokenHasScope
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -18,7 +15,7 @@ class DigitalCredentialRequestView(GenericAPIView):
     """Digital credential API views"""
 
     authentication_classes = [OAuth2Authentication]
-    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+    permission_classes = [IsAuthenticated, TokenHasScope]
     required_scopes = ["digitalcredentials"]
     serializer_class = DigitalCredentialRequestSerializer
     lookup_field = "uuid"

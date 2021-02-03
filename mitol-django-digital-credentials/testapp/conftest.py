@@ -26,7 +26,7 @@ def learner_and_oauth2():
         token="1234567890",
         application=application,
         expires=now_in_utc() + timedelta(days=1),
-        scope="read write digitalcredentials",
+        scope="digitalcredentials",
     )
     return SimpleNamespace(
         learner=learner, application=application, access_token=access_token
