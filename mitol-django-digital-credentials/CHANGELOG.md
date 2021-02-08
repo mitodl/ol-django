@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2021-02-08
+
 ### Changed
 
 - Narrowed oauth scope requirements for credential endpoint to not require read/write scopes.
@@ -42,7 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added HMAC Signature + Digest Headers support
 - Added `mitol-django-digital-credentials` app
 
-[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-digital-credentials/v1.1.0...HEAD
+[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-digital-credentials/v1.2.0...HEAD
+[1.2.0]: https://github.com/mitodl/ol-django/compare/mitol-django-digital-credentials/v0.1.0...mitol-django-digital-credentials/v1.2.0
 [1.1.0]: https://github.com/mitodl/ol-django/compare/mitol-django-digital-credentials/v0.1.0...mitol-django-digital-credentials/v1.1.0
 [1.0.0]: https://github.com/mitodl/ol-django/compare/mitol-django-digital-credentials/v0.1.0...mitol-django-digital-credentials/v1.0.0
 [0.3.0]: https://github.com/mitodl/ol-django/compare/mitol-django-digital-credentials/v0.1.0...mitol-django-digital-credentials/v0.3.0
