@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Narrowed oauth scope requirements for credential endpoint to not require read/write scopes.
+
 ## [1.1.0] - 2021-01-21
 
 ### Changed
