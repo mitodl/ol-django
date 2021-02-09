@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mitol-django-digital-credentials"
-version = "1.2.0"
+version = "1.3.0"
 description = "Django application to support digital credentials"
 authors = ["MIT Office of Open Learning <mitx-devops@mit.edu>"]
 classifiers = [
