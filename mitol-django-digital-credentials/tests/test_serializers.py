@@ -3,12 +3,22 @@ import json
 
 import pytest
 import responses
+from django.contrib.contenttypes.models import ContentType
 
-from mitol.common.factories import UserFactory
 from mitol.digitalcredentials.factories import LearnerDIDFactory
-from mitol.digitalcredentials.models import DigitalCredential, LearnerDID
-from mitol.digitalcredentials.serializers import DigitalCredentialRequestSerializer
-from testapp.factories import DemoCoursewareDigitalCredentialRequestFactory
+from mitol.digitalcredentials.models import (
+    DigitalCredential,
+    DigitalCredentialRequest,
+    LearnerDID,
+)
+from mitol.digitalcredentials.serializers import (
+    DigitalCredentialIssueSerializer,
+    DigitalCredentialRequestSerializer,
+)
+from testapp.factories import (
+    DemoCoursewareDigitalCredentialFactory,
+    DemoCoursewareDigitalCredentialRequestFactory,
+)
 
 
 pytestmark = pytest.mark.django_db
@@ -16,10 +26,9 @@ pytestmark = pytest.mark.django_db
 
 @responses.activate
 @pytest.mark.parametrize("learner_did_exists", [True, False])
-def test_digital_credential_request_serializer(learner_did_exists):
+def test_digital_credential_issue_serializer(learner, learner_did_exists):
     """Verify that the serializer updates successfully"""
     did = "did:example:12345"
-    learner = UserFactory.create()
     request = DemoCoursewareDigitalCredentialRequestFactory.create(learner=learner)
 
     if learner_did_exists:
@@ -39,7 +48,7 @@ def test_digital_credential_request_serializer(learner_did_exists):
         status=200,
     )
 
-    serializer = DigitalCredentialRequestSerializer(request, data={"id": did,})
+    serializer = DigitalCredentialIssueSerializer(request, data={"id": did,})
     serializer.is_valid(raise_exception=True)
 
     result = serializer.save()
@@ -57,8 +66,7 @@ def test_digital_credential_request_serializer(learner_did_exists):
 
 
 @responses.activate
-def test_digital_credential_request_serializer_other_user_did():
-    learner = UserFactory.create()
+def test_digital_credential_issue_serializer_other_user_did(learner):
     learner_did = LearnerDIDFactory.create()
     request = DemoCoursewareDigitalCredentialRequestFactory.create(learner=learner)
 
@@ -68,7 +76,7 @@ def test_digital_credential_request_serializer_other_user_did():
         json={},
         status=200,
     )
-    serializer = DigitalCredentialRequestSerializer(
+    serializer = DigitalCredentialIssueSerializer(
         request, data={"id": learner_did.did,}
     )
     assert serializer.is_valid() is False
@@ -76,7 +84,7 @@ def test_digital_credential_request_serializer_other_user_did():
 
 
 @responses.activate
-def test_digital_credential_request_serializer_presentation_verify_failed():
+def test_digital_credential_issue_serializer_presentation_verify_failed():
     learner_did = LearnerDIDFactory.create()
     request = DemoCoursewareDigitalCredentialRequestFactory.create(
         learner=learner_did.learner
@@ -88,7 +96,7 @@ def test_digital_credential_request_serializer_presentation_verify_failed():
         json={},
         status=400,
     )
-    serializer = DigitalCredentialRequestSerializer(
+    serializer = DigitalCredentialIssueSerializer(
         request, data={"id": learner_did.did,}
     )
     assert serializer.is_valid() is False
@@ -98,9 +106,8 @@ def test_digital_credential_request_serializer_presentation_verify_failed():
 
 
 @responses.activate
-def test_digital_credential_request_serializer_error():
+def test_digital_credential_issue_serializer_error(learner):
     """Verify that the serializer doesn't modify state if there's an upstream error"""
-    learner = UserFactory.create()
     learner_did = LearnerDIDFactory.create(learner=learner)
     request = DemoCoursewareDigitalCredentialRequestFactory.create(learner=learner)
 
@@ -114,7 +121,7 @@ def test_digital_credential_request_serializer_error():
         responses.POST, "http://localhost:5000/issue/credentials", json={}, status=500,
     )
 
-    serializer = DigitalCredentialRequestSerializer(
+    serializer = DigitalCredentialIssueSerializer(
         request, data={"id": learner_did.did,}
     )
     serializer.is_valid(raise_exception=True)
@@ -125,3 +132,34 @@ def test_digital_credential_request_serializer_error():
     request.refresh_from_db()
     assert request.consumed is False
     assert DigitalCredential.objects.count() == 0
+
+
+@pytest.mark.parametrize("request_exists", [True, False])
+def test_digital_credential_request_serializer(learner, request_exists):
+    """Test DigitalCredentialRequestSerializer"""
+    if request_exists:
+        DemoCoursewareDigitalCredentialRequestFactory.create(learner=learner)
+    assert DigitalCredentialRequest.objects.filter(learner=learner).count() == (
+        1 if request_exists else 0
+    )
+
+    credentialed_object = DemoCoursewareDigitalCredentialFactory.create(learner=learner)
+    serializer = DigitalCredentialRequestSerializer(
+        data={
+            "learner_id": learner.id,
+            "credentialed_object_id": credentialed_object.id,
+            "credentialed_content_type_id": ContentType.objects.get_for_model(
+                credentialed_object
+            ).id,
+        }
+    )
+    serializer.is_valid(raise_exception=True)
+    result = serializer.save()
+
+    assert DigitalCredentialRequest.objects.filter(learner=learner).count() == (
+        2 if request_exists else 1
+    )
+    assert isinstance(result, DigitalCredentialRequest)
+    assert result.learner == learner
+    assert result.credentialed_object == credentialed_object
+    assert result.consumed is False

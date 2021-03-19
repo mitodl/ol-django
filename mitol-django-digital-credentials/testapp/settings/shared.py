@@ -126,3 +126,6 @@ STATIC_URL = "/static/"
 
 SITE_NAME = "Test app"
 SITE_BASE_URL = "http://127.0.0.1:8000/"
+
+MITOL_DIGITAL_CREDENTIALS_AUTH_TYPE = "test"
+MITOL_DIGITAL_CREDENTIALS_DEEP_LINK_URL = "testscheme://localhost"
