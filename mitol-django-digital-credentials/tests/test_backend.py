@@ -1,16 +1,20 @@
 """Integration tests"""
 import json
+from urllib.parse import parse_qs, urljoin, urlparse
 
 import pytest
 import responses
 from django.core.exceptions import ImproperlyConfigured
+from django.urls import reverse
 
 from mitol.digitalcredentials.backend import (
     build_api_url,
     build_credential,
+    create_deep_link_url,
     issue_credential,
     verify_presentations,
 )
+from testapp.factories import DemoCoursewareDigitalCredentialRequestFactory
 
 
 def test_build_api_url():
@@ -24,6 +28,48 @@ def test_build_api_url_invalid(settings):
 
     with pytest.raises(ImproperlyConfigured):
         build_api_url("/path")
+
+
+@pytest.mark.django_db
+def test_create_deep_link_url(settings):
+    """Test create_deep_link_url()"""
+    settings.MITOL_DIGITAL_CREDENTIALS_AUTH_TYPE = "test_auth_type"
+    settings.MITOL_DIGITAL_CREDENTIALS_DEEP_LINK_URL = "testapp://test"
+    credential_request = DemoCoursewareDigitalCredentialRequestFactory.create()
+
+    url = create_deep_link_url(credential_request)
+    scheme, netloc, _, _, query, _ = urlparse(url)
+
+    assert scheme == "testapp"
+    assert netloc == "test"
+    assert parse_qs(query) == {
+        "auth_type": ["test_auth_type"],
+        "issuer": [settings.SITE_BASE_URL],
+        "vc_request_url": [
+            urljoin(
+                settings.SITE_BASE_URL,
+                reverse(
+                    "digital-credentials:credentials-issue",
+                    kwargs={"uuid": credential_request.uuid},
+                ),
+            )
+        ],
+        "challenge": [str(credential_request.uuid)],
+    }
+
+
+@pytest.mark.parametrize(
+    "missing_setting_name",
+    ["MITOL_DIGITAL_CREDENTIALS_AUTH_TYPE", "MITOL_DIGITAL_CREDENTIALS_DEEP_LINK_URL"],
+)
+def test_create_deep_link_url_misconfigured(settings, missing_setting_name):
+    """Test that create_deep_link_url raises a configuration error"""
+    settings.MITOL_DIGITAL_CREDENTIALS_AUTH_TYPE = "test_auth_type"
+    settings.MITOL_DIGITAL_CREDENTIALS_DEEP_LINK_URL = "testapp://test"
+    setattr(settings, missing_setting_name, None)
+
+    with pytest.raises(ImproperlyConfigured):
+        create_deep_link_url(None)
 
 
 @responses.activate

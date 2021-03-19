@@ -1,10 +1,11 @@
 """Digital credentials proxy to sign-and-verify service"""
 from typing import Dict
-from urllib.parse import urljoin
+from urllib.parse import urlencode, urljoin
 
 import requests
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.urls import reverse
 from django.utils.module_loading import import_string
 
 from mitol.common.utils import now_in_utc
@@ -90,3 +91,33 @@ def issue_credential(credential: Dict) -> Dict:
         response = session.send(request)
     response.raise_for_status()
     return response.json()
+
+
+def create_deep_link_url(credential_request: DigitalCredentialRequest) -> str:
+    """Creates and returns a deep link credential url"""
+    auth_type = settings.MITOL_DIGITAL_CREDENTIALS_AUTH_TYPE
+    deep_link_url = settings.MITOL_DIGITAL_CREDENTIALS_DEEP_LINK_URL
+
+    if not auth_type:
+        raise ImproperlyConfigured(
+            "MITOL_DIGITAL_CREDENTIALS_AUTH_TYPE is required to create deep links"
+        )
+    if not deep_link_url:
+        raise ImproperlyConfigured(
+            "MITOL_DIGITAL_CREDENTIALS_DEEP_LINK_URL is required to create deep links"
+        )
+
+    params = {
+        "auth_type": auth_type,
+        "issuer": settings.SITE_BASE_URL,
+        "vc_request_url": urljoin(
+            settings.SITE_BASE_URL,
+            reverse(
+                "digital-credentials:credentials-issue",
+                kwargs={"uuid": credential_request.uuid},
+            ),
+        ),
+        "challenge": credential_request.uuid,
+    }
+
+    return f"{deep_link_url}?{urlencode(params)}"

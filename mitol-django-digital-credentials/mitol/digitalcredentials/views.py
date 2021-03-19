@@ -8,16 +8,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from mitol.digitalcredentials.serializers import DigitalCredentialRequestSerializer
+from mitol.digitalcredentials.serializers import DigitalCredentialIssueSerializer
 
 
-class DigitalCredentialRequestView(GenericAPIView):
+class DigitalCredentialIssueView(GenericAPIView):
     """Digital credential API views"""
 
     authentication_classes = [OAuth2Authentication]
     permission_classes = [IsAuthenticated, TokenHasScope]
     required_scopes = ["digitalcredentials"]
-    serializer_class = DigitalCredentialRequestSerializer
+    serializer_class = DigitalCredentialIssueSerializer
     lookup_field = "uuid"
 
     def get_queryset(self):

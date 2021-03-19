@@ -3,21 +3,34 @@ import json
 import logging
 from typing import Dict, cast
 
-from rest_framework.serializers import CharField, Serializer, ValidationError
+from rest_framework.serializers import (
+    CharField,
+    IntegerField,
+    ModelSerializer,
+    Serializer,
+    SerializerMethodField,
+    UUIDField,
+    ValidationError,
+)
 
 from mitol.digitalcredentials.backend import (
     build_credential,
+    create_deep_link_url,
     issue_credential,
     verify_presentations,
 )
-from mitol.digitalcredentials.models import DigitalCredential, LearnerDID
+from mitol.digitalcredentials.models import (
+    DigitalCredential,
+    DigitalCredentialRequest,
+    LearnerDID,
+)
 
 
 log = logging.getLogger(__name__)
 
 
-class DigitalCredentialRequestSerializer(Serializer):
-    """Serializer for digital credential requests"""
+class DigitalCredentialIssueSerializer(Serializer):
+    """Serializer for issuing digital credential"""
 
     id = CharField(write_only=True)
 
@@ -68,4 +81,28 @@ class DigitalCredentialRequestSerializer(Serializer):
             learner_did=learner_did,
             credentialed_object=instance.credentialed_object,
             credential_json=json.dumps(credential_json),
+        )
+
+
+class DigitalCredentialRequestSerializer(ModelSerializer):
+    """Serializer for DigitalCredentialRequest"""
+
+    credentialed_object_id = IntegerField(write_only=True)
+    credentialed_content_type_id = CharField(write_only=True)
+    learner_id = IntegerField(write_only=True)
+    deep_link_url = SerializerMethodField()
+    uuid = UUIDField(read_only=True)
+
+    def get_deep_link_url(self, instance: DigitalCredentialRequest) -> str:
+        """Get the deep link url for the wallet app"""
+        return create_deep_link_url(instance)
+
+    class Meta:
+        model = DigitalCredentialRequest
+        fields = (
+            "credentialed_object_id",
+            "credentialed_content_type_id",
+            "learner_id",
+            "uuid",
+            "deep_link_url",
         )

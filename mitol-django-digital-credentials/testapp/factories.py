@@ -2,6 +2,7 @@
 from factory import SubFactory
 from factory.django import DjangoModelFactory
 
+from mitol.common.factories import UserFactory
 from mitol.digitalcredentials.factories import (
     DigitalCredentialFactory,
     DigitalCredentialRequestFactory,
@@ -11,6 +12,8 @@ from testapp.models import DemoCourseware
 
 class DemoCoursewareFactory(DjangoModelFactory):
     """Factory for DemoCourseware"""
+
+    learner = SubFactory(UserFactory)
 
     class Meta:
         model = DemoCourseware
