@@ -32,7 +32,7 @@ class DigitalCredentialsRequestViewSetMixin(_Base):
         url_name="request_digital_credentials",
     )
     def request_digital_credential(
-        self, request: Request, pk=None
+        self, request: Request, *args: Any, **kwargs: Any
     ):  # pylint: disable=unused-argument
         """Action to create a digital credentials request"""
         credentialed_object = self.get_object()
