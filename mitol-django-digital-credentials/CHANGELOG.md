@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2021-03-23
+
 ## [1.4.0] - 2021-03-22
 
 - Added `mitol.digitalcredentials.mixinxs.DigitalCredentialsRequestViewSetMixin` DRF view mixin
@@ -54,7 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added HMAC Signature + Digest Headers support
 - Added `mitol-django-digital-credentials` app
 
-[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-digital-credentials/v1.4.0...HEAD
+[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-digital-credentials/v1.4.1...HEAD
+[1.4.1]: https://github.com/mitodl/ol-django/compare/mitol-django-digital-credentials/v0.1.0...mitol-django-digital-credentials/v1.4.1
 [1.4.0]: https://github.com/mitodl/ol-django/compare/mitol-django-digital-credentials/v0.1.0...mitol-django-digital-credentials/v1.4.0
 [1.3.0]: https://github.com/mitodl/ol-django/compare/mitol-django-digital-credentials/v0.1.0...mitol-django-digital-credentials/v1.3.0
 [1.2.0]: https://github.com/mitodl/ol-django/compare/mitol-django-digital-credentials/v0.1.0...mitol-django-digital-credentials/v1.2.0
