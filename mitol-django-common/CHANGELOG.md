@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added `mitol.common.envs.init_app_settings` to support namespace and site name configuration
+- Added `mitol.common.envs.import_settings_modules` to support dynamically importing a set of settings files 
+
 ## [0.5.0] - 2021-01-29
 
 ### Added

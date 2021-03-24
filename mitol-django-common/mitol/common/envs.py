@@ -3,6 +3,7 @@ import json
 import os
 from ast import literal_eval
 from functools import wraps
+from importlib import import_module
 from typing import Any, Callable, Dict, List, NamedTuple, Union, cast
 
 from django.core.exceptions import ImproperlyConfigured
@@ -70,7 +71,6 @@ def var_parser(parser_func: Callable):
             raise ValueError(f"Environment variable '{name}' was used more than once")
 
         value = environ.get(name, default)
-
         # attempt to parse the value before we store it in configured_envs
         # this ensures that get_any works since we don't store the various parse attempts until one succeeds
         value = parser_func(name, value, default)
@@ -262,6 +262,17 @@ class EnvParser:
         return self._configured_vars.values()
 
     def get_features(self, prefix: str = "FEATURE_") -> Dict[str, bool]:
+        """
+        Get the list of features enabled for this app
+
+        Args:
+            prefix (str):
+                feature prefix string
+
+        Returns:
+            dict of bool:
+                dictionary of feature flags
+        """
         return {
             key[len(prefix) :]: self.get_bool(
                 name=key,
@@ -272,6 +283,39 @@ class EnvParser:
             for key in list(self._env.keys())
             if key.startswith(prefix)
         }
+
+    def init_app_settings(self, *, namespace: str, site_name: str):
+        """
+        Configure the app static settings
+
+        Args:
+            namespace (str):
+                the app settings namespace
+        """
+        self._configured_vars["APP_SETTINGS_NAMESPACE"] = namespace
+        self._configured_vars["SITE_NAME"] = site_name
+
+    def get_site_name(self):
+        """Return the site name"""
+        site_name = self._configured_vars.get("SITE_NAME")
+        if not site_name:
+            raise ImproperlyConfigured(
+                "Site name isn't set, add a call to init_app_settings()"
+            )
+        return site_name
+
+    def app_namespaced(self, setting_key: str) -> str:
+        """
+        Return a namespaced setting key
+
+        Example: app_namespaced("KEY") -> "APP_KEY"
+        """
+        namespace = self._configured_vars.get("APP_SETTINGS_NAMESPACE")
+        if not namespace:
+            raise ImproperlyConfigured(
+                "App settings namespace isn't set, add a call to init_app_settings()"
+            )
+        return f"{namespace}_{setting_key}"
 
     get_string = var_parser(parse_str)
     get_bool = var_parser(parse_bool)
@@ -292,6 +336,31 @@ reload = env.reload
 validate = env.validate
 list_environment_vars = env.list_environment_vars
 get_features = env.get_features
+init_app_settings = env.init_app_settings
+app_namespaced = env.app_namespaced
+get_site_name = env.get_site_name
+
+
+def import_settings_modules(gbs: Dict, *module_names: str):
+    """
+    Import settings from modules
+
+    Args:
+        gbs (dict):
+            the value of a calling module's globals()
+
+    Usage:
+        import_settings_modules(globals(), "module1.settings", "module2.settings")
+    """
+
+    # this function imports modules and then walks each, adding uppercased vars
+    # to the calling settings module (typically settings.py in a django project)
+    for module_name in module_names:
+        mod = import_module(module_name)
+        for setting_name in dir(mod):
+            if setting_name.isupper():
+                setting_value = getattr(mod, setting_name)
+                gbs[setting_name] = setting_value
 
 
 def generate_app_json():
