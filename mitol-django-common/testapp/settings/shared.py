@@ -12,8 +12,13 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 
-from mitol.common.settings.webpack import *
+from mitol.common.envs import import_settings_modules, init_app_settings
 
+
+init_app_settings(namespace="MITOL", site_name="MIT Open Learning Common Library")
+import_settings_modules(
+    globals(), "mitol.common.settings.base", "mitol.common.settings.webpack",
+)
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 # multiple dinames to get up to mitol-django-mail/
@@ -119,7 +124,3 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = "/static/"
-
-
-SITE_NAME = "Test app"
-SITE_BASE_URL = "http://127.0.0.1:8000/"

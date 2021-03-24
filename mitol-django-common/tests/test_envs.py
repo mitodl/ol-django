@@ -203,3 +203,23 @@ def test_get_features(mocker):
     envs.env.reload()
     assert envs.get_features() == {"ABC": True, "DEF": False}
     assert envs.get_features("FLAG_") == {"GHI": False}
+
+
+def test_app_namespace():
+    """Verify that app_namespaced namespaces an environment variable"""
+    with pytest.raises(ImproperlyConfigured):
+        envs.app_namespaced("KEY")
+
+    envs.init_app_settings(namespace="PREFIX", site_name="")
+
+    assert envs.app_namespaced("KEY") == "PREFIX_KEY"
+
+
+def test_get_site_name():
+    """Verify that get_site_name returns the site name"""
+    with pytest.raises(ImproperlyConfigured):
+        envs.get_site_name()
+
+    envs.init_app_settings(namespace="", site_name="Site Name")
+
+    assert envs.get_site_name() == "Site Name"
