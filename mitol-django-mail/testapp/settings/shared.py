@@ -12,6 +12,13 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 
+from mitol.common.envs import import_settings_modules, init_app_settings
+
+
+SITE_NAME = "Test app"
+
+init_app_settings(namespace="TESTAPP", site_name=SITE_NAME)
+import_settings_modules(globals(), "mitol.mail.settings.email")
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 # multiple dinames to get up to mitol-django-mail/
@@ -117,6 +124,4 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 
-
-SITE_NAME = "Test app"
 SITE_BASE_URL = "http://127.0.0.1:8000/"
