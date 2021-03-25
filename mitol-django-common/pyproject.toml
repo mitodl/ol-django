@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mitol-django-common"
-version = "0.5.0"
+version = "0.6.0"
 description = "MIT Open Learning django app extensions for common utilities"
 authors = [
   "MIT Office of Open Learning <mitx-devops@mit.edu>"
