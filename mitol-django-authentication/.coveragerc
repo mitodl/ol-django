@@ -1,0 +1,23 @@
+[run]
+branch = True
+source = .
+data_file=/tmp/coverage
+omit =
+    */site-packages/*
+    */distutils/*
+    conftest.py
+    manage.py
+    testapp/*
+    tests/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+show_missing = True
+precision = 2
+
+[html]
+directory = coverage/
+
+[xml]
+output = coverage/coverage.xml
