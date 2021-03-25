@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added boilerplate configuration settings for email (`mitol.common.settings.email`)
+
 ## [0.3.0] - 2021-01-21
 
 ### Changed
