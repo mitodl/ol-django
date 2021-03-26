@@ -1,0 +1,59 @@
+17:17:45.30 [INFO] Completed: test - src/python/mitol/common/tests/test_apps.py:../test-common succeeded.
+17:17:45.39 [INFO] Completed: test - src/python/mitol/common/tests/templates/test_render_bundle.py:../../test-common succeeded.
+17:17:45.49 [INFO] Completed: test - src/python/mitol/common/tests/test_envs.py:../test-common succeeded.
+17:17:45.75 [INFO] Completed: test - src/python/mitol/common/tests/utils/test_webpack.py:../../test-common succeeded.
+17:17:45.77 [INFO] Completed: test - src/python/mitol/common/tests/utils/test_datetime.py:../../test-common succeeded.
+17:17:45.78 [INFO] Completed: test - src/python/mitol/common/tests/utils/test_currency.py:../../test-common succeeded.
+17:17:45.86 [INFO] Completed: test - src/python/mitol/common/tests/utils/test_collections.py:../../test-common succeeded.
+17:17:45.86 [INFO] Completed: test - src/python/mitol/common/tests/utils/test_urls.py:../../test-common succeeded.
+17:17:46.19 [INFO] Completed: test - src/python/mitol/common/tests/test_pytest_utils.py:../test-common succeeded.
+17:17:46.48 [31m[WARN][0m Completed: test - src/python/mitol/common/tests/test_models.py:../test-common failed (exit code 2).
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.6.10, pytest-6.1.2, py-1.9.0, pluggy-0.13.1
+rootdir: /tmp/process-executionXbECEB
+plugins: mock-1.10.1, Faker-4.17.1, cov-2.10.1, django-3.10.0
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+[31m[1m________ ERROR collecting src/python/mitol/common/tests/test_models.py _________[0m
+[1m[31msrc/python/mitol/common/tests/test_models.py[0m:9: in <module>
+    from testapp.models import (
+[1m[31msrc/python/mitol/common/testapp/models.py[0m:1: in <module>
+    from django.contrib.contenttypes.fields import GenericForeignKey
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/contrib/contenttypes/fields.py[0m:3: in <module>
+    from django.contrib.contenttypes.models import ContentType
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/contrib/contenttypes/models.py[0m:133: in <module>
+    class ContentType(models.Model):
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/db/models/base.py[0m:103: in __new__
+    app_config = apps.get_containing_app_config(module)
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/apps/registry.py[0m:252: in get_containing_app_config
+    self.check_apps_ready()
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/apps/registry.py[0m:134: in check_apps_ready
+    settings.INSTALLED_APPS
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/conf/__init__.py[0m:79: in __getattr__
+    self._setup(name)
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/conf/__init__.py[0m:64: in _setup
+    % (desc, ENVIRONMENT_VARIABLE))
+[1m[31mE   django.core.exceptions.ImproperlyConfigured: Requested setting INSTALLED_APPS, but settings are not configured. You must either define the environment variable DJANGO_SETTINGS_MODULE or call settings.configure() before accessing settings.[0m
+
+---------- coverage: platform linux, python 3.6.10-final-0 -----------
+Name                                           Stmts   Miss  Cover
+------------------------------------------------------------------
+src/python/mitol/__init__.py                       1      0   100%
+src/python/mitol/common/__init__.py                1      0   100%
+src/python/mitol/common/conftest.py                2      0   100%
+src/python/mitol/common/testapp/__init__.py        0      0   100%
+src/python/mitol/common/testapp/models.py         17     16     6%
+src/python/mitol/common/tests/test_models.py      39     33    15%
+------------------------------------------------------------------
+TOTAL                                             60     49    18%
+Coverage HTML written to dir htmlcov
+Coverage XML written to file coverage.xml
+
+=========================== short test summary info ============================
+ERROR src/python/mitol/common/tests/test_models.py - django.core.exceptions.I...
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+[31m=============================== [31m[1m1 error[0m[31m in 0.31s[0m[31m ===============================[0m
+
+
+17:17:46.60 [INFO] Completed: test - src/python/mitol/common/tests/utils/test_http_requests.py:../../test-common succeeded.

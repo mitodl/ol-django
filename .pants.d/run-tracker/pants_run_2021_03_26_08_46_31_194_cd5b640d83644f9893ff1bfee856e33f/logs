@@ -1,0 +1,19 @@
+08:46:31.20 [31m[ERROR][0m Invalid option 'plguins' under [GLOBAL] in /home/nathan/odl/ol-django/pants.toml
+08:46:31.20 [31m[ERROR][0m Invalid config entries detected. See log for details on which entries to update or remove.
+(Specify --no-verify-config to disable this check.)
+
+(Use --print-stacktrace to see more error details.)
+08:46:31.20 [INFO] request completed: `--pants-bin-name=./pants --pants-version=2.3.0 test src/python/mitol/common:`
+08:46:37.92 [INFO] notify invalidation: cleared 2 and dirtied 2 nodes for: {"pants.toml", ""}
+08:46:37.92 [INFO] notify invalidation: cleared 0 and dirtied 0 nodes for: {"pants.toml", ""}
+08:46:37.92 [INFO] notify invalidation: cleared 2 and dirtied 2 nodes for: {"pants.toml", ""}
+08:46:37.92 [INFO] notify invalidation: cleared 0 and dirtied 0 nodes for: {"pants.toml", ""}
+08:46:37.92 [INFO] Filesystem changed during run: retrying `PySnapshot` in 500ms...
+08:46:37.92 [INFO] notify invalidation: cleared 0 and dirtied 0 nodes for: {"", "pants.toml"}
+08:46:37.92 [INFO] notify invalidation: cleared 0 and dirtied 0 nodes for: {"pants.toml", ""}
+08:46:38.24 [ERROR] saw filesystem changes covered by invalidation globs: content changed (<pants.engine.internals.native_engine.PyDigest object at 0x7f5ff12325b0> fs <pants.engine.internals.native_engine.PyDigest object at 0x7f5ff12325b0>). terminating the daemon.
+08:46:38.75 [ERROR] service failure for <pants.pantsd.service.scheduler_service.SchedulerService object at 0x7f5fe00a9e50>.
+08:46:38.75 [INFO] Waiting for ongoing runs to complete before exiting...
+08:46:38.75 [INFO] Server exiting with Ok(())
+08:46:38.75 [INFO] Exiting pantsd
+08:46:38.76 [WARN] File watcher exiting with: The watcher was shut down.

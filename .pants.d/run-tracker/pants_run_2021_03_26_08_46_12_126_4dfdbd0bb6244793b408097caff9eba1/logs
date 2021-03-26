@@ -1,0 +1,7 @@
+08:46:12.13 [31m[ERROR][0m Invalid option 'plguins' under [GLOBAL] in /home/nathan/odl/ol-django/pants.toml
+08:46:12.13 [31m[ERROR][0m Invalid config entries detected. See log for details on which entries to update or remove.
+(Specify --no-verify-config to disable this check.)
+
+(Use --print-stacktrace to see more error details.)
+08:46:12.13 [INFO] request completed: `--pants-bin-name=./pants --pants-version=2.3.0 test ::`
+08:46:17.24 [INFO] handling request: `--pants-bin-name=./pants --pants-version=2.3.0 test ::common`

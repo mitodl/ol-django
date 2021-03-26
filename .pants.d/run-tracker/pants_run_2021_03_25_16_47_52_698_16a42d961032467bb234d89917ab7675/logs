@@ -1,0 +1,335 @@
+16:47:55.25 [INFO] Completed: test - src/python/mitol/common/tests/test_pytest_utils.py:../test-common succeeded.
+16:47:55.43 [INFO] Completed: test - src/python/mitol/common/tests/utils/test_currency.py:../../test-common succeeded.
+16:47:55.45 [INFO] Completed: test - src/python/mitol/common/tests/utils/test_urls.py:../../test-common succeeded.
+16:47:55.46 [INFO] Completed: test - src/python/mitol/common/tests/test_apps.py:../test-common succeeded.
+16:47:55.50 [INFO] Completed: test - src/python/mitol/common/tests/test_envs.py:../test-common succeeded.
+16:47:55.50 [INFO] Completed: test - src/python/mitol/common/tests/utils/test_http_requests.py:../../test-common succeeded.
+16:47:55.59 [31m[WARN][0m Completed: test - src/python/mitol/common/tests/test_models.py:../test-common failed (exit code 2).
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.6.10, pytest-6.1.2, py-1.9.0, pluggy-0.13.1
+rootdir: /tmp/process-executionmnSfLa
+plugins: mock-1.10.1, Faker-4.17.1, cov-2.10.1, django-3.10.0
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+[31m[1m________ ERROR collecting src/python/mitol/common/tests/test_models.py _________[0m
+[1m[31msrc/python/mitol/common/tests/test_models.py[0m:9: in <module>
+    from testapp.models import (
+[1m[31msrc/python/mitol/common/testapp/models.py[0m:1: in <module>
+    from django.contrib.contenttypes.fields import GenericForeignKey
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/contrib/contenttypes/fields.py[0m:3: in <module>
+    from django.contrib.contenttypes.models import ContentType
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/contrib/contenttypes/models.py[0m:133: in <module>
+    class ContentType(models.Model):
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/db/models/base.py[0m:103: in __new__
+    app_config = apps.get_containing_app_config(module)
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/apps/registry.py[0m:252: in get_containing_app_config
+    self.check_apps_ready()
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/apps/registry.py[0m:134: in check_apps_ready
+    settings.INSTALLED_APPS
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/conf/__init__.py[0m:79: in __getattr__
+    self._setup(name)
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/conf/__init__.py[0m:64: in _setup
+    % (desc, ENVIRONMENT_VARIABLE))
+[1m[31mE   django.core.exceptions.ImproperlyConfigured: Requested setting INSTALLED_APPS, but settings are not configured. You must either define the environment variable DJANGO_SETTINGS_MODULE or call settings.configure() before accessing settings.[0m
+=========================== short test summary info ============================
+ERROR src/python/mitol/common/tests/test_models.py - django.core.exceptions.I...
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+[31m=============================== [31m[1m1 error[0m[31m in 0.57s[0m[31m ===============================[0m
+
+
+16:47:55.84 [31m[WARN][0m Completed: test - src/python/mitol/common/tests/templates/test_render_bundle.py:../../test-common failed (exit code 1).
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.6.10, pytest-6.1.2, py-1.9.0, pluggy-0.13.1
+rootdir: /tmp/process-executione4JYn1
+plugins: mock-1.10.1, Faker-4.17.1, cov-2.10.1, django-3.10.0
+collected 3 items
+
+src/python/mitol/common/tests/templates/test_render_bundle.py [31mF[0m[31mF[0m[31mF[0m[31m        [100%][0m
+
+=================================== FAILURES ===================================
+[31m[1m___________________ test_render_bundle_disable_loader_stats ____________________[0m
+
+self = <django.template.utils.EngineHandler object at 0x7ff9e75830f0>
+alias = 'django'
+
+    def __getitem__(self, alias):
+        try:
+>           return self._engines[alias]
+[1m[31mE           KeyError: 'django'[0m
+
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/utils.py[0m:66: KeyError
+
+[33mDuring handling of the above exception, another exception occurred:[0m
+
+settings = <pytest_django.fixtures.SettingsWrapper object at 0x7ff9e664de80>
+mocker = <pytest_mock.MockFixture object at 0x7ff9e664def0>
+rf = <django.test.client.RequestFactory object at 0x7ff9e664df98>
+
+    def test_render_bundle_disable_loader_stats(settings, mocker, rf):
+        """Verify it renders nothing if WEBPACK_DISABLE_LOADER_STATS = True"""
+        settings.WEBPACK_DISABLE_LOADER_STATS = True
+        request = rf.get("/")
+        get_loader = mocker.patch("mitol.common.templatetags.render_bundle.get_loader")
+    
+        context = Context({"request": request})
+>       template = Template("{% load render_bundle %}{% render_bundle 'bundle_name' %}")
+
+[1m[31msrc/python/mitol/common/tests/templates/test_render_bundle.py[0m:39: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/base.py[0m:149: in __init__
+    engine = Engine.get_default()
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/engine.py[0m:76: in get_default
+    for engine in engines.all():
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/utils.py[0m:90: in all
+    return [self[alias] for alias in self]
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/utils.py[0m:90: in <listcomp>
+    return [self[alias] for alias in self]
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/utils.py[0m:81: in __getitem__
+    engine = engine_cls(params)
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/backends/django.py[0m:25: in __init__
+    options['libraries'] = self.get_templatetag_libraries(libraries)
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/backends/django.py[0m:43: in get_templatetag_libraries
+    libraries = get_installed_libraries()
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/backends/django.py[0m:98: in get_installed_libraries
+    for app_config in apps.get_app_configs())
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/apps/registry.py[0m:144: in get_app_configs
+    self.check_apps_ready()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <django.apps.registry.Apps object at 0x7ff9e74ed908>
+
+    def check_apps_ready(self):
+        """Raise an exception if all apps haven't been imported yet."""
+        if not self.apps_ready:
+            from django.conf import settings
+            # If "not ready" is due to unconfigured settings, accessing
+            # INSTALLED_APPS raises a more helpful ImproperlyConfigured
+            # exception.
+            settings.INSTALLED_APPS
+>           raise AppRegistryNotReady("Apps aren't loaded yet.")
+[1m[31mE           django.core.exceptions.AppRegistryNotReady: Apps aren't loaded yet.[0m
+
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/apps/registry.py[0m:135: AppRegistryNotReady
+[31m[1m______________________________ test_render_bundle ______________________________[0m
+
+self = <django.template.utils.EngineHandler object at 0x7ff9e75830f0>
+alias = 'django'
+
+    def __getitem__(self, alias):
+        try:
+>           return self._engines[alias]
+[1m[31mE           KeyError: 'django'[0m
+
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/utils.py[0m:66: KeyError
+
+[33mDuring handling of the above exception, another exception occurred:[0m
+
+mocker = <pytest_mock.MockFixture object at 0x7ff9e623a7b8>
+rf = <django.test.client.RequestFactory object at 0x7ff9e623aa58>
+
+    def test_render_bundle(mocker, rf):
+        """Verify render_bundle returns the path to the bundle with the correct base url"""
+        request = rf.get("/")
+        context = {"request": request}
+    
+        # convert to generator
+        common_bundle = (chunk for chunk in FAKE_COMMON_BUNDLE)
+        get_bundle = mocker.Mock(return_value=common_bundle)
+        loader = mocker.Mock(get_bundle=get_bundle)
+        bundle_name = "bundle_name"
+    
+        get_loader = mocker.patch(
+            "mitol.common.templatetags.render_bundle.get_loader", return_value=loader
+        )
+        mock_webpack_public_path = mocker.patch(
+            "mitol.common.templatetags.render_bundle.webpack_public_path", return_value="/"
+        )
+    
+        context = Context({"request": request})
+        template = Template(
+            "{{% load render_bundle %}}{{% render_bundle '{bundle_name}' %}}".format(
+>               bundle_name=bundle_name
+            )
+        )
+
+[1m[31msrc/python/mitol/common/tests/templates/test_render_bundle.py[0m:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/base.py[0m:149: in __init__
+    engine = Engine.get_default()
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/engine.py[0m:76: in get_default
+    for engine in engines.all():
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/utils.py[0m:90: in all
+    return [self[alias] for alias in self]
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/utils.py[0m:90: in <listcomp>
+    return [self[alias] for alias in self]
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/utils.py[0m:81: in __getitem__
+    engine = engine_cls(params)
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/backends/django.py[0m:25: in __init__
+    options['libraries'] = self.get_templatetag_libraries(libraries)
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/backends/django.py[0m:43: in get_templatetag_libraries
+    libraries = get_installed_libraries()
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/backends/django.py[0m:98: in get_installed_libraries
+    for app_config in apps.get_app_configs())
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/apps/registry.py[0m:144: in get_app_configs
+    self.check_apps_ready()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <django.apps.registry.Apps object at 0x7ff9e74ed908>
+
+    def check_apps_ready(self):
+        """Raise an exception if all apps haven't been imported yet."""
+        if not self.apps_ready:
+            from django.conf import settings
+            # If "not ready" is due to unconfigured settings, accessing
+            # INSTALLED_APPS raises a more helpful ImproperlyConfigured
+            # exception.
+            settings.INSTALLED_APPS
+>           raise AppRegistryNotReady("Apps aren't loaded yet.")
+[1m[31mE           django.core.exceptions.AppRegistryNotReady: Apps aren't loaded yet.[0m
+
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/apps/registry.py[0m:135: AppRegistryNotReady
+[31m[1m_______________________ test_render_bundle_missing_file ________________________[0m
+
+self = <django.template.utils.EngineHandler object at 0x7ff9e75830f0>
+alias = 'django'
+
+    def __getitem__(self, alias):
+        try:
+>           return self._engines[alias]
+[1m[31mE           KeyError: 'django'[0m
+
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/utils.py[0m:66: KeyError
+
+[33mDuring handling of the above exception, another exception occurred:[0m
+
+mocker = <pytest_mock.MockFixture object at 0x7ff9e61fac88>
+rf = <django.test.client.RequestFactory object at 0x7ff9e61fadd8>
+
+    def test_render_bundle_missing_file(mocker, rf):
+        """
+        If webpack-stats.json is missing, return an empty string
+        """
+        request = rf.get("/")
+        context = {"request": request}
+    
+        get_bundle = mocker.Mock(side_effect=OSError)
+        loader = mocker.Mock(get_bundle=get_bundle)
+        bundle_name = "bundle_name"
+        get_loader = mocker.patch(
+            "mitol.common.templatetags.render_bundle.get_loader", return_value=loader
+        )
+    
+        context = Context({"request": request})
+        template = Template(
+            "{{% load render_bundle %}}{{% render_bundle '{bundle_name}' %}}".format(
+>               bundle_name=bundle_name
+            )
+        )
+
+[1m[31msrc/python/mitol/common/tests/templates/test_render_bundle.py[0m:100: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/base.py[0m:149: in __init__
+    engine = Engine.get_default()
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/engine.py[0m:76: in get_default
+    for engine in engines.all():
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/utils.py[0m:90: in all
+    return [self[alias] for alias in self]
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/utils.py[0m:90: in <listcomp>
+    return [self[alias] for alias in self]
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/utils.py[0m:81: in __getitem__
+    engine = engine_cls(params)
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/backends/django.py[0m:25: in __init__
+    options['libraries'] = self.get_templatetag_libraries(libraries)
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/backends/django.py[0m:43: in get_templatetag_libraries
+    libraries = get_installed_libraries()
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/template/backends/django.py[0m:98: in get_installed_libraries
+    for app_config in apps.get_app_configs())
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/apps/registry.py[0m:144: in get_app_configs
+    self.check_apps_ready()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <django.apps.registry.Apps object at 0x7ff9e74ed908>
+
+    def check_apps_ready(self):
+        """Raise an exception if all apps haven't been imported yet."""
+        if not self.apps_ready:
+            from django.conf import settings
+            # If "not ready" is due to unconfigured settings, accessing
+            # INSTALLED_APPS raises a more helpful ImproperlyConfigured
+            # exception.
+            settings.INSTALLED_APPS
+>           raise AppRegistryNotReady("Apps aren't loaded yet.")
+[1m[31mE           django.core.exceptions.AppRegistryNotReady: Apps aren't loaded yet.[0m
+
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/apps/registry.py[0m:135: AppRegistryNotReady
+=========================== short test summary info ============================
+FAILED src/python/mitol/common/tests/templates/test_render_bundle.py::test_render_bundle_disable_loader_stats
+FAILED src/python/mitol/common/tests/templates/test_render_bundle.py::test_render_bundle
+FAILED src/python/mitol/common/tests/templates/test_render_bundle.py::test_render_bundle_missing_file
+[31m============================== [31m[1m3 failed[0m[31m in 0.87s[0m[31m ===============================[0m
+
+
+16:47:56.23 [INFO] Completed: test - src/python/mitol/common/tests/utils/test_datetime.py:../../test-common succeeded.
+16:47:56.30 [INFO] Completed: test - src/python/mitol/common/tests/utils/test_collections.py:../../test-common succeeded.
+16:47:56.37 [31m[WARN][0m Completed: test - src/python/mitol/common/tests/utils/test_webpack.py:../../test-common failed (exit code 1).
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.6.10, pytest-6.1.2, py-1.9.0, pluggy-0.13.1
+rootdir: /tmp/process-executionzVRpRJ
+plugins: mock-1.10.1, Faker-4.17.1, cov-2.10.1, django-3.10.0
+collected 3 items
+
+src/python/mitol/common/tests/utils/test_webpack.py [31mF[0m[32m.[0m[32m.[0m[31m                  [100%][0m
+
+=================================== FAILURES ===================================
+[31m[1m___________________________ test_webpack_public_path ___________________________[0m
+
+rf = <django.test.client.RequestFactory object at 0x7f6863b7bc88>
+settings = <pytest_django.fixtures.SettingsWrapper object at 0x7f6863b7bcf8>
+mocker = <pytest_mock.MockFixture object at 0x7f6863b7bd30>
+
+    def test_webpack_public_path(rf, settings, mocker):
+        """Test public_path() behaviors"""
+        request = rf.get("/")
+    
+        mock_webpack_dev_server_url = mocker.patch(
+            "mitol.common.utils.webpack.webpack_dev_server_url", return_value="/dev/server"
+        )
+    
+        settings.WEBPACK_USE_DEV_SERVER = True
+        assert webpack_public_path(request) == "/dev/server/"
+    
+        settings.WEBPACK_USE_DEV_SERVER = False
+>       assert webpack_public_path(request) == "/static/bundles/"
+
+[1m[31msrc/python/mitol/common/tests/utils/test_webpack.py[0m:21: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31msrc/python/mitol/common/utils/webpack.py[0m:16: in webpack_public_path
+    return ensure_trailing_slash(static("bundles/"))
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/templatetags/static.py[0m:167: in static
+    return StaticNode.handle_simple(path)
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/templatetags/static.py[0m:116: in handle_simple
+    if apps.is_installed('django.contrib.staticfiles'):
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/apps/registry.py[0m:240: in is_installed
+    self.check_apps_ready()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <django.apps.registry.Apps object at 0x7f6864653278>
+
+    def check_apps_ready(self):
+        """Raise an exception if all apps haven't been imported yet."""
+        if not self.apps_ready:
+            from django.conf import settings
+            # If "not ready" is due to unconfigured settings, accessing
+            # INSTALLED_APPS raises a more helpful ImproperlyConfigured
+            # exception.
+            settings.INSTALLED_APPS
+>           raise AppRegistryNotReady("Apps aren't loaded yet.")
+[1m[31mE           django.core.exceptions.AppRegistryNotReady: Apps aren't loaded yet.[0m
+
+[1m[31m/home/nathan/.cache/pants/named_caches/pex_root/venvs/short/cb58c18c/lib/python3.6/site-packages/django/apps/registry.py[0m:135: AppRegistryNotReady
+=========================== short test summary info ============================
+FAILED src/python/mitol/common/tests/utils/test_webpack.py::test_webpack_public_path
+[31m========================= [31m[1m1 failed[0m, [32m2 passed[0m[31m in 0.37s[0m[31m ==========================[0m
+
+

@@ -1,0 +1,4 @@
+16:26:21.79 [31m[WARN][0m Unmatched glob from //:testapp's `sources` field: "testapp/**/*.py"
+16:26:24.48 [INFO] Completed: Building setuptools.pex with 2 requirements: setuptools>=50.3.0,<54.0, wheel>=0.35.1,<0.37
+16:26:24.69 [INFO] Wrote dist/mitol-django-common-0.5.0.tar.gz
+16:26:24.69 [INFO] Wrote dist/mitol_django_common-0.5.0-py3-none-any.whl

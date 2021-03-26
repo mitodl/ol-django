@@ -1,0 +1,80 @@
+16:28:46.51 [INFO] Completed: Building pytest.pex with 4 requirements: pytest-cov>=2.10.1, pytest-django>=3.9.0,<4, pytest-mock>=1.10.1, pytest>=6.0.1,<6.3
+16:29:01.97 [INFO] Completed: Resolving requirements.txt
+16:29:03.90 [INFO] Completed: Building pytest_runner.pex
+16:29:04.50 [31m[WARN][0m Completed: test - src/python/mitol/common/tests/utils/test_currency.py:../../test-common failed (exit code 4).
+ImportError while loading conftest '/tmp/process-executionvsDXg8/src/python/mitol/common/conftest.py'.
+src/python/mitol/__init__.py:1: in <module>
+    __import__('pkg_resources').declare_namespace(__name__)
+E   ModuleNotFoundError: No module named 'pkg_resources'
+
+
+16:29:04.53 [31m[WARN][0m Completed: test - src/python/mitol/common/tests/test_envs.py:../test-common failed (exit code 4).
+ImportError while loading conftest '/tmp/process-executionsat1d4/src/python/mitol/common/conftest.py'.
+src/python/mitol/__init__.py:1: in <module>
+    __import__('pkg_resources').declare_namespace(__name__)
+E   ModuleNotFoundError: No module named 'pkg_resources'
+
+
+16:29:04.54 [31m[WARN][0m Completed: test - src/python/mitol/common/tests/utils/test_http_requests.py:../../test-common failed (exit code 4).
+ImportError while loading conftest '/tmp/process-executionK5SrUx/src/python/mitol/common/conftest.py'.
+src/python/mitol/__init__.py:1: in <module>
+    __import__('pkg_resources').declare_namespace(__name__)
+E   ModuleNotFoundError: No module named 'pkg_resources'
+
+
+16:29:04.57 [31m[WARN][0m Completed: test - src/python/mitol/common/tests/test_apps.py:../test-common failed (exit code 4).
+ImportError while loading conftest '/tmp/process-executionONCqmw/src/python/mitol/common/conftest.py'.
+src/python/mitol/__init__.py:1: in <module>
+    __import__('pkg_resources').declare_namespace(__name__)
+E   ModuleNotFoundError: No module named 'pkg_resources'
+
+
+16:29:04.58 [31m[WARN][0m Completed: test - src/python/mitol/common/tests/utils/test_webpack.py:../../test-common failed (exit code 4).
+ImportError while loading conftest '/tmp/process-executionJy2fuX/src/python/mitol/common/conftest.py'.
+src/python/mitol/__init__.py:1: in <module>
+    __import__('pkg_resources').declare_namespace(__name__)
+E   ModuleNotFoundError: No module named 'pkg_resources'
+
+
+16:29:04.59 [31m[WARN][0m Completed: test - src/python/mitol/common/tests/utils/test_urls.py:../../test-common failed (exit code 4).
+ImportError while loading conftest '/tmp/process-executionLxSy29/src/python/mitol/common/conftest.py'.
+src/python/mitol/__init__.py:1: in <module>
+    __import__('pkg_resources').declare_namespace(__name__)
+E   ModuleNotFoundError: No module named 'pkg_resources'
+
+
+16:29:04.65 [31m[WARN][0m Completed: test - src/python/mitol/common/tests/test_models.py:../test-common failed (exit code 4).
+ImportError while loading conftest '/tmp/process-executionxhHKHH/src/python/mitol/common/conftest.py'.
+src/python/mitol/__init__.py:1: in <module>
+    __import__('pkg_resources').declare_namespace(__name__)
+E   ModuleNotFoundError: No module named 'pkg_resources'
+
+
+16:29:04.65 [31m[WARN][0m Completed: test - src/python/mitol/common/tests/utils/test_collections.py:../../test-common failed (exit code 4).
+ImportError while loading conftest '/tmp/process-executionEftzVm/src/python/mitol/common/conftest.py'.
+src/python/mitol/__init__.py:1: in <module>
+    __import__('pkg_resources').declare_namespace(__name__)
+E   ModuleNotFoundError: No module named 'pkg_resources'
+
+
+16:29:04.91 [31m[WARN][0m Completed: test - src/python/mitol/common/tests/templates/test_render_bundle.py:../../test-common failed (exit code 4).
+ImportError while loading conftest '/tmp/process-execution5o7jMs/src/python/mitol/common/conftest.py'.
+src/python/mitol/__init__.py:1: in <module>
+    __import__('pkg_resources').declare_namespace(__name__)
+E   ModuleNotFoundError: No module named 'pkg_resources'
+
+
+16:29:04.93 [31m[WARN][0m Completed: test - src/python/mitol/common/tests/utils/test_datetime.py:../../test-common failed (exit code 4).
+ImportError while loading conftest '/tmp/process-execution93LvbO/src/python/mitol/common/conftest.py'.
+src/python/mitol/__init__.py:1: in <module>
+    __import__('pkg_resources').declare_namespace(__name__)
+E   ModuleNotFoundError: No module named 'pkg_resources'
+
+
+16:29:04.94 [31m[WARN][0m Completed: test - src/python/mitol/common/tests/test_pytest_utils.py:../test-common failed (exit code 4).
+ImportError while loading conftest '/tmp/process-executionQiGk6l/src/python/mitol/common/conftest.py'.
+src/python/mitol/__init__.py:1: in <module>
+    __import__('pkg_resources').declare_namespace(__name__)
+E   ModuleNotFoundError: No module named 'pkg_resources'
+
+

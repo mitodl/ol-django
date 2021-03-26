@@ -1,0 +1,2 @@
+16:24:23.15 [INFO] request completed: `--pants-bin-name=./pants --pants-version=2.3.0 build`
+16:24:30.61 [INFO] handling request: `--pants-bin-name=./pants --pants-version=2.3.0 help goals`

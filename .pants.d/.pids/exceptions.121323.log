@@ -1,0 +1,58 @@
+timestamp: 2021-03-25T16:25:03.124688
+process title: pantsd [/home/nathan/odl/ol-django]
+sys.argv: ['/home/nathan/.cache/pants/setup/bootstrap-Linux-x86_64/2.3.0_py38/bin/pants', '--pants-bin-name=./pants', '--pants-version=2.3.0', 'package', 'src/python/mitol/common:python_distribution']
+pid: 121323
+Exception caught: (pants.engine.internals.scheduler.ExecutionError)
+  File "/home/nathan/.cache/pants/setup/bootstrap-Linux-x86_64/2.3.0_py38/lib/python3.8/site-packages/pants/bin/local_pants_runner.py", line 246, in run
+    engine_result = self._perform_run(goals)
+  File "/home/nathan/.cache/pants/setup/bootstrap-Linux-x86_64/2.3.0_py38/lib/python3.8/site-packages/pants/bin/local_pants_runner.py", line 167, in _perform_run
+    return self._perform_run_body(goals, poll=False)
+  File "/home/nathan/.cache/pants/setup/bootstrap-Linux-x86_64/2.3.0_py38/lib/python3.8/site-packages/pants/bin/local_pants_runner.py", line 184, in _perform_run_body
+    return self.graph_session.run_goal_rules(
+  File "/home/nathan/.cache/pants/setup/bootstrap-Linux-x86_64/2.3.0_py38/lib/python3.8/site-packages/pants/init/engine_initializer.py", line 130, in run_goal_rules
+    exit_code = self.scheduler_session.run_goal_rule(
+  File "/home/nathan/.cache/pants/setup/bootstrap-Linux-x86_64/2.3.0_py38/lib/python3.8/site-packages/pants/engine/internals/scheduler.py", line 568, in run_goal_rule
+    self._raise_on_error([t for _, t in throws])
+  File "/home/nathan/.cache/pants/setup/bootstrap-Linux-x86_64/2.3.0_py38/lib/python3.8/site-packages/pants/engine/internals/scheduler.py", line 536, in _raise_on_error
+    raise ExecutionError(
+
+Exception message: 1 Exception encountered:
+
+  ResolveError: 'python_distribution' was not found in namespace 'src/python/mitol/common'. Did you mean one of:
+  :common
+  :common-testapp
+  :mitol-django-common
+  :test-common
+
+
+timestamp: 2021-03-25T16:25:16.786465
+process title: pantsd [/home/nathan/odl/ol-django]
+sys.argv: ['/home/nathan/.cache/pants/setup/bootstrap-Linux-x86_64/2.3.0_py38/bin/pants', '--pants-bin-name=./pants', '--pants-version=2.3.0', 'package', 'src/python/mitol/common:mitol-django-common']
+pid: 121323
+Exception caught: (pants.engine.internals.scheduler.ExecutionError)
+  File "/home/nathan/.cache/pants/setup/bootstrap-Linux-x86_64/2.3.0_py38/lib/python3.8/site-packages/pants/bin/local_pants_runner.py", line 246, in run
+    engine_result = self._perform_run(goals)
+  File "/home/nathan/.cache/pants/setup/bootstrap-Linux-x86_64/2.3.0_py38/lib/python3.8/site-packages/pants/bin/local_pants_runner.py", line 167, in _perform_run
+    return self._perform_run_body(goals, poll=False)
+  File "/home/nathan/.cache/pants/setup/bootstrap-Linux-x86_64/2.3.0_py38/lib/python3.8/site-packages/pants/bin/local_pants_runner.py", line 184, in _perform_run_body
+    return self.graph_session.run_goal_rules(
+  File "/home/nathan/.cache/pants/setup/bootstrap-Linux-x86_64/2.3.0_py38/lib/python3.8/site-packages/pants/init/engine_initializer.py", line 130, in run_goal_rules
+    exit_code = self.scheduler_session.run_goal_rule(
+  File "/home/nathan/.cache/pants/setup/bootstrap-Linux-x86_64/2.3.0_py38/lib/python3.8/site-packages/pants/engine/internals/scheduler.py", line 568, in run_goal_rule
+    self._raise_on_error([t for _, t in throws])
+  File "/home/nathan/.cache/pants/setup/bootstrap-Linux-x86_64/2.3.0_py38/lib/python3.8/site-packages/pants/engine/internals/scheduler.py", line 536, in _raise_on_error
+    raise ExecutionError(
+
+Exception message: 1 Exception encountered:
+
+  ProcessExecutionFailure: Process 'Building setuptools.pex with 2 requirements: setuptools>=50.3.0,<54.0, wheel>=0.35.1,<0.37' failed with exit code 1.
+stdout:
+
+stderr:
+ERROR: Could not find a version that satisfies the requirement setuptools<54.0,>=50.3.0
+ERROR: No matching distribution found for setuptools<54.0,>=50.3.0
+pid 122733 -> /home/nathan/.pyenv/versions/3.6.10/bin/python3.6 /home/nathan/.cache/pants/named_caches/pex_root/pip.pex/6171f0be6c7c788a7ee08b106590493233bda9b3 --disable-pip-version-check --no-python-version-warning --exists-action a --isolated -q --cache-dir /home/nathan/.cache/pants/named_caches/pex_root --log /tmp/process-executionCrZZfi/.tmp/tmpcbvvmdxh/pip.log download --dest /tmp/process-executionCrZZfi/.tmp/tmpfxxhinei/home.nathan..pyenv.versions.3.6.10.bin.python3.6 --constraint requirements.txt setuptools>=50.3.0,<54.0 wheel>=0.35.1,<0.37 --index-url https://pypi.org/simple/ --retries 5 --timeout 15 exited with 1 and STDERR:
+None
+
+
+
