@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # test the reusabe app
     "mitol.common.apps.CommonApp",
+    "mitol.authentication.apps.AuthenticationApp",
     "testapp",
 ]
 
