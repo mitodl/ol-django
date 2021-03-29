@@ -7,6 +7,7 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8]
         app-name:
+          - mitol-django-authentication
           - mitol-django-common
           - mitol-django-digital-credentials
           - mitol-django-mail
@@ -23,6 +24,9 @@ jobs:
         run: |
           python -m pip install -U pip setuptools
           pip install -r requirements.test.txt
+
+      - name: Apt install
+        run: sudo apt-get install -y libxmlsec1-dev
 
       - name: Install poetry
         uses: abatilo/actions-poetry@1f9adef0261964471fcf93ba269e1762a33a8a26
