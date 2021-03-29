@@ -6,11 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Support django 3.x
+
 ## [0.5.0] - 2021-03-29
+### Fixed
+- App configuration import error fixed
 
 ## [0.4.0] - 2021-03-29
+### Fixed
+- Fix app configuration w/ namespace packages
 
 ## [0.3.0] - 2021-03-29
+
+### Fixed
+- Don't install test/dev dependencies
 
 ## [0.2.0] - 2021-03-29
 
