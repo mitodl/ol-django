@@ -52,6 +52,14 @@ ipython = {version = "^7.13.0", optional = true}
 factory_boy = {version = "^2.12.0", optional = true}
 responses = {version = "^0.10.14", optional = true}
 
+[tool.poetry.extras]
+test = [
+  "pytest", "pytest-cov", "pytest-mock", "pytest-django", "freezegun", "factory_boy", "responses", "coverage",
+  "isort", "black",
+  "pylint", "pylint-django", "mypy", "django-stubs",
+]
+dev = ["ipython"]
+
 [tool.isort]
 not_skip = "__init__.py"
 
