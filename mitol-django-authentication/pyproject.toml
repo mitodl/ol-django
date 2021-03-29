@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mitol-django-authentication"
-version = "0.1.0"
+version = "0.2.0"
 description = "MIT Open Learning django app extensions for social-auth"
 authors = [
   "MIT Office of Open Learning <mitx-devops@mit.edu>"
