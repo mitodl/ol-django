@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2021-03-30
+
 ### Fixed
 - Fixed a bug in `mitol.common.envs.init_app_settings` when `mitol.common.envs.validate` is called
 
@@ -48,7 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added the `mitol-django-common` app
 
-[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.6.0...HEAD
+[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.7.0...HEAD
+[0.7.0]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.1.0...mitol-django-common/v0.7.0
 [0.6.0]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.1.0...mitol-django-common/v0.6.0
 [0.5.0]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.1.0...mitol-django-common/v0.5.0
 [0.4.0]: https://github.com/mitodl/ol-django/compare/mitol-django-common/v0.1.0...mitol-django-common/v0.4.0
