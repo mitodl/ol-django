@@ -292,8 +292,13 @@ class EnvParser:
             namespace (str):
                 the app settings namespace
         """
-        self._configured_vars["APP_SETTINGS_NAMESPACE"] = namespace
-        self._configured_vars["SITE_NAME"] = site_name
+        self.get_string(
+            name="APP_SETTINGS_NAMESPACE",
+            default=namespace,
+            description="App environment variable namespace",
+            write_app_json=False,
+        )
+        self.get_string(name="SITE_NAME", default=site_name, description="Site name")
 
     def get_site_name(self):
         """Return the site name"""
@@ -302,7 +307,7 @@ class EnvParser:
             raise ImproperlyConfigured(
                 "Site name isn't set, add a call to init_app_settings()"
             )
-        return site_name
+        return site_name.value
 
     def app_namespaced(self, setting_key: str) -> str:
         """
@@ -315,7 +320,7 @@ class EnvParser:
             raise ImproperlyConfigured(
                 "App settings namespace isn't set, add a call to init_app_settings()"
             )
-        return f"{namespace}_{setting_key}"
+        return f"{namespace.value}_{setting_key}"
 
     get_string = var_parser(parse_str)
     get_bool = var_parser(parse_bool)
