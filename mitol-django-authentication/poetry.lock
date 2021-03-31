@@ -475,7 +475,7 @@ python-versions = "*"
 
 [[package]]
 name = "mitol-django-common"
-version = "0.6.0"
+version = "0.7.0"
 description = "MIT Open Learning django app extensions for common utilities"
 category = "main"
 optional = false
@@ -493,7 +493,7 @@ dev = ["ipython (>=7.13.0,<8.0.0)"]
 
 [[package]]
 name = "mitol-django-mail"
-version = "0.4.0"
+version = "1.0.0"
 description = "MIT Open Learning django app extensions for mail"
 category = "main"
 optional = false
@@ -504,7 +504,7 @@ beautifulsoup4 = ">=4.6.0,<5.0.0"
 Django = ">=2.2.12,<3.2"
 django-anymail = ">=6.1,<9.0"
 html5lib = ">=1.1,<2.0"
-mitol-django-common = ">=0.6.0,<0.7.0"
+mitol-django-common = ">=0.7.0,<0.8.0"
 premailer = ">=3.7.0,<4.0.0"
 toolz = ">=0.9,<0.10"
 
@@ -1118,7 +1118,7 @@ test = ["pytest", "pytest-cov", "pytest-mock", "pytest-django", "factory_boy", "
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.6 | ~3.7 | ~3.8"
-content-hash = "95e149cf39ee0c303519f6b1f33037daad2c400e4f39cefad758442bf2c69881"
+content-hash = "f0b8da45271986e996568d13222ea70a655f48f294c9982eee8f42075508eb77"
 
 [metadata.files]
 appdirs = [
@@ -1433,12 +1433,12 @@ mccabe = [
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
 ]
 mitol-django-common = [
-    {file = "mitol-django-common-0.6.0.tar.gz", hash = "sha256:f434b173b50712f641bebd6ee3cd434a0689d40530ff76e9567a58a8e22d3ab1"},
-    {file = "mitol_django_common-0.6.0-py3-none-any.whl", hash = "sha256:b8506653e41feea3fb6045ffdd2ae6b48ad53a8277a3b867a81fdc65aba7da01"},
+    {file = "mitol-django-common-0.7.0.tar.gz", hash = "sha256:0d5e3905d8260aaebdc1eb9a3b77a7c0d37c86cd96726d6940a983cb2864aa92"},
+    {file = "mitol_django_common-0.7.0-py3-none-any.whl", hash = "sha256:b292ef01baf54999def0bc49e0f24e8c59079fc96c0adab205e3a12b737393a5"},
 ]
 mitol-django-mail = [
-    {file = "mitol-django-mail-0.4.0.tar.gz", hash = "sha256:b57983d8990ad84875abbf8f62b4d1e7a5a2aa3fc215f1c14fc6f46a1ce6e1a8"},
-    {file = "mitol_django_mail-0.4.0-py3-none-any.whl", hash = "sha256:cd09cff9339a9a64fd6df2b7c08df47c1405fa95eeef526516247abbdff81b72"},
+    {file = "mitol-django-mail-1.0.0.tar.gz", hash = "sha256:1cc6a5584b2d8d412f1c71358e5bb843763fca8a0858ab880cf47a5002e6a4da"},
+    {file = "mitol_django_mail-1.0.0-py3-none-any.whl", hash = "sha256:835ac1fe488f7471c233796709fc0bf90a27baf006a932b612c06c1928044613"},
 ]
 more-itertools = [
     {file = "more-itertools-8.7.0.tar.gz", hash = "sha256:c5d6da9ca3ff65220c3bfd2a8db06d698f05d4d2b9be57e1deb2be5a45019713"},
