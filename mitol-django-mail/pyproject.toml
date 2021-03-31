@@ -33,7 +33,7 @@ premailer = "^3.7.0"
 html5lib = "^1.1"
 beautifulsoup4 = "^4.6.0"
 toolz = "^0.9"
-mitol-django-common = "~0.6.0"
+mitol-django-common = "^0.7.0"
 
 # Testers
 pytest = {version = "^6.0.2", optional = true}

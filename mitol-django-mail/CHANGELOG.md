@@ -5,11 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Bumped `mitol-django-common` requirement to `^0.7.0`
 
 ## [0.5.0] - 2021-03-31
 
 ### Changed
-- Bumped `mitol-django-common` requirement to `~0.7.0`
+- Bumped `mitol-django-common` requirement to `~0.6.0`
 
 ## [0.4.0] - 2021-03-26
 

@@ -388,7 +388,7 @@ python-versions = "*"
 
 [[package]]
 name = "mitol-django-common"
-version = "0.6.0"
+version = "0.7.0"
 description = "MIT Open Learning django app extensions for common utilities"
 category = "main"
 optional = false
@@ -441,7 +441,7 @@ pyparsing = ">=2.0.2"
 
 [[package]]
 name = "parso"
-version = "0.8.1"
+version = "0.8.2"
 description = "A Python Parser"
 category = "main"
 optional = true
@@ -835,7 +835,7 @@ test = ["pytest", "pytest-cov", "pytest-mock", "pytest-django", "isort", "black"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.6 || ~3.7 || ~3.8"
-content-hash = "d024ce66c8189be1d16b6de6d5709188ec7a972918ea72a64d347e4a270d1a61"
+content-hash = "c40694dd307d53612b6b1deea17a108eb9d08ec3c4fbb0200141617aa8dd286d"
 
 [metadata.files]
 appdirs = [
@@ -1076,8 +1076,8 @@ mccabe = [
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
 ]
 mitol-django-common = [
-    {file = "mitol-django-common-0.6.0.tar.gz", hash = "sha256:f434b173b50712f641bebd6ee3cd434a0689d40530ff76e9567a58a8e22d3ab1"},
-    {file = "mitol_django_common-0.6.0-py3-none-any.whl", hash = "sha256:b8506653e41feea3fb6045ffdd2ae6b48ad53a8277a3b867a81fdc65aba7da01"},
+    {file = "mitol-django-common-0.7.0.tar.gz", hash = "sha256:0d5e3905d8260aaebdc1eb9a3b77a7c0d37c86cd96726d6940a983cb2864aa92"},
+    {file = "mitol_django_common-0.7.0-py3-none-any.whl", hash = "sha256:b292ef01baf54999def0bc49e0f24e8c59079fc96c0adab205e3a12b737393a5"},
 ]
 mypy = [
     {file = "mypy-0.782-cp35-cp35m-macosx_10_6_x86_64.whl", hash = "sha256:2c6cde8aa3426c1682d35190b59b71f661237d74b053822ea3d748e2c9578a7c"},
@@ -1104,8 +1104,8 @@ packaging = [
     {file = "packaging-20.9.tar.gz", hash = "sha256:5b327ac1320dc863dca72f4514ecc086f31186744b84a230374cc1fd776feae5"},
 ]
 parso = [
-    {file = "parso-0.8.1-py2.py3-none-any.whl", hash = "sha256:15b00182f472319383252c18d5913b69269590616c947747bc50bf4ac768f410"},
-    {file = "parso-0.8.1.tar.gz", hash = "sha256:8519430ad07087d4c997fda3a7918f7cfa27cb58972a8c89c2a0295a1c940e9e"},
+    {file = "parso-0.8.2-py2.py3-none-any.whl", hash = "sha256:a8c4922db71e4fdb90e0d0bc6e50f9b273d3397925e5e60a717e719201778d22"},
+    {file = "parso-0.8.2.tar.gz", hash = "sha256:12b83492c6239ce32ff5eed6d3639d6a536170723c6f3f1506869f1ace413398"},
 ]
 pathspec = [
     {file = "pathspec-0.8.1-py2.py3-none-any.whl", hash = "sha256:aa0cb481c4041bf52ffa7b0d8fa6cd3e88a2ca4879c533c9153882ee2556790d"},
