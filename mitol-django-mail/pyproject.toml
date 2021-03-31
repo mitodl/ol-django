@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mitol-django-mail"
-version = "0.5.0"
+version = "1.0.0"
 description = "MIT Open Learning django app extensions for mail"
 authors = [
   "MIT Office of Open Learning <mitx-devops@mit.edu>"
