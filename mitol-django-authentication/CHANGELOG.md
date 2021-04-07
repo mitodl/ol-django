@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2021-04-07
+
 ### Changed
 - Added usage of `SOCIAL_AUTH_SAML_IDP_ATTRIBUTE_NAME` to `SOCIAL_AUTH_SAML_ENABLED_IDPS`
 
@@ -43,7 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Barebones implementation of authentication app
 - SAML metadata endpoint and boilerplate configuration
 
-[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.0.0...HEAD
+[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.1.0...HEAD
+[1.1.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v0.2.0...mitol-django-authentication/v1.1.0
 [1.0.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v0.2.0...mitol-django-authentication/v1.0.0
 [0.7.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v0.2.0...mitol-django-authentication/v0.7.0
 [0.6.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v0.2.0...mitol-django-authentication/v0.6.0
