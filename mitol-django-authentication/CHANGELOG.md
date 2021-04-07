@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Added usage of `SOCIAL_AUTH_SAML_IDP_ATTRIBUTE_NAME` to `SOCIAL_AUTH_SAML_ENABLED_IDPS`
+
 ## [1.0.0] - 2021-03-31
 
 ### Changed

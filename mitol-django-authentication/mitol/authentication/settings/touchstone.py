@@ -86,6 +86,7 @@ SOCIAL_AUTH_SAML_ENABLED_IDPS = {
         "attr_user_permanent_id": SOCIAL_AUTH_SAML_IDP_ATTRIBUTE_PERM_ID,
         "attr_username": SOCIAL_AUTH_SAML_IDP_ATTRIBUTE_PERM_ID,
         "attr_email": SOCIAL_AUTH_SAML_IDP_ATTRIBUTE_EMAIL,
+        "attr_full_name": SOCIAL_AUTH_SAML_IDP_ATTRIBUTE_NAME,
         "x509cert": SOCIAL_AUTH_SAML_IDP_X509,
     }
 }
