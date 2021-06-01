@@ -42,7 +42,7 @@ def test_issue_credential(learner_and_oauth2):
             "digital-credentials:credentials-issue",
             kwargs={"uuid": credential_request.uuid},
         ),
-        {"id": "did:example:abc"},
+        {"holder": "did:example:abc"},
         HTTP_AUTHORIZATION=f"Bearer {learner_and_oauth2.access_token.token}",
     )
 
@@ -60,7 +60,7 @@ def test_issue_credential_anonymous():
             "digital-credentials:credentials-issue",
             kwargs={"uuid": credential_request.uuid},
         ),
-        {"id": "did:example:abc"},
+        {"holder": "did:example:abc"},
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
@@ -75,7 +75,7 @@ def test_issue_credential_wrong_learner(learner_and_oauth2):
             "digital-credentials:credentials-issue",
             kwargs={"uuid": credential_request.uuid},
         ),
-        {"id": "did:example:abc"},
+        {"holder": "did:example:abc"},
         HTTP_AUTHORIZATION=f"Bearer {learner_and_oauth2.access_token.token}",
     )
     assert response.status_code == HTTPStatus.NOT_FOUND

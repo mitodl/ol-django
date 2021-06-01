@@ -48,7 +48,7 @@ def test_digital_credential_issue_serializer(learner, learner_did_exists):
         status=200,
     )
 
-    serializer = DigitalCredentialIssueSerializer(request, data={"id": did,})
+    serializer = DigitalCredentialIssueSerializer(request, data={"holder": did,})
     serializer.is_valid(raise_exception=True)
 
     result = serializer.save()
@@ -77,10 +77,10 @@ def test_digital_credential_issue_serializer_other_user_did(learner):
         status=200,
     )
     serializer = DigitalCredentialIssueSerializer(
-        request, data={"id": learner_did.did,}
+        request, data={"holder": learner_did.did,}
     )
     assert serializer.is_valid() is False
-    assert serializer.errors == {"id": ["DID is associated with someone else"]}
+    assert serializer.errors == {"holder": ["DID is associated with someone else"]}
 
 
 @responses.activate
@@ -97,7 +97,7 @@ def test_digital_credential_issue_serializer_presentation_verify_failed():
         status=400,
     )
     serializer = DigitalCredentialIssueSerializer(
-        request, data={"id": learner_did.did,}
+        request, data={"holder": learner_did.did,}
     )
     assert serializer.is_valid() is False
     assert serializer.errors == {
@@ -122,7 +122,7 @@ def test_digital_credential_issue_serializer_error(learner):
     )
 
     serializer = DigitalCredentialIssueSerializer(
-        request, data={"id": learner_did.did,}
+        request, data={"holder": learner_did.did,}
     )
     serializer.is_valid(raise_exception=True)
 
