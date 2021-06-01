@@ -32,10 +32,10 @@ log = logging.getLogger(__name__)
 class DigitalCredentialIssueSerializer(Serializer):
     """Serializer for issuing digital credential"""
 
-    id = CharField(write_only=True)
+    holder = CharField(write_only=True)
 
-    def validate_id(self, value: str):
-        """Validate the id (DID)"""
+    def validate_holder(self, value: str):
+        """Validate the holder (DID)"""
         assert self.instance is not None
         learner = self.instance.learner
         learner_did, _ = LearnerDID.objects.get_or_create(
@@ -66,7 +66,7 @@ class DigitalCredentialIssueSerializer(Serializer):
         """Perform an update by consuming the credentials request"""
 
         # we associate the learner DID with the request's learner
-        did = cast(str, validated_data.get("id"))
+        did = cast(str, validated_data.get("holder"))
         learner_did = LearnerDID.objects.get(did_sha256=LearnerDID.sha256_hash_did(did))
 
         credential = build_credential(instance.credentialed_object, learner_did)
