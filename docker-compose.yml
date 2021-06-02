@@ -1,0 +1,11 @@
+version: '3.1'
+
+services:
+
+  db:
+    image: postgres
+    environment:
+      POSTGRES_DB: ol_django
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"

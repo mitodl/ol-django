@@ -1,17 +1,48 @@
 name: CI
 on: [push]
 jobs:
+  list_applications:
+
+    runs-on: ubuntu-latest
+    steps:
+      # dynamically determine application names so we automatically pick up new apps
+      - uses: actions/checkout@v2
+
+      - name: list all monorepo applications
+        id: set-app-names
+        run: |
+          cd src/mitol
+          APP_NAMES=$(ls -d */ | sed 's#/##' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "::set-output name=app-names::${APP_NAMES}"
+
+    # save the list into the outputs
+    outputs:
+      app-names: ${{ steps.set-app-names.outputs.app-names }}
+
   tests:
     runs-on: ubuntu-latest
+    needs: list_applications
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
-        app-name:
-          - mitol-django-authentication
-          - mitol-django-common
-          - mitol-django-digital-credentials
-          - mitol-django-mail
-          - mitol-django-oauth-toolkit-extensions
+        app-name: ${{ fromJson(needs.list_applications.outputs.app-names) }}
+
+    # Service containers to run
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
+
     steps:
       - uses: actions/checkout@v2
 
@@ -20,44 +51,23 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install global dependencies
-        run: |
-          python -m pip install -U pip setuptools
-          pip install -r requirements.test.txt
-
       - name: Apt install
         run: sudo apt-get install -y libxmlsec1-dev
 
-      - name: Install poetry
-        uses: abatilo/actions-poetry@1f9adef0261964471fcf93ba269e1762a33a8a26
-        with:
-          poetry-version: 1.0.10
-
-      - name: Install dependencies
-        run: |
-          cd ${{ matrix.app-name }}
-          poetry install --no-root -vvv --extras "test"
-
       - name: Lints
-        run: |
-          cd ${{ matrix.app-name }}
-          echo "Checking code formatting"
-          poetry run black --check .
-          echo "Checking import ordering"
-          poetry run isort -c
-          echo "Checking mypy typing"
-          poetry run mypy --show-error-codes mitol/
+        run: ./pants lint "tests/mitol/${{ matrix.app-name }}:"
+
+      # - name: Typecheck
+      #   run: ./pants typecheck "tests/mitol/${{ matrix.app-name }}:"
 
       - name: Tests
-        run: |
-          cd ${{ matrix.app-name }}
-          tox
+        run: ./pants test "tests/mitol/${{ matrix.app-name }}:"
 
-      - name: Upload coverage to CodeCov
-        uses: codecov/codecov-action@v1
-        with:
-          directory: ${{ matrix.app-name }}/coverage/
-          flags: ${{ matrix.app-name }}
+      # - name: Upload coverage to CodeCov
+      #   uses: codecov/codecov-action@v1
+      #   with:
+      #     directory: ${{ matrix.app-name }}/coverage/
+      #     flags: ${{ matrix.app-name }}
 
   release:
     needs: tests
@@ -70,10 +80,6 @@ jobs:
       with:
         python-version: 3.8
 
-    - uses: abatilo/actions-poetry@1f9adef0261964471fcf93ba269e1762a33a8a26
-      with:
-        poetry-version: 1.0.10
-
     # extract the app name out of the tag's ref value
     - id: get-app-name
       uses: actions/github-script@v3
@@ -81,9 +87,12 @@ jobs:
         script: |
           const appName = context.ref.match(/refs\/tags\/([a-z\-]+)\/v\S+$/)[1]
           core.setOutput('app-name', appName)
+          core.setOutput('app-package', appName.replace("-", "_"))
 
-    - name: Release to PyPI
-      run: |
-        cd ${{steps.get-app-name.outputs.app-name}}
-        poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
-        poetry publish --build
+    - name: Build
+      run: ./pants package "src/mitol/${{steps.get-app-name.outputs.app-package}}:"
+
+    - uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
