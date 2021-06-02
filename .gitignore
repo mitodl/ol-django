@@ -53,7 +53,14 @@ setup.py
 
 # django
 db.sqlite3
-**/testapp/settings/dev.py
+testapp/settings/dev.py
 
 # mypy
 .mypy_cache/
+
+# Pants workspace files
+/.pants.d/
+/dist/
+/.pids
+/.pants.workdir.file_lock*
+*.pex
