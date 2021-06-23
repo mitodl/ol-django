@@ -51,6 +51,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Apt update
+        run: sudo apt-get update
+
       - name: Apt install
         run: sudo apt-get install -y libxmlsec1-dev
 

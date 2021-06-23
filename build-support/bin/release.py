@@ -104,8 +104,8 @@ def update_init_py(args: Namespace, init_filename: str) -> Metadata:
         app_name=app_name,
         old_version=old_version,
         new_version=new_version,
-        base_ref=f"{app_name}/{old_version}",
-        next_ref=f"{app_name}/{new_version}",
+        base_ref=f"{app_name}/v{old_version}",
+        next_ref=f"{app_name}/v{new_version}",
     )
 
 
