@@ -24,7 +24,7 @@ jobs:
     needs: list_applications
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.7, 3.8, 3.9]
         app-name: ${{ fromJson(needs.list_applications.outputs.app-names) }}
 
     # Service containers to run

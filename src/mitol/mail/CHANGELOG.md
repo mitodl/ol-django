@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Support for Python 3.9
+
+### Removed
+- Support for Python 3.6
+
 ## [1.0.0] - 2021-03-31
 ### Changed
 - Bumped `mitol-django-common` requirement to `^0.7.0`
