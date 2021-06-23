@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2021-06-23
+
 ### Added
 - Support for Python 3.9
 
@@ -68,7 +70,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial port of the `mail` app
 
-[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-mail/v1.0.0...HEAD
+[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-mail/v2.0.0...HEAD
+[2.0.0]: https://github.com/mitodl/ol-django/compare/mitol-django-mail/v1.0.0...mitol-django-mail/v2.0.0
 [1.0.0]: https://github.com/mitodl/ol-django/compare/mitol-django-mail/v0.1.0...mitol-django-mail/v1.0.0
 [0.5.0]: https://github.com/mitodl/ol-django/compare/mitol-django-mail/v0.1.0...mitol-django-mail/v0.5.0
 [0.4.0]: https://github.com/mitodl/ol-django/compare/mitol-django-mail/v0.1.0...mitol-django-mail/v0.4.0
