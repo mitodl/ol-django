@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Support newer versions of `factory_boy`
+
 ## [2.1.0] - 2021-06-24
 
 ### Changed

@@ -19,7 +19,7 @@ toolz>=0.10.0
 
 # Testing/linting tools
 coverage==5.3
-factory-boy==3.1.0
+factory-boy~=3.2
 faker==4.17.1
 freezegun==1.0.0
 ipython
