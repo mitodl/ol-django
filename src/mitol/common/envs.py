@@ -285,21 +285,25 @@ class EnvParser:
             if key.startswith(prefix)
         }
 
-    def init_app_settings(self, *, namespace: str, site_name: str):
+    def init_app_settings(self, *, gbs: Dict, namespace: str, site_name: str):
         """
         Configure the app static settings
 
         Args:
+            gbs (dict):
+                A dictionary of global variables where we can set settings
             namespace (str):
                 the app settings namespace
+            site_name (str):
+                The name of the site
         """
-        self.get_string(
+        gbs["APP_SETTINGS_NAMESPACE"] = self.get_string(
             name="APP_SETTINGS_NAMESPACE",
             default=namespace,
             description="App environment variable namespace",
             write_app_json=False,
         )
-        self.get_string(name="SITE_NAME", default=site_name, description="Site name")
+        gbs["SITE_NAME"] = self.get_string(name="SITE_NAME", default=site_name, description="Site name")
 
     def get_site_name(self):
         """Return the site name"""

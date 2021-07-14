@@ -14,14 +14,16 @@ import os
 
 import dj_database_url
 
-from mitol.common.envs import get_string, init_app_settings
+from mitol.common.envs import get_string, init_app_settings, import_settings_modules
 
-init_app_settings(namespace="MITOL", site_name="MIT Open Learning Common Library")
-
-from mitol.authentication.settings.touchstone import *  # noqa: E402,F401,F403
-from mitol.common.settings.base import *  # noqa: E402,F401,F403
-from mitol.common.settings.webpack import *  # noqa: E402,F401,F403
-from mitol.mail.settings.email import *  # noqa: E402,F401,F403
+init_app_settings(gbs=globals(), namespace="MITOL", site_name="MIT Open Learning Common Library")
+import_settings_modules(
+    globals(),
+    "mitol.common.settings.base",
+    "mitol.common.settings.webpack",
+    "mitol.mail.settings.email",
+    "mitol.authentication.settings.touchstone",
+)
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
