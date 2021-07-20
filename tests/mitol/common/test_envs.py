@@ -209,10 +209,12 @@ def test_app_namespace():
     with pytest.raises(ImproperlyConfigured):
         envs.app_namespaced("KEY")
 
-    envs.init_app_settings(namespace="PREFIX", site_name="Site Name")
+    _globals = {}
+    envs.init_app_settings(gbs=_globals, namespace="PREFIX", site_name="Site Name")
     envs.validate()
 
     assert envs.app_namespaced("KEY") == "PREFIX_KEY"
+    assert _globals["APP_SETTINGS_NAMESPACE"] == "PREFIX"
 
 
 def test_get_site_name():
@@ -220,7 +222,9 @@ def test_get_site_name():
     with pytest.raises(ImproperlyConfigured):
         envs.get_site_name()
 
-    envs.init_app_settings(namespace="PREFIX", site_name="Site Name")
+    _globals = {}
+    envs.init_app_settings(gbs=_globals, namespace="PREFIX", site_name="Site Name")
     envs.validate()
 
     assert envs.get_site_name() == "Site Name"
+    assert _globals["SITE_NAME"] == "Site Name"
