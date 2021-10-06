@@ -13,6 +13,7 @@ urlpatterns = [
     path("api/", include("mitol.digitalcredentials.urls")),
     path("api/", include("mitol.mail.urls")),
     path("", include("mitol.authentication.urls.saml")),
+    path("", include("mitol.authentication.urls.djoser_urls")),
     path("", include("social_django.urls", namespace="social")),
     path(
         "oauth2/",

@@ -14,15 +14,18 @@ import os
 
 import dj_database_url
 
-from mitol.common.envs import get_string, init_app_settings, import_settings_modules
+from mitol.common.envs import get_string, import_settings_modules, init_app_settings
 
-init_app_settings(gbs=globals(), namespace="MITOL", site_name="MIT Open Learning Common Library")
+init_app_settings(
+    gbs=globals(), namespace="MITOL", site_name="MIT Open Learning Common Library"
+)
 import_settings_modules(
     globals(),
     "mitol.common.settings.base",
     "mitol.common.settings.webpack",
     "mitol.mail.settings.email",
     "mitol.authentication.settings.touchstone",
+    "mitol.authentication.settings.djoser_settings"
 )
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
