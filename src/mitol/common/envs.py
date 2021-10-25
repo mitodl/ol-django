@@ -303,7 +303,9 @@ class EnvParser:
             description="App environment variable namespace",
             write_app_json=False,
         )
-        gbs["SITE_NAME"] = self.get_string(name="SITE_NAME", default=site_name, description="Site name")
+        gbs["SITE_NAME"] = self.get_string(
+            name="SITE_NAME", default=site_name, description="Site name"
+        )
 
     def get_site_name(self):
         """Return the site name"""
