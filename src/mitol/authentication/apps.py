@@ -2,6 +2,8 @@
 import os
 
 from django.apps import AppConfig
+
+
 class AuthenticationApp(AppConfig):
     """Authentication AppConfig"""
 

@@ -2,6 +2,7 @@
 Tests for mitol.common.templatetags.render_bundle
 """
 from os import path
+from textwrap import dedent
 
 import pytest
 from django.template import Context, Template
@@ -41,7 +42,14 @@ def test_render_bundle_disable_loader_stats(settings, mocker, rf):
     get_loader.assert_not_called()
 
 
-def test_render_bundle(mocker, rf):
+@pytest.mark.parametrize(
+    "attrs, expected",
+    [
+        ("", ""),
+        ("added_attrs='defer'", "defer"),
+    ],
+)
+def test_render_bundle(mocker, rf, attrs, expected):
     """Verify render_bundle returns the path to the bundle with the correct base url"""
     request = rf.get("/")
     context = {"request": request}
@@ -61,18 +69,21 @@ def test_render_bundle(mocker, rf):
 
     context = Context({"request": request})
     template = Template(
-        "{{% load render_bundle %}}{{% render_bundle '{bundle_name}' %}}".format(
-            bundle_name=bundle_name
+        "{{% load render_bundle %}}{{% render_bundle '{bundle_name}' {attrs} %}}".format(
+            bundle_name=bundle_name, attrs=attrs
         )
     )
 
     script_url = path.join("/", FAKE_COMMON_BUNDLE[0]["name"])
     style_url = path.join("/", FAKE_COMMON_BUNDLE[1]["name"])
-    assert template.render(context) == "\n".join(
-        [
-            '<script type="text/javascript" src="{}"></script>'.format(script_url),
-            '<link type="text/css" href="{}" rel="stylesheet" />'.format(style_url),
-        ]
+    assert template.render(context) == dedent(
+        """\
+    <script type="text/javascript" src="{script_url}" {expected} ></script>
+    <link type="text/css" href="{style_url}" rel="stylesheet" {expected} />""".format(
+            script_url=script_url,
+            style_url=style_url,
+            expected=expected,
+        )
     )
 
     get_bundle.assert_called_with(bundle_name)

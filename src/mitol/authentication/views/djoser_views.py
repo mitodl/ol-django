@@ -1,15 +1,16 @@
 """
 Custom views to override default djoser behaviours
 """
+from anymail.message import AnymailMessage
 from django.conf import settings
 from django.contrib.auth import update_session_auth_hash
 from django.core import mail as django_mail
+from djoser.email import PasswordResetEmail as DjoserPasswordResetEmail
 from djoser.utils import ActionViewMixin
 from djoser.views import UserViewSet
-from djoser.email import PasswordResetEmail as DjoserPasswordResetEmail
 from rest_framework import status
 from rest_framework.decorators import action
-from anymail.message import AnymailMessage
+
 from mitol.mail.api import render_email_templates, send_message
 
 
@@ -30,8 +31,9 @@ class CustomDjoserAPIView(UserViewSet, ActionViewMixin):
             update_session_auth_hash(self.request, self.request.user)
         return response
 
+
 class CustomPasswordResetEmail(DjoserPasswordResetEmail):
-    """Custom class to modify base functionality in Djoser's PasswordResetEmail class""" 
+    """Custom class to modify base functionality in Djoser's PasswordResetEmail class"""
 
     def send(self, to, *args, **kwargs):
         """
@@ -55,7 +57,7 @@ class CustomPasswordResetEmail(DjoserPasswordResetEmail):
             )
             msg.attach_alternative(html_body, "text/html")
             send_message(msg)
-    
+
     def get_context_data(self):
         """Adds base_url to the template context"""
         context = super().get_context_data()

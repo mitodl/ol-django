@@ -34,7 +34,9 @@ def _get_bundle(request: HttpRequest, bundle_name: str) -> Iterator[dict]:
 
 
 @register.simple_tag(takes_context=True)
-def render_bundle(context: Dict[str, Any], bundle_name: str) -> SafeText:
+def render_bundle(
+    context: Dict[str, Any], bundle_name: str, added_attrs: str = ""
+) -> SafeText:
     """
     Render the script tags for a Webpack bundle
 
@@ -45,25 +47,27 @@ def render_bundle(context: Dict[str, Any], bundle_name: str) -> SafeText:
     Args:
         context (dict): The context for rendering the template (includes request)
         bundle_name (str): The name of the bundle to render
+        added_attrs (str): Optional string of HTML attributes to add to the script/link tag
 
     Returns:
         django.utils.safestring.SafeText:
     """
     try:
         bundle = _get_bundle(context["request"], bundle_name)
-        return _render_tags(bundle)
+        return _render_tags(bundle, added_attrs)
     except OSError:
         # webpack-stats.json doesn't exist
         return mark_safe("")
 
 
-def _render_tags(bundle: Iterator[dict]) -> SafeText:
+def _render_tags(bundle: Iterator[dict], added_attrs: str = "") -> SafeText:
     """
     Outputs tags for template rendering.
     Adapted from webpack_loader.utils.get_as_tags and webpack_loader.templatetags.webpack_loader.
 
     Args:
         bundle (iterable of dict): The information about a webpack bundle
+        added_attrs (str): Optional string of HTML attributes to add to the script/link tag
 
     Returns:
         django.utils.safestring.SafeText: HTML for rendering bundles
@@ -73,14 +77,14 @@ def _render_tags(bundle: Iterator[dict]) -> SafeText:
     for chunk in bundle:
         if chunk["name"].endswith((".js", ".js.gz")):
             tags.append(
-                ('<script type="text/javascript" src="{}"></script>').format(
-                    chunk["url"]
+                ('<script type="text/javascript" src="{}" {} ></script>').format(
+                    chunk["url"], added_attrs
                 )
             )
         elif chunk["name"].endswith((".css", ".css.gz")):
             tags.append(
-                ('<link type="text/css" href="{}" rel="stylesheet" />').format(
-                    chunk["url"]
+                ('<link type="text/css" href="{}" rel="stylesheet" {} />').format(
+                    chunk["url"], added_attrs
                 )
             )
     return mark_safe("\n".join(tags))
