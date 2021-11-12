@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2021-11-12
+
 ### Changed
 
 - Added support for `added_attrs` argument for the `render_bundle` template tag.
