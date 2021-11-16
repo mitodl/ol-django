@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.1] - 2021-11-16
+
 ## [3.0.0] - 2021-11-04
 
 ### Changed
@@ -74,7 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added HMAC Signature + Digest Headers support
 - Added `mitol-django-digital-credentials` app
 
-[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-digitalcredentials/v3.0.0...HEAD
+[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-digitalcredentials/v3.0.1...HEAD
+[3.0.1]: https://github.com/mitodl/ol-django/compare/mitol-django-digitalcredentials/v3.0.0...mitol-django-digitalcredentials/v3.0.1
 [3.0.0]: https://github.com/mitodl/ol-django/compare/mitol-django-digitalcredentials/v2.0.0...mitol-django-digitalcredentials/v3.0.0
 [2.0.0]: https://github.com/mitodl/ol-django/compare/mitol-django-digital-credentials/v0.1.0...mitol-django-digital-credentials/v2.0.0
 [1.4.1]: https://github.com/mitodl/ol-django/compare/mitol-django-digital-credentials/v0.1.0...mitol-django-digital-credentials/v1.4.1
