@@ -10,6 +10,7 @@ python_library(name="testapp-lib", sources=[
     "src/mitol/digitalcredentials",
     "src/mitol/mail",
     "src/mitol/oauth_toolkit_extensions",
+    "src/mitol/openedx",
     ":testapp-files",
     "//:psycopg2-binary",
     "//:python3-saml"
