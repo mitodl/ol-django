@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "mitol.digitalcredentials.apps.DigitalCredentialsApp",
     "mitol.mail.apps.MailApp",
     "mitol.oauth_toolkit_extensions.apps.OAuthToolkitExtensionsApp",
+    "mitol.openedx.apps.OpenedxApp",
     # test app, integrates the reusable apps
     "testapp",
 ]
