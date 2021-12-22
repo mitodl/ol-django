@@ -10,4 +10,16 @@ class OpenedxApp(AppConfig):
     label = "openedx"
     verbose_name = "Openedx"
 
+    # necessary because this is a namespaced app
+    path = os.path.dirname(os.path.abspath(__file__))
+
+
+class TransitionalOpenedxApp(AppConfig):
+    """Openedx AppConfig for transitioning a project with an existing 'openedx' app"""
+
+    name = "mitol.openedx"
+    label = "transitional_openedx"
+    verbose_name = "Openedx"
+
+    # necessary because this is a namespaced app
     path = os.path.dirname(os.path.abspath(__file__))
