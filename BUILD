@@ -9,6 +9,7 @@ python_requirements(
     "python3-saml": ["onelogin"],
     "social-auth-app-django": ["social_django"],
     "setuptools": ["pkg_resources"],
+    "edx-opaque-keys": ["opaque_keys"],
   },
 )
 
