@@ -37,6 +37,7 @@ shell = "ipython"
 
 [ipython]
 version = "ipython==7.23.1"
+lockfile = "build-support/ipython.lockfile"
 
 [python]
 interpreter_constraints = ['>=3.7']
@@ -52,6 +53,7 @@ extra_requirements = ["black==21.5b1"]
 
 [mypy]
 version = "mypy==0.782"
+lockfile = "build-support/mypy.lockfile"
 extra_requirements = [
   "django-stubs==1.6.0",
   "djangorestframework-stubs==1.2.0"
@@ -63,6 +65,7 @@ lockfile = "build-support/flake8.lockfile"
 
 [pytest]
 # config = "build-support/pytest.ini"
+lockfile = "build-support/pytest.lockfile"
 args = [
   "--cov .",
   "--cov-report term ",
