@@ -1,18 +1,18 @@
+resources(name="mail-templates", sources=["templates/**/*"])
+
 resources(
-  name="mail-templates",
-  sources=["templates/**/*"]
+    name="files",
+    sources=[
+        "CHANGELOG.md",
+        "README.md",
+        "py.typed",
+    ],
 )
 
-resources(name="files", sources=[
-    "CHANGELOG.md",
-    "README.md",
-    "py.typed",
-])
-
-python_library(
+python_sources(
     name="mail",
     sources=[
-      "**/*.py",
+        "**/*.py",
     ],
     dependencies=[
         "src/mitol/common",
@@ -29,5 +29,4 @@ python_distribution(
         name="mitol-django-mail",
         description="MIT Open Learning django app extensions for mail",
     ),
-    setup_py_commands=["sdist", "bdist_wheel"]
 )

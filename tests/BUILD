@@ -1,26 +1,24 @@
-resources(name="testapp-files", sources=[
-    "testapp/templates/**/*"
-])
+resources(name="testapp-files", sources=["testapp/templates/**/*"])
 
-python_library(name="testapp-lib", sources=[
-    "testapp/**/*.py"
-], dependencies=[
-    "src/mitol/authentication",
-    "src/mitol/common",
-    "src/mitol/digitalcredentials",
-    "src/mitol/mail",
-    "src/mitol/oauth_toolkit_extensions",
-    "src/mitol/openedx",
-    ":testapp-files",
-    "//:psycopg2-binary",
-    "//:python3-saml"
-])
+python_sources(
+    name="testapp-lib",
+    sources=["testapp/**/*.py"],
+    dependencies=[
+        "src/mitol/authentication",
+        "src/mitol/common",
+        "src/mitol/digitalcredentials",
+        "src/mitol/mail",
+        "src/mitol/oauth_toolkit_extensions",
+        "src/mitol/openedx",
+        ":testapp-files",
+        "//:psycopg2-binary",
+        "//:python3-saml",
+    ],
+)
 
-python_library(name="pytest-tests", sources=[
-    "conftest.py"
-], dependencies=[
-    "//:pytest-django"
-])
+python_sources(
+    name="pytest-tests", sources=["conftest.py"], dependencies=["//:pytest-django"]
+)
 
 pex_binary(
     name="manage",

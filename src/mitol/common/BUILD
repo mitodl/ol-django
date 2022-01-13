@@ -1,15 +1,18 @@
-resources(name="files", sources=[
-    "CHANGELOG.md",
-    "README.md",
-    "py.typed",
-])
+resources(
+    name="files",
+    sources=[
+        "CHANGELOG.md",
+        "README.md",
+        "py.typed",
+    ],
+)
 
-python_library(
+python_sources(
     name="common",
     sources=[
-      "**/*.py",
+        "**/*.py",
     ],
-    dependencies=[":files", "//:setuptools"]
+    dependencies=[":files", "//:setuptools"],
 )
 
 python_distribution(
@@ -19,5 +22,4 @@ python_distribution(
         name="mitol-django-common",
         description="MIT Open Learning django app extensions for common utilities",
     ),
-    setup_py_commands=["sdist", "bdist_wheel"]
 )

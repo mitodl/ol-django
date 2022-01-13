@@ -1,10 +1,13 @@
-resources(name="files", sources=[
-    "CHANGELOG.md",
-    "README.md",
-    "py.typed",
-])
+resources(
+    name="files",
+    sources=[
+        "CHANGELOG.md",
+        "README.md",
+        "py.typed",
+    ],
+)
 
-python_library(
+python_sources(
     name="authentication",
     sources=[
         "**/*.py",
@@ -22,5 +25,4 @@ python_distribution(
         name="mitol-django-authentication",
         description="MIT Open Learning django app extensions for oauth toolkit",
     ),
-    setup_py_commands=["sdist", "bdist_wheel"]
 )

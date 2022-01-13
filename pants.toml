@@ -38,7 +38,7 @@ shell = "ipython"
 [ipython]
 version = "ipython==7.23.1"
 
-[python-setup]
+[python]
 interpreter_constraints = ['>=3.7']
 requirement_constraints = "requirements.txt"
 
@@ -47,6 +47,8 @@ first_party_dependency_version_scheme = "compatible"
 
 [black]
 version = "black==21.5b1"
+lockfile = "build-support/black.lockfile"
+extra_requirements = ["black==21.5b1"]
 
 [mypy]
 version = "mypy==0.782"
@@ -68,7 +70,7 @@ args = [
   "--reuse-db"
 ]
 execution_slot_var = "PANTS_EXECUTION_SLOT"
-pytest_plugins.add = [
+extra_requirements.add = [
   "pytest-django==3.10.0",
   "pytest-mock==1.10.1",
   "ipdb"

@@ -5,14 +5,13 @@ from pants.engine.console import Console
 from pants.engine.environment import CompleteEnvironment
 from pants.engine.fs import Workspace
 from pants.engine.goal import Goal
-from pants.engine.process import InteractiveProcess, InteractiveRunner
-from pants.engine.rules import Get, collect_rules, goal_rule
+from pants.engine.process import InteractiveProcess, InteractiveProcessResult
+from pants.engine.rules import Get, collect_rules, goal_rule, Effect
 from pants.engine.target import (
     NoApplicableTargetsBehavior,
     TargetRootsToFieldSets,
     TargetRootsToFieldSetsRequest,
 )
-from pants.option.global_options import GlobalOptions
 
 
 class DjangoRunSubsystem(RunSubsystem):
@@ -27,9 +26,7 @@ class DjangoRun(Goal):
 @goal_rule
 async def django_run(
     django_run_subsystem: DjangoRunSubsystem,
-    global_options: GlobalOptions,
     console: Console,
-    interactive_runner: InteractiveRunner,
     workspace: Workspace,
     build_root: BuildRoot,
     complete_env: CompleteEnvironment,
@@ -54,7 +51,8 @@ async def django_run(
         **{k: v.format(chroot=build_root.path) for k, v in request.extra_env.items()},
     }
     try:
-        result = interactive_runner.run(
+        result = await Effect(
+            InteractiveProcessResult,
             InteractiveProcess(
                 argv=(*args, *django_run_subsystem.args),
                 env=env,

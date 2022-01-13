@@ -1,15 +1,16 @@
-resources(name="files", sources=[
-    "CHANGELOG.md",
-    "README.md",
-    "py.typed",
-])
-
-python_library(
-    name="digitalcredentials",
+resources(
+    name="files",
     sources=[
-      "**/*.py"
+        "CHANGELOG.md",
+        "README.md",
+        "py.typed",
     ],
-    dependencies=["src/mitol/common", ":files"]
+)
+
+python_sources(
+    name="digitalcredentials",
+    sources=["**/*.py"],
+    dependencies=["src/mitol/common", ":files"],
 )
 
 python_distribution(
@@ -19,5 +20,4 @@ python_distribution(
         name="mitol-django-digital-credentials",
         description="Django application to support digital credentials",
     ),
-    setup_py_commands=["sdist", "bdist_wheel"]
 )
