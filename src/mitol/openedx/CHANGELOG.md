@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2022-01-13
+
 - Inital/first version has only few utils related to edx which seems to be quite common. Hence this edx-specifc 
 module is being created which can be expanded later on according to the needs. 
 
