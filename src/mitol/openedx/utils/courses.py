@@ -1,7 +1,7 @@
 """Utility functions for course related functions"""
 
-from opaque_keys.edx.keys import CourseKey
 from opaque_keys import InvalidKeyError
+from opaque_keys.edx.keys import CourseKey
 
 
 def get_course_number(courseware_id):

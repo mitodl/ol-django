@@ -6,7 +6,7 @@ from pants.engine.environment import CompleteEnvironment
 from pants.engine.fs import Workspace
 from pants.engine.goal import Goal
 from pants.engine.process import InteractiveProcess, InteractiveProcessResult
-from pants.engine.rules import Get, collect_rules, goal_rule, Effect
+from pants.engine.rules import Effect, Get, collect_rules, goal_rule
 from pants.engine.target import (
     NoApplicableTargetsBehavior,
     TargetRootsToFieldSets,
@@ -57,7 +57,7 @@ async def django_run(
                 argv=(*args, *django_run_subsystem.args),
                 env=env,
                 run_in_workspace=True,
-            )
+            ),
         )
         exit_code = result.exit_code
     except Exception as e:

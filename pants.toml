@@ -59,6 +59,7 @@ extra_requirements = [
 
 [flake8]
 version = "flake8==3.8.0"
+lockfile = "build-support/flake8.lockfile"
 
 [pytest]
 # config = "build-support/pytest.ini"
@@ -78,6 +79,7 @@ extra_requirements.add = [
 
 [isort]
 version = "isort==5.8.0"
+lockfile = "build-support/isort.lockfile"
 args = [
   "--profile=black",
   "--project=mitol",
