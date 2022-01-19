@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "mitol.mail.apps.MailApp",
     "mitol.oauth_toolkit_extensions.apps.OAuthToolkitExtensionsApp",
     "mitol.openedx.apps.OpenedxApp",
+    "mitol.payment_gateway.apps.PaymentGatewayApp",
     # test app, integrates the reusable apps
     "testapp",
 ]
@@ -147,8 +148,6 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-USE_L10N = True
-
 USE_TZ = True
 
 
@@ -181,3 +180,8 @@ REST_FRAMEWORK = {"TEST_REQUEST_DEFAULT_FORMAT": "json"}
 
 MITOL_DIGITAL_CREDENTIALS_AUTH_TYPE = "test"
 MITOL_DIGITAL_CREDENTIALS_DEEP_LINK_URL = "testscheme://localhost"
+
+MITOL_PAYMENT_GATEWAY_CYBERSOURCE_ACCESS_KEY = "abc123"
+MITOL_PAYMENT_GATEWAY_CYBERSOURCE_PROFILE_ID = "abc123"
+MITOL_PAYMENT_GATEWAY_CYBERSOURCE_SECURITY_KEY = "Test1234"
+MITOL_PAYMENT_GATEWAY_CYBERSOURCE_SECURE_ACCEPTANCE_URL = "https://google.com"

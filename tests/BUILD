@@ -10,6 +10,7 @@ python_sources(
         "src/mitol/mail",
         "src/mitol/oauth_toolkit_extensions",
         "src/mitol/openedx",
+        "src/mitol/payment_gateway",
         ":testapp-files",
         "//:psycopg2-binary",
         "//:python3-saml",
