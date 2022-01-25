@@ -1,3 +1,5 @@
+from typing import Dict
+
 import pytest
 from django.conf import settings
 from testapp.factories import CartItemFactory, OrderFactory
@@ -19,24 +21,13 @@ def cartitems():
     return CartItemFactory.create_batch(5)
 
 
-def test_cybersource_payload_generation(order, cartitems):
+def generate_test_cybersource_payload(order, cartitems, transaction_uuid):
     """
-    Starts a payment through the payment gateway, and then checks to make sure
-    there's stuff in the payload that it generates. The transaction is not sent
-    through CyberSource itself.
+    Generates a test payload based on the order and cart items passed in, ready
+    for signing.
     """
-
     receipt_url = "https://www.google.com"
     cancel_url = "https://duckduckgo.com"
-    order.items = cartitems
-
-    checkout_data = PaymentGateway.start_payment(
-        MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
-        order,
-        receipt_url,
-        cancel_url,
-        merchant_fields=None,
-    )
 
     test_line_items = {}
     test_total = 0
@@ -65,10 +56,56 @@ def test_cybersource_payload_generation(order, cartitems):
         "override_custom_receipt_page": receipt_url,
         "override_custom_cancel_page": cancel_url,
         "transaction_type": "sale",
-        "transaction_uuid": checkout_data["payload"]["transaction_uuid"],
+        "transaction_uuid": transaction_uuid,
         "unsigned_field_names": "",
         "customer_ip_address": order.ip_address if order.ip_address else None,
     }
+
+    return {"payload": test_payload, "items": test_line_items}
+
+
+def test_invalid_payload_generation(order, cartitems):
+    """
+    Tests to make sure something sane happens when an invalid payment gateway
+    is specified.
+    """
+    receipt_url = "https://www.google.com"
+    cancel_url = "https://duckduckgo.com"
+    order.items = cartitems
+
+    checkout_data = PaymentGateway.start_payment(
+        "Invalid Payment Gateway",
+        order,
+        receipt_url,
+        cancel_url,
+        merchant_fields=None,
+    )
+
+    assert isinstance(checkout_data, TypeError)
+
+
+def test_cybersource_payload_generation(order, cartitems):
+    """
+    Starts a payment through the payment gateway, and then checks to make sure
+    there's stuff in the payload that it generates. The transaction is not sent
+    through CyberSource itself.
+    """
+    receipt_url = "https://www.google.com"
+    cancel_url = "https://duckduckgo.com"
+    order.items = cartitems
+
+    checkout_data = PaymentGateway.start_payment(
+        MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
+        order,
+        receipt_url,
+        cancel_url,
+        merchant_fields=None,
+    )
+
+    test_payload = generate_test_cybersource_payload(
+        order, cartitems, checkout_data["payload"]["transaction_uuid"]
+    )
+    test_payload = test_payload["payload"]
 
     gateway = CyberSourcePaymentGateway()
 
@@ -83,3 +120,50 @@ def test_cybersource_payload_generation(order, cartitems):
         == settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_SECURE_ACCEPTANCE_URL
     )
     assert checkout_data["method"] == "POST"
+
+
+def test_cybersource_response_auth(order, cartitems):
+    """
+    Generates a test payload, then uses it to generate a fake request that is
+    run through the validate_processor_response method.
+    """
+
+    class FakeRequest:
+        """
+        This implements just the stuff that the validator method needs to check
+        the response.
+        """
+
+        data: Dict
+        method: str
+
+        def __init__(self, data, method):
+            self.data = data
+            self.method = method
+
+    receipt_url = "https://www.google.com"
+    cancel_url = "https://duckduckgo.com"
+    order.items = cartitems
+
+    checkout_data = PaymentGateway.start_payment(
+        MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
+        order,
+        receipt_url,
+        cancel_url,
+        merchant_fields=None,
+    )
+
+    test_payload = generate_test_cybersource_payload(
+        order, cartitems, checkout_data["payload"]["transaction_uuid"]
+    )
+    test_payload = test_payload["payload"]
+
+    gateway = CyberSourcePaymentGateway()
+
+    signed_test_payload = gateway._sign_cybersource_payload(test_payload)
+
+    fake_request = FakeRequest(signed_test_payload, "POST")
+
+    assert PaymentGateway.validate_processor_response(
+        MITOL_PAYMENT_GATEWAY_CYBERSOURCE, fake_request
+    )
