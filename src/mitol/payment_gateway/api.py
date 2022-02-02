@@ -61,6 +61,35 @@ class Order:
     items: List[CartItem]
 
 
+@dataclass
+class ProcessorResponse:
+    """
+    Standardizes the salient parts of the response from the
+    payment gateway after a transaction has come back to the app.
+
+    Most of these fields are going to be processor-dependent, but each
+    processor should at least have a state and a message. State should
+    ideally be one of the ones that there are constants for here.
+
+    Fields:
+    - state: string, should be one of the constants
+    - message: string, human-readable response from the processor
+    - response_code: string, code representing more info about the transaction status
+    - transaction_id: string, processor-dependent ID for the transaction
+    """
+
+    state: str
+    message: str
+    response_code: str
+    transaction_id: str
+
+    STATE_ACCEPTED = "ACCEPT"
+    STATE_DECLINED = "DECLINE"
+    STATE_ERROR = "ERROR"
+    STATE_CANCELLED = "CANCEL"
+    STATE_REVIEW = "REVIEW"
+
+
 class PaymentGateway(abc.ABC):
     """
     PaymentGateway provides a standardized interface to payment processors.
@@ -127,10 +156,24 @@ class PaymentGateway(abc.ABC):
         to be used in an authentication class.
 
         Args:
-            request: HttpRequest object or equivalent (DRF Request)
+            request:    HttpRequest object or equivalent (DRF Request)
 
         Returns:
             True or False
+        """
+        pass
+
+    @abc.abstractmethod
+    def decode_processor_response(self, request):
+        """
+        Decodes the post-completion response from the payment processor
+        and converts it to a generic representation of the data.
+
+        Args:
+            request:    HttpRequest object or equivalent (DRF Request)
+
+        Returns:
+            ProcessorResponse
         """
         pass
 
@@ -173,6 +216,30 @@ class PaymentGateway(abc.ABC):
 
         return payment_type.perform_processor_response_validation(request)
 
+    @classmethod
+    @find_gateway_class
+    def get_formatted_response(cls, payment_type, request):
+        """
+        Runs the request through the processor response decoder.
+
+        Args:
+            payment_type:   String; gateway class to use
+            request:        HttpRequest object or equivalent
+
+        Returns:
+            ProcessorResponse
+        """
+
+        return payment_type.decode_processor_response(request)
+
+    @classmethod
+    @find_gateway_class
+    def get_gateway_class(cls, payment_type):
+        """
+        Just returns the resolved payment gateway class.
+        """
+        return payment_type
+
 
 class CyberSourcePaymentGateway(
     PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_CYBERSOURCE
@@ -189,7 +256,10 @@ class CyberSourcePaymentGateway(
         """
         Generates CyberSource-formatted line items based on what's in the cart.
         Args:
-            cart (list):
+            cart:   List of CartItems
+
+        Retuns:
+            Tuple: formatted lines and the total cart value
         """
         lines = {}
         cart_total = 0
@@ -210,7 +280,7 @@ class CyberSourcePaymentGateway(
         """
         Generate an HMAC SHA256 signature for the CyberSource Secure Acceptance payload
         Args:
-            payload (dict): The payload to be sent to CyberSource
+            payload:    Dict; the payload to be sent to CyberSource
         Returns:
             str: The signature
         """
@@ -231,11 +301,10 @@ class CyberSourcePaymentGateway(
         Return a payload signed with the CyberSource key
 
         Args:
-            payload (dict): An unsigned payload to be sent to CyberSource
+            payload: Dict; an unsigned payload to be sent to CyberSource
 
         Returns:
-            dict:
-                A signed payload to be sent to CyberSource
+            dict: A signed payload to be sent to CyberSource
         """
         field_names = sorted(list(payload.keys()) + ["signed_field_names"])
         payload = {**payload, "signed_field_names": ",".join(field_names)}
@@ -306,3 +375,84 @@ class CyberSourcePaymentGateway(
         signature = self._generate_cybersource_sa_signature(passed_payload)
 
         return passed_payload["signature"] == signature
+
+    def convert_to_order(response):
+        """
+        CyberSource includes the order in its response, using the same
+        field names prepended with "req_". This will grab those fields
+        out of the response and convert it back to an Order and a set of
+        CartItems. (Not all payment processor APIs may support this, so this
+        is just defined for the CyberSource one.)
+
+        Args:
+            response: Dict; the data from the response
+
+        Returns:
+            Order
+        """
+        items = []
+
+        for i in range(0, int(response["req_line_item_count"])):
+            line = CartItem(
+                code=response[f"req_item_{i}_code"],
+                name=response[f"req_item_{i}_name"],
+                sku=response[f"req_item_{i}_sku"],
+                unitprice=response[f"req_item_{i}_unit_price"],
+                taxable=response[f"req_item_{i}_tax_amount"],
+                quantity=response[f"req_item_{i}_quantity"],
+            )
+            items.append(line)
+
+        order = Order(
+            username=response["req_consumer_id"],
+            ip_address=response["req_customer_ip_address"],
+            reference=response["req_reference_number"],
+            items=items,
+        )
+
+        return order
+
+    def decode_processor_response(self, request):
+        """
+        The CyberSource implementation of this. The ProcessorResponse
+        class was designed around this processor so the state codes map
+        one-to-one to the decision field that gets passed back from them.
+
+        The reason code and transaction ID fields don't appear in certain
+        states.
+        """
+        if request.method == "POST":
+            response = getattr(request, "data", getattr(request, "POST", {}))
+        else:
+            response = getattr(request, "query_params", getattr(request, "GET", {}))
+
+        fmt_response = ProcessorResponse(
+            ProcessorResponse.STATE_ERROR,
+            "Could not decode the processor response",
+            "",
+            "",
+        )
+
+        fmt_response.message = response["message"]
+
+        # CyberSource has no reason codes for cancellation at least
+        if "reason_code" in response:
+            fmt_response.response_code = response["reason_code"]
+
+        # Same for transaction_id
+        if "transaction_id" in response:
+            fmt_response.transaction_id = response["transaction_id"]
+
+        if response["decision"] == "ACCEPT":
+            fmt_response.state = ProcessorResponse.STATE_ACCEPTED
+        elif response["decision"] == "DECLINE":
+            fmt_response.state = ProcessorResponse.STATE_DECLINED
+        elif response["decision"] == "ERROR":
+            fmt_response.state = ProcessorResponse.STATE_ERROR
+            # maybe should log here? this is a straight-up something went wrong between the app and the processor state
+        elif response["decision"] == "CANCEL":
+            fmt_response.state = ProcessorResponse.STATE_CANCELLED
+        elif response["decision"] == "REVIEW":
+            fmt_response.state = ProcessorResponse.STATE_REVIEW
+
+        return fmt_response

@@ -1,3 +1,6 @@
+import json
+import os
+from dataclasses import dataclass
 from typing import Dict
 
 import pytest
@@ -5,7 +8,11 @@ from django.conf import settings
 from testapp.factories import CartItemFactory, OrderFactory
 
 from mitol.common.utils.datetime import now_in_utc
-from mitol.payment_gateway.api import CyberSourcePaymentGateway, PaymentGateway
+from mitol.payment_gateway.api import (
+    CyberSourcePaymentGateway,
+    PaymentGateway,
+    ProcessorResponse,
+)
 from mitol.payment_gateway.constants import MITOL_PAYMENT_GATEWAY_CYBERSOURCE
 
 ISO_8601_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -19,6 +26,17 @@ def order():
 @pytest.fixture()
 def cartitems():
     return CartItemFactory.create_batch(5)
+
+
+@dataclass
+class FakeRequest:
+    """
+    This implements just the stuff that the validator method needs to check
+    the response.
+    """
+
+    data: Dict
+    method: str
 
 
 def generate_test_cybersource_payload(order, cartitems, transaction_uuid):
@@ -127,20 +145,6 @@ def test_cybersource_response_auth(order, cartitems):
     Generates a test payload, then uses it to generate a fake request that is
     run through the validate_processor_response method.
     """
-
-    class FakeRequest:
-        """
-        This implements just the stuff that the validator method needs to check
-        the response.
-        """
-
-        data: Dict
-        method: str
-
-        def __init__(self, data, method):
-            self.data = data
-            self.method = method
-
     receipt_url = "https://www.google.com"
     cancel_url = "https://duckduckgo.com"
     order.items = cartitems
@@ -167,3 +171,41 @@ def test_cybersource_response_auth(order, cartitems):
     assert PaymentGateway.validate_processor_response(
         MITOL_PAYMENT_GATEWAY_CYBERSOURCE, fake_request
     )
+
+
+def test_cybersource_payment_response(order, cartitems):
+    """
+    Testing this really requires a payload from CyberSource, which also means
+    having an profile and keys set up. So, instead, this has a set of payloads
+    from test payments. (These have fake keys in them and won't pass the
+    signaure validation, so this test doesn't validate them.)
+    """
+    payload_fp = open(
+        os.getcwd() + "/tests/mitol/payment_gateway/test_success_payload.json", mode="r"
+    )
+    test_success_payload = json.load(payload_fp)
+
+    payload_fp = open(
+        os.getcwd() + "/tests/mitol/payment_gateway/test_cancel_payload.json", mode="r"
+    )
+    test_cancel_payload = json.load(payload_fp)
+
+    # sanity check - make sure the payloads are actually valid JSON
+    assert "req_amount" in test_success_payload
+    assert "req_amount" in test_cancel_payload
+
+    fake_success = FakeRequest(test_success_payload, "POST")
+
+    response = PaymentGateway.get_formatted_response(
+        MITOL_PAYMENT_GATEWAY_CYBERSOURCE, fake_success
+    )
+
+    assert response.state == ProcessorResponse.STATE_ACCEPTED
+
+    fake_cancel = FakeRequest(test_cancel_payload, "POST")
+
+    response = PaymentGateway.get_formatted_response(
+        MITOL_PAYMENT_GATEWAY_CYBERSOURCE, fake_cancel
+    )
+
+    assert response.state == ProcessorResponse.STATE_CANCELLED
