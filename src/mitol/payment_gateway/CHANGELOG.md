@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 # [Unreleased]
 
 ### Added
+- Bug fix for CyberSource processor validation 
+
+# [1.2.0] - 2022-02-02
+
+### Added
 - Added get_formatted_response helper to decode processor responses into a generic format
 - Added ProcessorResponse dataclass to provide a standard interface for processor responses
 
