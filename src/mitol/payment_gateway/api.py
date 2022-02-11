@@ -367,10 +367,12 @@ class CyberSourcePaymentGateway(
         original transaction was sent, so we just reuse that process here, with
         some logic to pull the proper request data out depending on HTTP verb.
         """
-        if request.method == "GET":
-            passed_payload = request.query_params
+        if request.method == "POST":
+            passed_payload = getattr(request, "data", getattr(request, "POST", {}))
         else:
-            passed_payload = request.data
+            passed_payload = getattr(
+                request, "query_params", getattr(request, "GET", {})
+            )
 
         signature = self._generate_cybersource_sa_signature(passed_payload)
 
