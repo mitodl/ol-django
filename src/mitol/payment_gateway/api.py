@@ -378,7 +378,7 @@ class CyberSourcePaymentGateway(
 
         return passed_payload["signature"] == signature
 
-    def convert_to_order(response):
+    def convert_to_order(self, response):
         """
         CyberSource includes the order in its response, using the same
         field names prepended with "req_". This will grab those fields
