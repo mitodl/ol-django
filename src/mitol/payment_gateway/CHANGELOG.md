@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # [Unreleased] - 2022-02-24
 
+### Changed
+- Bump `mitol-django-common` to `2.2.0`.
+
 ### Added
 - Bug fix for CyberSource order extraction
 
