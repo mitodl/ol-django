@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2022-05-12
+
 ### Changed
 - Bump `mitol-django-common` to `2.2.0`.
 
@@ -71,7 +73,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Barebones implementation of authentication app
 - SAML metadata endpoint and boilerplate configuration
 
-[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.3.1...HEAD
+[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.4.0...HEAD
+[1.4.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.3.1...mitol-django-authentication/v1.4.0
 [1.3.1]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.3.0...mitol-django-authentication/v1.3.1
 [1.3.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.2.0...mitol-django-authentication/v1.3.0
 [1.2.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.1.0...mitol-django-authentication/v1.2.0
