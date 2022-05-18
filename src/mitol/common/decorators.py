@@ -1,7 +1,6 @@
 import random
 
-from django.utils.cache import patch_cache_control
-from django.views.utils import get_max_age
+from django.utils.cache import get_max_age, patch_cache_control
 
 
 def cache_control_max_age_jitter(**kwargs):
