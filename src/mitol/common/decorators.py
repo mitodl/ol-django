@@ -1,9 +1,10 @@
+from functools import wraps
 import random
 
 from django.utils.cache import get_max_age, patch_cache_control
 
 
-def cache_control_max_age_jitter(**kwargs):
+def cache_control_max_age_jitter(*args, **kwargs):
     def _cache_controller(viewfunc):
         @wraps(viewfunc)
         def _cache_controlled(request, *args, **kwargs):
