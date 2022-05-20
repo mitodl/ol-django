@@ -20,7 +20,7 @@ def cache_control_max_age_jitter(*args, **kwargs):
             # add random delay upto 5 minutes
             if max_age:
                 kwargs["max_age"] = max_age + random.randint(1, 600)
-            patch_cache_control(response, **kwargs)
+                patch_cache_control(response, **kwargs)
             return response
         return _cache_controlled
     return _cache_controller
