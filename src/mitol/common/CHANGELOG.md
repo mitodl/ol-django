@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed cache control issue for no cache
+
 ## [2.2.2] - 2022-05-19
 
 ### Fixed
