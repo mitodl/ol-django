@@ -37,6 +37,28 @@ class TimestampedModel(Model):
         abstract = True
 
 
+class SingletonModel(Model):
+    """Model class for models representing tables that should only have a single record"""
+
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
+        if force_insert and self._meta.model.objects.count() > 0:
+            raise ValidationError(
+                "Only one {} object should exist. Update the existing object instead "
+                "of creating a new one.".format(self.__class__.__name__)
+            )
+        return super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
+
+    class Meta:
+        abstract = True
+
+
 _ModelClass = TypeVar("_ModelClass", bound=Model)
 _PrefetchGenericQuerySet = TypeVar(
     "_PrefetchGenericQuerySet", bound="PrefetchGenericQuerySet"
