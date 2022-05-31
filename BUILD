@@ -17,3 +17,9 @@ resources(
     name="license",
     sources=["LICENSE"],
 )
+
+pex_binary(
+    name="django-admin",
+    dependencies=["//:django"],
+    script="django-admin"
+)

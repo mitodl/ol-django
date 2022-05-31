@@ -4,6 +4,7 @@ Common model classes
 import copy
 from typing import Dict, Iterable, List, Type, TypeVar, Union
 
+from django.core.exceptions import ValidationError
 from django.db.models import DateTimeField, Model, prefetch_related_objects
 from django.db.models.query import QuerySet
 
