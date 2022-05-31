@@ -1,5 +1,5 @@
-from functools import wraps
 import random
+from functools import wraps
 
 from django.utils.cache import get_max_age, patch_cache_control
 
@@ -13,7 +13,7 @@ def cache_control_max_age_jitter(*args, **kwargs):
                 raise TypeError(
                     "cache_control_max_age_jitter didn't receive an HttpRequest. If you are "
                     "decorating a classmethod, be sure to use "
-                     "@method_decorator."
+                    "@method_decorator."
                 )
             response = viewfunc(request, *args, **kwargs)
             max_age = get_max_age(response)
@@ -22,5 +22,7 @@ def cache_control_max_age_jitter(*args, **kwargs):
                 kwargs["max_age"] = max_age + random.randint(1, 600)
                 patch_cache_control(response, **kwargs)
             return response
+
         return _cache_controlled
+
     return _cache_controller
