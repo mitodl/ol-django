@@ -7,6 +7,7 @@ python_sources(
         "src/mitol/authentication",
         "src/mitol/common",
         "src/mitol/digitalcredentials",
+        "src/mitol/google_sheets",
         "src/mitol/mail",
         "src/mitol/oauth_toolkit_extensions",
         "src/mitol/openedx",

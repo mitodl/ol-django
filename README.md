@@ -8,7 +8,7 @@ Changelogs are maintained according to [Keep a Changelog](https://keepachangelog
 Versioning adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Version tags follow `{package-name}/v{major}.{minor}.{patch}`
 To perform a release, run:
-- `./pants run build-support/bin/release -- --app APP_NAME [--bump-major] [--bump-minor] [--bump-patch] [--version VERSION]`:
+- `./pants run build-support/bin/release.py -- --app APP_NAME [--bump-major] [--bump-minor] [--bump-patch] [--version VERSION]`:
   - `APPNAME`: the name of an application directory
   - `VERSION`: a semantic version value
 - `git push --tags`
@@ -38,7 +38,13 @@ Useful commands:
 ./pants lint ::
 
 # run django management scripts
-./pants run tests/manage.py -- ARGS
+./pants django-run tests: -- ARGS
+# run a django shell
+./pants django-run tests: -- shell  
+# create migrations
+./pants django-run tests: -- makemigrations  
+# run a django migrate
+./pants django-run tests: -- migrate  
 ```
 
 ### Migrations

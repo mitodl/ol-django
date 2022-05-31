@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "mitol.authentication.apps.AuthenticationApp",
     "mitol.common.apps.CommonApp",
     "mitol.digitalcredentials.apps.DigitalCredentialsApp",
+    "mitol.google_sheets.apps.GoogleSheetsApp",
     "mitol.mail.apps.MailApp",
     "mitol.oauth_toolkit_extensions.apps.OAuthToolkitExtensionsApp",
     "mitol.openedx.apps.OpenedxApp",
