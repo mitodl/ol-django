@@ -97,7 +97,6 @@ def test_auditable_model():
     data = auditable_instance.to_dict()
     assert serialize_model_object(auditable_instance) == data
 
-    original_before_json = serialize_model_object(auditable_instance)
     # Make sure audit object is created
     assert AuditableTestModelAudit.objects.count() == 0
     # auditable_instance.status = FinancialAidStatus.AUTO_APPROVED
