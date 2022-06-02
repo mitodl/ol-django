@@ -4,9 +4,10 @@ Common model classes
 import copy
 from typing import Dict, Iterable, List, Type, TypeVar, Union
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import DateTimeField, Model, prefetch_related_objects
+from django.db.models import DateTimeField, Model, prefetch_related_objects, ForeignKey, PROTECT, JSONField
 from django.db.models.query import QuerySet
 
 from mitol.common.utils.datetime import now_in_utc
@@ -37,6 +38,25 @@ class TimestampedModel(Model):
 
     class Meta:
         abstract = True
+
+
+class AuditModel(TimestampedModel):
+    """An abstract base class for audit models"""
+
+    acting_user = ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=PROTECT)
+    data_before = JSONField(blank=True, null=True)
+    data_after = JSONField(blank=True, null=True)
+
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def get_related_field_name(cls):
+        """
+        Returns:
+            str: A field name which links the Auditable model to this model
+        """
+        raise NotImplementedError
 
 
 class AuditableModel(Model):

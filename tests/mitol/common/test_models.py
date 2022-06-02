@@ -13,6 +13,7 @@ from testapp.models import (
     SecondLevel2,
     Updateable,
     AuditableTestModel,
+    AuditableTestModelAudit,
 )
 from mitol.common.factories import UserFactory
 from mitol.common.utils.serializers import serialize_model_object
@@ -94,3 +95,10 @@ def test_auditable_model():
     user = UserFactory.create()
     data = auditable_instance.to_dict()
     assert serialize_model_object(auditable_instance) == data
+
+    original_before_json = serialize_model_object(auditable_instance)
+    # Make sure audit object is created
+    assert AuditableTestModelAudit.objects.count() == 0
+    # auditable_instance.status = FinancialAidStatus.AUTO_APPROVED
+    auditable_instance.save_and_log(user)
+    assert AuditableTestModelAudit.objects.count() == 1
