@@ -4,7 +4,8 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
-from mitol.common.models import PrefetchGenericQuerySet, TimestampedModel
+from mitol.common.models import PrefetchGenericQuerySet, TimestampedModel, AuditableModel
+from mitol.common.utils.serializers import serialize_model_object
 
 
 class SecondLevel1(models.Model):
@@ -43,6 +44,21 @@ class Root(models.Model):
 
 class Updateable(TimestampedModel):
     """Test-only model"""
+
+
+class AuditableTestModel(AuditableModel):
+    """Test-only model"""
+
+    @classmethod
+    def get_audit_class(cls):
+        return AuditableTestModel
+
+    def to_dict(self):
+        """
+        Get a serialized representation of the AuditableTestModel
+        """
+        data = serialize_model_object(self)
+        return data
 
 
 class DemoCourseware(models.Model):

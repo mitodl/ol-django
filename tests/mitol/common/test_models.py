@@ -12,7 +12,10 @@ from testapp.models import (
     SecondLevel1,
     SecondLevel2,
     Updateable,
+    AuditableTestModel,
 )
+from mitol.common.factories import UserFactory
+from mitol.common.utils.serializers import serialize_model_object
 
 pytestmark = pytest.mark.django_db
 
@@ -83,3 +86,11 @@ def test_timestamped_model(pass_updated_on):
 
     assert obj.updated_on == expected_updated_on
     assert obj.created_on == initial_frozen_datetime
+
+
+def test_auditable_model():
+    """Verify that AuditableModel to_dict works correctly"""
+    auditable_instance = AuditableTestModel.objects.create()
+    user = UserFactory.create()
+    data = auditable_instance.to_dict()
+    assert serialize_model_object(auditable_instance) == data
