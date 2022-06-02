@@ -6,15 +6,16 @@ import pytest
 import pytz
 from freezegun import freeze_time
 from testapp.models import (
+    AuditableTestModel,
+    AuditableTestModelAudit,
     FirstLevel1,
     FirstLevel2,
     Root,
     SecondLevel1,
     SecondLevel2,
     Updateable,
-    AuditableTestModel,
-    AuditableTestModelAudit,
 )
+
 from mitol.common.factories import UserFactory
 from mitol.common.utils.serializers import serialize_model_object
 

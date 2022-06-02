@@ -7,7 +7,14 @@ from typing import Dict, Iterable, List, Type, TypeVar, Union
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import DateTimeField, Model, prefetch_related_objects, ForeignKey, PROTECT, JSONField
+from django.db.models import (
+    PROTECT,
+    DateTimeField,
+    ForeignKey,
+    JSONField,
+    Model,
+    prefetch_related_objects,
+)
 from django.db.models.query import QuerySet
 
 from mitol.common.utils.datetime import now_in_utc
