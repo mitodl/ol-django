@@ -6,6 +6,8 @@ import pytest
 import pytz
 from freezegun import freeze_time
 from testapp.models import (
+    AuditableTestModel,
+    AuditableTestModelAudit,
     FirstLevel1,
     FirstLevel2,
     Root,
@@ -13,6 +15,9 @@ from testapp.models import (
     SecondLevel2,
     Updateable,
 )
+
+from mitol.common.factories import UserFactory
+from mitol.common.utils.serializers import serialize_model_object
 
 pytestmark = pytest.mark.django_db
 
@@ -83,3 +88,17 @@ def test_timestamped_model(pass_updated_on):
 
     assert obj.updated_on == expected_updated_on
     assert obj.created_on == initial_frozen_datetime
+
+
+def test_auditable_model():
+    """Verify that AuditableModel to_dict works correctly"""
+    auditable_instance = AuditableTestModel.objects.create()
+    user = UserFactory.create()
+    data = auditable_instance.to_dict()
+    assert serialize_model_object(auditable_instance) == data
+
+    # Make sure audit object is created
+    assert AuditableTestModelAudit.objects.count() == 0
+    # auditable_instance.status = FinancialAidStatus.AUTO_APPROVED
+    auditable_instance.save_and_log(user)
+    assert AuditableTestModelAudit.objects.count() == 1
