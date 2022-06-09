@@ -333,10 +333,13 @@ class CyberSourcePaymentGateway(
 
                 formatted_merchant_fields[f"merchant_defined_data{idx}"] = field_data
 
+        consumer_id_hasher = hashlib.sha256()
+        consumer_id = consumer_id_hasher.update(order.username).hexdigest()
+
         payload = {
             "access_key": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_ACCESS_KEY,
             "amount": str(total),
-            "consumer_id": order.username,
+            "consumer_id": consumer_id,
             "currency": "USD",
             "locale": "en-us",
             **line_items,
