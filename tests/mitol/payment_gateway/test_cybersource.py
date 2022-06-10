@@ -1,6 +1,6 @@
+import hashlib
 import json
 import os
-import hashlib
 from dataclasses import dataclass
 from typing import Dict
 
