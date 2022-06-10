@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 from dataclasses import dataclass
@@ -60,10 +61,12 @@ def generate_test_cybersource_payload(order, cartitems, transaction_uuid):
         test_line_items[f"item_{idx}_tax_amount"] = str(line.taxable)
         test_line_items[f"item_{idx}_unit_price"] = str(line.unitprice)
 
+    consumer_id = hashlib.sha256(order.username.encode("ascii")).hexdigest()
+
     test_payload = {
         "access_key": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_ACCESS_KEY,
         "amount": str(test_total),
-        "consumer_id": order.username,
+        "consumer_id": consumer_id,
         "currency": "USD",
         "locale": "en-us",
         **test_line_items,
