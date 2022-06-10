@@ -11,6 +11,7 @@ router.register(r"democourseware", DemoCoursewareViewSet)
 urlpatterns = [
     path("api/", include(router.urls)),
     path("api/", include("mitol.digitalcredentials.urls")),
+    path("api/", include("mitol.google_sheets.urls")),
     path("api/", include("mitol.mail.urls")),
     path("", include("mitol.authentication.urls.saml")),
     path("", include("mitol.authentication.urls.djoser_urls")),

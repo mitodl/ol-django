@@ -3,6 +3,8 @@ import operator as op
 from math import ceil
 from types import SimpleNamespace
 
+import pytest
+
 from mitol.common.utils.collections import (
     all_equal,
     all_unique,
@@ -17,6 +19,7 @@ from mitol.common.utils.collections import (
     has_equal_properties,
     item_at_index_or_blank,
     item_at_index_or_none,
+    matching_item_index,
     max_or_none,
     partition,
     partition_to_lists,
@@ -260,3 +263,12 @@ def test_chunks_iterable():
     for chunk in chunk_output:
         range_list += chunk
     assert range_list == list(range(count))
+
+
+def test_matching_item_index():
+    """matching_item_index should return the index of an item equal to the given value, or raises an exception"""
+    assert matching_item_index(["a", "b", "c", "d"], "b") == 1
+    with pytest.raises(StopIteration):
+        matching_item_index(["a", "b", "c", "d"], "e")
+    number_iter = (i for i in [0, 1, 2, 3, 4])
+    assert matching_item_index(number_iter, 2) == 2

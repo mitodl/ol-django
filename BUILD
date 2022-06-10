@@ -10,6 +10,8 @@ python_requirements(
         "social-auth-app-django": ["social_django"],
         "setuptools": ["pkg_resources"],
         "edx-opaque-keys": ["opaque_keys"],
+        "google-api-python-client": ["googleapiclient"],
+        "pytest-lazy-fixture": ["pytest_lazyfixture"],
     },
 )
 
