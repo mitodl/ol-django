@@ -317,7 +317,13 @@ class CyberSourcePaymentGateway(
         self, order: Order, receipt_url: str, cancel_url: str, **kwargs
     ):
         """
-        This acts more as a coordinator for the internal methods in the class
+        This acts more as a coordinator for the internal methods in the class.
+
+        The username attached to the order is passed to CyberSource. However, it
+        won't accept an email address-like username (see
+        https://github.com/mitodl/mitxonline/issues/593), so this generates a
+        sha256 hash of the username to pass in to CyberSource. This hash isn't
+        stored anywhere.
         """
 
         (line_items, total) = self._generate_line_items(order.items)
@@ -387,6 +393,10 @@ class CyberSourcePaymentGateway(
         out of the response and convert it back to an Order and a set of
         CartItems. (Not all payment processor APIs may support this, so this
         is just defined for the CyberSource one.)
+
+        Note that the username that is returned by CyberSource will be the
+        sha256 hash of the username that was originally passed in, and *not* the
+        actual username.
 
         Args:
             response: Dict; the data from the response
