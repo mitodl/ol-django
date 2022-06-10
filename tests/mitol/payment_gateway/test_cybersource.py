@@ -61,8 +61,7 @@ def generate_test_cybersource_payload(order, cartitems, transaction_uuid):
         test_line_items[f"item_{idx}_tax_amount"] = str(line.taxable)
         test_line_items[f"item_{idx}_unit_price"] = str(line.unitprice)
 
-    consumer_id_hasher = hashlib.sha256()
-    consumer_id = consumer_id_hasher.update(order.username).hexdigest()
+    consumer_id = hashlib.sha256(order.username.encode("ascii")).hexdigest()
 
     test_payload = {
         "access_key": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_ACCESS_KEY,
