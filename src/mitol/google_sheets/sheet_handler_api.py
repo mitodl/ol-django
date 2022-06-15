@@ -10,7 +10,6 @@ from django.utils.functional import cached_property
 from mitol.common.collections import group_into_dict, item_at_index_or_none
 from mitol.google_sheets.api import get_authorized_pygsheets_client
 from mitol.google_sheets.constants import (
-    ENROLL_CHANGE_SHEET_PROCESSOR_NAME,
     GOOGLE_API_TRUE_VAL,
     GOOGLE_SHEET_FIRST_ROW,
 )
@@ -281,7 +280,7 @@ class EnrollmentChangeRequestHandler(SheetHandler):
                 ),
                 values=[
                     [
-                        ENROLL_CHANGE_SHEET_PROCESSOR_NAME,
+                        settings.MITOL_GOOGLE_SHEET_PROCESSOR_APP_NAME,
                         format_datetime_for_sheet_formula(
                             row_result.row_db_record.date_completed.astimezone(
                                 settings.SHEETS_DATE_TIMEZONE
