@@ -5,10 +5,12 @@ import logging
 import os
 import pickle
 from collections import namedtuple
+from urllib.parse import urljoin
 
 import pygsheets
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.db import transaction
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials
@@ -16,12 +18,18 @@ from googleapiclient.discovery import build
 
 from mitol.common.utils import now_in_utc
 from mitol.google_sheets.constants import (
+    GOOGLE_API_FILE_WATCH_KIND,
+    GOOGLE_API_NOTIFICATION_TYPE,
     DEFAULT_GOOGLE_EXPIRE_TIMEDELTA,
     GOOGLE_SERVICE_ACCOUNT_EMAIL_DOMAIN,
     GOOGLE_TOKEN_URI,
     REQUIRED_GOOGLE_API_SCOPES,
 )
-from mitol.google_sheets.models import GoogleApiAuth
+from mitol.google_sheets.models import FileWatchRenewalAttempt, GoogleApiAuth, GoogleFileWatch
+from mitol.google_sheets.utils import (
+    format_datetime_for_google_timestamp,
+    google_timestamp_to_datetime,
+)
 
 log = logging.getLogger(__name__)
 
@@ -260,3 +268,48 @@ def build_drive_service(credentials=None):
     """
     credentials = credentials or get_credentials()
     return build("drive", "v3", credentials=credentials, cache_discovery=False)
+
+
+def request_file_watch(
+    file_id, channel_id, handler_url, expiration=None, credentials=None
+):
+    """
+    Sends a request to the Google API to watch for changes in a given file. If successful, this
+    app will receive requests from Google when changes are made to the file.
+    Ref: https://developers.google.com/drive/api/v3/reference/files/watch
+    Args:
+        file_id (str): The id of the file in Google Drive (can be determined from the URL)
+        channel_id (str): Arbitrary string to identify the file watch being set up. This will
+            be included in the header of every request Google sends to the app.
+        handler_url (str): The URL stub for the xpro endpoint that should be called from Google's end when the file
+            changes.
+        expiration (datetime.datetime or None): The datetime that this file watch should expire.
+            Defaults to 1 hour, and cannot exceed 24 hours.
+        credentials (google.oauth2.credentials.Credentials or None): Credentials to be used by the
+            Google Drive client
+    Returns:
+        dict: The Google file watch API response
+    """
+    drive_service = build_drive_service(credentials=credentials)
+    extra_body_params = {}
+    if expiration:
+        extra_body_params["expiration"] = format_datetime_for_google_timestamp(
+            expiration
+        )
+    return (
+        drive_service.files()
+        .watch(
+            fileId=file_id,
+            supportsTeamDrives=True,
+            body={
+                "id": channel_id,
+                "resourceId": file_id,
+                "address": urljoin(settings.SITE_BASE_URL, handler_url),
+                "payload": True,
+                "kind": GOOGLE_API_FILE_WATCH_KIND,
+                "type": GOOGLE_API_NOTIFICATION_TYPE,
+                **extra_body_params,
+            },
+        )
+        .execute()
+    )
