@@ -9,11 +9,9 @@ from collections import namedtuple
 import pygsheets
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from google.auth.transport.requests import Request  # pylint:disable=no-name-in-module
-from google.oauth2.credentials import Credentials  # pylint:disable=no-name-in-module
-from google.oauth2.service_account import (
-    Credentials as ServiceAccountCredentials,  # pylint:disable=no-name-in-module
-)
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google.oauth2.service_account import Credentials as ServiceAccountCredentials
 from googleapiclient.discovery import build
 
 from mitol.common.utils import now_in_utc

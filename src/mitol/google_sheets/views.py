@@ -8,12 +8,8 @@ from django.db import transaction
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
-from google.auth.exceptions import GoogleAuthError  # pylint: disable-all
-
-# NOTE: Due to an unresolved bug (https://github.com/PyCQA/pylint/issues/2108), the
-# `google` package (and other packages without an __init__.py file) will break pylint.
-# The `disable-all` rules are here until that bug is fixed.
-from google_auth_oauthlib.flow import Flow  # pylint: disable-all
+from google.auth.exceptions import GoogleAuthError
+from google_auth_oauthlib.flow import Flow
 
 from mitol.google_sheets.constants import REQUIRED_GOOGLE_API_SCOPES
 from mitol.google_sheets.models import GoogleApiAuth

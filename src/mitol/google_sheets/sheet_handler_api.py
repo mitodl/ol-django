@@ -207,7 +207,7 @@ class SheetHandler:
             row_result = None
             try:
                 row_result = self.process_row(row_index, row_data)
-            except Exception as exc:  # pylint: disable=broad-except
+            except Exception as exc:
                 row_result = RowResult(
                     row_index=row_index,
                     row_db_record=None,

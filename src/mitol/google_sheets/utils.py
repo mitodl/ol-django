@@ -126,7 +126,7 @@ class ResultType(Enum):
     PROCESSED = "processed"
 
     def __lt__(self, other):
-        return self.value < other.value  # pylint: disable=comparison-with-callable
+        return self.value < other.value
 
 
 RowResult = namedtuple(
@@ -426,7 +426,7 @@ def build_protected_range_request_body(
     worksheet_id=0,
     warning_only=False,
     description=None,
-):  # pylint: disable=too-many-arguments
+):
     """
     Builds a request body that will be sent to the Google Sheets API to create a protected range on a spreadsheet.
 

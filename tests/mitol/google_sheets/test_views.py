@@ -54,9 +54,7 @@ def test_request_auth(mocker, settings, staff_client):
 
 @pytest.mark.parametrize("existing_auth", [lazy("google_api_auth"), None])
 @pytest.mark.django_db
-def test_complete_auth(
-    mocker, settings, learner, existing_auth
-):  # pylint: disable=unused-argument
+def test_complete_auth(mocker, settings, learner, existing_auth):
     """
     View that handles Google auth completion should fetch a token and save/update a
     GoogleApiAuth object
