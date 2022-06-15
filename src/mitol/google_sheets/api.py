@@ -5,41 +5,25 @@ import logging
 import os
 import pickle
 from collections import namedtuple
-from urllib.parse import urljoin
 
 import pygsheets
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db import transaction
 from google.auth.transport.requests import Request  # pylint:disable=no-name-in-module
 from google.oauth2.credentials import Credentials  # pylint:disable=no-name-in-module
 from google.oauth2.service_account import (
     Credentials as ServiceAccountCredentials,  # pylint:disable=no-name-in-module
 )
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-from mitxpro.utils import now_in_utc
-from sheets.constants import (
+
+from mitol.common.utils import now_in_utc
+from mitol.google_sheets.constants import (
     DEFAULT_GOOGLE_EXPIRE_TIMEDELTA,
-    GOOGLE_API_FILE_WATCH_KIND,
-    GOOGLE_API_NOTIFICATION_TYPE,
     GOOGLE_SERVICE_ACCOUNT_EMAIL_DOMAIN,
     GOOGLE_TOKEN_URI,
     REQUIRED_GOOGLE_API_SCOPES,
-    SHEET_RENEWAL_RECORD_LIMIT,
-    SHEET_TYPE_COUPON_ASSIGN,
-    SHEET_TYPE_COUPON_REQUEST,
-    SHEET_TYPE_ENROLL_CHANGE,
-    WORKSHEET_TYPE_REFUND,
 )
-from sheets.models import FileWatchRenewalAttempt, GoogleApiAuth, GoogleFileWatch
-from sheets.utils import (
-    CouponAssignSheetMetadata,
-    CouponRequestSheetMetadata,
-    RefundRequestSheetMetadata,
-    format_datetime_for_google_timestamp,
-    google_timestamp_to_datetime,
-)
+from mitol.google_sheets.models import GoogleApiAuth
 
 log = logging.getLogger(__name__)
 
@@ -278,220 +262,3 @@ def build_drive_service(credentials=None):
     """
     credentials = credentials or get_credentials()
     return build("drive", "v3", credentials=credentials, cache_discovery=False)
-
-
-def request_file_watch(
-    file_id, channel_id, handler_url, expiration=None, credentials=None
-):
-    """
-    Sends a request to the Google API to watch for changes in a given file. If successful, this
-    app will receive requests from Google when changes are made to the file.
-    Ref: https://developers.google.com/drive/api/v3/reference/files/watch
-
-    Args:
-        file_id (str): The id of the file in Google Drive (can be determined from the URL)
-        channel_id (str): Arbitrary string to identify the file watch being set up. This will
-            be included in the header of every request Google sends to the app.
-        handler_url (str): The URL stub for the xpro endpoint that should be called from Google's end when the file
-            changes.
-        expiration (datetime.datetime or None): The datetime that this file watch should expire.
-            Defaults to 1 hour, and cannot exceed 24 hours.
-        credentials (google.oauth2.credentials.Credentials or None): Credentials to be used by the
-            Google Drive client
-
-    Returns:
-        dict: The Google file watch API response
-    """
-    drive_service = build_drive_service(credentials=credentials)
-    extra_body_params = {}
-    if expiration:
-        extra_body_params["expiration"] = format_datetime_for_google_timestamp(
-            expiration
-        )
-    return (
-        drive_service.files()
-        .watch(
-            fileId=file_id,
-            supportsTeamDrives=True,
-            body={
-                "id": channel_id,
-                "resourceId": file_id,
-                "address": urljoin(settings.SITE_BASE_URL, handler_url),
-                "payload": True,
-                "kind": GOOGLE_API_FILE_WATCH_KIND,
-                "type": GOOGLE_API_NOTIFICATION_TYPE,
-                **extra_body_params,
-            },
-        )
-        .execute()
-    )
-
-
-def _generate_channel_id(sheet_metadata, sheet_file_id=None, dt=None):
-    """
-    Generates a string channel id based on several spreadsheet attributes. The channel id is an identifier
-    used in the Google file watch API.
-
-    Args:
-        sheet_metadata (SheetMetadata):
-        sheet_file_id (str): The file id of the spreadsheet
-        dt (Optional[datetime.datetime]): The date and time when the file watch was created
-
-    Returns:
-        str: The channel id to be used in the Google file watch API
-    """
-    dt = dt or now_in_utc()
-    new_channel_id_segments = [
-        settings.DRIVE_WEBHOOK_CHANNEL_ID,
-        sheet_metadata.sheet_type,
-        dt.strftime("%Y%m%d-%H%M%S"),
-    ]
-    if isinstance(sheet_metadata, CouponAssignSheetMetadata):
-        new_channel_id_segments.insert(2, sheet_file_id)
-    return "-".join(new_channel_id_segments)
-
-
-def _track_file_watch_renewal(sheet_type, sheet_file_id, exception=None):
-    """
-    Creates a record of the attempt to update a Google file watch. This is used for
-    debugging purposes as the renewal endpoint is flaky.
-
-    Args:
-        sheet_type (str): The type of spreadsheet
-        sheet_file_id (str): The file id of the spreadsheet
-        exception (Optional[Exception]): The exception raised when trying to renew the file watch
-    """
-    result = None
-    result_status_code = None
-    if exception is None:
-        result_status_code = 200
-    else:
-        if isinstance(exception, HttpError):
-            result_status_code = exception.resp.status
-            exc_content = json.loads(exception.content.decode("utf-8"))
-            if "error" in exc_content:
-                result = exc_content["error"]["message"]
-        if not result:
-            result = str(exception)[0:300]
-    FileWatchRenewalAttempt.objects.create(
-        sheet_type=sheet_type,
-        sheet_file_id=sheet_file_id,
-        result=result,
-        result_status_code=result_status_code,
-    )
-    # Clear out old records. We only need to keep a record of renewal attempts for debugging recent errors.
-    existing_attempt_ids = (
-        FileWatchRenewalAttempt.objects.filter(sheet_file_id=sheet_file_id)
-        .order_by("-id")
-        .values_list("id", flat=True)
-    )
-    if len(existing_attempt_ids) > SHEET_RENEWAL_RECORD_LIMIT:
-        id_to_delete = existing_attempt_ids[SHEET_RENEWAL_RECORD_LIMIT]
-        FileWatchRenewalAttempt.objects.filter(id__lte=id_to_delete).delete()
-
-
-def create_or_renew_sheet_file_watch(sheet_metadata, force=False, sheet_file_id=None):
-    """
-    Creates or renews a file watch on a spreadsheet depending on the existence
-    of other file watches and their expiration.
-
-    Args:
-        sheet_metadata (Type(sheets.utils.SheetMetadata)): The file watch metadata for the sheet
-            that we want to create/renew the file watch for.
-        force (bool): If True, make the file watch request and overwrite the GoogleFileWatch record
-            even if an unexpired one exists.
-        sheet_file_id (Optional[str]): (Optional) The id of the spreadsheet as it appears in the spreadsheet's
-            URL. If the spreadsheet being watched is a singleton, this isn't necessary.
-
-    Returns:
-        (Optional[GoogleFileWatch], bool, bool): The GoogleFileWatch object (or None), a flag indicating
-            whether or not it was newly created during execution, and a flag indicating
-            whether or not it was updated during execution.
-    """
-    now = now_in_utc()
-    sheet_file_id = sheet_file_id or sheet_metadata.sheet_file_id
-    new_channel_id = _generate_channel_id(
-        sheet_metadata, sheet_file_id=sheet_file_id, dt=now
-    )
-    handler_url = (
-        sheet_metadata.handler_url_stub(file_id=sheet_file_id)
-        if isinstance(sheet_metadata, CouponAssignSheetMetadata)
-        else sheet_metadata.handler_url_stub()
-    )
-    min_fresh_expiration_date = now + datetime.timedelta(
-        minutes=settings.DRIVE_WEBHOOK_RENEWAL_PERIOD_MINUTES
-    )
-    with transaction.atomic():
-        file_watch, created = GoogleFileWatch.objects.select_for_update().get_or_create(
-            file_id=sheet_file_id,
-            defaults=dict(
-                version=1,
-                channel_id=new_channel_id,
-                activation_date=now,
-                expiration_date=now,
-            ),
-        )
-        if (
-            not created
-            and file_watch.expiration_date > min_fresh_expiration_date
-            and not force
-        ):
-            return file_watch, False, False
-        if file_watch.expiration_date < now:
-            log.error(
-                "Current file watch in the database for %s is expired. "
-                "Some file changes may have failed to trigger a push notification (%s, file id: %s)",
-                sheet_metadata.sheet_name,
-                file_watch,
-                sheet_file_id,
-            )
-        expiration = now + datetime.timedelta(
-            minutes=settings.DRIVE_WEBHOOK_EXPIRATION_MINUTES
-        )
-        try:
-            resp_dict = request_file_watch(
-                sheet_file_id, new_channel_id, handler_url, expiration=expiration
-            )
-        except HttpError as exc:
-            _track_file_watch_renewal(
-                sheet_metadata.sheet_type, sheet_file_id, exception=exc
-            )
-            return None, False, False
-        else:
-            _track_file_watch_renewal(sheet_metadata.sheet_type, sheet_file_id)
-        log.info(
-            "File watch request for push notifications on %s completed. Response: %s",
-            sheet_metadata.sheet_name,
-            resp_dict,
-        )
-        file_watch.activation_date = now
-        file_watch.expiration_date = google_timestamp_to_datetime(
-            resp_dict["expiration"]
-        )
-        file_watch.channel_id = new_channel_id
-        if not created:
-            file_watch.version += 1
-        file_watch.save()
-        return file_watch, created, True
-
-
-def get_sheet_metadata_from_type(sheet_type):
-    """
-    Gets sheet metadata associated with the given sheet type
-
-    Args:
-        sheet_type (str):
-
-    Returns:
-        type(sheets.utils.SheetMetadata): An object with metadata about some sheet type
-
-    Raises:
-         ValueError: Raised if there is no metadata class associated with the given sheet type
-    """
-    if sheet_type == SHEET_TYPE_COUPON_REQUEST:
-        return CouponRequestSheetMetadata()
-    elif sheet_type == SHEET_TYPE_COUPON_ASSIGN:
-        return CouponAssignSheetMetadata()
-    elif sheet_type in {SHEET_TYPE_ENROLL_CHANGE, WORKSHEET_TYPE_REFUND}:
-        return RefundRequestSheetMetadata()
-    raise ValueError(f"No sheet metadata exists matching the type '{sheet_type}'")
