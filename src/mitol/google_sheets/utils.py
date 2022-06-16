@@ -12,7 +12,6 @@ from django.urls import reverse
 from mitol.google_sheets.constants import (
     GOOGLE_AUTH_PROVIDER_X509_CERT_URL,
     GOOGLE_AUTH_URI,
-    GOOGLE_SERVICE_ACCOUNT_EMAIL_DOMAIN,
     GOOGLE_TOKEN_URI,
     SHEETS_VALUE_REQUEST_PAGE_SIZE,
 )
@@ -474,7 +473,9 @@ def build_drive_file_email_share_request(file_id, email_to_share):
     """
     added_kwargs = (
         {"sendNotificationEmail": False}
-        if email_to_share.endswith(GOOGLE_SERVICE_ACCOUNT_EMAIL_DOMAIN)
+        if email_to_share.endswith(
+            settings.MITOL_GOOGLE_SHEETS_GOOGLE_ACCOUNT_EMAIL_DOMAIN
+        )
         else {}
     )
     return dict(

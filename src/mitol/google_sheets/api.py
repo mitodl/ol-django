@@ -21,7 +21,6 @@ from mitol.google_sheets.constants import (
     DEFAULT_GOOGLE_EXPIRE_TIMEDELTA,
     GOOGLE_API_FILE_WATCH_KIND,
     GOOGLE_API_NOTIFICATION_TYPE,
-    GOOGLE_SERVICE_ACCOUNT_EMAIL_DOMAIN,
     GOOGLE_TOKEN_URI,
     REQUIRED_GOOGLE_API_SCOPES,
 )
@@ -76,7 +75,7 @@ def get_credentials():
         is_sharing_to_service_account = any(
             email
             for email in settings.SHEETS_ADMIN_EMAILS
-            if email.endswith(GOOGLE_SERVICE_ACCOUNT_EMAIL_DOMAIN)
+            if email.endswith(settings.MITOL_GOOGLE_SHEETS_GOOGLE_ACCOUNT_EMAIL_DOMAIN)
         )
         if not is_sharing_to_service_account:
             raise ImproperlyConfigured(
