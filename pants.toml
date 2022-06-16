@@ -23,6 +23,7 @@ enabled = false
 root_patterns = [
   "src",
   "tests",
+  "build-support",
   "/build-support/bin",
   "/pants-plugins",
 ]
