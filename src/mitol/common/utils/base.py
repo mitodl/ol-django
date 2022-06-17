@@ -2,8 +2,8 @@
 import abc
 
 
-def base_register_subclasses_factory():
-    class BaseRegisterSubclasses(abc.ABC):
+def base_register_subclasses_factory(*mixin_classes):
+    class BaseRegisterSubclasses(abc.ABC, *mixin_classes):
         _SUBCLASSES = {}
 
         def __init_subclass__(cls, *, subclass_type, **kwargs):

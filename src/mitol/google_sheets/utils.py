@@ -1,4 +1,5 @@
 """Sheets app util functions"""
+import abc
 import datetime
 import email.utils
 from collections import namedtuple
@@ -54,7 +55,7 @@ def get_column_letter(column_index):
     return chr(column_index + uppercase_a_ord)
 
 
-class SheetConfig(base_register_subclasses_factory(), subclass_type="sheet_config"):
+class SheetConfigMixin:
     """Metadata for a type of Google Sheet that this app interacts with"""
 
     sheet_type = None
@@ -109,12 +110,18 @@ class SheetConfig(base_register_subclasses_factory(), subclass_type="sheet_confi
         ]
 
 
-class SingletonSheetConfig(SheetConfig, subclass_type="singleton_sheet_config"):
+SheetConfig = base_register_subclasses_factory(SheetConfigMixin)
+
+
+class SingletonSheetConfigMixin(SheetConfigMixin):
     """
     Metadata for a type of Google Sheet that this app interacts with, and of which only one should exist
     """
 
     sheet_file_id = None
+
+
+SingletonSheetConfig = base_register_subclasses_factory(SingletonSheetConfigMixin)
 
 
 class ResultType(Enum):
