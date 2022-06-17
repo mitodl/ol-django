@@ -1,5 +1,4 @@
 """Sheets app util functions"""
-import abc
 import datetime
 import email.utils
 from collections import namedtuple
@@ -108,9 +107,6 @@ class SheetConfigMixin:
         return [
             col for i, col in enumerate(row_data) if i in self.form_input_column_indices
         ]
-
-
-SheetConfig = base_register_subclasses_factory(SheetConfigMixin)
 
 
 class SingletonSheetConfigMixin(SheetConfigMixin):
