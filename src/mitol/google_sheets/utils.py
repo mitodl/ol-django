@@ -9,13 +9,13 @@ import pytz
 from django.conf import settings
 from django.urls import reverse
 
+from mitol.common.utils.base import base_register_subclasses_factory
 from mitol.google_sheets.constants import (
     GOOGLE_AUTH_PROVIDER_X509_CERT_URL,
     GOOGLE_AUTH_URI,
     GOOGLE_TOKEN_URI,
     SHEETS_VALUE_REQUEST_PAGE_SIZE,
 )
-from mitol.common.utils.base import base_register_subclasses_factory
 
 
 def generate_google_client_config():
@@ -54,7 +54,7 @@ def get_column_letter(column_index):
     return chr(column_index + uppercase_a_ord)
 
 
-class SheetConfig(base_register_subclasses_factory(), subclass_type='sheet_config'):
+class SheetConfig(base_register_subclasses_factory(), subclass_type="sheet_config"):
     """Metadata for a type of Google Sheet that this app interacts with"""
 
     sheet_type = None
@@ -109,7 +109,7 @@ class SheetConfig(base_register_subclasses_factory(), subclass_type='sheet_confi
         ]
 
 
-class SingletonSheetConfig(SheetConfig, subclass_type='singleton_sheet_config'):
+class SingletonSheetConfig(SheetConfig, subclass_type="singleton_sheet_config"):
     """
     Metadata for a type of Google Sheet that this app interacts with, and of which only one should exist
     """

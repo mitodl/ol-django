@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('google_sheets', '0001_initial'),
+        ("google_sheets", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='filewatchrenewalattempt',
-            name='sheet_type',
+            model_name="filewatchrenewalattempt",
+            name="sheet_type",
             field=models.CharField(db_index=True, max_length=30),
         ),
     ]
