@@ -238,7 +238,7 @@ class EnrollmentChangeRequestHandler(SheetHandler):
         Args:
             worksheet_id (int):
             start_row (int):
-            sheet_metadata (Type(SheetMetadata)):
+            sheet_metadata (Type(SheetConfig)):
             request_model_cls (Type(EnrollmentChangeRequestModel)):
         """
         self.pygsheets_client = get_authorized_pygsheets_client()

@@ -5,7 +5,6 @@ from django.db import models
 from django.db.models import DateTimeField, Model, PositiveSmallIntegerField
 
 from mitol.common.models import SingletonModel, TimestampedModel
-from mitol.google_sheets.constants import VALID_SHEET_TYPES
 
 
 class GoogleApiAuth(TimestampedModel, SingletonModel):
@@ -65,12 +64,7 @@ class FileWatchRenewalAttempt(Model):
     Tracks attempts to renew a Google file watch. Used for debugging flaky endpoint.
     """
 
-    sheet_type = models.CharField(
-        max_length=30,
-        choices=zip(VALID_SHEET_TYPES, VALID_SHEET_TYPES),
-        db_index=True,
-        null=False,
-    )
+    sheet_type = models.CharField(max_length=30, db_index=True, null=False)
     sheet_file_id = models.CharField(max_length=100, db_index=True, null=False)
     date_attempted = DateTimeField(auto_now_add=True)
     result = models.CharField(max_length=300, null=True, blank=True)
