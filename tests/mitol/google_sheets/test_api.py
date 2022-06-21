@@ -16,7 +16,7 @@ def test_get_credentials_service_account(mocker, settings):
     patched_svc_account_creds = mocker.patch(
         "mitol.google_sheets.api.ServiceAccountCredentials"
     )
-    settings.DRIVE_SERVICE_ACCOUNT_CREDS = '{"credentials": "json"}'
+    settings.MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS = '{"credentials": "json"}'
     settings.SHEETS_ADMIN_EMAILS = ["abc@example.com"]
     settings.MITOL_GOOGLE_SHEETS_GOOGLE_ACCOUNT_EMAIL_DOMAIN = "iam.gserviceaccount.com"
     # An exception should be raised if service account auth is being used, but no service account email
@@ -43,9 +43,9 @@ def test_get_credentials_personal_auth(settings):
     get_credentials should construct a valid Credentials object from data and app settings using personal
     OAuth credentials if Service Account auth is not being used
     """
-    settings.DRIVE_SERVICE_ACCOUNT_CREDS = None
-    settings.DRIVE_CLIENT_ID = "client-id"
-    settings.DRIVE_CLIENT_SECRET = "client-secret"
+    settings.MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS = None
+    settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_ID = "client-id"
+    settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_SECRET = "client-secret"
     settings.ENVIRONMENT = "prod"
     with pytest.raises(ImproperlyConfigured):
         get_credentials()

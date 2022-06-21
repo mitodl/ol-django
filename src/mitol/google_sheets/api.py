@@ -71,7 +71,7 @@ def get_credentials():
     Raises:
         ImproperlyConfigured: Raised if no credentials have been configured
     """
-    if settings.DRIVE_SERVICE_ACCOUNT_CREDS:
+    if settings.MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS:
         is_sharing_to_service_account = any(
             email
             for email in settings.SHEETS_ADMIN_EMAILS
@@ -81,11 +81,11 @@ def get_credentials():
             raise ImproperlyConfigured(
                 "If Service Account auth is being used, the SHEETS_ADMIN_EMAILS setting must "
                 "include a Service Account email for spreadsheet updates/creation to work. "
-                "Add the Service Account email to that setting, or remove the DRIVE_SERVICE_ACCOUNT_CREDS "
+                "Add the Service Account email to that setting, or remove the MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS "
                 "setting and use a different auth method."
             )
         return ServiceAccountCredentials.from_service_account_info(
-            json.loads(settings.DRIVE_SERVICE_ACCOUNT_CREDS),
+            json.loads(settings.MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS),
             scopes=REQUIRED_GOOGLE_API_SCOPES,
         )
     google_api_auth = GoogleApiAuth.objects.order_by("-updated_on").first()
@@ -94,8 +94,8 @@ def get_credentials():
             token=google_api_auth.access_token,
             refresh_token=google_api_auth.refresh_token,
             token_uri=GOOGLE_TOKEN_URI,
-            client_id=settings.DRIVE_CLIENT_ID,
-            client_secret=settings.DRIVE_CLIENT_SECRET,
+            client_id=settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_ID,
+            client_secret=settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_SECRET,
             scopes=REQUIRED_GOOGLE_API_SCOPES,
         )
         # Proactively refresh if necessary
@@ -133,8 +133,10 @@ def get_authorized_pygsheets_client():
     """
     credentials = get_credentials()
     pygsheets_client = pygsheets.authorize(custom_credentials=credentials)
-    if settings.DRIVE_SHARED_ID:
-        pygsheets_client.drive.enable_team_drive(team_drive_id=settings.DRIVE_SHARED_ID)
+    if settings.MITOL_GOOGLE_SHEETS_DRIVE_SHARED_ID:
+        pygsheets_client.drive.enable_team_drive(
+            team_drive_id=settings.MITOL_GOOGLE_SHEETS_DRIVE_SHARED_ID
+        )
     return pygsheets_client
 
 
@@ -149,7 +151,7 @@ class ExpandedSheetsClient:
             pygsheets_client (pygsheets.client.Client): An authorized pygsheets client
         """
         self.pygsheets_client = pygsheets_client
-        self.supports_team_drives = bool(settings.DRIVE_SHARED_ID)
+        self.supports_team_drives = bool(settings.MITOL_GOOGLE_SHEETS_DRIVE_SHARED_ID)
 
     def get_metadata_for_matching_files(self, query, file_fields="id, name"):
         """
@@ -167,7 +169,7 @@ class ExpandedSheetsClient:
             extra_list_params.update(
                 dict(
                     corpora="teamDrive",
-                    teamDriveId=settings.DRIVE_SHARED_ID,
+                    teamDriveId=settings.MITOL_GOOGLE_SHEETS_DRIVE_SHARED_ID,
                     supportsTeamDrives=True,
                     includeTeamDriveItems=True,
                 )
