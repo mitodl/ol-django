@@ -16,15 +16,33 @@ INSTALLED_APPS = [
 ]
 ```
 
-### Configuration
+### Setup
+First, gather a bunch of ID-type values from Drive:
 
-- `MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS` - set to the fully qualified path for a user model factory, otherwise a default based on `django.contrib.auth.models.User` is used
+1. The "Client ID" and "Client secret" values for the web application credentials you created
+    above ([API Console Credentials section](https://console.developers.google.com/apis/credentials))
+2. Your API project ID, which you can find in Google Cloud Platform > IAM & Admin > Settings > Project ID.
+    Example: `my-api-project-1234567890123`
+
+Now using the values you have gathered set those settings:
+- `MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS` - The contents of the Service Account credentials JSON to use for Google API auth
 - `MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_ID` - Client ID from Google API credentials
 - `MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_SECRET` - Client secret from Google API credentials
 - `MITOL_GOOGLE_SHEETS_DRIVE_API_PROJECT_ID` - ID for the Google API project where the credentials were created
 - `MITOL_GOOGLE_SHEETS_DRIVE_SHARED_ID` - ID of the Shared Drive (a.k.a. Team Drive). This is equal to the top-level folder ID
 
 
-### Use
+### Usage with google-sheet-refunds
 
-TODO
+In production, webhooks (also known as "file watches") are set up to make a request
+to your app, so that new changes to spreadsheets can be automatically processed. You can set
+those up locally too, but it's probably easier just to use the management commands.
+
+Here's an example workflow for making a request for refunds:
+
+1. Fill out and submit the spreadsheet request form. This should add a row to the
+ first worksheet in the enrollment code request spreadsheet.
+2. Run the management command to process the sheet:
+ `./manage.py process_refund_requests -i "<spreadsheet id>"`. This should
+ update the "Date Processed" column for the row you added.
+3. Check the status of the request in the spreadsheet.
