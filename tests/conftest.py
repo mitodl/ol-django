@@ -3,6 +3,7 @@ from os import environ
 from types import SimpleNamespace
 
 import pytest
+from django.test.client import Client
 from pytest_django.fixtures import _set_suffix_to_test_databases
 from pytest_django.lazy_django import skip_if_no_django
 
@@ -38,7 +39,7 @@ def learner_drf_client(learner):
 
 
 @pytest.fixture
-def learner():
+def learner(db):
     """Fixture for a default learner"""
     # import is here to avoid trying to load django before settings are initialized
     from mitol.common.factories import UserFactory
@@ -70,3 +71,27 @@ def learner_and_oauth2(learner):
     return SimpleNamespace(
         learner=learner, application=application, access_token=access_token
     )
+
+
+@pytest.fixture
+def staff_user(db):
+    """Staff user fixture"""
+    from mitol.common.factories import UserFactory
+
+    return UserFactory.create(is_staff=True)
+
+
+@pytest.fixture
+def user_client(learner):
+    """Django test client that is authenticated with the user"""
+    client = Client()
+    client.force_login(learner)
+    return client
+
+
+@pytest.fixture
+def staff_client(staff_user):
+    """Django test client that is authenticated with the staff user"""
+    client = Client()
+    client.force_login(staff_user)
+    return client
