@@ -16,7 +16,7 @@ INSTALLED_APPS = [
 ]
 ```
 
-### Setup
+### Configuration
 First, gather a bunch of ID-type values from Drive:
 
 1. The "Client ID" and "Client secret" values for the web application credentials you created
@@ -32,7 +32,7 @@ Now using the values you have gathered set those settings:
 - `MITOL_GOOGLE_SHEETS_DRIVE_SHARED_ID` - ID of the Shared Drive (a.k.a. Team Drive). This is equal to the top-level folder ID
 
 
-### Usage with google-sheet-refunds
+### Usage
 
 In production, webhooks (also known as "file watches") are set up to make a request
 to your app, so that new changes to spreadsheets can be automatically processed. You can set
