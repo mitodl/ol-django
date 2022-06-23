@@ -46,3 +46,40 @@ Here's an example workflow for making a request for refunds:
  `./manage.py process_refund_requests -i "<spreadsheet id>"`. This should
  update the "Date Processed" column for the row you added.
 3. Check the status of the request in the spreadsheet.
+
+
+### Integration with mitol-google-sheets
+
+Add this to your settings file:
+```python
+# import_settings_module, imports the default settings defined in mitol-google-sheets app
+from mitol.common.envs import import_settings_modules
+import_settings_modules(globals(), "mitol.google-sheets.settings.google_sheets")
+```
+
+Create spreadsheed config, for example:
+```python
+from mitol.google_sheets.utils import SingletonSheetConfig
+class RefundRequestSheetConfig(SingletonSheetConfig, subclass_type=<type_of_spreadsheet>):
+    """Metadata for the refund request spreadsheet"""
+    def __init__(self):
+        self.sheet_type = "<type_of_spreadsheet>"
+        self.sheet_name = "Refund Request sheet"
+        self.worksheet_type = WORKSHEET_TYPE_REFUND
+        self.worksheet_name = "Refunds"
+```
+Subclassing `SingletonSheetConfig` will allow you have your spreadsheet type registered in the base class. This
+allows to determine the appropriate config class based on the type of spreadsheet
+by running `SingletonSheetConfig.get_subclass_by_type(<type_of_sheet>)`. This is used in various
+tasks, and management commands where you want to set up file watch on all current registered
+spreadsheets.
+
+In your `urls.py`:
+```python
+urlpatterns = (
+    [
+        ...
+        path("", include("mitol.google_sheets.urls")),
+    ]
+)
+```
