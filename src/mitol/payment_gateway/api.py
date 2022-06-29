@@ -4,6 +4,7 @@ API for the Payment Gateway
 import abc
 import hashlib
 import hmac
+import json
 import uuid
 from base64 import b64encode
 from dataclasses import dataclass
@@ -11,6 +12,13 @@ from decimal import Decimal
 from functools import wraps
 from typing import List
 
+from CyberSource import (
+    Ptsv2paymentsClientReferenceInformation,
+    Ptsv2paymentsidcapturesOrderInformationAmountDetails,
+    Ptsv2paymentsidrefundsOrderInformation,
+    RefundApi,
+    RefundPaymentRequest,
+)
 from django.conf import settings
 
 from mitol.common.utils.datetime import now_in_utc
@@ -18,6 +26,8 @@ from mitol.payment_gateway.constants import (
     ISO_8601_FORMAT,
     MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
 )
+from mitol.payment_gateway.exceptions import RefundDuplicateException
+from mitol.payment_gateway.payment_utils import clean_request_data
 
 
 @dataclass
@@ -62,6 +72,22 @@ class Order:
 
 
 @dataclass
+class Refund:
+    """
+    Represents a refund request data
+
+    Fields:
+    - transaction_id: transaction id of a successful payment
+    - refund_amount: Amount to be refunded
+    - refund_currency: Currency for refund amount (Ideally, this should be the currency used while payment)
+    """
+
+    transaction_id: str
+    refund_amount: float
+    refund_currency: str
+
+
+@dataclass
 class ProcessorResponse:
     """
     Standardizes the salient parts of the response from the
@@ -82,12 +108,18 @@ class ProcessorResponse:
     message: str
     response_code: str
     transaction_id: str
+    # In some cases we would need this data as traceback (Can be saved in the Transaction entries in Database)
+    response_data: str
 
     STATE_ACCEPTED = "ACCEPT"
     STATE_DECLINED = "DECLINE"
     STATE_ERROR = "ERROR"
     STATE_CANCELLED = "CANCEL"
     STATE_REVIEW = "REVIEW"
+    # It's more of a reason then state, but treating this as state keeps it bound with the overall architecture
+    STATE_DUPLICATE = "DUPLICATE_REQUEST"
+    # The possible state for a successful refund is always `PENDING`
+    STATE_PENDING = "PENDING"
 
 
 class PaymentGateway(abc.ABC):
@@ -177,6 +209,27 @@ class PaymentGateway(abc.ABC):
         """
         pass
 
+    @staticmethod
+    @abc.abstractmethod
+    def get_client_configuration():
+        """
+        This is the function that will provide required configuration for a PaymentGateway
+        """
+        pass
+
+    @abc.abstractmethod
+    def perform_refund(self, refund):
+        """
+        This is the entrypoint to the payment gateway.
+
+        Args:
+            refund: (Refund) Data class for refund request (see the data classes above)
+        Returns:
+            ProcessorResponse
+
+        """
+        pass
+
     @classmethod
     @find_gateway_class
     def start_payment(
@@ -199,6 +252,22 @@ class PaymentGateway(abc.ABC):
         """
 
         return payment_type.prepare_checkout(order, receipt_url, cancel_url, **kwargs)
+
+    @classmethod
+    @find_gateway_class
+    def start_refund(cls, payment_type, refund: Refund):
+        """
+        Starts the payment refund process for the given type. See prepare_checkout for
+        more detail about these arguments (other than payment_type).
+
+        Args:
+            payment_type    String; gateway class to use
+            refund          Object: Refund
+        Returns:
+            see perform_refund
+        """
+
+        return payment_type.perform_refund(refund)
 
     @classmethod
     @find_gateway_class
@@ -369,6 +438,107 @@ class CyberSourcePaymentGateway(
             "method": "POST",
         }
 
+    @staticmethod
+    def get_client_configuration():
+        """
+        Get the configuration required for CyberSource API client
+        """
+        configuration_dictionary = {
+            "authentication_type": "http_signature",
+            "merchantid": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_MERCHANT_ID,
+            "run_environment": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_REST_API_ENVIRONMENT,
+            "merchant_keyid": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_MERCHANT_SECRET_KEY_ID,
+            "merchant_secretkey": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_MERCHANT_SECRET,
+            "timeout": 1000,
+        }
+        return configuration_dictionary
+
+    def perform_refund(self, refund):
+        """
+        Based on the provided refund detail data object, this method calls the cyber source refund API call after
+        performing the appropriate operation on the data.
+
+        returns:
+
+            i) API Success:
+                Returns a ProcessorResponse object that the caller app can use to perform whatever they need
+
+            ii)  API Failure ("DUPLICATE_REQUEST"):
+                Raises RefundDuplicateException when the refund API call is duplicate
+
+            iii)  API Failure (General):
+                Raises the exception(Mostly CyberSource.rest.ApiException) to the caller to decide what their
+                application behaviour
+        """
+
+        api_instance = RefundApi(self.get_client_configuration())
+        refund_payload = self.generate_refund_payload(refund)
+        transaction_id = refund.transaction_id
+
+        try:
+            return_data, status, body = api_instance.refund_payment(
+                refund_payload, transaction_id
+            )
+            response_body = json.loads(body)
+
+            # Transforming the response in a format that process response decoder can work on while keeping our
+            # structure consistent
+            response_transformed = {
+                "data": response_body,
+                "reason_code": response_body.get("processorInformation", {}).get(
+                    "responseCode", ""
+                ),
+                "transaction_id": transaction_id,
+                "message": "The refund request was successful",
+                "decision": response_body["status"],
+            }
+
+            response = self.decode_processor_api_response(response_transformed)
+            return response
+
+        except Exception as ex:
+            exception_body = json.loads(ex.body)
+
+            # Special case for request failure when DUPLICATE_REQUEST
+            if exception_body["reason"] == ProcessorResponse.STATE_DUPLICATE:
+                raise RefundDuplicateException(
+                    exception_body["reason"],
+                    transaction_id,
+                    refund.refund_amount,
+                    exception_body,
+                    message=exception_body["message"],
+                )
+
+            raise ex
+
+    def generate_refund_payload(self, refund):
+        """
+        CyberSource API client would expect the payload in a specific format to perform the refund API call.
+        This method generated that payload out of the Refund data class(s)
+        """
+        transaction_id = refund.transaction_id
+        order_information_amount_details = (
+            Ptsv2paymentsidcapturesOrderInformationAmountDetails(
+                total_amount=refund.refund_amount, currency=refund.refund_currency
+            )
+        )
+
+        order_information = Ptsv2paymentsidrefundsOrderInformation(
+            amount_details=clean_request_data(order_information_amount_details.__dict__)
+        )
+        client_reference_information = Ptsv2paymentsClientReferenceInformation(
+            transaction_id=transaction_id
+        )
+        refund_request = RefundPaymentRequest(
+            client_reference_information=clean_request_data(
+                client_reference_information.__dict__
+            ),
+            order_information=clean_request_data(order_information.__dict__),
+        )
+        refund_request = refund_request.__dict__
+
+        return json.dumps(refund_request)
+
     def perform_processor_response_validation(self, request):
         """
         CyberSource will send back a payload signed in the same manner that the
@@ -445,28 +615,72 @@ class CyberSourcePaymentGateway(
             "Could not decode the processor response",
             "",
             "",
+            "",
         )
 
-        fmt_response.message = response["message"]
-
-        # CyberSource has no reason codes for cancellation at least
-        if "reason_code" in response:
-            fmt_response.response_code = response["reason_code"]
-
-        # Same for transaction_id
-        if "transaction_id" in response:
-            fmt_response.transaction_id = response["transaction_id"]
-
-        if response["decision"] == "ACCEPT":
-            fmt_response.state = ProcessorResponse.STATE_ACCEPTED
-        elif response["decision"] == "DECLINE":
-            fmt_response.state = ProcessorResponse.STATE_DECLINED
-        elif response["decision"] == "ERROR":
-            fmt_response.state = ProcessorResponse.STATE_ERROR
-            # maybe should log here? this is a straight-up something went wrong between the app and the processor state
-        elif response["decision"] == "CANCEL":
-            fmt_response.state = ProcessorResponse.STATE_CANCELLED
-        elif response["decision"] == "REVIEW":
-            fmt_response.state = ProcessorResponse.STATE_REVIEW
+        # Format the order response using quick wrapping functions
+        fmt_response.message = self._get_response_message(response)
+        fmt_response.response_code = self._get_reason_code(response)
+        fmt_response.transaction_id = self._get_response_transaction_id(response)
+        fmt_response.state = self._get_decision_from_response(response)
 
         return fmt_response
+
+    def decode_processor_api_response(self, response):
+        """
+        The CyberSource implementation for decoding the processor response specifically for the API calls. The response
+        from the SecureAccept and the REST API calls is different so like "decode_processor_response"
+        this method generates the common ProcessorResponse out of the API response
+        """
+
+        fmt_response = ProcessorResponse(
+            ProcessorResponse.STATE_ERROR,
+            "Could not decode the processor response",
+            "",
+            "",
+            "",
+        )
+        fmt_response.message = self._get_response_message(response)
+
+        # CyberSource has no reason codes for cancellation at least
+        fmt_response.response_code = self._get_reason_code(response)
+
+        # Same for transaction_id
+        fmt_response.transaction_id = self._get_response_transaction_id(response)
+
+        fmt_response.state = self._get_decision_from_response(response)
+        fmt_response.response_data = response.get("data", "")
+
+        return fmt_response
+
+    def _get_response_message(self, response):
+        """Getter for message key from payload"""
+        return response.get("message", "")
+
+    def _get_reason_code(self, response):
+        """Getter for reason_code key from payload"""
+        return response.get("reason_code", "")
+
+    def _get_response_transaction_id(self, response):
+        """Getter for transaction_id key from payload"""
+        return response.get("transaction_id", "")
+
+    def _get_decision_from_response(self, response):
+        """Getter for appropriate response state based on the decision key from payload"""
+        decision = response.get("decision", None)
+
+        if not decision or decision == "ERROR":
+            return ProcessorResponse.STATE_ERROR
+        elif decision == "ACCEPT":
+            return ProcessorResponse.STATE_ACCEPTED
+        elif decision == "DECLINE":
+            return ProcessorResponse.STATE_DECLINED
+            # maybe should log here? this is a straight-up something went wrong between the app and the processor state
+        elif decision == "CANCEL":
+            return ProcessorResponse.STATE_CANCELLED
+        elif decision == "REVIEW":
+            return ProcessorResponse.STATE_REVIEW
+        elif decision == "PENDING":
+            return ProcessorResponse.STATE_PENDING
+
+        return ProcessorResponse.STATE_ERROR

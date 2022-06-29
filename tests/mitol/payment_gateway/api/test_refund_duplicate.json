@@ -1,0 +1,7 @@
+{
+  "id": "111111111",
+  "submitTimeUtc": "2022-06-08T22:17:10Z",
+  "status": "INVALID_REQUEST",
+  "reason": "DUPLICATE_REQUEST",
+  "message": "Declined - The transaction identifier sent with this request has already been used in the last 60 days"
+}

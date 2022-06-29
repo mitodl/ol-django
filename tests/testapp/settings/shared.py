@@ -26,6 +26,7 @@ import_settings_modules(
     "mitol.mail.settings.email",
     "mitol.authentication.settings.touchstone",
     "mitol.authentication.settings.djoser_settings",
+    "mitol.payment_gateway.settings.cybersource",
 )
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -186,3 +187,6 @@ MITOL_PAYMENT_GATEWAY_CYBERSOURCE_ACCESS_KEY = "abc123"
 MITOL_PAYMENT_GATEWAY_CYBERSOURCE_PROFILE_ID = "abc123"
 MITOL_PAYMENT_GATEWAY_CYBERSOURCE_SECURITY_KEY = "Test1234"
 MITOL_PAYMENT_GATEWAY_CYBERSOURCE_SECURE_ACCEPTANCE_URL = "https://google.com"
+MITOL_PAYMENT_GATEWAY_CYBERSOURCE_MERCHANT_ID = "test"
+MITOL_PAYMENT_GATEWAY_CYBERSOURCE_MERCHANT_SECRET = "test1234"
+MITOL_PAYMENT_GATEWAY_CYBERSOURCE_MERCHANT_SECRET_KEY_ID = "test1234"

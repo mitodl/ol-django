@@ -12,6 +12,7 @@ python_requirements(
         "edx-opaque-keys": ["opaque_keys"],
         "google-api-python-client": ["googleapiclient"],
         "pytest-lazy-fixture": ["pytest_lazyfixture"],
+        "cybersource-rest-client-python": ["CyberSource"],
     },
 )
 

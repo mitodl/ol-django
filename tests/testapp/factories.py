@@ -1,4 +1,7 @@
 """Test factories"""
+
+import string
+
 import faker
 from factory import Factory, SubFactory, fuzzy
 from factory.django import DjangoModelFactory
@@ -9,7 +12,7 @@ from mitol.digitalcredentials.factories import (
     DigitalCredentialFactory,
     DigitalCredentialRequestFactory,
 )
-from mitol.payment_gateway.api import CartItem, Order
+from mitol.payment_gateway.api import CartItem, Order, Refund
 
 FAKE = faker.Factory.create()
 
@@ -55,3 +58,16 @@ class OrderFactory(Factory):
     reference = fuzzy.FuzzyText(length=6)
     username = FAKE.safe_email()
     items = []
+
+
+class RefundFactory(Factory):
+    """Factory for creating Refund data object for CyberSource API calls"""
+
+    class Meta:
+        model = Refund
+
+    transaction_id = fuzzy.FuzzyText(length=22, chars=string.digits)
+    refund_amount = fuzzy.FuzzyFloat(
+        1.00, 100.00
+    )  # Just a random amount with some min/max constraints
+    refund_currency = "USD"
