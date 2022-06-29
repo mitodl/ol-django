@@ -243,7 +243,7 @@ class EnrollmentChangeRequestHandler(SheetHandler):
         """
         self.pygsheets_client = get_authorized_pygsheets_client()
         self.spreadsheet = self.pygsheets_client.open_by_key(
-            settings.ENROLLMENT_CHANGE_SHEET_ID
+            settings.MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID
         )
         self.worksheet_id = worksheet_id
         self.start_row = start_row

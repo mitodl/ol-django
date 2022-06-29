@@ -38,3 +38,10 @@ MITOL_GOOGLE_SHEETS_DRIVE_SHARED_ID = get_string(
     default=None,
     description="ID of the Shared Drive (a.k.a. Team Drive). This is equal to the top-level folder ID.",
 )
+MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID = get_string(
+    name="MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID",
+    default=None,
+    description=(
+        "ID of the Google Sheet that contains the enrollment change request worksheets (refunds, transfers, etc)"
+    ),
+)

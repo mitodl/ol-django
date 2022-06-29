@@ -69,3 +69,14 @@ class FileWatchRenewalAttempt(Model):
     date_attempted = DateTimeField(auto_now_add=True)
     result = models.CharField(max_length=300, null=True, blank=True)
     result_status_code = PositiveSmallIntegerField(null=True, blank=True)
+
+
+class EnrollmentChangeRequestModel(TimestampedModel):
+    """Model that represents a request to change an enrollment"""
+
+    form_response_id = models.IntegerField(db_index=True, unique=True, null=False)
+    date_completed = models.DateTimeField(null=True, blank=True)
+    raw_data = models.CharField(max_length=300, null=True, blank=True)
+
+    class Meta:
+        abstract = True
