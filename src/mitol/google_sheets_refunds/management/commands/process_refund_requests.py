@@ -15,12 +15,12 @@ class Command(BaseCommand):
 
     help = __doc__
 
-    def add_arguments(self, parser):  # pylint:disable=missing-docstring
+    def add_arguments(self, parser):
         parser.add_argument(
             "-r", "--row", type=int, help="Row number in the refund request Sheet"
         )
 
-    def handle(self, *args, **options):  # pylint:disable=missing-docstring
+    def handle(self, *args, **options):
         refund_request_handler = RefundRequestHandler()
         self.stdout.write("Handling refunds and updating spreadsheet...")
         results = refund_request_handler.process_sheet(

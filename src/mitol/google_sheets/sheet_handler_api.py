@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils.functional import cached_property
 
-from mitol.common.collections import group_into_dict, item_at_index_or_none
+from mitol.common.utils.collections import group_into_dict, item_at_index_or_none
 from mitol.google_sheets.api import get_authorized_pygsheets_client
 from mitol.google_sheets.constants import GOOGLE_API_TRUE_VAL, GOOGLE_SHEET_FIRST_ROW
 from mitol.google_sheets.utils import (
