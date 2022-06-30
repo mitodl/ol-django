@@ -4,14 +4,13 @@ import os
 from types import SimpleNamespace
 
 import pytest
-from pygsheets import Worksheet, Spreadsheet
+from pygsheets import Spreadsheet, Worksheet
 from pygsheets.client import Client as PygsheetsClient
 from pygsheets.drive import DriveAPIWrapper
 from pygsheets.sheet import SheetAPIWrapper
 
 from mitol.google_sheets.factories import GoogleApiAuthFactory
 from mitol.google_sheets.utils import ResultType
-
 from mitol.google_sheets_refunds.api import RefundRequestHandler, RefundRequestRow
 from mitol.google_sheets_refunds.models import RefundRequest
 
@@ -61,9 +60,7 @@ def pygsheets_fixtures(mocker, db, request_csv_rows):
     )
 
 
-def test_full_sheet_process(
-    db, settings, pygsheets_fixtures, request_csv_rows
-):
+def test_full_sheet_process(db, settings, pygsheets_fixtures, request_csv_rows):
     """
     RefundRequestHandler.process_sheet should parse rows, create relevant objects in the database, and report
     on results
@@ -73,14 +70,16 @@ def test_full_sheet_process(
     expected_processed_rows = {6, 8}
     expected_failed_rows = {5, 7}
     assert ResultType.PROCESSED.value in result
-    assert set(result[ResultType.PROCESSED.value]) == expected_processed_rows, (
-        "Rows %s as defined in refund_requests.csv should be processed"
-        % str(expected_processed_rows)
+    assert (
+        set(result[ResultType.PROCESSED.value]) == expected_processed_rows
+    ), "Rows %s as defined in refund_requests.csv should be processed" % str(
+        expected_processed_rows
     )
     assert ResultType.FAILED.value in result
-    assert set(result[ResultType.FAILED.value]) == expected_failed_rows, (
-        "Rows %s as defined in refund_requests.csv should fail"
-        % str(expected_failed_rows)
+    assert (
+        set(result[ResultType.FAILED.value]) == expected_failed_rows
+    ), "Rows %s as defined in refund_requests.csv should fail" % str(
+        expected_failed_rows
     )
     # A RefundRequest should be created for each row that wasn't ignored and did not fail full sheet
     # validation (CSV has 1 row that should fail validation, hence the 1)

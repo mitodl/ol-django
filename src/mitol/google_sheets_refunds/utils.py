@@ -1,17 +1,19 @@
 """Google Sheets Refunds app util functions"""
 from django.conf import settings
 
-from mitol.google_sheets.utils import SingletonSheetConfig, get_column_letter
 from mitol.google_sheets.constants import GOOGLE_API_TRUE_VAL
 from mitol.google_sheets.exceptions import SheetRowParsingException
 from mitol.google_sheets.utils import (
+    SingletonSheetConfig,
     clean_sheet_value,
+    get_column_letter,
     parse_sheet_date_only_str,
 )
 from mitol.google_sheets_refunds.constants import (
     SHEET_TYPE_ENROLL_CHANGE,
     WORKSHEET_TYPE_REFUND,
 )
+
 
 class RefundRequestRow:
     """Represents a row of the refund request sheet"""
@@ -91,7 +93,6 @@ class RefundRequestRow:
             )
         except Exception as exc:
             raise SheetRowParsingException(str(exc)) from exc
-
 
 
 class RefundRequestSheetConfig(

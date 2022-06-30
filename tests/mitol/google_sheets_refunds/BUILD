@@ -1,3 +1,5 @@
+resources(name="resources", sources=["**/*.csv"])
+
 python_tests(
     name="test-google-sheets-refunds",
     sources=["**/test_*.py"],
