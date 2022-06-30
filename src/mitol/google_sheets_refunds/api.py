@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from mitol.common.utils.datetime import now_in_utc
 from mitol.google_sheets.constants import GOOGLE_API_TRUE_VAL
 from mitol.google_sheets.exceptions import SheetRowParsingException
-from mitol.google_sheets.sheet_handler_api import EnrollmentChangeRequestHandler
+from mitol.google_sheets.sheet_handler_api import GoogleSheetsChangeRequestHandler
 from mitol.google_sheets.utils import (
     ResultType,
     RowResult,
@@ -43,7 +43,7 @@ class RefundRequestRow:  # pylint: disable=too-many-instance-attributes
         refund_complete_date,
         errors,
         skip_row,
-    ):  # pylint: disable=too-many-arguments,too-many-locals
+    ):
         self.row_index = row_index
         self.response_id = response_id
         self.request_date = request_date
@@ -102,13 +102,14 @@ class RefundRequestRow:  # pylint: disable=too-many-instance-attributes
             raise SheetRowParsingException(str(exc)) from exc
 
 
-class RefundRequestHandler(EnrollmentChangeRequestHandler):
+class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
     """Manages the processing of refund requests from a spreadsheet"""
 
     def __init__(self):
         self.pm = get_plugin_manager()
         self.hook = self.pm.hook
         super().__init__(
+            spreadsheet_id=settings.MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID,
             worksheet_id=settings.MITOL_GOOGLE_SHEETS_REFUNDS_REQUEST_WORKSHEET_ID,
             start_row=settings.MITOL_GOOGLE_SHEETS_REFUNDS_FIRST_ROW,
             sheet_metadata=refund_sheet_config,

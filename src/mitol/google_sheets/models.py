@@ -71,7 +71,7 @@ class FileWatchRenewalAttempt(Model):
     result_status_code = PositiveSmallIntegerField(null=True, blank=True)
 
 
-class EnrollmentChangeRequestModel(TimestampedModel):
+class GoogleSheetsRequestModel(TimestampedModel):
     """Model that represents a request to change an enrollment"""
 
     form_response_id = models.IntegerField(db_index=True, unique=True, null=False)

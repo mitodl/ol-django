@@ -128,7 +128,7 @@ class SheetHandler:
             row_data (List[str]): Raw data from a row in the spreadsheet
 
         Returns:
-            Tuple[Type(EnrollmentChangeRequestModel), bool, bool]: A tuple containing an object representing the
+            Tuple[Type(GoogleSheetsRequestModel), bool, bool]: A tuple containing an object representing the
                 request, a flag that indicates whether or not it was newly created, and a flag that indicates
                 whether or not it was updated.
         """
@@ -227,24 +227,25 @@ class SheetHandler:
         }
 
 
-class EnrollmentChangeRequestHandler(SheetHandler):
+class GoogleSheetsChangeRequestHandler(SheetHandler):
     """
     Base class for managing the processing of enrollment change requests from a spreadsheet
     """
 
-    def __init__(self, worksheet_id, start_row, sheet_metadata, request_model_cls):
+    def __init__(
+        self, spreadsheet_id, worksheet_id, start_row, sheet_metadata, request_model_cls
+    ):
         """
 
         Args:
+            spreadsheet_id (int):
             worksheet_id (int):
             start_row (int):
             sheet_metadata (Type(SheetConfig)):
-            request_model_cls (Type(EnrollmentChangeRequestModel)):
+            request_model_cls (Type(GoogleSheetsRequestModel)):
         """
         self.pygsheets_client = get_authorized_pygsheets_client()
-        self.spreadsheet = self.pygsheets_client.open_by_key(
-            settings.MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID
-        )
+        self.spreadsheet = self.pygsheets_client.open_by_key(spreadsheet_id)
         self.worksheet_id = worksheet_id
         self.start_row = start_row
         self.sheet_metadata = sheet_metadata

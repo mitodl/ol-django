@@ -5,7 +5,7 @@ from mitol.common.apps import BaseApp
 
 
 class GoogleSheetsRefundsApp(BaseApp):
-    """Default configuration for the Google Sheets app"""
+    """Default configuration for the Google Sheets Refunds app"""
 
     name = "mitol.google_sheets_refunds"
     label = "google_sheets_refunds"

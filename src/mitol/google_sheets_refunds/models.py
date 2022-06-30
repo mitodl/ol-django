@@ -1,8 +1,8 @@
 """Models for Refunds"""
-from mitol.google_sheets.models import EnrollmentChangeRequestModel
+from mitol.google_sheets.models import GoogleSheetsRequestModel
 
 
-class RefundRequest(EnrollmentChangeRequestModel):
+class RefundRequest(GoogleSheetsRequestModel):
     """Model that represents a request to refund an enrollment"""
 
     def __str__(self):
