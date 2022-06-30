@@ -58,7 +58,7 @@ jobs:
         run: sudo apt-get install -y libxmlsec1-dev
 
       - name: Lints
-        run: ./pants lint "tests/mitol/${{ matrix.app-name }}:"
+        run: ./pants lint "src/mitol/${{ matrix.app-name }}:" "tests/mitol/${{ matrix.app-name }}:"
 
       # - name: Typecheck
       #   run: ./pants typecheck "tests/mitol/${{ matrix.app-name }}:"
