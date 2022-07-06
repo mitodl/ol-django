@@ -3,7 +3,6 @@
 import os
 from types import SimpleNamespace
 
-import pluggy
 import pytest
 from pygsheets import Spreadsheet, Worksheet
 from pygsheets.client import Client as PygsheetsClient
@@ -12,8 +11,7 @@ from pygsheets.sheet import SheetAPIWrapper
 
 from mitol.google_sheets.factories import GoogleApiAuthFactory
 from mitol.google_sheets.utils import ResultType
-from mitol.google_sheets_refunds.api import RefundRequestHandler, RefundRequestRow
-from mitol.google_sheets_refunds.models import RefundRequest
+from mitol.google_sheets_refunds.api import RefundRequestHandler
 
 
 @pytest.fixture
