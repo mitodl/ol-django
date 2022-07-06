@@ -1,4 +1,4 @@
-resources(name="resources", sources=["**/*.csv"])
+resources(name="files", sources=["**/*.csv"])
 
 python_tests(
     name="test-google-sheets-refunds",
@@ -6,5 +6,6 @@ python_tests(
     dependencies=[
         "tests:pytest-tests",
         "tests:testapp-lib",
+        ":files"
     ],
 )

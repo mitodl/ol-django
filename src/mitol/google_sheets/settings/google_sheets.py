@@ -1,4 +1,6 @@
 """google sheets settings """
+import pytz
+
 from mitol.common.envs import get_string
 
 MITOL_GOOGLE_SHEET_PROCESSOR_APP_NAME = get_string(
@@ -45,3 +47,17 @@ MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID = get_string(
         "ID of the Google Sheet that contains the enrollment change request worksheets (refunds, transfers, etc)"
     ),
 )
+MITOL_GOOGLE_SHEETS_DATE_ONLY_FORMAT = get_string(
+    name="MITOL_GOOGLE_SHEETS_DATE_ONLY_FORMAT",
+    default="%m/%d/%Y",
+    description="Python strptime format for date columns (no time) in enrollment management spreadsheets",
+)
+_sheets_date_timezone = get_string(
+    name="MITOL_GOOGLE_SHEETS_DATE_TIMEZONE",
+    default="UTC",
+    description=(
+        "The name of the timezone that should be assumed for date/time values in spreadsheets. "
+        "Choose from a value in the TZ database (https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)."
+    ),
+)
+MITOL_GOOGLE_SHEETS_DATE_TIMEZONE = pytz.timezone(_sheets_date_timezone)

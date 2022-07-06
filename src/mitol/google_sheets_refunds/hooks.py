@@ -4,7 +4,7 @@ import pluggy
 from django.conf import settings
 from django.utils.module_loading import import_string
 
-from mitol.google_sheets_refunds.api import RefundRequestRow
+from mitol.google_sheets_refunds.utils import RefundRequestRow
 
 
 class RefundResult(typing.NamedTuple):

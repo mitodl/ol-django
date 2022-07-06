@@ -84,25 +84,23 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
                 result_type=ResultType.OUT_OF_SYNC,
                 message=None,
             )
-
-        for result_type, message in self.hook.refunds_process_request(refund_request):
-            if result_type != ResultType.PROCESSED:
-                # TODO: rollback the surrounding transaction
-                return RowResult(
-                    row_index=row_index,
-                    row_db_record=refund_request,
-                    row_object=None,
-                    result_type=ResultType.PROCESSED,
-                    message=message,
-                )
-
+        result_type, message = self.hook.refunds_process_request(refund_request)
+        if result_type != ResultType.PROCESSED:
+            # TODO: rollback the surrounding transaction
+            return RowResult(
+                row_index=row_index,
+                row_db_record=refund_request,
+                row_object=None,
+                result_type=ResultType.PROCESSED,
+                message=message,
+            )
         refund_request.date_completed = now_in_utc()
         refund_request.save()
 
         return RowResult(
             row_index=row_index,
             row_db_record=refund_request,
-            row_object=row_object,
+            row_object=refund_req_row,
             result_type=result_type,
             message=message,
         )

@@ -317,9 +317,13 @@ def _parse_sheet_date_str(date_str, date_format):
     if not date_str:
         return None
     dt = datetime.datetime.strptime(date_str, date_format).astimezone(
-        settings.SHEETS_DATE_TIMEZONE
+        settings.MITOL_GOOGLE_SHEETS_DATE_TIMEZONE
     )
-    return dt if settings.SHEETS_DATE_TIMEZONE == pytz.UTC else dt.astimezone(pytz.UTC)
+    return (
+        dt
+        if settings.MITOL_GOOGLE_SHEETS_DATE_TIMEZONE == pytz.UTC
+        else dt.astimezone(pytz.UTC)
+    )
 
 
 def parse_sheet_datetime_str(datetime_str):
@@ -345,7 +349,9 @@ def parse_sheet_date_only_str(date_str):
     Returns:
         datetime.datetime or None: The parsed datetime (in UTC) or None
     """
-    return _parse_sheet_date_str(date_str, settings.SHEETS_DATE_ONLY_FORMAT)
+    return _parse_sheet_date_str(
+        date_str, settings.MITOL_GOOGLE_SHEETS_DATE_ONLY_FORMAT
+    )
 
 
 def google_timestamp_to_datetime(google_timestamp):

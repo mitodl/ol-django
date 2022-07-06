@@ -3,6 +3,7 @@
 import os
 from types import SimpleNamespace
 
+import pluggy
 import pytest
 from pygsheets import Spreadsheet, Worksheet
 from pygsheets.client import Client as PygsheetsClient
@@ -19,7 +20,7 @@ from mitol.google_sheets_refunds.models import RefundRequest
 def request_csv_rows(settings):
     """Fake refund request spreadsheet data rows (loaded from CSV)"""
     fake_request_csv_filepath = os.path.join(
-        settings.BASE_DIR, "mitol/google_sheets_refunds/resources/refund_requests.csv"
+        settings.BASE_DIR, "mitol/google_sheets_refunds/refund_requests.csv"
     )
     with open(fake_request_csv_filepath) as f:
         # Return all rows except for the header
@@ -33,7 +34,8 @@ def pygsheets_fixtures(mocker, db, request_csv_rows):
     MagicMock = mocker.MagicMock
     google_api_auth = GoogleApiAuthFactory.create()
     patched_get_data_rows = mocker.patch(
-        "sheets.sheet_handler_api.get_data_rows", return_value=request_csv_rows
+        "mitol.google_sheets.sheet_handler_api.get_data_rows_after_start",
+        return_value=request_csv_rows,
     )
     mocked_worksheet = MagicMock(spec=Worksheet, get_all_values=Mock(return_value=[]))
     mocked_spreadsheet = MagicMock(
@@ -48,7 +50,7 @@ def pygsheets_fixtures(mocker, db, request_csv_rows):
         create=Mock(return_value=mocked_spreadsheet),
     )
     mocker.patch(
-        "sheets.coupon_request_api.get_authorized_pygsheets_client",
+        "mitol.google_sheets.sheet_handler_api.get_authorized_pygsheets_client",
         return_value=mocked_pygsheets_client,
     )
     return SimpleNamespace(
@@ -60,15 +62,32 @@ def pygsheets_fixtures(mocker, db, request_csv_rows):
     )
 
 
-def test_full_sheet_process(db, settings, pygsheets_fixtures, request_csv_rows):
+def test_full_sheet_process(db, settings, mocker, pygsheets_fixtures, request_csv_rows):
     """
     RefundRequestHandler.process_sheet should parse rows, create relevant objects in the database, and report
     on results
     """
+    settings.MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID = "1"
+    mocked_plugin_manager = mocker.Mock(
+        hook=mocker.Mock(
+            refunds_process_request=mocker.Mock(
+                return_value=(ResultType.PROCESSED, "message")
+            )
+        )
+    )
+
+    mock_get_plugin_manager = mocker.patch(
+        "mitol.google_sheets_refunds.api.get_plugin_manager",
+        return_value=mocked_plugin_manager,
+    )
+
     handler = RefundRequestHandler()
+
+    mock_get_plugin_manager.assert_called_once()
+
     result = handler.process_sheet()
-    expected_processed_rows = {6, 8}
-    expected_failed_rows = {5, 7}
+    expected_processed_rows = {4, 5}
+    expected_failed_rows = {6, 7}
     assert ResultType.PROCESSED.value in result
     assert (
         set(result[ResultType.PROCESSED.value]) == expected_processed_rows
@@ -80,9 +99,4 @@ def test_full_sheet_process(db, settings, pygsheets_fixtures, request_csv_rows):
         set(result[ResultType.FAILED.value]) == expected_failed_rows
     ), "Rows %s as defined in refund_requests.csv should fail" % str(
         expected_failed_rows
-    )
-    # A RefundRequest should be created for each row that wasn't ignored and did not fail full sheet
-    # validation (CSV has 1 row that should fail validation, hence the 1)
-    assert RefundRequest.objects.all().count() == (
-        len(expected_processed_rows) + len(expected_failed_rows) - 1
     )

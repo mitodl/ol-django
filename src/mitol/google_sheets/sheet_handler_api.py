@@ -198,7 +198,6 @@ class SheetHandler:
             ]
         filtered_rows = self.filter_ignored_rows(enumerated_rows)
         valid_enumerated_rows, row_results = self.validate_sheet(filtered_rows)
-
         for row_index, row_data in valid_enumerated_rows:
             row_result = None
             try:
@@ -281,7 +280,7 @@ class GoogleSheetsChangeRequestHandler(SheetHandler):
                         settings.MITOL_GOOGLE_SHEET_PROCESSOR_APP_NAME,
                         format_datetime_for_sheet_formula(
                             row_result.row_db_record.date_completed.astimezone(
-                                settings.SHEETS_DATE_TIMEZONE
+                                settings.MITOL_GOOGLE_SHEETS_DATE_TIMEZONE
                             )
                         ),
                         "",
@@ -309,29 +308,6 @@ class GoogleSheetsChangeRequestHandler(SheetHandler):
                 enroll_change_request.raw_data = user_input_json
                 enroll_change_request.save()
         return enroll_change_request, created, raw_data_changed
-
-    def filter_ignored_rows(self, enumerated_rows):
-        completed_form_response_ids = set(
-            self.request_model_cls.objects.exclude(date_completed=None).values_list(
-                "form_response_id", flat=True
-            )
-        )
-        for row_index, row_data in enumerated_rows:
-            if item_at_index_or_none(
-                row_data, self.sheet_metadata.SKIP_ROW_COL
-            ) == GOOGLE_API_TRUE_VAL or item_at_index_or_none(
-                row_data, self.sheet_metadata.COMPLETED_DATE_COL
-            ):
-                continue
-            form_response_id = int(
-                row_data[self.sheet_metadata.FORM_RESPONSE_ID_COL].strip()
-            )
-            completed_date_str = row_data[
-                self.sheet_metadata.COMPLETED_DATE_COL
-            ].strip()
-            if form_response_id in completed_form_response_ids and completed_date_str:
-                continue
-            yield row_index, row_data
 
     def process_row(self, row_index, row_data):
         raise NotImplementedError
