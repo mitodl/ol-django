@@ -1,5 +1,4 @@
 import random
-from django.conf import settings
 from functools import wraps
 
 from django.utils.cache import get_max_age, patch_cache_control

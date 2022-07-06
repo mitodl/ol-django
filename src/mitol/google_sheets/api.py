@@ -10,7 +10,6 @@ from urllib.parse import urljoin
 import pygsheets
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db import transaction
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials
@@ -24,15 +23,8 @@ from mitol.google_sheets.constants import (
     GOOGLE_TOKEN_URI,
     REQUIRED_GOOGLE_API_SCOPES,
 )
-from mitol.google_sheets.models import (
-    FileWatchRenewalAttempt,
-    GoogleApiAuth,
-    GoogleFileWatch,
-)
-from mitol.google_sheets.utils import (
-    format_datetime_for_google_timestamp,
-    google_timestamp_to_datetime,
-)
+from mitol.google_sheets.models import GoogleApiAuth
+from mitol.google_sheets.utils import format_datetime_for_google_timestamp
 
 log = logging.getLogger(__name__)
 
