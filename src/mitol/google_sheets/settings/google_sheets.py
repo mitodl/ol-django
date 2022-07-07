@@ -47,8 +47,8 @@ MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID = get_string(
         "ID of the Google Sheet that contains the enrollment change request worksheets (refunds, transfers, etc)"
     ),
 )
-MITOL_GOOGLE_SHEETS_DATE_ONLY_FORMAT = get_string(
-    name="MITOL_GOOGLE_SHEETS_DATE_ONLY_FORMAT",
+MITOL_GOOGLE_SHEETS_DATE_FORMAT = get_string(
+    name="MITOL_GOOGLE_SHEETS_DATE_FORMAT",
     default="%m/%d/%Y",
     description="Python strptime format for date columns (no time) in enrollment management spreadsheets",
 )
