@@ -10,7 +10,7 @@ from base64 import b64encode
 from dataclasses import dataclass
 from decimal import Decimal
 from functools import wraps
-from typing import List
+from typing import Dict, List
 
 from CyberSource import (
     Ptsv2paymentsClientReferenceInformation,
@@ -26,7 +26,10 @@ from mitol.payment_gateway.constants import (
     ISO_8601_FORMAT,
     MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
 )
-from mitol.payment_gateway.exceptions import RefundDuplicateException
+from mitol.payment_gateway.exceptions import (
+    InvalidTransactionException,
+    RefundDuplicateException,
+)
 from mitol.payment_gateway.payment_utils import clean_request_data
 
 
@@ -181,6 +184,19 @@ class PaymentGateway(abc.ABC):
         """
         pass
 
+    @staticmethod
+    @abc.abstractmethod
+    def get_refund_request(transaction_dict: Dict):
+        """
+        This is the entrypoint to the payment gateway for creating refund request objects.
+        Args:
+            transaction_dict (Dict): Data dictionary of the payment transaction response of the Gateway
+        Returns:
+            Object (Refund): Refund An object of Refund class that can be used for Refund operations
+
+        """
+        pass
+
     @abc.abstractmethod
     def perform_processor_response_validation(self, request):
         """
@@ -252,6 +268,20 @@ class PaymentGateway(abc.ABC):
         """
 
         return payment_type.prepare_checkout(order, receipt_url, cancel_url, **kwargs)
+
+    @classmethod
+    @find_gateway_class
+    def create_refund_request(cls, payment_type, transaction_dict: Dict):
+        """
+        Iterate through the given payment transaction dictionary and returns a refund object to perform operations on.
+        Args:
+            payment_type (String): gateway class to use
+            transaction_dict (Dict): Dictionary of the data acquired through a successful Gateway payment
+        Returns:
+            see get_refund_request
+        """
+
+        return payment_type.get_refund_request(transaction_dict)
 
     @classmethod
     @find_gateway_class
@@ -452,6 +482,32 @@ class CyberSourcePaymentGateway(
             "timeout": 1000,
         }
         return configuration_dictionary
+
+    @staticmethod
+    def get_refund_request(transaction_dict: Dict):
+        """
+        Create a refund request object to from the required attributes in the payment dictionary
+        Args:
+            transaction_dict: (Dict) Data dictionary of the payment response of the Gateway
+            Ideally, The transaction dictionary should have transaction_id, req_amount, req_currency in case of
+            CyberSource.
+        Returns:
+            Object: Refund An object of Refund class that can be used to operate the Refunds
+
+        """
+        try:
+            # If a required value exists we can't decide if it's valid so let the API throw that error itself
+            transaction_id = transaction_dict["transaction_id"]
+            order_amount = transaction_dict["req_amount"]
+            order_currency = transaction_dict["req_currency"]
+
+            return Refund(
+                transaction_id=transaction_id,
+                refund_amount=order_amount,
+                refund_currency=order_currency,
+            )
+        except KeyError as error:
+            raise InvalidTransactionException() from error
 
     def perform_refund(self, refund):
         """
