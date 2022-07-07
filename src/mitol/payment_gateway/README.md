@@ -74,18 +74,17 @@ The custom data (merchant_fields) should be a list of items to pass along with t
 **Refund Code Example:**
 
 ```python
-from mitol.payment_gateway.api import Refund, PaymentGateway
-    
-     refund_request = Refund(
-         transaction_id=transaction_id,     # You can find this in any successful payment's response JSON
-         refund_amount=order_amount,        # The amount to be refunded
-         refund_currency=order_currency,    # Currency to be used for the refund
-     )
-    
+from mitol.payment_gateway.api import PaymentGateway
+      # Create a Refund request object to perform operations on
+      refund_gateway_request = PaymentGateway.create_refund_request(
+          ECOMMERCE_DEFAULT_PAYMENT_GATEWAY,
+          transaction_dict  # Ideally this dict should have transaction_id, req_amount, req_currency
+      )
+
       # Call start_refund from PaymentGateway with the Refund object you just created above 
       response = PaymentGateway.start_refund(
           ECOMMERCE_DEFAULT_PAYMENT_GATEWAY,    # Default Gateway to be used for processing e.g. CyberSource
-          refund_request,
+          refund_gateway_request,
       )
 
 

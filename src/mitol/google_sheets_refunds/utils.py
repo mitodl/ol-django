@@ -117,9 +117,9 @@ class RefundRequestSheetConfig(
         self.non_input_column_indices = set(
             # Response ID column
             [self.FORM_RESPONSE_ID_COL]
-            +
-            # Every column from the finance columns to the end of the row
-            list(range(8, self.num_columns))
+            + list(  # Every column from the finance columns to the end of the row
+                range(8, self.num_columns)
+            )
         )
         self.sheet_file_id = settings.MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID
 

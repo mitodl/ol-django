@@ -2,6 +2,8 @@
 
 
 class RefundDuplicateException(Exception):
+    """Exception class for Duplicate Refund requests"""
+
     def __init__(
         self,
         refund_reason_code,
@@ -16,5 +18,18 @@ class RefundDuplicateException(Exception):
         self.body = response_body
 
         if message is None:
-            self.message = f"There was an error in Refund API for transaction_id={self.transaction_id} with ReasonCode={self.reason_code}"
+            message = f"There was an error in Refund API for transaction_id={self.transaction_id} with ReasonCode={self.reason_code}"
+        super().__init__(message)
+
+
+class InvalidTransactionException(Exception):
+    """Exception class for Invalid transaction data"""
+
+    def __init__(
+        self,
+        message=None,
+    ):
+        if message is None:
+            message = "The provided transaction dictionary is invalid. Please check it contains transaction_id, req_amount, req_currency"
+
         super().__init__(message)

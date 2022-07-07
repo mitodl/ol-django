@@ -17,7 +17,10 @@ from mitol.payment_gateway.api import (
     ProcessorResponse,
 )
 from mitol.payment_gateway.constants import MITOL_PAYMENT_GATEWAY_CYBERSOURCE
-from mitol.payment_gateway.exceptions import RefundDuplicateException
+from mitol.payment_gateway.exceptions import (
+    InvalidTransactionException,
+    RefundDuplicateException,
+)
 
 ISO_8601_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -336,7 +339,6 @@ def test_cybersource_refund_response_failure_general(response_payload, refund, m
     """
     duplicate_response_json = response_payload
 
-    # test_refund_duplicate = json.load(duplicate_response_json)
     duplicate_response_json["reason"] = "dummy"
 
     sample_response = HTTPResponse(
@@ -355,3 +357,46 @@ def test_cybersource_refund_response_failure_general(response_payload, refund, m
     # An ApiException should be raised if request fails without DUPLICATE_REQUEST reason
     with pytest.raises(ApiException):
         cybersource_gateway.perform_refund(refund)
+
+
+@pytest.mark.parametrize(
+    "response_payload", ["test_success_payload"], indirect=["response_payload"]
+)
+def test_create_refund_request(response_payload):
+    """Tests that create_refund_request creates the correct Refund Request object out of provided
+    payment transaction dictionary"""
+
+    payment_response_json = response_payload
+    refund_request = PaymentGateway.create_refund_request(
+        MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
+        payment_response_json,
+    )
+
+    assert refund_request.transaction_id == payment_response_json["transaction_id"]
+    assert refund_request.refund_amount == payment_response_json["req_amount"]
+    assert refund_request.refund_currency == payment_response_json["req_currency"]
+
+
+@pytest.mark.parametrize(
+    "transaction_data",
+    [
+        {},
+        {"transaction_id": 11},
+        {"req_amount": 100},
+        {"req_currency": "USD"},
+        {"transaction_id": 11, "req_amount": 100},
+        {"req_amount": 100, "req_currency": "USD"},
+        {"transaction_id": 100, "req_currency": "USD"},
+    ],
+)
+def test_create_refund_request_invalid_data_exception(transaction_data):
+    """
+    Test that create_refund_request throws InvalidTransactionException if the payment transaction dictionary is invalid
+    """
+    cybersource_gateway = CyberSourcePaymentGateway()
+
+    # A RefundDuplicateException should be raised if request fails with DUPLICATE_REQUEST reason
+    with pytest.raises(InvalidTransactionException):
+        cybersource_gateway.create_refund_request(
+            MITOL_PAYMENT_GATEWAY_CYBERSOURCE, transaction_data
+        )
