@@ -27,6 +27,8 @@ import_settings_modules(
     "mitol.authentication.settings.touchstone",
     "mitol.authentication.settings.djoser_settings",
     "mitol.payment_gateway.settings.cybersource",
+    "mitol.google_sheets.settings.google_sheets",
+    "mitol.google_sheets_refunds.settings.google_sheets_refunds",
 )
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -61,6 +63,7 @@ INSTALLED_APPS = [
     "mitol.common.apps.CommonApp",
     "mitol.digitalcredentials.apps.DigitalCredentialsApp",
     "mitol.google_sheets.apps.GoogleSheetsApp",
+    "mitol.google_sheets_refunds.apps.GoogleSheetsRefundsApp",
     "mitol.mail.apps.MailApp",
     "mitol.oauth_toolkit_extensions.apps.OAuthToolkitExtensionsApp",
     "mitol.openedx.apps.OpenedxApp",

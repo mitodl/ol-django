@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils.functional import cached_property
 
-from mitol.common.collections import group_into_dict, item_at_index_or_none
+from mitol.common.utils.collections import group_into_dict, item_at_index_or_none
 from mitol.google_sheets.api import get_authorized_pygsheets_client
 from mitol.google_sheets.constants import GOOGLE_API_TRUE_VAL, GOOGLE_SHEET_FIRST_ROW
 from mitol.google_sheets.utils import (
@@ -128,7 +128,7 @@ class SheetHandler:
             row_data (List[str]): Raw data from a row in the spreadsheet
 
         Returns:
-            Tuple[Type(EnrollmentChangeRequestModel), bool, bool]: A tuple containing an object representing the
+            Tuple[Type(GoogleSheetsRequestModel), bool, bool]: A tuple containing an object representing the
                 request, a flag that indicates whether or not it was newly created, and a flag that indicates
                 whether or not it was updated.
         """
@@ -198,7 +198,6 @@ class SheetHandler:
             ]
         filtered_rows = self.filter_ignored_rows(enumerated_rows)
         valid_enumerated_rows, row_results = self.validate_sheet(filtered_rows)
-
         for row_index, row_data in valid_enumerated_rows:
             row_result = None
             try:
@@ -227,24 +226,25 @@ class SheetHandler:
         }
 
 
-class EnrollmentChangeRequestHandler(SheetHandler):
+class GoogleSheetsChangeRequestHandler(SheetHandler):
     """
     Base class for managing the processing of enrollment change requests from a spreadsheet
     """
 
-    def __init__(self, worksheet_id, start_row, sheet_metadata, request_model_cls):
+    def __init__(
+        self, spreadsheet_id, worksheet_id, start_row, sheet_metadata, request_model_cls
+    ):
         """
 
         Args:
+            spreadsheet_id (int):
             worksheet_id (int):
             start_row (int):
             sheet_metadata (Type(SheetConfig)):
-            request_model_cls (Type(EnrollmentChangeRequestModel)):
+            request_model_cls (Type(GoogleSheetsRequestModel)):
         """
         self.pygsheets_client = get_authorized_pygsheets_client()
-        self.spreadsheet = self.pygsheets_client.open_by_key(
-            settings.ENROLLMENT_CHANGE_SHEET_ID
-        )
+        self.spreadsheet = self.pygsheets_client.open_by_key(spreadsheet_id)
         self.worksheet_id = worksheet_id
         self.start_row = start_row
         self.sheet_metadata = sheet_metadata
@@ -280,7 +280,7 @@ class EnrollmentChangeRequestHandler(SheetHandler):
                         settings.MITOL_GOOGLE_SHEET_PROCESSOR_APP_NAME,
                         format_datetime_for_sheet_formula(
                             row_result.row_db_record.date_completed.astimezone(
-                                settings.SHEETS_DATE_TIMEZONE
+                                settings.MITOL_GOOGLE_SHEETS_DATE_TIMEZONE
                             )
                         ),
                         "",
@@ -308,29 +308,6 @@ class EnrollmentChangeRequestHandler(SheetHandler):
                 enroll_change_request.raw_data = user_input_json
                 enroll_change_request.save()
         return enroll_change_request, created, raw_data_changed
-
-    def filter_ignored_rows(self, enumerated_rows):
-        completed_form_response_ids = set(
-            self.request_model_cls.objects.exclude(date_completed=None).values_list(
-                "form_response_id", flat=True
-            )
-        )
-        for row_index, row_data in enumerated_rows:
-            if item_at_index_or_none(
-                row_data, self.sheet_metadata.SKIP_ROW_COL
-            ) == GOOGLE_API_TRUE_VAL or item_at_index_or_none(
-                row_data, self.sheet_metadata.COMPLETED_DATE_COL
-            ):
-                continue
-            form_response_id = int(
-                row_data[self.sheet_metadata.FORM_RESPONSE_ID_COL].strip()
-            )
-            completed_date_str = row_data[
-                self.sheet_metadata.COMPLETED_DATE_COL
-            ].strip()
-            if form_response_id in completed_form_response_ids and completed_date_str:
-                continue
-            yield row_index, row_data
 
     def process_row(self, row_index, row_data):
         raise NotImplementedError
