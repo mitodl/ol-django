@@ -349,9 +349,7 @@ def parse_sheet_date_only_str(date_str):
     Returns:
         datetime.datetime or None: The parsed datetime (in UTC) or None
     """
-    return _parse_sheet_date_str(
-        date_str, settings.MITOL_GOOGLE_SHEETS_DATE_FORMAT
-    )
+    return _parse_sheet_date_str(date_str, settings.MITOL_GOOGLE_SHEETS_DATE_FORMAT)
 
 
 def google_timestamp_to_datetime(google_timestamp):
