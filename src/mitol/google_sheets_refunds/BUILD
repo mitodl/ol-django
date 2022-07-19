@@ -16,7 +16,7 @@ python_distribution(
     name="mitol-django-google-sheets-refunds",
     dependencies=[":google_sheets_refunds"],
     provides=setup_py(
-        name="mitol-django-google-sheets",
+        name="mitol-django-google-sheets-refunds",
         description="Library to handle Refund requests using Google Sheets integrations in Django",
     ),
 )
