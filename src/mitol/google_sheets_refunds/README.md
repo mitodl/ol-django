@@ -3,6 +3,17 @@ mitol-django-google-sheets-refunds
 
 This is the Open Learning Django Google Sheets library for handling refund requests over Google Sheets
 ### Setup
+`pip install mitol-django-google-sheets-refunds`
+
+Add the google sheets app:
+
+```python
+INSTALLED_APPS = [
+    ...
+    "mitol.google_sheets_refunds.apps.GoogleSheetsRefundsApp",
+]
+```
+
 Set the following:
 `MITOL_GOOGLE_SHEETS_REFUNDS_REQUEST_WORKSHEET_ID` - ID of the worksheet within the enrollment change request spreadsheet that contains enrollment refund requests
 `MITOL_GOOGLE_SHEETS_REFUNDS_PROCESSOR_COL` - The zero-based index of the enrollment change sheet column that contains the user that processed the row
