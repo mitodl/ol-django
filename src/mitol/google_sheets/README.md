@@ -5,7 +5,7 @@ This is the Open Learning Django Google Sheets core library. The purpose of it i
 
 ### Setup
 
-`pip install mitol-django-core`
+`pip install mitol-django-google-sheets`
 
 Add the google sheets app:
 

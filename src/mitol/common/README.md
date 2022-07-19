@@ -1,11 +1,11 @@
-mitol-django-core
+mitol-django-common
 ---
 
-This is the Open Learning Core app. It provides common functionality used across all our applications.
+This is the Open Learning Django Common app. It provides common functionality used across all our applications.
 
 ### Getting started
 
-`pip install mitol-django-core`
+`pip install mitol-django-common`
 
 
 ### Configuration
