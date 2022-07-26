@@ -4,7 +4,7 @@ to reflect the processed request(s).
 """
 from django.core.management import BaseCommand
 
-from mitol.google_sheets_refunds.refund_request_api import RefundRequestHandler
+from mitol.google_sheets_refunds.api import RefundRequestHandler
 
 
 class Command(BaseCommand):
