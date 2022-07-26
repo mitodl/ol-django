@@ -80,7 +80,7 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
                 message=None,
             )
         result_type, message = self.hook.refunds_process_request(refund_request)
-        if result_type is ResultType.PROCESSED:
+        if result_type == ResultType.PROCESSED:
             refund_request.date_completed = now_in_utc()
             refund_request.save()
 
