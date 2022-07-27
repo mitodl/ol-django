@@ -50,6 +50,7 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
         try:
             refund_req_row = RefundRequestRow.parse_raw_data(row_index, row_data)
         except SheetRowParsingException as exc:
+            log.error("Parsing failure: {}".format(str(exc)))
             return RowResult(
                 row_index=row_index,
                 row_db_record=refund_request,
@@ -80,7 +81,7 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
                 message=None,
             )
         result_type, message = self.hook.refunds_process_request(
-            refund_request_row=refund_request
+            refund_request_row=refund_req_row
         )
         if result_type == ResultType.PROCESSED:
             refund_request.date_completed = now_in_utc()
