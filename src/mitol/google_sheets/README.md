@@ -201,7 +201,7 @@ and Responses->Settings->Select response destination-> Select existing spreadshe
 When you fill out the form it will create a new worksheet, called something like "Form Response 1". You can
 rename this tab to "Refund Form Response".
 In the "Refund Form Response" sheet make sure that the "Timestamp" column format is set to "Date" and not to "Date Time".
-The main google worksheeet gets updated by the "Refund Response" worksheet by the following query:
+The main google worksheet gets updated by the "Refund Response" worksheet by the following query:
 
 ```markdown
 ={QUERY({'Refund Form Response'!A2:G, ARRAYFORMULA(if(isblank('Refund Form Response'!A2:A),"",ROW('Refund Form Response'!A2:G)))},"SELECT Col8, Col1, Col3, Col4, Col2, Col5, Col6, Col7",0)}
