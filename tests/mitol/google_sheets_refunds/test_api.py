@@ -69,7 +69,7 @@ def test_full_sheet_process(db, settings, mocker, pygsheets_fixtures, request_cs
     mocked_plugin_manager = mocker.Mock(
         hook=mocker.Mock(
             refunds_process_request=mocker.Mock(
-                return_value=(ResultType.PROCESSED, "message")
+                return_value=[(ResultType.PROCESSED, "message")]
             )
         )
     )
