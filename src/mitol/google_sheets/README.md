@@ -180,11 +180,12 @@ GOOGLE_DOMAIN_VERIFICATION_TAG_VALUE=ETRM2VjAZ3BF52L_ait6r...
 6. Add Google API console configs ([API console link](https://console.cloud.google.com/apis/dashboard))
     1. Domain verification ([link](https://console.cloud.google.com/apis/credentials/domainverification)): 
         Add the ngrok domain (e.g.: `12345abc6789.ngrok.io`)
-    1. OAuth consent screen ([link](https://console.cloud.google.com/apis/credentials/consent))
-        1. Click "Edit App"
-        1. Add a domain in the "Authorized domains" section. **Hit Enter to add**.
-        1. **Click Save at the bottom**
-    1. Credentials ([link](https://console.cloud.google.com/apis/credentials))
+    2. OAuth consent screen ([link](https://console.cloud.google.com/apis/credentials/consent))
+       1. Under "Test users" click "add users", add your email address
+       2. Click "Edit App"
+       3. Add a domain in the "Authorized domains" section. **Hit Enter to add**.
+       4. **Click Save at the bottom**
+    3. Credentials ([link](https://console.cloud.google.com/apis/credentials))
         1. Click on the name of your web app credential in the OAuth 2.0 Client ID section
         1. In the "Authorized redirect URIs" section, click "Add URI", and enter the ngrok HTTPS URL appended with `/api/sheets/auth-complete/`, e.g.: `https://12345abc6789.ngrok.io/api/sheets/auth-complete/`
         1. **Click Save**
@@ -194,3 +195,15 @@ GOOGLE_DOMAIN_VERIFICATION_TAG_VALUE=ETRM2VjAZ3BF52L_ait6r...
     1. Click the Authorize button and go through Google OAuth flow
         - *NOTE: You will hit a warning page after selecting your user. To continue, click "Advanced", then click the "Go to \<url\>" link at bottom*
     
+###On setting up the google spreadsheets and request form
+You need to link the refund form responses form to output to the spreadsheet. You can do that by opening the form 
+and Responses->Settings->Select response destination-> Select existing spreadsheet.
+When you fill out the form it will create a new worksheet, called something like "Form Response 1". You can
+rename this tab to "Refund Form Response".
+In the "Refund Form Response" sheet make sure that the "Timestamp" column format is set to "Date" and not to "Date Time".
+The main google worksheet gets updated by the "Refund Response" worksheet by the following query:
+
+```markdown
+={QUERY({'Refund Form Response'!A2:G, ARRAYFORMULA(if(isblank('Refund Form Response'!A2:A),"",ROW('Refund Form Response'!A2:G)))},"SELECT Col8, Col1, Col3, Col4, Col2, Col5, Col6, Col7",0)}
+```
+Add this query to the first data row and column (4:A).
