@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # [Unreleased]
 
+
+### Fixed
+- Fixed an error that happens when handling row results
+
 ### Added
 
 - Added `mitol.google_sheets_refunds` Google Sheets Refunds library.
+- Added additional logging on exceptions

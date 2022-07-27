@@ -203,6 +203,7 @@ class SheetHandler:
             try:
                 row_result = self.process_row(row_index, row_data)
             except Exception as exc:
+                log.exception("Error processing row from google sheets")
                 row_result = RowResult(
                     row_index=row_index,
                     row_db_record=None,
