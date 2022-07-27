@@ -200,7 +200,7 @@ You need to link the refund form responses form to output to the spreadsheet. Yo
 and Responses->Settings->Select response destination-> Select existing spreadsheet.
 When you fill out the form it will create a new worksheet, called something like "Form Response 1". You can
 rename this tab to "Refund Form Response".
-
+In the "Refund Form Response" sheet make sure that the "Timestamp" column format is set to "Date" and not to "Date Time".
 The main google worksheeet gets updated by the "Refund Response" worksheet by the following query:
 
 ```markdown
