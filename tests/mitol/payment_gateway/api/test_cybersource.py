@@ -126,9 +126,9 @@ def test_invalid_payload_generation(order, cartitems):
     checkout_data = PaymentGateway.start_payment(
         "Invalid Payment Gateway",
         order,
-        backoffice_post_url,
         receipt_url,
         cancel_url,
+        backoffice_post_url,
         merchant_fields=None,
     )
 
@@ -149,9 +149,9 @@ def test_cybersource_payload_generation(order, cartitems):
     checkout_data = PaymentGateway.start_payment(
         MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
         order,
-        backoffice_post_url,
         receipt_url,
         cancel_url,
+        backoffice_post_url,
         merchant_fields=None,
     )
 
@@ -188,9 +188,9 @@ def test_cybersource_response_auth(order, cartitems):
     checkout_data = PaymentGateway.start_payment(
         MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
         order,
-        backoffice_post_url,
         receipt_url,
         cancel_url,
+        backoffice_post_url,
         merchant_fields=None,
     )
 
