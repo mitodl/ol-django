@@ -413,7 +413,12 @@ class CyberSourcePaymentGateway(
         }
 
     def prepare_checkout(
-        self, order: Order, receipt_url: str, cancel_url: str, **kwargs
+        self,
+        order: Order,
+        receipt_url: str,
+        cancel_url: str,
+        backoffice_post_url: str = None,
+        **kwargs,
     ):
         """
         This acts more as a coordinator for the internal methods in the class.
@@ -459,11 +464,11 @@ class CyberSourcePaymentGateway(
             "unsigned_field_names": "",
             "customer_ip_address": order.ip_address if order.ip_address else None,
         }
-
-        signed_payload = self._sign_cybersource_payload(payload)
+        if backoffice_post_url:
+            payload["override_backoffice_post_url"] = backoffice_post_url
 
         return {
-            "payload": signed_payload,
+            "payload": payload,
             "url": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_SECURE_ACCEPTANCE_URL,
             "method": "POST",
         }
