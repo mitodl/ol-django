@@ -101,13 +101,13 @@ def generate_test_cybersource_payload(order, cartitems, transaction_uuid):
         "reference_number": order.reference,
         "profile_id": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_PROFILE_ID,
         "signed_date_time": now_in_utc().strftime(ISO_8601_FORMAT),
-        "override_backoffice_post_url": backoffice_post_url,
         "override_custom_receipt_page": receipt_url,
         "override_custom_cancel_page": cancel_url,
         "transaction_type": "sale",
         "transaction_uuid": transaction_uuid,
         "unsigned_field_names": "",
         "customer_ip_address": order.ip_address if order.ip_address else None,
+        "override_backoffice_post_url": backoffice_post_url,
     }
 
     return {"payload": test_payload, "items": test_line_items}
