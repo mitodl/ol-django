@@ -476,9 +476,11 @@ class CyberSourcePaymentGateway(
         }
         if backoffice_post_url:
             payload["override_backoffice_post_url"] = backoffice_post_url
+            
+        signed_payload = self._sign_cybersource_payload(payload)
 
         return {
-            "payload": payload,
+            "payload": signed_payload,
             "url": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_SECURE_ACCEPTANCE_URL,
             "method": "POST",
         }
