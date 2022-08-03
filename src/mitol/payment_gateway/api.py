@@ -476,7 +476,7 @@ class CyberSourcePaymentGateway(
         }
         if backoffice_post_url:
             payload["override_backoffice_post_url"] = backoffice_post_url
-            
+
         signed_payload = self._sign_cybersource_payload(payload)
 
         return {
