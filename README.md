@@ -22,7 +22,9 @@ To perform a release, run:
 
 ### Usage
 
-We use [`pants`](https://www.pantsbuild.org/) to manage apps and releases
+We use [`pants`](https://www.pantsbuild.org/) to manage apps and releases.
+
+**NOTE:** before running any pants commands, it's highly recommended to install and use [`pyenv`](https://github.com/pyenv/pyenv) to manage the python version as system python installs are often modified or broken versions. In particular, you'll probably end up seeing errors from C code from system pythons. If you have hit this issue but already run a pants command, install `pyenv` and then delete your `.pants.d/` directory to clear cached state.
 
 Useful commands:
 ```shell
