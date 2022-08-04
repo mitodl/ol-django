@@ -36,9 +36,7 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
 
     def get_required_settings(self):
         """Return a list of required settings"""
-        return (
-            REQUIRED_GOOGLE_SHEETS_REFUNDS_SETTINGS + REQUIRED_GOOGLE_SHEETS_SETTINGS
-        )
+        return REQUIRED_GOOGLE_SHEETS_REFUNDS_SETTINGS + REQUIRED_GOOGLE_SHEETS_SETTINGS
 
     def process_row(self, row_index, row_data):
         """
