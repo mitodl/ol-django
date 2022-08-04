@@ -31,6 +31,24 @@ class SheetHandler:
     spreadsheet = None
     sheet_metadata = None
 
+    def get_required_settings(self):
+        """Return a list of required settings"""
+        raise NotImplementedError
+
+    def is_configured(self):
+        """
+        Checks for required settings.
+
+        Returns:
+            bool: false if required settings are missing
+        """
+        missing = []
+        for variable in self.get_required_settings():
+            if getattr(settings, variable, None) is None:
+                missing.append(variable)
+                log.exception(f"{variable} is not set.")
+        return not missing
+
     @cached_property
     def worksheet(self):
         """

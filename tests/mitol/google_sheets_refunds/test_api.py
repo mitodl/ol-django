@@ -60,6 +60,52 @@ def pygsheets_fixtures(mocker, db, request_csv_rows):
     )
 
 
+def set_google_sheets_settings(settings):
+    settings.MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID = "1"
+    settings.MITOL_GOOGLE_SHEET_PROCESSOR_APP_NAME = "test app name"
+    settings.MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS = '{"credentials": "json"}'
+    settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_ID = "nhijg1i.apps.googleusercontent.com"
+    settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_SECRET = "secret"
+    settings.MITOL_GOOGLE_SHEETS_DRIVE_API_PROJECT_ID = "project-id-1234"
+    settings.MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID = "sheet-id-1234"
+
+
+@pytest.mark.parametrize("refunds_settings_set", [True, False])
+@pytest.mark.parametrize("sheets_settings_set", [True, False])
+def test_is_configured(
+    db, settings, mocker, pygsheets_fixtures, refunds_settings_set, sheets_settings_set
+):
+    """
+    is_configured makes sure all config variables are set
+    """
+    mocked_plugin_manager = mocker.Mock(
+        hook=mocker.Mock(
+            refunds_process_request=mocker.Mock(
+                return_value=(ResultType.PROCESSED, "message")
+            )
+        )
+    )
+
+    mock_get_plugin_manager = mocker.patch(
+        "mitol.google_sheets_refunds.api.get_plugin_manager",
+        return_value=mocked_plugin_manager,
+    )
+    handler = RefundRequestHandler()
+    mock_get_plugin_manager.assert_called_once()
+
+    if sheets_settings_set:
+        set_google_sheets_settings(settings)
+
+    if refunds_settings_set:
+        settings.MITOL_GOOGLE_SHEETS_REFUNDS_REQUEST_WORKSHEET_ID = "1"
+        settings.MITOL_GOOGLE_SHEETS_REFUNDS_PLUGINS = "app.plugins.RefundPlugin"
+
+    if sheets_settings_set and refunds_settings_set:
+        assert handler.is_configured() is True
+    else:
+        assert handler.is_configured() is False
+
+
 def test_full_sheet_process(db, settings, mocker, pygsheets_fixtures, request_csv_rows):
     """
     RefundRequestHandler.process_sheet should parse rows, create relevant objects in the database, and report
