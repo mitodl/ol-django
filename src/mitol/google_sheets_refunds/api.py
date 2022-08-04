@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from mitol.common.utils.datetime import now_in_utc
+from mitol.google_sheets.constants import REQUIRED_GOOGLE_SHEETS_SETTINGS
 from mitol.google_sheets.exceptions import SheetRowParsingException
 from mitol.google_sheets.sheet_handler_api import GoogleSheetsChangeRequestHandler
 from mitol.google_sheets.utils import ResultType, RowResult
@@ -33,22 +34,11 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
             request_model_cls=RefundRequest,
         )
 
-    def is_configured(self):
-        """
-        Checks for required settings.
-
-        Returns:
-            bool: False if required settings are missing
-        """
-        missing = []
-        for variable in REQUIRED_GOOGLE_SHEETS_REFUNDS_SETTINGS:
-            try:
-                if not getattr(settings, variable):
-                    missing.append(variable)
-            except AttributeError:
-                missing.append(variable)
-                log.exception(f"{variable} is not set.")
-        return not missing and super().is_configured()
+    def get_required_settings(self):
+        """Return a list of required settings"""
+        return (
+            REQUIRED_GOOGLE_SHEETS_REFUNDS_SETTINGS + REQUIRED_GOOGLE_SHEETS_SETTINGS
+        )
 
     def process_row(self, row_index, row_data):
         """

@@ -20,15 +20,6 @@ from mitol.google_sheets.utils import (
 
 log = logging.getLogger(__name__)
 
-REQUIRED_GOOGLE_SHEETS_SETTINGS = [
-    "MITOL_GOOGLE_SHEET_PROCESSOR_APP_NAME",
-    "MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS",
-    "MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_ID",
-    "MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_SECRET",
-    "MITOL_GOOGLE_SHEETS_DRIVE_API_PROJECT_ID",
-    "MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID",
-]
-
 
 class SheetHandler:
     """
@@ -40,6 +31,10 @@ class SheetHandler:
     spreadsheet = None
     sheet_metadata = None
 
+    def get_required_settings(self):
+        """Return a list of required settings"""
+        raise NotImplementedError
+
     def is_configured(self):
         """
         Checks for required settings.
@@ -48,11 +43,8 @@ class SheetHandler:
             bool: false if required settings are missing
         """
         missing = []
-        for variable in REQUIRED_GOOGLE_SHEETS_SETTINGS:
-            try:
-                if not getattr(settings, variable):
-                    missing.append(variable)
-            except AttributeError:
+        for variable in self.get_required_settings():
+            if getattr(settings, variable, None) is None:
                 missing.append(variable)
                 log.exception(f"{variable} is not set.")
         return not missing
