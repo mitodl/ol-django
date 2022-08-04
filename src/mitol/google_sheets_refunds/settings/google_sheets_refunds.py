@@ -3,7 +3,6 @@ from mitol.common.envs import get_int, get_string
 
 MITOL_GOOGLE_SHEETS_REFUNDS_REQUEST_WORKSHEET_ID = get_string(
     name="MITOL_GOOGLE_SHEETS_REFUNDS_REQUEST_WORKSHEET_ID",
-    default="0",
     description=(
         "ID of the worksheet within the enrollment change request spreadsheet that contains enrollment refund requests"
     ),
@@ -47,6 +46,5 @@ MITOL_GOOGLE_SHEETS_REFUNDS_FIRST_ROW = get_int(
 
 MITOL_GOOGLE_SHEETS_REFUNDS_PLUGINS = get_string(
     name="MITOL_GOOGLE_SHEETS_REFUNDS_PLUGINS",
-    default="app.plugins.RefundPlugin",
-    description="The path to your refund plugin",
+    description="The path to your refund plugin, example: app.plugins.RefundPlugin",
 )

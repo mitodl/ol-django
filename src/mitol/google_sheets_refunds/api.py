@@ -11,6 +11,9 @@ from mitol.google_sheets.utils import ResultType, RowResult
 from mitol.google_sheets_refunds.hooks import get_plugin_manager
 from mitol.google_sheets_refunds.models import RefundRequest
 from mitol.google_sheets_refunds.utils import RefundRequestRow, refund_sheet_config
+from mitol.google_sheets_refunds.constants import (
+    REQUIRED_GOOGLE_SHEETS_REFUNDS_SETTINGS,
+)
 
 log = logging.getLogger(__name__)
 User = get_user_model()
@@ -29,6 +32,23 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
             sheet_metadata=refund_sheet_config,
             request_model_cls=RefundRequest,
         )
+
+    def is_configured(self):
+        """
+        Checks for required settings.
+
+        Returns:
+            bool: False if required settings are missing
+        """
+        missing = []
+        for variable in REQUIRED_GOOGLE_SHEETS_REFUNDS_SETTINGS:
+            try:
+                if not getattr(settings, variable):
+                    missing.append(variable)
+            except AttributeError:
+                missing.append(variable)
+                log.exception(f"{variable} is not set.")
+        return not missing and super().is_configured()
 
     def process_row(self, row_index, row_data):
         """

@@ -195,7 +195,8 @@ GOOGLE_DOMAIN_VERIFICATION_TAG_VALUE=ETRM2VjAZ3BF52L_ait6r...
     1. Click the Authorize button and go through Google OAuth flow
         - *NOTE: You will hit a warning page after selecting your user. To continue, click "Advanced", then click the "Go to \<url\>" link at bottom*
     
-###On setting up the google spreadsheets and request form
+### On setting up the google spreadsheets and request form
+
 You need to link the refund form responses form to output to the spreadsheet. You can do that by opening the form 
 and Responses->Settings->Select response destination-> Select existing spreadsheet.
 When you fill out the form it will create a new worksheet, called something like "Form Response 1". You can
