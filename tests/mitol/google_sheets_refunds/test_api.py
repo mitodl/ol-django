@@ -72,7 +72,9 @@ def set_google_sheets_settings(settings):
 
 @pytest.mark.parametrize("refunds_settings_set", [True, False])
 @pytest.mark.parametrize("sheets_settings_set", [True, False])
-def test_is_configured(db, settings, mocker, pygsheets_fixtures, refunds_settings_set, sheets_settings_set):
+def test_is_configured(
+    db, settings, mocker, pygsheets_fixtures, refunds_settings_set, sheets_settings_set
+):
     """
     is_configured makes sure all config variables are set
     """
