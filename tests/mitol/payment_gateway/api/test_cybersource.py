@@ -71,6 +71,7 @@ def generate_test_cybersource_payload(order, cartitems, transaction_uuid):
     Generates a test payload based on the order and cart items passed in, ready
     for signing.
     """
+    backoffice_post_url = "https://www.google.com"
     receipt_url = "https://www.google.com"
     cancel_url = "https://duckduckgo.com"
 
@@ -106,6 +107,7 @@ def generate_test_cybersource_payload(order, cartitems, transaction_uuid):
         "transaction_uuid": transaction_uuid,
         "unsigned_field_names": "",
         "customer_ip_address": order.ip_address if order.ip_address else None,
+        "override_backoffice_post_url": backoffice_post_url,
     }
 
     return {"payload": test_payload, "items": test_line_items}
@@ -116,6 +118,7 @@ def test_invalid_payload_generation(order, cartitems):
     Tests to make sure something sane happens when an invalid payment gateway
     is specified.
     """
+    backoffice_post_url = "https://www.google.com"
     receipt_url = "https://www.google.com"
     cancel_url = "https://duckduckgo.com"
     order.items = cartitems
@@ -125,6 +128,7 @@ def test_invalid_payload_generation(order, cartitems):
         order,
         receipt_url,
         cancel_url,
+        backoffice_post_url,
         merchant_fields=None,
     )
 
@@ -138,6 +142,7 @@ def test_cybersource_payload_generation(order, cartitems):
     through CyberSource itself.
     """
     receipt_url = "https://www.google.com"
+    backoffice_post_url = "https://www.google.com"
     cancel_url = "https://duckduckgo.com"
     order.items = cartitems
 
@@ -146,6 +151,7 @@ def test_cybersource_payload_generation(order, cartitems):
         order,
         receipt_url,
         cancel_url,
+        backoffice_post_url,
         merchant_fields=None,
     )
 
@@ -175,6 +181,7 @@ def test_cybersource_response_auth(order, cartitems):
     run through the validate_processor_response method.
     """
     receipt_url = "https://www.google.com"
+    backoffice_post_url = "https://www.google.com"
     cancel_url = "https://duckduckgo.com"
     order.items = cartitems
 
@@ -183,6 +190,7 @@ def test_cybersource_response_auth(order, cartitems):
         order,
         receipt_url,
         cancel_url,
+        backoffice_post_url,
         merchant_fields=None,
     )
 

@@ -155,7 +155,9 @@ class PaymentGateway(abc.ABC):
         return _find_gateway_class
 
     @abc.abstractmethod
-    def prepare_checkout(self, order, cart, receipt_url, cancel_url, **kwargs):
+    def prepare_checkout(
+        self, order, cart, receipt_url, cancel_url, backoffice_post_url, **kwargs
+    ):
         """
         This is the entrypoint to the payment gateway.
         Args:
@@ -249,7 +251,13 @@ class PaymentGateway(abc.ABC):
     @classmethod
     @find_gateway_class
     def start_payment(
-        cls, payment_type, order: Order, receipt_url: str, cancel_url: str, **kwargs
+        cls,
+        payment_type,
+        order: Order,
+        receipt_url: str,
+        cancel_url: str,
+        backoffice_post_url: str = None,
+        **kwargs,
     ):
         """
         Starts the payment process for the given type. See prepare_checkout for
@@ -267,7 +275,9 @@ class PaymentGateway(abc.ABC):
             see prepare_checkout
         """
 
-        return payment_type.prepare_checkout(order, receipt_url, cancel_url, **kwargs)
+        return payment_type.prepare_checkout(
+            order, receipt_url, cancel_url, backoffice_post_url, **kwargs
+        )
 
     @classmethod
     @find_gateway_class
@@ -413,7 +423,12 @@ class CyberSourcePaymentGateway(
         }
 
     def prepare_checkout(
-        self, order: Order, receipt_url: str, cancel_url: str, **kwargs
+        self,
+        order: Order,
+        receipt_url: str,
+        cancel_url: str,
+        backoffice_post_url: str = None,
+        **kwargs,
     ):
         """
         This acts more as a coordinator for the internal methods in the class.
@@ -459,6 +474,8 @@ class CyberSourcePaymentGateway(
             "unsigned_field_names": "",
             "customer_ip_address": order.ip_address if order.ip_address else None,
         }
+        if backoffice_post_url:
+            payload["override_backoffice_post_url"] = backoffice_post_url
 
         signed_payload = self._sign_cybersource_payload(payload)
 
