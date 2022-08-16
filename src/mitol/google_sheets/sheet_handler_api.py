@@ -8,8 +8,14 @@ from django.db import transaction
 from django.utils.functional import cached_property
 
 from mitol.common.utils.collections import group_into_dict
+from mitol.common.utils.config import get_missing_settings
 from mitol.google_sheets.api import get_authorized_pygsheets_client
-from mitol.google_sheets.constants import GOOGLE_SHEET_FIRST_ROW
+from mitol.google_sheets.constants import (
+    GOOGLE_SHEET_FIRST_ROW,
+    REQUIRED_GOOGLE_SHEETS_CLIENT_SETTINGS,
+    REQUIRED_GOOGLE_SHEETS_SERVICE_ACCOUNT_SETTINGS,
+    REQUIRED_GOOGLE_SHEETS_SETTINGS,
+)
 from mitol.google_sheets.utils import (
     ResultType,
     RowResult,
@@ -31,10 +37,6 @@ class SheetHandler:
     spreadsheet = None
     sheet_metadata = None
 
-    def get_required_settings(self):
-        """Return a list of required settings"""
-        raise NotImplementedError
-
     def is_configured(self):
         """
         Checks for required settings.
@@ -42,12 +44,48 @@ class SheetHandler:
         Returns:
             bool: false if required settings are missing
         """
-        missing = []
-        for variable in self.get_required_settings():
-            if getattr(settings, variable, None) is None:
-                missing.append(variable)
-                log.exception(f"{variable} is not set.")
-        return not missing
+        is_configured = True
+        missing = get_missing_settings(REQUIRED_GOOGLE_SHEETS_SETTINGS)
+
+        for variable in missing:
+            log.warning("Google sheets setting %s is not set.", variable)
+            is_configured = False
+
+        missing_service_account_settings = get_missing_settings(
+            REQUIRED_GOOGLE_SHEETS_SERVICE_ACCOUNT_SETTINGS
+        )
+        missing_client_settings = get_missing_settings(
+            REQUIRED_GOOGLE_SHEETS_CLIENT_SETTINGS
+        )
+        missing_mutually_exclusive_settings = [
+            missing_service_account_settings,
+            missing_client_settings,
+        ]
+
+        if not any(missing_mutually_exclusive_settings):
+            # if no settings are missing, both are configured
+            log.error(
+                "Google sheets is configured for both service account and client credentials"
+            )
+            is_configured = False
+        elif all(missing_mutually_exclusive_settings):
+            # if all the settings are missing, nothing is configured
+            log.error("Google sheets is not configured with credentials")
+            is_configured = False
+        elif (
+            0
+            < len(missing_client_settings)
+            < len(REQUIRED_GOOGLE_SHEETS_CLIENT_SETTINGS)
+        ):
+            for variable in missing_client_settings:
+                log.error("Google sheets setting %s is not set.", variable)
+            is_configured = False
+
+        # Note: there's no `else` clause here for service accounts
+        # because there's only one setting for service accounts,
+        # so this ends up being ambiguous with nothing being configured
+
+        return is_configured
 
     @cached_property
     def worksheet(self):
@@ -296,7 +334,7 @@ class GoogleSheetsChangeRequestHandler(SheetHandler):
                 ),
                 values=[
                     [
-                        settings.MITOL_GOOGLE_SHEET_PROCESSOR_APP_NAME,
+                        settings.MITOL_GOOGLE_SHEETS_PROCESSOR_APP_NAME,
                         format_datetime_for_sheet_formula(
                             row_result.row_db_record.date_completed.astimezone(
                                 settings.MITOL_GOOGLE_SHEETS_DATE_TIMEZONE
