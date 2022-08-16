@@ -95,3 +95,28 @@ def staff_client(staff_user):
     client = Client()
     client.force_login(staff_user)
     return client
+
+
+@pytest.fixture
+def google_sheets_base_settings(settings):
+    """Fixture for base google sheets settings"""
+    settings.MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID = "1"
+    settings.MITOL_GOOGLE_SHEETS_PROCESSOR_APP_NAME = "test app name"
+    settings.MITOL_GOOGLE_SHEETS_DRIVE_API_PROJECT_ID = "project-id-1234"
+    settings.MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID = "sheet-id-1234"
+    return settings
+
+
+@pytest.fixture
+def google_sheets_service_creds_settings(settings):
+    """Fixture for google sheets settings configured for a service account"""
+    settings.MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS = '{"credentials": "json"}'
+    return settings
+
+
+@pytest.fixture
+def google_sheets_client_creds_settings(settings):
+    """Fixture gor google sheets settings configured with OAuth"""
+    settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_ID = "nhijg1i.apps.googleusercontent.com"
+    settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_SECRET = "secret"
+    return settings

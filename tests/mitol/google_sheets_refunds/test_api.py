@@ -8,6 +8,7 @@ from pygsheets import Spreadsheet, Worksheet
 from pygsheets.client import Client as PygsheetsClient
 from pygsheets.drive import DriveAPIWrapper
 from pygsheets.sheet import SheetAPIWrapper
+from pytest_lazyfixture import lazy_fixture
 
 from mitol.google_sheets.factories import GoogleApiAuthFactory
 from mitol.google_sheets.utils import ResultType
@@ -60,20 +61,36 @@ def pygsheets_fixtures(mocker, db, request_csv_rows):
     )
 
 
-def set_google_sheets_settings(settings):
-    settings.MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID = "1"
-    settings.MITOL_GOOGLE_SHEET_PROCESSOR_APP_NAME = "test app name"
-    settings.MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS = '{"credentials": "json"}'
-    settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_ID = "nhijg1i.apps.googleusercontent.com"
-    settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_SECRET = "secret"
-    settings.MITOL_GOOGLE_SHEETS_DRIVE_API_PROJECT_ID = "project-id-1234"
-    settings.MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID = "sheet-id-1234"
+@pytest.fixture
+def google_sheets_refunds_settings(settings):
+    settings.MITOL_GOOGLE_SHEETS_REFUNDS_REQUEST_WORKSHEET_ID = "1"
+    settings.MITOL_GOOGLE_SHEETS_REFUNDS_PLUGINS = "app.plugins.RefundPlugin"
+    return settings
 
 
-@pytest.mark.parametrize("refunds_settings_set", [True, False])
-@pytest.mark.parametrize("sheets_settings_set", [True, False])
+@pytest.mark.parametrize(
+    "has_sheets_settings", [lazy_fixture("google_sheets_base_settings"), False]
+)
+@pytest.mark.parametrize(
+    "has_service_creds_settings",
+    [lazy_fixture("google_sheets_service_creds_settings"), False],
+)
+@pytest.mark.parametrize(
+    "has_client_creds_settings",
+    [lazy_fixture("google_sheets_client_creds_settings"), False],
+)
+@pytest.mark.parametrize(
+    "has_refunds_settings, ", [lazy_fixture("google_sheets_refunds_settings"), False]
+)
 def test_is_configured(
-    db, settings, mocker, pygsheets_fixtures, refunds_settings_set, sheets_settings_set
+    db,
+    settings,
+    mocker,
+    pygsheets_fixtures,
+    has_sheets_settings,
+    has_service_creds_settings,
+    has_client_creds_settings,
+    has_refunds_settings,
 ):
     """
     is_configured makes sure all config variables are set
@@ -93,17 +110,18 @@ def test_is_configured(
     handler = RefundRequestHandler()
     mock_get_plugin_manager.assert_called_once()
 
-    if sheets_settings_set:
-        set_google_sheets_settings(settings)
-
-    if refunds_settings_set:
-        settings.MITOL_GOOGLE_SHEETS_REFUNDS_REQUEST_WORKSHEET_ID = "1"
-        settings.MITOL_GOOGLE_SHEETS_REFUNDS_PLUGINS = "app.plugins.RefundPlugin"
-
-    if sheets_settings_set and refunds_settings_set:
-        assert handler.is_configured() is True
-    else:
-        assert handler.is_configured() is False
+    assert handler.is_configured() is (
+        has_sheets_settings
+        and has_refunds_settings
+        and any(
+            # one needs to be configured
+            [has_service_creds_settings, has_client_creds_settings]
+        )
+        and not all(
+            # but not more than one
+            [has_service_creds_settings, has_client_creds_settings]
+        )
+    )
 
 
 def test_full_sheet_process(db, settings, mocker, pygsheets_fixtures, request_csv_rows):

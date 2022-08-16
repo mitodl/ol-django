@@ -1,6 +1,7 @@
 """Pytest testing utils"""
 import abc
 import json
+import logging
 import traceback
 from contextlib import contextmanager
 
@@ -73,12 +74,21 @@ def test_app_json_modified():  # pragma: no cover
 
     from mitol.common.pytest_utils import test_app_json_modified
     """
+    from mitol.common import envs
+
+    envs.reload_settings()
+
     with open("app.json") as app_json_file:
         app_json = json.load(app_json_file)
 
     generated_app_json = generate_app_json()
 
+    if app_json != generated_app_json:
+        logging.error(
+            "Generated app.json does not match the app.json file. To fix this, run `./manage.py generate_app_json`"
+        )
+
     # pytest will print the difference
     assert json.dumps(app_json, sort_keys=True, indent=2) == json.dumps(
         generated_app_json, sort_keys=True, indent=2
-    ), "Generated app.json does not match the app.json file. Please use the 'generate_app_json' management command to update app.json"
+    )
