@@ -160,12 +160,14 @@ Update your .env file with the settings listed above, that begin with `MITOL_GOO
 Your local xPRO needs permissions to be able to read/write to your Drive. This can
 be done via OAuth with the help of ngrok.
 
-1. Run ngrok using the nginx port for this app: `ngrok http 8053`
-2. Begin domain verification
+1. Run ngrok using the nginx port for this app: `ngrok http 8013`
+2. Visit the credential section of the Google Developer Console: https://console.developers.google.com/apis/credentials,
+select your auth client and update `Authorized redirect URIs` if it changed.
+3. Begin domain verification
     1. Visit Webmasters home: https://www.google.com/webmasters/verification/home?hl=en
     1. Enter the **HTTPS** URL that ngrok is exposing (use the full URL including the protocol)
     1. Select Alternate Methods > HTML Tag auth, and copy the "content" attribute value from tag (just the value, not the full HTML tag)
-3. Update your .env
+4. Update your .env
  ```dotenv
 <your_app_name>_BASE_URL=<Full ngrok HTTPS URL, including protocol>
 GOOGLE_DOMAIN_VERIFICATION_TAG_VALUE=<"content" attribute value from step 2.iii>
