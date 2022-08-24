@@ -24,6 +24,9 @@ FAKE_ENVIRONS = {
     "FLAG_GHI": "False",
     # this here to ensure the envs.reload() works
     "DJANGO_SETTINGS_MODULE": "testapp.settings.test",
+    "CRONTAB_BLANK": "    ",
+    "CRONTAB_EMPTY": "",
+    "CRONTAB_VALID": "* * * * *",
 }
 
 
@@ -134,6 +137,66 @@ def test_get_list_literal():
     assert envs.get_list_literal(
         name="missing_list", default=["default"], description="description"
     ) == ["default"]
+
+
+@pytest.mark.parametrize(
+    "env_var, default",
+    [
+        ("MISSING", dict(invalid_key="*")),
+        ("MISSING", 2345),
+        ("CRONTAB_BLANK", None),
+        ("CRONTAB_EMPTY", None),
+    ],
+)
+def test_get_crontab_kwargs_invalid(env_var, default):
+    """get_crontab_kwargs should parse a crontab string"""
+    # invalid
+    with pytest.raises(ImproperlyConfigured):
+        envs.get_crontab_kwargs(
+            name="MISSING", default=dict(invalid_key="*"), description="desc"
+        )
+
+    with pytest.raises(ImproperlyConfigured):
+        envs.get_crontab_kwargs(name="MISSING", default=2345, description="desc")
+
+    with pytest.raises(ImproperlyConfigured):
+        envs.get_crontab_kwargs(name="CRONTAB_BLANK", description="desc")
+
+    with pytest.raises(ImproperlyConfigured):
+        envs.get_crontab_kwargs(name="CRONTAB_EMPTY", description="desc")
+
+
+@pytest.mark.parametrize(
+    "env_var, default",
+    [
+        ("CRONTAB_VALID", None),
+        ("CRONTAB_VALID", "1 2 3 4 5"),
+        ("CRONTAB_VALID", dict(zip(envs.CRONTAB_KEYS, map(str, range(5))))),
+    ],
+)
+def test_get_crontab_kwargs_valid(env_var, default):
+    assert envs.get_crontab_kwargs(
+        name=env_var, default=default, description="desc"
+    ) == {key: "*" for key in envs.CRONTAB_KEYS}
+
+
+@pytest.mark.parametrize(
+    "default, expected",
+    [
+        (None, {}),
+        (
+            " ".join(map(str, range(5))),
+            dict(zip(envs.CRONTAB_KEYS, map(str, range(5)))),
+        ),
+        (dict(zip(envs.CRONTAB_KEYS, range(5))),)
+        * 2,  # turns to (dict, dict) to get same value for both args
+    ],
+)
+def test_get_crontab_kwargs_valid_default(default, expected):
+    assert (
+        envs.get_crontab_kwargs(name="MISSING", default=default, description="desc")
+        == expected
+    )
 
 
 def test_list_environment_vars():
