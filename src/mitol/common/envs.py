@@ -221,6 +221,54 @@ def parse_delimited_list(name, value, default):
     return [item.strip(" ") for item in parsed_value]
 
 
+CRONTAB_KEYS = ["minute", "hour", "day_of_week", "day_of_month", "month_of_year"]
+
+
+def parse_crontab_kwargs(name, value, default):
+    """
+    Parses a crontab string into structured kwargs
+
+    Argumments:
+        value (str):
+            the crontab string value
+        default (str or dict):
+            the default crontab as either a string or dict
+
+    Returns:
+        dict:
+            the parsed crontab kwargs
+    """
+
+    if isinstance(value, str):
+        units = value.split(" ")
+
+        if len(units) != len(CRONTAB_KEYS):
+            raise ImproperlyConfigured(
+                f"Crontab value '{value}' is required to have {len(CRONTAB_KEYS)} units"
+            )
+
+        if not all(units):
+            raise ImproperlyConfigured(
+                f"Crontab value '{value}' does not have values for all units"
+            )
+
+        return dict(zip(CRONTAB_KEYS, units))
+
+    # an empty string would be falsy and we want to catch that above so default the value here
+    value = value or {}
+
+    if isinstance(value, dict):
+        invalid_keys = set(value.keys()) - set(CRONTAB_KEYS)
+        if invalid_keys:
+            raise ImproperlyConfigured(
+                f"Crontab value has invalid keys: {invalid_keys}"
+            )
+
+        return value
+    else:
+        raise ImproperlyConfigured(f"Crontab value is an invalid type: {type(value)}")
+
+
 class EnvParser:
     """Stateful tracker for environment variable parsing"""
 
@@ -381,6 +429,7 @@ class EnvParser:
     get_int = var_parser(parse_int)
     get_list_literal = var_parser(parse_list_literal)
     get_delimited_list = var_parser(parse_delimited_list)
+    get_crontab_kwargs = var_parser(parse_crontab_kwargs)
 
 
 env = EnvParser()
@@ -391,6 +440,8 @@ get_int = env.get_int
 get_bool = env.get_bool
 get_list_literal = env.get_list_literal
 get_delimited_list = env.get_delimited_list
+get_crontab_kwargs = env.get_crontab_kwargs
+
 reload = env.reload
 validate = env.validate
 list_environment_vars = env.list_environment_vars
