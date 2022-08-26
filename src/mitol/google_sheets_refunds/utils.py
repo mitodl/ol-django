@@ -27,7 +27,7 @@ class RefundRequestRow:
         zendesk_ticket_no,
         requester_email,
         product_id,
-        order_id,
+        order_ref_num,
         order_type,
         finance_email,
         finance_approve_date,
@@ -44,7 +44,7 @@ class RefundRequestRow:
         self.zendesk_ticket_no = zendesk_ticket_no
         self.requester_email = requester_email
         self.product_id = product_id
-        self.order_id = order_id
+        self.order_ref_num = order_ref_num
         self.order_type = order_type
         self.finance_email = finance_email
         self.finance_approve_date = finance_approve_date
@@ -76,7 +76,7 @@ class RefundRequestRow:
                 zendesk_ticket_no=raw_row_data[3],
                 requester_email=raw_row_data[4],
                 product_id=raw_row_data[5],
-                order_id=int(raw_row_data[6]),
+                order_ref_num=raw_row_data[6],
                 order_type=raw_row_data[7],
                 finance_email=raw_row_data[8],
                 finance_approve_date=parse_sheet_date_only_str(raw_row_data[9]),
