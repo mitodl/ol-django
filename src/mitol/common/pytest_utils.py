@@ -7,8 +7,6 @@ from contextlib import contextmanager
 
 import pytest
 
-from mitol.common.envs import generate_app_json
-
 
 def any_instance_of(*cls):
     """
@@ -66,7 +64,7 @@ class MockResponse:
         return json.loads(self.content)
 
 
-def test_app_json_modified():  # pragma: no cover
+def test_app_json_modified():
     """
     Pytest test that verifies app.json is up-to-date
 
@@ -76,12 +74,12 @@ def test_app_json_modified():  # pragma: no cover
     """
     from mitol.common import envs
 
-    envs.reload_settings()
+    envs.reload()
 
     with open("app.json") as app_json_file:
         app_json = json.load(app_json_file)
 
-    generated_app_json = generate_app_json()
+    generated_app_json = envs.generate_app_json()
 
     if app_json != generated_app_json:
         logging.error(

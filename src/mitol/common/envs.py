@@ -1,5 +1,6 @@
 """Functions reading and parsing environment variables"""
 import importlib
+import inspect
 import json
 import os
 from ast import literal_eval
@@ -223,13 +224,31 @@ def parse_delimited_list(name, value, default):
 class EnvParser:
     """Stateful tracker for environment variable parsing"""
 
+    _env: Dict[str, str]
+    _configured_vars: Dict[str, EnvVariable]
+    _imported_modules: List[str]
+
     def __init__(self):
-        self.reload()
+        self.reset()
+
+    def reset(self):
+        """Reset the state"""
+        self._env = dict(os.environ)
+        self._configured_vars = {}
+        self._imported_modules = []
 
     def reload(self):
         """Reloads the environment"""
-        self._env = dict(os.environ)
-        self._configured_vars = {}
+        # reset the internal state since we're reloading everything that created it
+        self.reset()
+
+        # reload the modules we've imported
+        for mod in [
+            # this needs to be dynamic and inlined because settings.py will import this module
+            importlib.import_module(os.environ.get("DJANGO_SETTINGS_MODULE")),
+            *self._imported_modules,
+        ]:
+            importlib.reload(mod)
 
     def validate(self):
         """
@@ -285,25 +304,27 @@ class EnvParser:
             if key.startswith(prefix)
         }
 
-    def init_app_settings(self, *, gbs: Dict, namespace: str, site_name: str):
+    def init_app_settings(self, *, namespace: str, site_name: str, **kwargs):
         """
         Configure the app static settings
 
         Args:
-            gbs (dict):
-                A dictionary of global variables where we can set settings
             namespace (str):
                 the app settings namespace
             site_name (str):
                 The name of the site
         """
-        gbs["APP_SETTINGS_NAMESPACE"] = self.get_string(
+
+        # an optional scope can be passed, or this will default to the calling scope's globals
+        scope = kwargs.pop("scope", inspect.currentframe().f_back.f_globals)
+
+        scope["APP_SETTINGS_NAMESPACE"] = self.get_string(
             name="APP_SETTINGS_NAMESPACE",
             default=namespace,
             description="App environment variable namespace",
             write_app_json=False,
         )
-        gbs["SITE_NAME"] = self.get_string(
+        scope["SITE_NAME"] = self.get_string(
             name="SITE_NAME", default=site_name, description="Site name"
         )
 
@@ -329,6 +350,32 @@ class EnvParser:
             )
         return f"{namespace.value}_{setting_key}"
 
+    def import_settings_modules(self, *module_names: str, **kwargs):
+        """
+        Import settings from modules
+
+        Usage:
+            import_settings_modules("module1.settings", "module2.settings")
+            import_settings_modules("module1.settings", "module2.settings", scope=globals())
+        """
+
+        # an optional scope can be passed, or this will default to the calling scope's globals
+        scope = kwargs.pop("scope", inspect.currentframe().f_back.f_globals)
+
+        # this function imports modules and then walks each, adding uppercased vars
+        # to the calling settings module (typically settings.py in a django project)
+        for module_name in module_names:
+            mod = importlib.import_module(module_name)
+
+            # track this module to support reloading
+            self._imported_modules.append(mod)
+
+            # walk the module and get only the constant-cased variables
+            for setting_name in dir(mod):
+                if setting_name.isupper():
+                    setting_value = getattr(mod, setting_name)
+                    scope[setting_name] = setting_value
+
     get_string = var_parser(parse_str)
     get_bool = var_parser(parse_bool)
     get_int = var_parser(parse_int)
@@ -351,28 +398,7 @@ get_features = env.get_features
 init_app_settings = env.init_app_settings
 app_namespaced = env.app_namespaced
 get_site_name = env.get_site_name
-
-
-def import_settings_modules(gbs: Dict, *module_names: str):
-    """
-    Import settings from modules
-
-    Args:
-        gbs (dict):
-            the value of a calling module's globals()
-
-    Usage:
-        import_settings_modules(globals(), "module1.settings", "module2.settings")
-    """
-
-    # this function imports modules and then walks each, adding uppercased vars
-    # to the calling settings module (typically settings.py in a django project)
-    for module_name in module_names:
-        mod = importlib.import_module(module_name)
-        for setting_name in dir(mod):
-            if setting_name.isupper():
-                setting_value = getattr(mod, setting_name)
-                gbs[setting_name] = setting_value
+import_settings_modules = env.import_settings_modules
 
 
 def generate_app_json():

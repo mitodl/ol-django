@@ -1,5 +1,7 @@
 """Test-only settings"""
-from testapp.settings.shared import *  # noqa: F401,F403
+from mitol.common.envs import import_settings_modules
+
+import_settings_modules("testapp.settings.shared")
 
 MITOL_DIGITAL_CREDENTIALS_VERIFY_SERVICE_BASE_URL = "http://localhost:5000/"
 MITOL_DIGITAL_CREDENTIALS_BUILD_CREDENTIAL_FUNC = "testapp.integration.build_credential"
