@@ -1,7 +1,10 @@
 """Tests for test utils"""
+import json
+
 import pytest
 
 from mitol.common.pytest_utils import MockResponse, any_instance_of, assert_not_raises
+from mitol.common.pytest_utils import test_app_json_modified as _test_app_json_modified
 
 
 def test_any_instance_of():
@@ -54,3 +57,28 @@ def test_mock_response(content, expected_content, expected_json):
     assert response.status_code == 404
     assert response.content == expected_content
     assert response.json() == expected_json
+
+
+def test_test_app_json_modified_passes(mocker):
+    """
+    This is a test for a function that itself is a pytest test,
+    usually imported into projects for reuse.
+    """
+    data = dict(a=1243)
+
+    mocker.patch("builtins.open", mocker.mock_open(read_data=json.dumps(data)))
+    mocker.patch("mitol.common.envs.generate_app_json", return_value=data)
+
+    _test_app_json_modified()
+
+
+def test_test_app_json_modified_fails(mocker):
+    """
+    This is a test for a function that itself is a pytest test,
+    usually imported into projects for reuse.
+    """
+    mocker.patch("builtins.open", mocker.mock_open(read_data=json.dumps(dict(a=1))))
+    mocker.patch("mitol.common.envs.generate_app_json", return_value=dict(a=1243))
+
+    with pytest.raises(AssertionError):
+        _test_app_json_modified()

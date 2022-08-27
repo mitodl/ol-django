@@ -19,6 +19,11 @@ FAKE_ENVIRONS = {
     "LIST_OF_INT": "[3,4,5]",
     "LIST_OF_STR": '["x", "y", \'z\']',
     "LIST_DELIMITED": "x, y, z",
+    "FEATURE_ABC": "True",
+    "FEATURE_DEF": "False",
+    "FLAG_GHI": "False",
+    # this here to ensure the envs.reload() works
+    "DJANGO_SETTINGS_MODULE": "testapp.settings.test",
 }
 
 
@@ -72,7 +77,11 @@ def test_get_bool():
     assert envs.get_bool(name="FALSE", default=1234, description="description") is False
 
     for key, value in FAKE_ENVIRONS.items():
-        if key not in ("TRUE", "FALSE"):
+        if (
+            key not in ("TRUE", "FALSE")
+            and not key.startswith("FEATURE_")
+            and not key.startswith("FLAG_")
+        ):
             with pytest.raises(envs.EnvironmentVariableParseException) as ex:
                 envs.get_bool(name=key, default=1234, description="description")
             assert ex.value.args[
@@ -194,12 +203,6 @@ def test_generate_app_json(mocker):
 
 def test_get_features(mocker):
     """Verify that get_features() parses dict of feature flags"""
-    mocker.patch.dict(
-        "os.environ",
-        {"FEATURE_ABC": "True", "FEATURE_DEF": "False", "FLAG_GHI": "False"},
-        clear=True,
-    )
-    envs.env.reload()
     assert envs.get_features() == {"ABC": True, "DEF": False}
     assert envs.get_features("FLAG_") == {"GHI": False}
 
@@ -210,7 +213,7 @@ def test_app_namespace():
         envs.app_namespaced("KEY")
 
     _globals = {}
-    envs.init_app_settings(gbs=_globals, namespace="PREFIX", site_name="Site Name")
+    envs.init_app_settings(scope=_globals, namespace="PREFIX", site_name="Site Name")
     envs.validate()
 
     assert envs.app_namespaced("KEY") == "PREFIX_KEY"
@@ -223,7 +226,7 @@ def test_get_site_name():
         envs.get_site_name()
 
     _globals = {}
-    envs.init_app_settings(gbs=_globals, namespace="PREFIX", site_name="Site Name")
+    envs.init_app_settings(scope=_globals, namespace="PREFIX", site_name="Site Name")
     envs.validate()
 
     assert envs.get_site_name() == "Site Name"

@@ -16,11 +16,8 @@ import dj_database_url
 
 from mitol.common.envs import get_string, import_settings_modules, init_app_settings
 
-init_app_settings(
-    gbs=globals(), namespace="MITOL", site_name="MIT Open Learning Common Library"
-)
+init_app_settings(namespace="MITOL", site_name="MIT Open Learning Common Library")
 import_settings_modules(
-    globals(),
     "mitol.common.settings.base",
     "mitol.common.settings.webpack",
     "mitol.mail.settings.email",
