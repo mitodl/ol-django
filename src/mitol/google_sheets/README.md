@@ -18,33 +18,28 @@ INSTALLED_APPS = [
 
 ### Configuration
 
-First, gather a bunch of ID-type values from Drive:
+First, gather a few of ID-type values from Drive:
 
 1. The "Client ID" and "Client secret" values for the web application credentials you created
     above ([API Console Credentials section](https://console.developers.google.com/apis/credentials))
-2. Your API project ID, which you can find in Google Cloud Platform > IAM & Admin > Settings > Project ID.
+1. Your API project ID, which you can find in Google Cloud Platform > IAM & Admin > Settings > Project ID.
     Example: `my-api-project-1234567890123`
-3. Drive file IDs for the request spreadsheets. These can be found by opening a spreadsheet from
-    Drive and inspecting the URL. Example: `https://docs.google.com/spreadsheets/d/THIS_IS_THE_ID_VALUE/edit#gid=0`.
-    Copy the id for both the enrollment code request sheet and the change of enrollment sheet.
-4. The IDs of the refund and deferral sheets in the change of enrollment spreadsheet. These can
-    be found by opening the spreadsheet, selecting the "Refunds" or "Deferrals" worksheets, and
-    copying down the `gid` value in the URL. Example: `https://docs.google.com/spreadsheets/d/abcd1234efgh5678bQFCQ7SSFBH5xHip0Gx2wPKT4fUA/edit#gid=THIS_IS_THE_WORKSHEET_ID`
-5. The index of the first row where form-driven data begins in the refund and deferral worksheets.
-    If you're starting with no data already filled in these sheets (recommended), just use the index
-    of the first non-header row. Use the row index exactly as it appears in the spreadsheet.
+1. Drive file ID for the request spreadsheets. These can be found by opening a spreadsheet from
+    Drive and inspecting the URL. Copy the id for the change of enrollment sheet.
+    
+    Example: 
+    > `https://docs.google.com/spreadsheets/d/THIS_IS_THE_ID_VALUE/edit#gid=0`
+    
 
 *If it's not obvious, remove the angle brackets (`<>`) for the actual values.*
 
 ```dotenv
 MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_ID=<Client ID from step 1>
 MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_SECRET=<Client secret from step 1>
-MITOL_GOOGLE_SHEETS_DRIVE_API_PROJECT_ID=<Project ID from step 2
-
+MITOL_GOOGLE_SHEETS_DRIVE_API_PROJECT_ID=<Project ID from step 2>
 MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID=<Change of enrollment request sheet ID from step 3>
-MITOL_GOOGLE_SHEETS_REFUNDS_REQUEST_WORKSHEET_ID=<Refund worksheet ID from step 4>
-MITOL_GOOGLE_SHEETS_REFUNDS_FIRST_ROW=<Row index for the refund worksheet from step 5>
 ```
+
 
 ### Usage
 

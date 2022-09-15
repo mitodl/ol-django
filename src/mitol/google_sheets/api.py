@@ -66,12 +66,12 @@ def get_credentials():
     if settings.MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS:
         is_sharing_to_service_account = any(
             email
-            for email in settings.SHEETS_ADMIN_EMAILS
+            for email in settings.MITOL_GOOGLE_SHEETS_ADMIN_EMAILS
             if email.endswith(settings.MITOL_GOOGLE_SHEETS_GOOGLE_ACCOUNT_EMAIL_DOMAIN)
         )
         if not is_sharing_to_service_account:
             raise ImproperlyConfigured(
-                "If Service Account auth is being used, the SHEETS_ADMIN_EMAILS setting must "
+                "If Service Account auth is being used, the MITOL_GOOGLE_SHEETS_ADMIN_EMAILS setting must "
                 "include a Service Account email for spreadsheet updates/creation to work. "
                 "Add the Service Account email to that setting, or remove the MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS "
                 "setting and use a different auth method."
