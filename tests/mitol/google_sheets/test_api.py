@@ -17,14 +17,14 @@ def test_get_credentials_service_account(mocker, settings):
         "mitol.google_sheets.api.ServiceAccountCredentials"
     )
     settings.MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS = '{"credentials": "json"}'
-    settings.SHEETS_ADMIN_EMAILS = ["abc@example.com"]
+    settings.MITOL_GOOGLE_SHEETS_ADMIN_EMAILS = ["abc@example.com"]
     settings.MITOL_GOOGLE_SHEETS_GOOGLE_ACCOUNT_EMAIL_DOMAIN = "iam.gserviceaccount.com"
     # An exception should be raised if service account auth is being used, but no service account email
     # is included in the list of emails to share spreadsheets with.
     with pytest.raises(ImproperlyConfigured):
         get_credentials()
 
-    settings.SHEETS_ADMIN_EMAILS.append(
+    settings.MITOL_GOOGLE_SHEETS_ADMIN_EMAILS.append(
         "service-account@mitol.{}".format(
             settings.MITOL_GOOGLE_SHEETS_GOOGLE_ACCOUNT_EMAIL_DOMAIN
         )

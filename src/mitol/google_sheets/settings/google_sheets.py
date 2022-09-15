@@ -1,7 +1,7 @@
 """google sheets settings """
 import pytz
 
-from mitol.common.envs import get_string
+from mitol.common.envs import get_list_literal, get_string
 
 MITOL_GOOGLE_SHEETS_PROCESSOR_APP_NAME = get_string(
     name="MITOL_GOOGLE_SHEETS_PROCESSOR_APP_NAME",
@@ -61,3 +61,9 @@ _sheets_date_timezone = get_string(
     ),
 )
 MITOL_GOOGLE_SHEETS_DATE_TIMEZONE = pytz.timezone(_sheets_date_timezone)
+
+MITOL_GOOGLE_SHEETS_ADMIN_EMAILS = get_list_literal(
+    name="MITOL_GOOGLE_SHEETS_ADMIN_EMAILS",
+    default=[],
+    description="This list of email addresses for the google service account authentication",
+)
