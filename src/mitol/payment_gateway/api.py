@@ -750,12 +750,13 @@ class CyberSourcePaymentGateway(
             return ProcessorResponse.STATE_ACCEPTED
         elif decision == "DECLINE":
             return ProcessorResponse.STATE_DECLINED
-            # maybe should log here? this is a straight-up something went wrong between the app and the processor state
         elif decision == "CANCEL":
             return ProcessorResponse.STATE_CANCELLED
         elif decision == "REVIEW":
             return ProcessorResponse.STATE_REVIEW
         elif decision == "PENDING":
             return ProcessorResponse.STATE_PENDING
+        elif decision == "TRANSMITTED":
+            return ProcessorResponse.STATE_TRANSMITTED
 
         return ProcessorResponse.STATE_ERROR
