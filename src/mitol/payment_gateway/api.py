@@ -123,6 +123,8 @@ class ProcessorResponse:
     STATE_DUPLICATE = "DUPLICATE_REQUEST"
     # The possible state for a successful refund is always `PENDING`
     STATE_PENDING = "PENDING"
+    # CyberSource uses this status - it seems to be basically ACCEPT but maybe gets hit when the webhook activates?
+    STATE_TRANSMITTED = "TRANSMITTED"
 
 
 class PaymentGateway(abc.ABC):
