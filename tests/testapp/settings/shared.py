@@ -26,6 +26,7 @@ import_settings_modules(
     "mitol.payment_gateway.settings.cybersource",
     "mitol.google_sheets.settings.google_sheets",
     "mitol.google_sheets_refunds.settings.google_sheets_refunds",
+    "mitol.hubspot_api.settings.hubspot_api",
 )
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -61,6 +62,7 @@ INSTALLED_APPS = [
     "mitol.digitalcredentials.apps.DigitalCredentialsApp",
     "mitol.google_sheets.apps.GoogleSheetsApp",
     "mitol.google_sheets_refunds.apps.GoogleSheetsRefundsApp",
+    "mitol.hubspot_api.apps.HubspotApp",
     "mitol.mail.apps.MailApp",
     "mitol.oauth_toolkit_extensions.apps.OAuthToolkitExtensionsApp",
     "mitol.openedx.apps.OpenedxApp",
@@ -190,3 +192,6 @@ MITOL_PAYMENT_GATEWAY_CYBERSOURCE_SECURE_ACCEPTANCE_URL = "https://google.com"
 MITOL_PAYMENT_GATEWAY_CYBERSOURCE_MERCHANT_ID = "test"
 MITOL_PAYMENT_GATEWAY_CYBERSOURCE_MERCHANT_SECRET = "test1234"
 MITOL_PAYMENT_GATEWAY_CYBERSOURCE_MERCHANT_SECRET_KEY_ID = "test1234"
+
+MITOL_HUBSPOT_API_ID_PREFIX = "app"
+MITOL_HUBSPOT_API_PRIVATE_TOKEN = "testtoken"

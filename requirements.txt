@@ -10,6 +10,7 @@ google-api-python-client==1.7.11
 google-auth==1.6.3
 pygsheets==2.0.2
 html5lib>=1.1
+hubspot-api-client==6.1.0
 lxml>=4.6.1
 premailer>=3.7.0
 psycopg2-binary>=2.8.3
