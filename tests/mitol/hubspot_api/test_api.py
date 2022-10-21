@@ -66,7 +66,7 @@ def test_api_get_all_objects(mocker, mock_hubspot_api):
     ]
     test_results = api.get_all_objects(api.HubspotObjectType.PRODUCTS.value, limit=3)
     assert isinstance(test_results, Iterable)
-    assert [result for result in test_results] == all_results
+    assert list(test_results) == all_results
 
 
 @pytest.mark.parametrize(
@@ -258,8 +258,17 @@ def test_upsert_object_request_exists(mock_hubspot_api):
     mock_update.assert_called_once()
 
 
+@pytest.mark.parametrize(
+    "status, message",
+    [
+        [409, "Dupe error. Existing ID: {}"],
+        [400, "Dupe error. {} already has that value."],
+    ],
+)
 @pytest.mark.django_db
-def test_upsert_object_request_missing_id(mocker, mock_hubspot_api, content_type_obj):
+def test_upsert_object_request_missing_id(
+    mocker, mock_hubspot_api, content_type_obj, status, message
+):
     """If an object exists in Hubspot but missing a HubspotObject in Django, retry upsert w/patch instead of post"""
     hubspot_id = "123456789"
     object_id = 123
@@ -270,12 +279,11 @@ def test_upsert_object_request_missing_id(mocker, mock_hubspot_api, content_type
         http_resp=mocker.Mock(
             data=json.dumps(
                 {
-                    "message": f"{api.HUBSPOT_EXISTING_ID} {hubspot_id}",
-                    "category": "CONFLICT",
+                    "message": message.format(hubspot_id),
                 }
             ),
             reason="",
-            status=409,
+            status=status,
         )
     )
     body = {"properties": {"foo": "bar"}}
@@ -293,6 +301,32 @@ def test_upsert_object_request_missing_id(mocker, mock_hubspot_api, content_type
         ).hubspot_id
         == hubspot_id
     )
+
+
+@pytest.mark.django_db
+def test_upsert_object_request_other_error(mocker, mock_hubspot_api, content_type_obj):
+    """If a non-dupe ApIException happens, raise it"""
+    object_id = 123
+    mock_create = mock_hubspot_api.return_value.crm.objects.basic_api.create
+    mock_create.side_effect = ApiException(
+        http_resp=mocker.Mock(
+            data=json.dumps(
+                {
+                    "message": "something bad happened",
+                }
+            ),
+            reason="",
+            status=400,
+        )
+    )
+    body = {"properties": {"foo": "bar"}}
+    with pytest.raises(Exception):
+        api.upsert_object_request(
+            content_type_obj,
+            api.HubspotObjectType.CONTACTS.value,
+            object_id=object_id,
+            body=body,
+        )
 
 
 def test_associate_objects_request(mock_hubspot_api):

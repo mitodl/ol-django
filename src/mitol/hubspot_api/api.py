@@ -5,6 +5,7 @@ https://developers.hubspot.com/docs/api/overview
 """
 import json
 import logging
+import re
 from enum import Enum
 from typing import Dict, Iterable, List
 
@@ -24,7 +25,7 @@ from mitol.hubspot_api.models import HubspotObject
 
 log = logging.getLogger()
 
-HUBSPOT_EXISTING_ID = "Existing ID:"
+HUBSPOT_EXISTING_ID = r"Existing ID:\s*(\d+)|(\d+) already has that value"
 
 
 class HubspotObjectType(Enum):
@@ -155,7 +156,7 @@ def upsert_object_request(
     Returns:
         SimplePublicObject: The Hubspot object returned from the API
     """
-    hubspot_id = get_hubspot_id(object_id, content_type) or "" if object_id else ""
+    hubspot_id = get_hubspot_id(object_id, content_type)
     api = HubspotApi().crm.objects.basic_api
     if hubspot_id:
         result = api.update(
@@ -170,16 +171,18 @@ def upsert_object_request(
             )
         except ApiException as err:  # pylint:disable=broad-except
             # Handle cases where an object already exists but hubspot_id is not in db (redo as a PATCH)
-            if hasattr(err, "status") and err.status == 409:
+            if err.status in (400, 409):
                 details = json.loads(err.body)
                 message = details.get("message", "")
-                if (
-                    details.get("category", "") == "CONFLICT"
-                    and HUBSPOT_EXISTING_ID in message
-                ):
-                    hubspot_id = message.split(":")[-1].strip()
+                hubspot_id_matches = [
+                    match
+                    for match in list(sum(re.findall(HUBSPOT_EXISTING_ID, message), ()))
+                    if match
+                ]
+                if hubspot_id_matches:
+                    hubspot_id = hubspot_id_matches[0]
                     if object_id and not ignore_conflict:
-                        HubspotObject.objects.get_or_create(
+                        HubspotObject.objects.update_or_create(
                             object_id=object_id,
                             content_type=content_type,
                             hubspot_id=hubspot_id,
@@ -191,7 +194,7 @@ def upsert_object_request(
                         return SimplePublicObject(id=hubspot_id)
             raise
     if object_id and not hubspot_id:
-        HubspotObject.objects.get_or_create(
+        HubspotObject.objects.update_or_create(
             object_id=object_id, content_type=content_type, hubspot_id=result.id
         )
     return result
