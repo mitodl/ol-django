@@ -78,7 +78,7 @@ class HubspotApi(HubSpot):
                 backoff_factor=0.3,
                 status_forcelist=(429, 500, 502, 504),
             )
-        super().__init__(self, access_token=access_token, retry=retry, **kwargs)
+        super().__init__(access_token=access_token, retry=retry, **kwargs)
 
 
 def get_all_objects(
