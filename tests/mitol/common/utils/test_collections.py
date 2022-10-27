@@ -277,10 +277,11 @@ def test_matching_item_index():
 
 def test_replace_null_values():
     """Invalid values should be replaced"""
-    assert replace_null_values({"a": 1, "b": None, "c": "N/A"}, "nodata") == {
+    assert replace_null_values({"a": 1, "b": None, "c": "N/A", "d": 0}, "nodata") == {
         "a": 1,
         "b": "nodata",
         "c": "N/A",
+        "d": 0,
     }
-    assert replace_null_values([1, None, "N/A"], "") == [1, "", "N/A"]
-    assert replace_null_values([1, None, "N/A"], 0) == [1, 0, "N/A"]
+    assert replace_null_values([1, None, "N/A", 0], "") == [1, "", "N/A", 0]
+    assert replace_null_values([1, None, "N/A", ""], 0) == [1, 0, "N/A", ""]

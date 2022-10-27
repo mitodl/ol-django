@@ -297,6 +297,9 @@ def replace_null_values(iterable, replacement):
     """
 
     if isinstance(iterable, dict):
-        return {key: value if value else replacement for key, value in iterable.items()}
+        return {
+            key: value if value is not None else replacement
+            for key, value in iterable.items()
+        }
     else:
-        return [val if val else replacement for val in iterable]
+        return [val if val is not None else replacement for val in iterable]
