@@ -38,7 +38,7 @@ class HubspotObjectFactory(DjangoModelFactory):
 
 
 class SimplePublicObjectFactory(Factory):
-    """Factoru for SimplePublicObject"""
+    """Factory for SimplePublicObject"""
 
     id = Sequence(lambda number: "111000{}".format(number))
     properties = Faker("pydict")

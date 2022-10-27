@@ -70,20 +70,6 @@ def test_api_get_all_objects(mocker, mock_hubspot_api):
 
 
 @pytest.mark.parametrize(
-    "value, expected",
-    [
-        ({"prop": 1, "blank": None}, {"prop": 1, "blank": ""}),
-        ({"prop": 1}, {"prop": 1}),
-        ({"blank": None}, {"blank": ""}),
-        ({}, {}),
-    ],
-)
-def test_sanitize_properties(value, expected):
-    """Test that sanitize_properties replaces Nones with empty strings"""
-    assert api.sanitize_properties(value) == expected
-
-
-@pytest.mark.parametrize(
     "response, exists",
     [
         [api.PropertiesApiException(), False],
@@ -346,7 +332,7 @@ def test_make_object_properties_message(mocker):
     """make_object_properties_message should return expected JSON"""
     test_dict = {"foo": "bar"}
     mock_sanitize = mocker.patch(
-        "mitol.hubspot_api.api.sanitize_properties", return_value=test_dict
+        "mitol.hubspot_api.api.replace_null_values", return_value=test_dict
     )
     assert api.make_object_properties_message(test_dict).properties == test_dict
     mock_sanitize.assert_called_once()

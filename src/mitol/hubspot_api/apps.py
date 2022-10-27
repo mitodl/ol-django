@@ -4,7 +4,7 @@ import os
 from mitol.common.apps import BaseApp
 
 
-class HubspotApp(BaseApp):
+class HubspotApiApp(BaseApp):
     """Default configuration for the payment gateway app"""
 
     name = "mitol.hubspot_api"

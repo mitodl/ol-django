@@ -21,6 +21,7 @@ from hubspot.crm.objects import (
 from hubspot.crm.properties import ApiException as PropertiesApiException
 from urllib3 import Retry
 
+from mitol.common.utils.collections import replace_null_values
 from mitol.hubspot_api.models import HubspotObject
 
 log = logging.getLogger()
@@ -80,6 +81,20 @@ class HubspotApi(HubSpot):
                 status_forcelist=(429, 500, 502, 504),
             )
         super().__init__(access_token=access_token, retry=retry, **kwargs)
+
+
+def create_filter(name: str, operator: str, value: str or int) -> dict:
+    """
+    Return a filter dict for use in hubspot api searches
+
+    name(str): The hubspot object propertyName
+    operator(str): api filter operater (like 'EQ')
+    value(str): The hubspot object property's value
+
+    Returns:
+        dict: The search filter
+    """
+    return {"propertyName": name, "operator": operator, "value": value}
 
 
 def get_all_objects(
@@ -221,22 +236,6 @@ def associate_objects_request(
     )
 
 
-def sanitize_properties(properties: dict) -> dict:
-    """
-    Ensures we don't pass any invalid values (e.g. nulls) to hubspot_timestamp
-
-    Args:
-        properties(dict): dict of object properties
-
-    Returns:
-        dict: object properties with null values replaced w/empty strings
-    """
-
-    return {
-        key: value if value is not None else "" for key, value in properties.items()
-    }
-
-
 def make_object_properties_message(properties: dict) -> SimplePublicObjectInput:
     """
     Create data for object sync message
@@ -247,7 +246,7 @@ def make_object_properties_message(properties: dict) -> SimplePublicObjectInput:
     Returns:
         SimplePublicObjectInput: input object to create/update data in Hubspot
     """
-    return SimplePublicObjectInput(properties=sanitize_properties(properties))
+    return SimplePublicObjectInput(properties=replace_null_values(properties, ""))
 
 
 def transform_object_properties(object_data: dict, mapping: dict) -> dict:
@@ -514,9 +513,9 @@ def find_product(
     Returns:
         SimplePublicObject: The Hubspot product returned by the API
     """
-    filters = [{"propertyName": "name", "operator": "EQ", "value": name}]
+    filters = [create_filter("name", "EQ", name)]
     if price:
-        filters.append({"propertyName": "price", "operator": "EQ", "value": price})
+        filters.append(create_filter("price", "EQ", price))
     return find_object(
         HubspotObjectType.PRODUCTS.value, filters, raise_count_error=raise_count_error
     )
@@ -535,9 +534,9 @@ def find_deal(
     Returns:
         SimplePublicObject: The Hubspot deal returned by the API
     """
-    filters = [{"propertyName": "dealname", "operator": "EQ", "value": name}]
+    filters = [create_filter("dealname", "EQ", name)]
     if amount:
-        filters.append({"propertyName": "amount", "operator": "EQ", "value": amount})
+        filters.append(create_filter("amount", "EQ", amount))
     return find_object(
         HubspotObjectType.DEALS.value, filters, raise_count_error=raise_count_error
     )
@@ -595,5 +594,4 @@ def find_line_item(
         raise ValueError(
             f"Expected 1 line_item match for deal {deal_id}, hs_prod_id {hs_product_id} but found {len(line_items)}"
         )
-    if line_items:
-        return line_items[0]
+    return next(iter(line_items), None)
