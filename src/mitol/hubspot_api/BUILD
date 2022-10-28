@@ -13,7 +13,7 @@ python_sources(
 )
 
 python_distribution(
-    name="mitol-hubspot_api",
+    name="mitol-hubspot-api",
     dependencies=[":hubspot_api"],
     provides=setup_py(
         name="mitol-django-hubspot-api",
