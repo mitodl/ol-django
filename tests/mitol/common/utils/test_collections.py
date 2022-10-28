@@ -23,6 +23,7 @@ from mitol.common.utils.collections import (
     max_or_none,
     partition,
     partition_to_lists,
+    replace_null_values,
     unique,
     unique_ignore_case,
 )
@@ -272,3 +273,15 @@ def test_matching_item_index():
         matching_item_index(["a", "b", "c", "d"], "e")
     number_iter = (i for i in [0, 1, 2, 3, 4])
     assert matching_item_index(number_iter, 2) == 2
+
+
+def test_replace_null_values():
+    """Invalid values should be replaced"""
+    assert replace_null_values({"a": 1, "b": None, "c": "N/A", "d": 0}, "nodata") == {
+        "a": 1,
+        "b": "nodata",
+        "c": "N/A",
+        "d": 0,
+    }
+    assert replace_null_values([1, None, "N/A", 0], "") == [1, "", "N/A", 0]
+    assert replace_null_values([1, None, "N/A", ""], 0) == [1, 0, "N/A", ""]

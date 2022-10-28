@@ -9,6 +9,7 @@ python_sources(
         "src/mitol/digitalcredentials",
         "src/mitol/google_sheets",
         "src/mitol/google_sheets_refunds",
+        "src/mitol/hubspot_api",
         "src/mitol/mail",
         "src/mitol/oauth_toolkit_extensions",
         "src/mitol/openedx",
@@ -16,6 +17,7 @@ python_sources(
         ":testapp-files",
         "//:psycopg2-binary",
         "//:python3-saml",
+        "//:hubspot-api-client",
     ],
 )
 

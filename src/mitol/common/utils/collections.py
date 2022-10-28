@@ -282,3 +282,24 @@ def matching_item_index(iterable, value_to_match):
         StopIteration: Raised if the value is not found in the iterable
     """
     return next(i for i, value in enumerate(iterable) if value == value_to_match)
+
+
+def replace_null_values(iterable, replacement):
+    """
+    Replace any nulls in list or dict values
+
+    Args:
+        iterable(Iterable): the iterable to replace any null values
+        replacement(any): What to replace invalid values with
+
+    Returns:
+        iterable: iterable with null values replaced
+    """
+
+    if isinstance(iterable, dict):
+        return {
+            key: value if value is not None else replacement
+            for key, value in iterable.items()
+        }
+    else:
+        return [val if val is not None else replacement for val in iterable]
