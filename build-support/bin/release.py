@@ -116,7 +116,7 @@ def main() -> None:
 
     # checkout the main branch
     repo = Repo(".")
-    # repo.heads.main.checkout()
+    repo.heads.main.checkout()
 
     version_filename = join(app_dir, "__init__.py")
     metadata = update_init_py(args, version_filename)
@@ -127,7 +127,7 @@ def main() -> None:
     )
 
     # commit the changes and tag it
-    print("Commiting")
+    print("Committing")
     repo.index.add(
         [
             changelog_filename,
