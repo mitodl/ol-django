@@ -148,13 +148,20 @@ def test_full_sheet_process(db, settings, mocker, pygsheets_fixtures, request_cs
     mock_get_plugin_manager.assert_called_once()
 
     result = handler.process_sheet()
-    expected_processed_rows = {4, 5, 7, 9, 10}
+    expected_processed_rows = {5, 10}
     expected_failed_rows = {6}
+    expected_oos_rows = {7}
     assert ResultType.PROCESSED.value in result
     assert (
         set(result[ResultType.PROCESSED.value]) == expected_processed_rows
     ), "Rows %s as defined in refund_requests.csv should be processed" % str(
         expected_processed_rows
+    )
+    assert ResultType.OUT_OF_SYNC.value in result
+    assert (
+        set(result[ResultType.OUT_OF_SYNC.value]) == expected_oos_rows
+    ), "Rows %s as defined in refund_requests.csv should be out of sync" % str(
+        expected_oos_rows
     )
     assert ResultType.FAILED.value in result
     assert (
