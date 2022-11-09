@@ -125,7 +125,11 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
         """Performs row filtering according to the rules noted in filter_ignored_rows"""
         try:
             parsed_data = RefundRequestRow.parse_raw_data(*row_tuple)
-            return not parsed_data.skip_row
+            return not (
+                parsed_data.skip_row
+                or parsed_data.refund_complete_date is not None
+                or len(parsed_data.errors) > 0
+            )
         except Exception:
             return True
 
