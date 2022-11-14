@@ -120,3 +120,27 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
             result_type=result_type,
             message=message,
         )
+
+    def _int_filter_row(self, row_tuple):
+        """Performs row filtering according to the rules noted in filter_ignored_rows"""
+        try:
+            parsed_data = RefundRequestRow.parse_raw_data(*row_tuple)
+            return not (
+                parsed_data.skip_row or parsed_data.refund_complete_date is not None
+            )
+        except Exception:
+            return True
+
+    def filter_ignored_rows(self, enumerated_rows):
+        """
+        Filters skippable rows in the sheet. A row is skippable if these conditions is met:
+        - Ignore flag is set to TRUE
+
+        Args:
+            enumerated_rows (Iterable[Tuple[int, List[str]]]): Row indices paired with a list of strings
+                representing the data in each row
+
+        Returns:
+            Iterable[Tuple[int, List[str]]]: Iterable of data rows without the ones that should be ignored.
+        """
+        return filter(self._int_filter_row, enumerated_rows)
