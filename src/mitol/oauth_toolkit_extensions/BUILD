@@ -12,7 +12,9 @@ python_sources(
     sources=[
         "**/*.py",
     ],
-    dependencies=["src/mitol/common", ":files"],
+    dependencies=[
+        ":files",
+    ],
 )
 
 python_distribution(

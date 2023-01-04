@@ -1,15 +1,19 @@
-resources(name="files", sources=[
-    "CHANGELOG.md",
-    "README.md",
-    "py.typed",
-])
+resources(
+    name="files",
+    sources=[
+        "CHANGELOG.md",
+        "README.md",
+        "py.typed",
+    ],
+)
 
 python_sources(
     name="google_sheets_refunds",
-    sources=[
-      "**/*.py"
+    sources=["**/*.py"],
+    dependencies=[
+        ":files",
+        "//:reqs#setuptools",
     ],
-    dependencies=[":files", "//:setuptools"],
 )
 
 python_distribution(

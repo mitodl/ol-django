@@ -1,7 +1,7 @@
 [GLOBAL]
-pants_version = "2.9.0"
+pants_version = "2.14.0"
 pants_ignore.remove = [
-  # this is gitignored, which pants puls in, so we need to un-ignore it
+  # this is gitignored, which pants pulls in, so we need to un-ignore it
   "testapp/settings/dev.py",
 ]
 pythonpath = ["%(buildroot)s/pants-plugins"]
@@ -12,7 +12,6 @@ backend_packages = [
   'pants.backend.python.lint.black',
   'pants.backend.python.typecheck.mypy',
   # custom pants plugins
-  'django_run',
   'python_distribution',
 ]
 
@@ -41,30 +40,32 @@ lockfile = "build-support/ipython.lockfile"
 
 [python]
 interpreter_constraints = ['>=3.7']
-requirement_constraints = "requirements.txt"
+enable_resolves = true
+
+[python.resolves]
+python-default = "build-support/python-default.lock" 
+
 
 [setup-py-generation]
 first_party_dependency_version_scheme = "compatible"
 
 [black]
-version = "black==21.5b1"
+version = "black==22.12.0"
 lockfile = "build-support/black.lockfile"
-extra_requirements = ["black==21.5b1"]
 
 [mypy]
-version = "mypy==0.782"
+version = "mypy==0.991"
 lockfile = "build-support/mypy.lockfile"
 extra_requirements = [
-  "django-stubs==1.6.0",
-  "djangorestframework-stubs==1.2.0"
+  "django-stubs==1.13.1",
+  "djangorestframework-stubs[compatible-mypy]==1.8.0"
 ]
 
 [flake8]
-version = "flake8==3.8.0"
+version = "flake8>=5.0.0,<6"
 lockfile = "build-support/flake8.lockfile"
 
 [pytest]
-# config = "build-support/pytest.ini"
 lockfile = "build-support/pytest.lockfile"
 args = [
   "--cov .",

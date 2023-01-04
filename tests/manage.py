@@ -3,9 +3,6 @@
 import os
 import sys
 
-from django.utils.autoreload import get_child_arguments
-
-print(get_child_arguments())
 
 def main() -> None:
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "testapp.settings.dev")
@@ -17,6 +14,7 @@ def main() -> None:
             "available on your PYTHONPATH environment variable? Did you "
             "forget to activate a virtual environment?"
         ) from exc
+
     execute_from_command_line(sys.argv)
 
 

@@ -12,7 +12,10 @@ python_sources(
     sources=[
         "**/*.py",
     ],
-    dependencies=[":files", "//:setuptools"],
+    dependencies=[
+        ":files",
+        "//:reqs#setuptools",
+    ],
 )
 
 python_distribution(

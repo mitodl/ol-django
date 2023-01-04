@@ -1,32 +1,48 @@
-resources(name="testapp-files", sources=["testapp/templates/**/*"])
-
-python_sources(
-    name="testapp-lib",
-    sources=["testapp/**/*.py"],
-    dependencies=[
-        "src/mitol/authentication",
-        "src/mitol/common",
-        "src/mitol/digitalcredentials",
-        "src/mitol/google_sheets",
-        "src/mitol/google_sheets_refunds",
-        "src/mitol/hubspot_api",
-        "src/mitol/mail",
-        "src/mitol/oauth_toolkit_extensions",
-        "src/mitol/openedx",
-        "src/mitol/payment_gateway",
-        ":testapp-files",
-        "//:psycopg2-binary",
-        "//:python3-saml",
-        "//:hubspot-api-client",
-    ],
+resources(
+    name="testapp-files",
+    sources=["testapp/templates/**/*"],
 )
 
 python_sources(
-    name="pytest-tests", sources=["conftest.py"], dependencies=["//:pytest-django"]
+    name="testapp-lib",
+    sources=[
+        "manage.py",
+    ],
+    dependencies=[
+        "//src:mitol-sources",
+        "//tests/testapp",
+        ":testapp-files",
+        "//:reqs#psycopg2-binary",
+        "//:reqs#python3-saml",
+        "//:reqs#hubspot-api-client",
+    ],
+)
+
+resources(
+    name="test-data",
+    sources=["data/**/*"],
+)
+
+python_test_utils(
+    name="pytest-utils",
+    sources=[
+        "conftest.py",
+    ],
+    dependencies=["//:reqs#pytest-django"],
+)
+
+python_tests(
+    name="pytest-tests",
+    sources=["mitol/**/test_*.py"],
+    dependencies=[
+        ":testapp-lib",
+        ":test-data",
+    ],
 )
 
 pex_binary(
     name="manage",
-    entry_point="manage",
-    dependencies=[":testapp-lib", ":testapp-files"],
+    entry_point="manage.py",
+    dependencies=[":testapp-lib"],
+    restartable=True,
 )

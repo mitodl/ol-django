@@ -19,7 +19,7 @@ from mitol.google_sheets_refunds.api import RefundRequestHandler
 def request_csv_rows(settings):
     """Fake refund request spreadsheet data rows (loaded from CSV)"""
     fake_request_csv_filepath = os.path.join(
-        settings.BASE_DIR, "mitol/google_sheets_refunds/refund_requests.csv"
+        settings.BASE_DIR, "data/google_sheets_refunds/refund_requests.csv"
     )
     with open(fake_request_csv_filepath) as f:
         # Return all rows except for the header

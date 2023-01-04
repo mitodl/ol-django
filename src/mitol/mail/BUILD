@@ -15,10 +15,9 @@ python_sources(
         "**/*.py",
     ],
     dependencies=[
-        "src/mitol/common",
         ":mail-templates",
         ":files",
-        "//:html5lib",  # pulled in dynamically by bs4
+        "//:reqs#html5lib",  # pulled in dynamically by bs4
     ],
 )
 
