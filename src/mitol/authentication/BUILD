@@ -13,7 +13,6 @@ python_sources(
         "**/*.py",
     ],
     dependencies=[
-        "src/mitol/common",
         ":files",
     ],
 )

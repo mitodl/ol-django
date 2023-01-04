@@ -10,7 +10,9 @@ resources(
 python_sources(
     name="digitalcredentials",
     sources=["**/*.py"],
-    dependencies=["src/mitol/common", ":files"],
+    dependencies=[
+        ":files",
+    ],
 )
 
 python_distribution(

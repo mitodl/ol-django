@@ -107,6 +107,8 @@ REST_FRAMEWORK = {"TEST_REQUEST_DEFAULT_FORMAT": "json"}
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 DEFAULT_DATABASE_CONFIG = dj_database_url.parse(
     get_string(
         name="DATABASE_URL",

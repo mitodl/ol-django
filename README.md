@@ -20,6 +20,10 @@ To perform a release, run:
   - Module paths follow the pattern `mitol.{name}`
   - The app itself is installable to `INSTALLED_APPS` as `"{name}"`.
 
+### Prerequisites
+
+- Install `xmlsec` native libraries for your OS: https://xmlsec.readthedocs.io/en/stable/install.html
+
 ### Usage
 
 We use [`pants`](https://www.pantsbuild.org/) to manage apps and releases.
@@ -40,13 +44,13 @@ Useful commands:
 ./pants lint ::
 
 # run django management scripts
-./pants django-run tests: -- ARGS
+./pants run tests/manage.py -- ARGS
 # run a django shell
-./pants django-run tests: -- shell  
+./pants run tests/manage.py -- shell  
 # create migrations
-./pants django-run tests: -- makemigrations  
+./pants run tests/manage.py -- makemigrations  
 # run a django migrate
-./pants django-run tests: -- migrate  
+./pants run tests/manage.py -- migrate  
 ```
 
 ### Migrations
@@ -63,11 +67,11 @@ where `APP_NAME` matches the `name` attribute from your `apps.py` app.
 
 - Create the project:
 ```shell
-cd src/mitol
-django-admin startproject NAME && cd $NAME
+NAME="[APP-NAME]"
+mkdir src/mitol/$NAME
+./pants run :django-admin -- startapp $NAME src/mitol/$NAME
 ```
-- Remove the default app aside to use as the testapp: `rm -rf $NAME`
 - Add a `BUILD` file, following using the same files from other projects as a guideline
+- Add the project as a dependency in `src/BUILD`
 - Add the project to the testapp
-  - Add the project as a dependency in `tests/BUILD`
   - Add the project app in `tests/testapp/settings/shared.py` under `INSTALLED_APPS`

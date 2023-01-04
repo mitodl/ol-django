@@ -46,7 +46,7 @@ def response_payload(request):
 
     with open(
         os.path.join(
-            os.getcwd(), "tests/mitol/payment_gateway/api", f"{request.param}.json"
+            os.getcwd(), "tests/data/payment_gateway/api", f"{request.param}.json"
         ),
         mode="r",
     ) as f:
