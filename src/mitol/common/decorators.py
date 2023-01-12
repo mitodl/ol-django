@@ -5,6 +5,9 @@ from typing import Callable, Optional
 
 from django.utils.cache import get_max_age, patch_cache_control
 from django_redis import get_redis_connection
+from typing_extensions import ParamSpec
+
+P = ParamSpec("P")
 
 
 def cache_control_max_age_jitter(*args, **kwargs):
@@ -35,7 +38,7 @@ def cache_control_max_age_jitter(*args, **kwargs):
 def single_task(
     timeout: int,
     raise_block: Optional[bool] = True,
-    lock_str: Optional[str] = None,
+    key: Optional[str or Callable[[str, P.args, P.kwargs], str]] = None,
     cache_name: Optional[str] = "redis",
 ) -> Callable:
     """
@@ -45,7 +48,7 @@ def single_task(
     Args:
         timeout(int): Time in seconds to wait before relinquishing a lock
         raise_block(bool): If true, raise a BlockingIOError when locked
-        lock_str(str): Custom lock base name (if None, the function name will be used)
+        key(str | Callable): Custom lock name or function to generate one
         cache_name(str): The name of the celery redis cache (default is "redis")
 
     Returns:
@@ -57,8 +60,14 @@ def single_task(
         def wrapper(*args, **kwargs):
             has_lock = False
             client = get_redis_connection(cache_name)
-            lock_id = f"{lock_str or func.__name__}-id-{args[0] if args else 'single'}"
-            lock = client.lock(lock_id, timeout=timeout)
+            if isinstance(key, str):
+                lock_id = key
+            elif callable(key):
+                lock_id = key(func.__name__, args, kwargs)
+            else:
+                lock_id = func.__name__
+            lock = client.lock(f"task-lock:{lock_id}", timeout=timeout)
+            print(lock_id)
             try:
                 has_lock = lock.acquire(blocking=False)
                 if has_lock:
