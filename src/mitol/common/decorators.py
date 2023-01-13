@@ -67,7 +67,6 @@ def single_task(
             else:
                 lock_id = func.__name__
             lock = client.lock(f"task-lock:{lock_id}", timeout=timeout)
-            print(lock_id)
             try:
                 has_lock = lock.acquire(blocking=False)
                 if has_lock:
