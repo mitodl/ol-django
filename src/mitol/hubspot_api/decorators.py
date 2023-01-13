@@ -3,6 +3,7 @@ import functools
 from typing import Callable
 
 from hubspot.crm.objects import ApiException
+from rest_framework.status import HTTP_429_TOO_MANY_REQUESTS
 
 from mitol.hubspot_api.exceptions import TooManyRequestsException
 
@@ -20,7 +21,7 @@ def raise_429(func) -> Callable:
         try:
             return func(*args, **kwargs)
         except ApiException as ae:
-            if int(ae.status) == 429:
+            if int(ae.status) == HTTP_429_TOO_MANY_REQUESTS:
                 raise TooManyRequestsException(ae)
             else:
                 raise
