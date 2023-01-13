@@ -1,7 +1,13 @@
+import functools
 import random
 from functools import wraps
+from typing import Callable, Optional
 
 from django.utils.cache import get_max_age, patch_cache_control
+from django_redis import get_redis_connection
+from typing_extensions import ParamSpec
+
+P = ParamSpec("P")
 
 
 def cache_control_max_age_jitter(*args, **kwargs):
@@ -27,3 +33,53 @@ def cache_control_max_age_jitter(*args, **kwargs):
         return _cache_controlled
 
     return _cache_controller
+
+
+def single_task(
+    timeout: int,
+    raise_block: Optional[bool] = True,
+    key: Optional[str or Callable[[str, P.args, P.kwargs], str]] = None,
+    cache_name: Optional[str] = "redis",
+) -> Callable:
+    """
+    Only allow one instance of a celery task to run concurrently
+    Based on https://bit.ly/2RO2aav
+
+    Args:
+        timeout(int): Time in seconds to wait before relinquishing a lock
+        raise_block(bool): If true, raise a BlockingIOError when locked
+        key(str | Callable): Custom lock name or function to generate one
+        cache_name(str): The name of the celery redis cache (default is "redis")
+
+    Returns:
+        Callable: wrapped function (typically a celery task)
+    """
+
+    def task_run(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            has_lock = False
+            client = get_redis_connection(cache_name)
+            if isinstance(key, str):
+                lock_id = key
+            elif callable(key):
+                lock_id = key(func.__name__, args, kwargs)
+            else:
+                lock_id = func.__name__
+            lock = client.lock(f"task-lock:{lock_id}", timeout=timeout)
+            try:
+                has_lock = lock.acquire(blocking=False)
+                if has_lock:
+                    return_value = func(*args, **kwargs)
+                else:
+                    if raise_block:
+                        raise BlockingIOError()
+                    return_value = None
+            finally:
+                if has_lock and lock.locked():
+                    lock.release()
+            return return_value
+
+        return wrapper
+
+    return task_run

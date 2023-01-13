@@ -35,7 +35,7 @@ def content_type_obj():
 
 @pytest.fixture
 def mock_hubspot_api(mocker):
-    """Mock the send hubspot_xpro request method"""
+    """Mock the send hubspot request method"""
     return mocker.patch("mitol.hubspot_api.api.HubspotApi")
 
 
@@ -192,7 +192,7 @@ def test_delete_object_property(mock_hubspot_api, property_group):
 
 @pytest.mark.django_db
 def test_get_hubspot_id():
-    """Return the hubspot_xpro id if any for the specified content type and object ID"""
+    """Return the hubspot id if any for the specified content type and object ID"""
     hubspot_obj = HubspotObjectFactory.create()
     assert (
         api.get_hubspot_id(hubspot_obj.object_id, hubspot_obj.content_type)
@@ -230,7 +230,7 @@ def test_upsert_object_request_new(mock_hubspot_api, content_type_obj):
 
 @pytest.mark.django_db
 def test_upsert_object_request_exists(mock_hubspot_api):
-    """upsert_object_request should try a patch hubspot_xpro API call if there's an existing Hubspot object"""
+    """upsert_object_request should try a patch hubspot API call if there's an existing Hubspot object"""
     hs_obj = HubspotObjectFactory.create()
     mock_update = mock_hubspot_api.return_value.crm.objects.basic_api.update
     mock_update.return_value = SimplePublicObject(id=hs_obj.hubspot_id)
