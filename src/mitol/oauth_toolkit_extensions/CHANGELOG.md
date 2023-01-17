@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2023-01-17
+
 ## [1.2.1] - 2022-10-31
 
 ## [1.2.0] - 2022-06-24
@@ -35,7 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added initial implementation of `mitol-django-oauth-toolkit-extensions` library
 
-[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-oauth-toolkit-extensions/v1.2.1...HEAD
+[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-oauth-toolkit-extensions/v1.3.0...HEAD
+[1.3.0]: https://github.com/mitodl/ol-django/compare/mitol-django-oauth-toolkit-extensions/v1.2.1...mitol-django-oauth-toolkit-extensions/v1.3.0
 [1.2.1]: https://github.com/mitodl/ol-django/compare/mitol-django-oauth-toolkit-extensions/v1.2.0...mitol-django-oauth-toolkit-extensions/v1.2.1
 [1.2.0]: https://github.com/mitodl/ol-django/compare/mitol-django-oauth-toolkit-extensions/v1.1.0...mitol-django-oauth-toolkit-extensions/v1.2.0
 [1.1.0]: https://github.com/mitodl/ol-django/compare/mitol-django-oauth-toolkit-extensions/v1.0.1...mitol-django-oauth-toolkit-extensions/v1.1.0
