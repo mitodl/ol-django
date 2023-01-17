@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2023-01-17
+
 ## [1.5.1] - 2022-10-31
 
 ## [1.5.0] - 2022-06-24
@@ -79,7 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Barebones implementation of authentication app
 - SAML metadata endpoint and boilerplate configuration
 
-[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.5.1...HEAD
+[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.6.0...HEAD
+[1.6.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.5.1...mitol-django-authentication/v1.6.0
 [1.5.1]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.5.0...mitol-django-authentication/v1.5.1
 [1.5.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.4.1...mitol-django-authentication/v1.5.0
 [1.4.1]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.4.0...mitol-django-authentication/v1.4.1
