@@ -9,6 +9,7 @@ import re
 from enum import Enum
 from typing import Dict, Iterable, List
 
+import requests
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from hubspot import HubSpot
@@ -95,6 +96,22 @@ def create_filter(name: str, operator: str, value: str or int) -> dict:
         dict: The search filter
     """
     return {"propertyName": name, "operator": operator, "value": value}
+
+
+def delete_secondary_email(email: str, hubspot_id: str):
+    """
+    The CRM API Python library does not provide a function to delete secondary emails, so need to make a raw request
+
+    Args:
+        email(str): The email address to delete
+        hubspot_id: The id of the hubspot contact
+    """
+    headers = {"Authorization": f"Bearer {settings.MITOL_HUBSPOT_API_PRIVATE_TOKEN}"}
+    response = requests.delete(
+        f"https://api.hubapi.com/contacts/v1/secondary-email/{hubspot_id}/email/{email}?",
+        headers=headers,
+    )
+    response.raise_for_status()
 
 
 def get_all_objects(
@@ -196,6 +213,32 @@ def upsert_object_request(
                 ]
                 if hubspot_id_matches:
                     hubspot_id = hubspot_id_matches[0]
+                    if hubspot_type == HubspotObjectType.CONTACTS.value:
+                        # Check if the Hubspot contact has multiple emails, and if so, remove secondary email
+                        contact = find_contact(body.properties["email"])
+                        other_hso = HubspotObject.objects.filter(
+                            content_type=content_type, hubspot_id=hubspot_id
+                        ).first()
+                        if other_hso:
+                            if contact.properties["email"] == body.properties["email"]:
+                                # Delete the HubspotObject matched on secondary email, it will be synced again next time
+                                other_hso.delete()
+                                # Delete the secondary email for the other user
+                                delete_secondary_email(
+                                    other_hso.content_object.email, contact.id
+                                )
+                            else:
+                                # Delete the secondary email for this user
+                                delete_secondary_email(
+                                    body.properties["email"], contact.id
+                                )
+                            # Try again
+                            return upsert_object_request(
+                                content_type,
+                                hubspot_type,
+                                object_id=object_id,
+                                body=body,
+                            )
                     if object_id and not ignore_conflict:
                         HubspotObject.objects.update_or_create(
                             object_id=object_id,
@@ -432,7 +475,9 @@ def find_contact(email: str) -> SimplePublicObject:
     Returns:
         SimplePublicObject: The Hubspot contact returned by the API
     """
-    return HubspotApi().crm.contacts.basic_api.get_by_id(email, id_property="email")
+    return HubspotApi().crm.contacts.basic_api.get_by_id(
+        email, id_property="email", properties=["email", "hs_additional_emails"]
+    )
 
 
 def find_objects(

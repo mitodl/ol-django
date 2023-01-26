@@ -5,11 +5,17 @@ import json
 from collections.abc import Iterable
 
 import pytest
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from django.contrib.contenttypes.models import ContentType
 from faker import Faker
-from hubspot.crm.objects import ApiException, AssociatedId, SimplePublicObject
+from hubspot.crm.objects import (
+    ApiException,
+    AssociatedId,
+    SimplePublicObject,
+    SimplePublicObjectInput,
+)
 
+from mitol.common.factories import UserFactory
 from mitol.hubspot_api import api
 from mitol.hubspot_api.factories import HubspotObjectFactory, SimplePublicObjectFactory
 from mitol.hubspot_api.models import HubspotObject
@@ -275,7 +281,7 @@ def test_upsert_object_request_missing_id(
     body = {"properties": {"foo": "bar"}}
     api.upsert_object_request(
         content_type_obj,
-        api.HubspotObjectType.CONTACTS.value,
+        api.HubspotObjectType.PRODUCTS.value,
         object_id=object_id,
         body=body,
     )
@@ -312,6 +318,91 @@ def test_upsert_object_request_other_error(mocker, mock_hubspot_api, content_typ
             api.HubspotObjectType.CONTACTS.value,
             object_id=object_id,
             body=body,
+        )
+
+
+@pytest.mark.parametrize("is_primary_email", [True, False])
+@pytest.mark.django_db
+def test_upsert_object_contact_dupe_email(mocker, mock_hubspot_api, is_primary_email):
+    """If single hubspot contact has multiple emails matching 2+ django users, delete the other email"""
+    dupe_hubspot_id = "123456789"
+    new_hubspot_id = "222222222"
+    old_user = UserFactory.create(email="old@test.edu")
+    new_user = UserFactory.create(email="new@test.edu")
+    ct = ContentType.objects.get_for_model(User)
+    old_hso = HubspotObjectFactory.create(
+        content_type=ct,
+        hubspot_id=dupe_hubspot_id,
+        object_id=old_user.id,
+        content_object=old_user,
+    )
+    mocker.patch(
+        "mitol.hubspot_api.api.find_contact",
+        return_value=SimplePublicObject(
+            id=dupe_hubspot_id,
+            properties={
+                "email": new_user.email if is_primary_email else old_user.email,
+                "hs_additional_emails": old_user.email
+                if is_primary_email
+                else new_user.email,
+            },
+        ),
+    )
+    mock_create = mock_hubspot_api.return_value.crm.objects.basic_api.create
+    mock_exc = ApiException(
+        http_resp=mocker.Mock(
+            data=json.dumps(
+                {
+                    "message": f"Existing ID: {dupe_hubspot_id}",
+                }
+            ),
+            reason="",
+            status=409,
+        )
+    )
+    mock_create.side_effect = (
+        mock_exc
+        if is_primary_email
+        else [
+            mock_exc,
+            SimplePublicObject(id=new_hubspot_id, properties={"email": new_user.email}),
+        ]
+    )
+    mock_secondary = mocker.patch("mitol.hubspot_api.api.delete_secondary_email")
+    body = SimplePublicObjectInput(properties={"email": new_user.email})
+    api.upsert_object_request(
+        ct,
+        api.HubspotObjectType.CONTACTS.value,
+        object_id=new_user.id,
+        body=body,
+    )
+    if is_primary_email:
+        mock_secondary.assert_called_once_with(old_user.email, old_hso.hubspot_id)
+        assert (
+            HubspotObject.objects.filter(
+                content_type=ct, object_id=old_user.id
+            ).exists()
+            is False
+        )
+        assert (
+            HubspotObject.objects.get(
+                content_type=ct, hubspot_id=dupe_hubspot_id
+            ).object_id
+            == new_user.id
+        )
+    else:
+        mock_secondary.assert_called_once_with(new_user.email, dupe_hubspot_id)
+        assert (
+            HubspotObject.objects.get(
+                content_type=ct, hubspot_id=dupe_hubspot_id
+            ).object_id
+            == old_user.id
+        )
+        assert (
+            HubspotObject.objects.get(
+                content_type=ct, hubspot_id=new_hubspot_id
+            ).object_id
+            == new_user.id
         )
 
 
@@ -359,7 +450,9 @@ def test_find_contact(mock_hubspot_api):
     email = "testmail@mit.edu"
     mock_get_by_id = mock_hubspot_api.return_value.crm.contacts.basic_api.get_by_id
     api.find_contact(email)
-    mock_get_by_id.assert_called_once_with(email, id_property="email")
+    mock_get_by_id.assert_called_once_with(
+        email, id_property="email", properties=["email", "hs_additional_emails"]
+    )
 
 
 @pytest.mark.parametrize(
