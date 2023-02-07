@@ -18,6 +18,9 @@ from CyberSource import (
     Ptsv2paymentsidrefundsOrderInformation,
     RefundApi,
     RefundPaymentRequest,
+    SearchTransactionsApi,
+    CreateSearchRequest,
+    TransactionDetailsApi,
 )
 from django.conf import settings
 
@@ -757,3 +760,54 @@ class CyberSourcePaymentGateway(
             return ProcessorResponse.STATE_PENDING
 
         return ProcessorResponse.STATE_ERROR
+
+    def find_transactions(self, transactions: List[str]):
+        """
+        Performs a search for the transactions specified. For simplicity, this
+        assumes the data set specified is order IDs. If your system doesn't 
+        produce unique order IDs (or if they get reused for whatever reason), 
+        this will likely return multiple transactions for the same order ID.
+
+        Args:
+        - transactions: List of order IDs to look for
+
+        Returns:
+        - List of CyberSource transaction IDs
+        """
+
+        api = SearchTransactionsApi(self.get_client_configuration())
+
+        query_string = " OR ".join(transactions.map(lambda s: f"clientReferenceInformation.code:{s}"))
+
+        query_request = CreateSearchRequest(query=query_string)
+
+        response = api.create_search(query_request)
+
+        if response.totalCount == 0:
+            return []
+        
+        return [
+            [summary.id, summary.clientReferenceInformation.code, summary.submitTimeUtc] 
+            for summary in response._embedded.transactionSummaries
+        ]
+    
+    def get_transaction_details(self, transaction: str):
+        """
+        Gets the details for a particular transaction. The details will be 
+        reformmated into a format resembling a CyberSource payload. This expects
+        a CyberSource transaction ID, not an app-specific ID; the 
+        find_transactions method can be used to retrieve that if you don't have
+        the transaction ID.
+
+        Args:
+        - transaction: CyberSource transaction ID to retrieve
+
+        Returns:
+        - CyberSource-specific transaction object
+        """
+
+        api = TransactionDetailsApi(self.get_client_configuration())
+
+        response = api.get_transaction(transaction)
+
+        return response
