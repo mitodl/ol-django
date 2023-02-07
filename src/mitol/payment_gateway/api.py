@@ -33,7 +33,7 @@ from mitol.payment_gateway.exceptions import (
     InvalidTransactionException,
     RefundDuplicateException,
 )
-from mitol.payment_gateway.payment_utils import clean_request_data
+from mitol.payment_gateway.payment_utils import clean_request_data, strip_nones
 
 
 @dataclass
@@ -761,7 +761,7 @@ class CyberSourcePaymentGateway(
 
         return ProcessorResponse.STATE_ERROR
 
-    def find_transactions(self, transactions: List[str]):
+    def find_transactions(self, transactions: List[str], limit=20):
         """
         Performs a search for the transactions specified. For simplicity, this
         assumes the data set specified is order IDs. If your system doesn't 
@@ -769,7 +769,8 @@ class CyberSourcePaymentGateway(
         this will likely return multiple transactions for the same order ID.
 
         Args:
-        - transactions: List of order IDs to look for
+        - transactions (list of strings): List of order IDs to look for
+        - limit (int): Max number of rows to return (defaults to 20)
 
         Returns:
         - List of CyberSource transaction IDs
@@ -777,18 +778,26 @@ class CyberSourcePaymentGateway(
 
         api = SearchTransactionsApi(self.get_client_configuration())
 
-        query_string = " OR ".join(transactions.map(lambda s: f"clientReferenceInformation.code:{s}"))
+        query_string = " OR ".join([f"clientReferenceInformation.code:{s}" for s in transactions])
 
-        query_request = CreateSearchRequest(query=query_string)
+        query_request = CreateSearchRequest(
+            save=False,
+            name="MITOL",
+            timezone=settings.TIME_ZONE,
+            offset=0,
+            limit=limit,
+            sort="submitTimeUtc:desc",
+            query=query_string,
+        )
 
-        response = api.create_search(query_request)
+        response, status, body = api.create_search(json.dumps(strip_nones(query_request.__dict__)))
 
-        if response.totalCount == 0:
+        if response.total_count == 0:
             return []
         
         return [
-            [summary.id, summary.clientReferenceInformation.code, summary.submitTimeUtc] 
-            for summary in response._embedded.transactionSummaries
+            [summary.id, summary.client_reference_information.code, summary.submit_time_utc] 
+            for summary in response._embedded.transaction_summaries
         ]
     
     def get_transaction_details(self, transaction: str):
