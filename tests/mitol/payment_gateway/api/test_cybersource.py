@@ -1,7 +1,9 @@
 import hashlib
 import json
 import os
+from collections import namedtuple
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Dict
 
 import pytest
@@ -408,3 +410,50 @@ def test_create_refund_request_invalid_data_exception(transaction_data):
         cybersource_gateway.create_refund_request(
             MITOL_PAYMENT_GATEWAY_CYBERSOURCE, transaction_data
         )
+
+
+@pytest.mark.parametrize("test_failure", [True, False])
+def test_find_transactions(test_failure, mocker):
+    fake_ids = ["mitxonline-test-12345", "mitxonline-test-54321"]
+
+    # this only mocks up the things the find_transactions call actually uses
+    class fake_reference:
+        code = "mitxonline-test-12345"
+
+    class fake_summary:
+        def __init__(self):
+            self.id = 123456789
+            self.client_reference_information = fake_reference
+            self.submit_time_utc = datetime.today()
+
+    class fake_response:
+        def __init__(self):
+            self.total_count = 1
+            self._embedded = namedtuple("embedded", "transaction_summaries")(
+                **{"transaction_summaries": [fake_summary()]}
+            )
+
+    faked_responses = fake_response()
+
+    expected_exception = Exception("CyberSource API returned HTTP status 500: Error")
+
+    if test_failure:
+        mocker.patch(
+            "CyberSource.SearchTransactionsApi.create_search",
+            side_effect=expected_exception,
+        )
+    else:
+        mocker.patch(
+            "CyberSource.SearchTransactionsApi.create_search",
+            return_value=(faked_responses, 200, {}),
+        )
+
+    cybersource_gateway = CyberSourcePaymentGateway()
+
+    if test_failure:
+        with pytest.raises(Exception):
+            response = cybersource_gateway.find_transactions(fake_ids)
+    else:
+        response = cybersource_gateway.find_transactions(fake_ids)
+
+        assert "mitxonline-test-12345" in response[0]

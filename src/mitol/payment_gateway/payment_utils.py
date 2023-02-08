@@ -14,8 +14,10 @@ def clean_request_data(request_data):
 def strip_nones(datasource):
     """Strips None values from the supplied iterable. Does not recurse."""
 
+    retval = {}
+
     for key in datasource:
-        if datasource[key] is None:
-            del(datasource[key])
-    
-    return datasource
+        if datasource[key] is not None:
+            retval[key] = datasource[key]
+
+    return retval
