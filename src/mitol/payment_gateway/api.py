@@ -891,7 +891,7 @@ class CyberSourcePaymentGateway(
             "req_override_custom_cancel_page": "https://rc.mitxonline.mit.edu/checkout/result/",
             "req_override_custom_receipt_page": "https://rc.mitxonline.mit.edu/checkout/result/",
             "req_card_type_selection_indicator": response.payment_information.card.type,
-            "req_reference-number": response.client_reference_information.code,
+            "req_reference_number": response.client_reference_information.code,
         }
 
         for idx, line_item in enumerate(response.order_information.line_items):
