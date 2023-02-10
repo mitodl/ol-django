@@ -12,27 +12,19 @@ from decimal import Decimal
 from functools import wraps
 from typing import Dict, List
 
-from CyberSource import (
-    CreateSearchRequest,
-    Ptsv2paymentsClientReferenceInformation,
-    Ptsv2paymentsidcapturesOrderInformationAmountDetails,
-    Ptsv2paymentsidrefundsOrderInformation,
-    RefundApi,
-    RefundPaymentRequest,
-    SearchTransactionsApi,
-    TransactionDetailsApi,
-)
+from CyberSource import (CreateSearchRequest,
+                         Ptsv2paymentsClientReferenceInformation,
+                         Ptsv2paymentsidcapturesOrderInformationAmountDetails,
+                         Ptsv2paymentsidrefundsOrderInformation, RefundApi,
+                         RefundPaymentRequest, SearchTransactionsApi,
+                         TransactionDetailsApi)
 from django.conf import settings
 
 from mitol.common.utils.datetime import now_in_utc
-from mitol.payment_gateway.constants import (
-    ISO_8601_FORMAT,
-    MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
-)
-from mitol.payment_gateway.exceptions import (
-    InvalidTransactionException,
-    RefundDuplicateException,
-)
+from mitol.payment_gateway.constants import (ISO_8601_FORMAT,
+                                             MITOL_PAYMENT_GATEWAY_CYBERSOURCE)
+from mitol.payment_gateway.exceptions import (InvalidTransactionException,
+                                              RefundDuplicateException)
 from mitol.payment_gateway.payment_utils import clean_request_data, strip_nones
 
 
@@ -448,7 +440,7 @@ class CyberSourcePaymentGateway(
         formatted_merchant_fields = {}
 
         if "merchant_fields" in kwargs and kwargs["merchant_fields"] is not None:
-            for (idx, field_data) in enumerate(kwargs["merchant_fields"], start=1):
+            for idx, field_data in enumerate(kwargs["merchant_fields"], start=1):
                 # CyberSource maxes out at 100 of these
                 # there should really only ever be 6 at most (for xPro)
                 if idx > 100:
@@ -761,15 +753,15 @@ class CyberSourcePaymentGateway(
 
         return ProcessorResponse.STATE_ERROR
 
-    def find_transactions(self, transactions: List[str], limit=20):
+    def find_transactions(self, reference_numbers: List[str], limit=20):
         """
         Performs a search for the transactions specified. For simplicity, this
-        assumes the data set specified is order IDs. If your system doesn't
-        produce unique order IDs (or if they get reused for whatever reason),
+        assumes the data set specified is reference numbers. If your system doesn't
+        produce unique reference numbers (or if they get reused for whatever reason),
         this will likely return multiple transactions for the same order ID.
 
         Args:
-        - transactions (list of strings): List of order IDs to look for
+        - reference_numbers (list of strings): List of reference numbers to look for
         - limit (int): Max number of rows to return (defaults to 20)
 
         Returns:
@@ -783,7 +775,7 @@ class CyberSourcePaymentGateway(
         api = SearchTransactionsApi(self.get_client_configuration())
 
         query_string = " OR ".join(
-            [f"clientReferenceInformation.code:{s}" for s in transactions]
+            [f"clientReferenceInformation.code:{s}" for s in reference_numbers]
         )
 
         query_request = CreateSearchRequest(
@@ -913,23 +905,23 @@ class CyberSourcePaymentGateway(
 
         return (response, payload)
 
-    def find_and_get_transactions(self, transactions: List[str]):
+    def find_and_get_transactions(self, reference_numbers: List[str]):
         """
-        For the transaction IDs specified, gets the transaction details and
+        For the reference numbers specified, gets the transaction details and
         returns that. In the case that there are multiple results for the
-        transaction, the *last* one will be the one it uses.
+        reference number, the *last* one will be the one it uses.
 
         Args:
-        - transactions (list of str): app-specific transaction IDs to search for
+        - reference_numbers (list of str): app-specific reference numbers to search for
 
         Returns:
-        - Dict of formatted responses. The keys will be the transaction IDs.
+        - Dict of formatted responses. The keys will be the reference numbers.
         """
 
-        limit = len(transactions) if len(transactions) > 20 else 20
+        limit = len(reference_numbers) if len(reference_numbers) > 20 else 20
         results = {}
 
-        searches = self.find_transactions(transactions, limit)
+        searches = self.find_transactions(reference_numbers, limit)
 
         for search in searches:
             results[search[1]] = search[0]
