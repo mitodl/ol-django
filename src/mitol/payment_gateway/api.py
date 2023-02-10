@@ -12,25 +12,20 @@ from decimal import Decimal
 from functools import wraps
 from typing import Dict, List
 
-from CyberSource import (
-    Ptsv2paymentsClientReferenceInformation,
-    Ptsv2paymentsidcapturesOrderInformationAmountDetails,
-    Ptsv2paymentsidrefundsOrderInformation,
-    RefundApi,
-    RefundPaymentRequest,
-)
+from CyberSource import (CreateSearchRequest,
+                         Ptsv2paymentsClientReferenceInformation,
+                         Ptsv2paymentsidcapturesOrderInformationAmountDetails,
+                         Ptsv2paymentsidrefundsOrderInformation, RefundApi,
+                         RefundPaymentRequest, SearchTransactionsApi,
+                         TransactionDetailsApi)
 from django.conf import settings
 
 from mitol.common.utils.datetime import now_in_utc
-from mitol.payment_gateway.constants import (
-    ISO_8601_FORMAT,
-    MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
-)
-from mitol.payment_gateway.exceptions import (
-    InvalidTransactionException,
-    RefundDuplicateException,
-)
-from mitol.payment_gateway.payment_utils import clean_request_data
+from mitol.payment_gateway.constants import (ISO_8601_FORMAT,
+                                             MITOL_PAYMENT_GATEWAY_CYBERSOURCE)
+from mitol.payment_gateway.exceptions import (InvalidTransactionException,
+                                              RefundDuplicateException)
+from mitol.payment_gateway.payment_utils import clean_request_data, strip_nones
 
 
 @dataclass
@@ -445,7 +440,7 @@ class CyberSourcePaymentGateway(
         formatted_merchant_fields = {}
 
         if "merchant_fields" in kwargs and kwargs["merchant_fields"] is not None:
-            for (idx, field_data) in enumerate(kwargs["merchant_fields"], start=1):
+            for idx, field_data in enumerate(kwargs["merchant_fields"], start=1):
                 # CyberSource maxes out at 100 of these
                 # there should really only ever be 6 at most (for xPro)
                 if idx > 100:
@@ -757,3 +752,187 @@ class CyberSourcePaymentGateway(
             return ProcessorResponse.STATE_PENDING
 
         return ProcessorResponse.STATE_ERROR
+
+    def find_transactions(self, reference_numbers: List[str], limit=20):
+        """
+        Performs a search for the transactions specified. For simplicity, this
+        assumes the data set specified is reference numbers. If your system doesn't
+        produce unique reference numbers (or if they get reused for whatever reason),
+        this will likely return multiple transactions for the same order ID.
+
+        Args:
+        - reference_numbers (list of strings): List of reference numbers to look for
+        - limit (int): Max number of rows to return (defaults to 20)
+
+        Returns:
+        - List of CyberSource transaction IDs
+
+        Raises:
+        - Exception if HTTP status returned is > 299
+        - Any exception raised by the SearchTransactionsApi call
+        """
+
+        api = SearchTransactionsApi(self.get_client_configuration())
+
+        query_string = " OR ".join(
+            [f"clientReferenceInformation.code:{s}" for s in reference_numbers]
+        )
+
+        query_request = CreateSearchRequest(
+            save=False,
+            name="MITOL",
+            timezone=settings.TIME_ZONE,
+            offset=0,
+            limit=limit,
+            sort="submitTimeUtc:desc",
+            query=query_string,
+        )
+
+        response, status, body = api.create_search(
+            json.dumps(strip_nones(query_request.__dict__))
+        )
+
+        if status > 299:
+            raise Exception(
+                f"CyberSource API returned HTTP status {status}: {str(response)}"
+            )
+
+        if response.total_count == 0:
+            return []
+
+        return [
+            [
+                summary.id,
+                summary.client_reference_information.code,
+                summary.submit_time_utc,
+            ]
+            for summary in response._embedded.transaction_summaries
+        ]
+
+    def get_transaction_details(self, transaction: str):
+        """
+        Gets the details for a particular transaction. The details will be
+        reformmated into a format resembling a CyberSource payload. This expects
+        a CyberSource transaction ID, not an app-specific ID; the
+        find_transactions method can be used to retrieve that if you don't have
+        the transaction ID.
+
+        Args:
+        - transaction: CyberSource transaction ID to retrieve
+
+        Returns:
+        - Tuple of TssV2TransactionsGet200Response and a CyberSource-specific transaction object
+
+        Raises:
+        - Exception if HTTP status returned is > 299
+        - Any exception raised by the TransactionDetailsApi call
+        """
+
+        api = TransactionDetailsApi(self.get_client_configuration())
+
+        response, status, body = api.get_transaction(transaction)
+
+        if status > 299:
+            raise Exception(
+                f"CyberSource API returned HTTP status {status}: {str(response)}"
+            )
+
+        payload = {
+            "utf8": "",
+            "message": response.application_information.applications[-1].r_message,
+            "decision": response.application_information.applications[-1].reason_code,
+            "auth_code": response.processor_information.approval_code,
+            "auth_time": response.submit_time_utc,
+            "signature": "",
+            "req_amount": response.order_information.amount_details.total_amount,
+            "req_locale": "en-us",
+            "auth_amount": response.order_information.amount_details.authorized_amount,
+            "reason_code": response.application_information.applications[
+                -1
+            ].reason_code,
+            "req_currency": response.order_information.amount_details.currency,
+            "auth_avs_code": response.processor_information.avs.code,
+            "auth_response": response.processor_information.response_code,
+            "req_card_type": "",
+            "request_token": "",
+            "card_type_name": "",
+            "req_access_key": "",
+            "req_profile_id": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_PROFILE_ID,
+            "transaction_id": response.root_id,
+            "req_card_number": "",
+            "req_consumer_id": response.buyer_information.merchant_customer_id,
+            "req_line_item_count": len(response.order_information.line_items),
+            "signed_date_time": response.submit_time_utc,
+            "auth_avs_code_raw": response.processor_information.avs.code_raw,
+            "auth_trans_ref_no": response.processor_information.network_transaction_id,
+            "bill_trans_ref_no": response.processor_information.network_transaction_id,
+            "req_payment_method": "card",
+            "req_card_expiry_date": f"{response.payment_information.card.expiration_month}-{response.payment_information.card.expiration_year}",
+            "req_transaction_type": "sale",
+            "req_transaction_uuid": "",
+            "req_customer_ip_address": response.device_information.ip_address,
+            "signed_field_names": "",
+            "req_bill_to_email": response.order_information.bill_to.email,
+            "req_bill_to_surname": response.order_information.bill_to.last_name,
+            "req_bill_to_forename": response.order_information.bill_to.first_name,
+            "req_bill_to_address_city": response.order_information.bill_to.locality,
+            "req_bill_to_address_line1": response.order_information.bill_to.address1,
+            "req_bill_to_address_state": response.order_information.bill_to.administrative_area,
+            "req_bill_to_address_country": response.order_information.bill_to.country,
+            "req_bill_to_address_postal_code": response.order_information.bill_to.postal_code,
+            "req_override_custom_cancel_page": "https://rc.mitxonline.mit.edu/checkout/result/",
+            "req_override_custom_receipt_page": "https://rc.mitxonline.mit.edu/checkout/result/",
+            "req_card_type_selection_indicator": response.payment_information.card.type,
+            "req_reference_number": response.client_reference_information.code,
+        }
+
+        for idx, line_item in enumerate(response.order_information.line_items):
+            payload = {
+                **payload,
+                f"req_item_{idx}_quantity": line_item.quantity,
+                f"req_item_{idx}_code": line_item.product_code,
+                f"req_item_{idx}_name": line_item.product_name,
+                f"req_item_{idx}_tax_amount": line_item.tax_amount,
+                f"req_item_{idx}_unit_price": line_item.unit_price,
+                f"req_item_{idx}_sku": line_item.product_sku,
+            }
+
+        for merchant_info in response.merchant_defined_information:
+            payload = {
+                **payload,
+                f"req_merchant_defined_data{merchant_info.key}": merchant_info.value,
+            }
+
+        return (response, payload)
+
+    def find_and_get_transactions(self, reference_numbers: List[str]):
+        """
+        For the reference numbers specified, gets the transaction details and
+        returns that. In the case that there are multiple results for the
+        reference number, the *last* one will be the one it uses.
+
+        Args:
+        - reference_numbers (list of str): app-specific reference numbers to search for
+
+        Returns:
+        - Dict of formatted responses. The keys will be the reference numbers.
+        """
+
+        limit = len(reference_numbers) if len(reference_numbers) > 20 else 20
+        results = {}
+
+        searches = self.find_transactions(reference_numbers, limit)
+
+        for search in searches:
+            results[search[1]] = search[0]
+
+        for order_id in results:
+            search_id = results[order_id]
+
+            (orig_response, formatted_response) = self.get_transaction_details(
+                search_id
+            )
+
+            results[order_id] = formatted_response
+
+        return results

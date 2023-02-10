@@ -1,12 +1,17 @@
 import hashlib
 import json
 import os
+import random
+from collections import namedtuple
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Dict
 
 import pytest
+from CyberSource import models as cs_models
 from CyberSource.rest import ApiException
 from django.conf import settings
+from factory import fuzzy
 from testapp.factories import CartItemFactory, OrderFactory, RefundFactory
 from urllib3.response import HTTPResponse
 
@@ -408,3 +413,473 @@ def test_create_refund_request_invalid_data_exception(transaction_data):
         cybersource_gateway.create_refund_request(
             MITOL_PAYMENT_GATEWAY_CYBERSOURCE, transaction_data
         )
+
+
+def create_transaction_search_results():
+    """Mocks a transaction search result. This only mocks up the things the find_transactions call actually uses."""
+
+    class fake_reference:
+        code = "mitxonline-test-12345"
+
+    class fake_summary:
+        def __init__(self):
+            self.id = 123456789
+            self.client_reference_information = fake_reference
+            self.submit_time_utc = datetime.today()
+
+    class fake_response:
+        def __init__(self):
+            self.total_count = 1
+            self._embedded = namedtuple("embedded", "transaction_summaries")(
+                **{"transaction_summaries": [fake_summary()]}
+            )
+
+    return fake_response()
+
+
+@pytest.mark.parametrize("test_failure", [True, False])
+def test_find_transactions(test_failure, mocker):
+    fake_ids = ["mitxonline-test-12345", "mitxonline-test-54321"]
+
+    faked_responses = create_transaction_search_results()
+
+    expected_exception = Exception("CyberSource API returned HTTP status 500: Error")
+
+    if test_failure:
+        mocker.patch(
+            "CyberSource.SearchTransactionsApi.create_search",
+            side_effect=expected_exception,
+        )
+    else:
+        mocker.patch(
+            "CyberSource.SearchTransactionsApi.create_search",
+            return_value=(faked_responses, 200, {}),
+        )
+
+    cybersource_gateway = CyberSourcePaymentGateway()
+
+    if test_failure:
+        with pytest.raises(Exception):
+            response = cybersource_gateway.find_transactions(fake_ids)
+    else:
+        response = cybersource_gateway.find_transactions(fake_ids)
+
+        assert "mitxonline-test-12345" in response[0]
+
+
+def create_transaction_detail_record():
+    """Returns a faked out detail record in the same format you'd get from CyberSource for a TransactionDetailApi request."""
+
+    fake_id = random.randrange(1000000000000000000000, 9999999999999999999999)
+    fake_recon_id = fuzzy.FuzzyText(length=16)
+
+    data_dict = {
+        "application_information": cs_models.TssV2TransactionsGet200ResponseApplicationInformation(
+            **{
+                "applications": [
+                    cs_models.TssV2TransactionsGet200ResponseApplicationInformationApplications(
+                        **{
+                            "name": "ics_auth",
+                            "r_code": "1",
+                            "r_flag": "SOK",
+                            "r_message": "Request was " "processed " "successfully.",
+                            "reason_code": "100",
+                            "reconciliation_id": fake_recon_id,
+                            "return_code": 1010000,
+                            "status": None,
+                        }
+                    ),
+                    cs_models.TssV2TransactionsGet200ResponseApplicationInformationApplications(
+                        **{
+                            "name": "ics_bill",
+                            "r_code": "1",
+                            "r_flag": "SOK",
+                            "r_message": "Request was " "processed " "successfully.",
+                            "reason_code": "100",
+                            "reconciliation_id": fake_recon_id,
+                            "return_code": 1260000,
+                            "status": "TRANSMITTED",
+                        }
+                    ),
+                ],
+                "r_code": None,
+                "r_flag": None,
+                "reason_code": "100",
+                "status": "TRANSMITTED",
+            }
+        ),
+        "buyer_information": cs_models.TssV2TransactionsGet200ResponseBuyerInformation(
+            **{
+                "hashed_password": None,
+                "merchant_customer_id": "1a2bd577a252342290dae0459b0c92ac",
+            }
+        ),
+        "client_reference_information": cs_models.TssV2TransactionsGet200ResponseClientReferenceInformation(
+            **{
+                "application_name": "Secure Acceptance " "Web/Mobile",
+                "application_user": None,
+                "application_version": None,
+                "code": "mitxonline-dev-4",
+                "comments": None,
+                "partner": cs_models.TssV2TransactionsGet200ResponseClientReferenceInformationPartner(
+                    **{"solution_id": None}
+                ),
+            }
+        ),
+        "consumer_authentication_information": cs_models.TssV2TransactionsGet200ResponseConsumerAuthenticationInformation(
+            **{
+                "cavv": None,
+                "eci_raw": None,
+                "strong_authentication": cs_models.TssV2TransactionsGet200ResponseConsumerAuthenticationInformationStrongAuthentication(
+                    **{
+                        "delegated_authentication_exemption_indicator": None,
+                        "low_value_exemption_indicator": None,
+                        "risk_analysis_exemption_indicator": None,
+                        "secure_corporate_payment_indicator": None,
+                        "trusted_merchant_exemption_indicator": None,
+                    }
+                ),
+                "transaction_id": None,
+                "xid": None,
+            }
+        ),
+        "device_information": cs_models.TssV2TransactionsGet200ResponseDeviceInformation(
+            **{"cookies_accepted": None, "host_name": None, "ip_address": "172.20.0.9"}
+        ),
+        "error_information": None,
+        "fraud_marking_information": {"reason": None},
+        "health_care_information": None,
+        "id": fake_id,
+        "installment_information": {"identifier": None, "number_of_installments": None},
+        "links": cs_models.TssV2TransactionsGet200ResponseLinks(
+            **{
+                "_self": cs_models.PtsV2PaymentsPost201ResponseLinksSelf(
+                    **{
+                        "href": "https://apitest.cybersource.com/tss/v2/transactions/fake_id",
+                        "method": "GET",
+                    }
+                ),
+                "related_transactions": None,
+            }
+        ),
+        "merchant_defined_information": [
+            cs_models.Ptsv2paymentsMerchantDefinedInformation(
+                **{"key": "1", "value": "3"}
+            )
+        ],
+        "merchant_id": "fake_test_merchant",
+        "merchant_information": cs_models.TssV2TransactionsGet200ResponseMerchantInformation(
+            **{
+                "merchant_descriptor": cs_models.TssV2TransactionsGet200ResponseMerchantInformationMerchantDescriptor(
+                    **{"name": "fake_test_merchant"}
+                )
+            }
+        ),
+        "order_information": cs_models.TssV2TransactionsGet200ResponseOrderInformation(
+            **{
+                "amount_details": cs_models.TssV2TransactionsGet200ResponseOrderInformationAmountDetails(
+                    **{
+                        "authorized_amount": "750",
+                        "currency": "USD",
+                        "settlement_amount": None,
+                        "settlement_currency": None,
+                        "surcharge": None,
+                        "tax_amount": "0",
+                        "total_amount": "750",
+                    }
+                ),
+                "bill_to": cs_models.TssV2TransactionsGet200ResponseOrderInformationBillTo(
+                    **{
+                        "address1": "123 The Place to Be",
+                        "address2": None,
+                        "administrative_area": "TN",
+                        "company": None,
+                        "country": "US",
+                        "email": "alearner@mitxonline.odl.local",
+                        "first_name": "TEST",
+                        "last_name": "USER",
+                        "locality": "Memphis",
+                        "middle_name": None,
+                        "name_suffix": None,
+                        "phone_number": "9015551212",
+                        "postal_code": "38104",
+                        "title": None,
+                    }
+                ),
+                "invoice_details": cs_models.TssV2TransactionsGet200ResponseOrderInformationInvoiceDetails(
+                    **{"sales_slip_number": None}
+                ),
+                "line_items": [
+                    cs_models.TssV2TransactionsGet200ResponseOrderInformationLineItems(
+                        **{
+                            "fulfillment_type": "P ",
+                            "product_code": "60",
+                            "product_name": "course-v1:MITx+14.310x+1T2023",
+                            "product_sku": "60-35",
+                            "quantity": 1,
+                            "tax_amount": "0",
+                            "unit_price": "750",
+                        }
+                    )
+                ],
+                "ship_to": cs_models.TssV2TransactionsGet200ResponseOrderInformationShipTo(
+                    **{
+                        "address1": None,
+                        "address2": None,
+                        "administrative_area": None,
+                        "company": None,
+                        "country": None,
+                        "first_name": None,
+                        "last_name": None,
+                        "locality": None,
+                        "phone_number": None,
+                        "postal_code": None,
+                    }
+                ),
+                "shipping_details": cs_models.TssV2TransactionsGet200ResponseOrderInformationShippingDetails(
+                    **{"gift_wrap": None, "shipping_method": None}
+                ),
+            }
+        ),
+        "payment_information": cs_models.TssV2TransactionsGet200ResponsePaymentInformation(
+            **{
+                "account_features": cs_models.TssV2TransactionsGet200ResponsePaymentInformationAccountFeatures(
+                    **{
+                        "balance_amount": None,
+                        "currency": None,
+                        "previous_balance_amount": None,
+                    }
+                ),
+                "bank": None,
+                "card": cs_models.TssV2TransactionsGet200ResponsePaymentInformationCard(
+                    **{
+                        "account_encoder_id": None,
+                        "expiration_month": "02",
+                        "expiration_year": "2025",
+                        "issue_number": None,
+                        "prefix": "411111",
+                        "start_month": None,
+                        "start_year": None,
+                        "suffix": "1111",
+                        "type": "001",
+                        "use_as": None,
+                    }
+                ),
+                "customer": cs_models.TssV2TransactionsGet200ResponsePaymentInformationCustomer(
+                    **{"customer_id": None, "id": None}
+                ),
+                "instrument_identifier": cs_models.TssV2TransactionsGet200ResponsePaymentInformationInstrumentIdentifier(
+                    **{"id": None}
+                ),
+                "invoice": cs_models.TssV2TransactionsGet200ResponsePaymentInformationInvoice(
+                    **{"barcode_number": None, "expiration_date": None, "number": None}
+                ),
+                "payment_instrument": cs_models.PtsV2PaymentsPost201ResponseTokenInformationPaymentInstrument(
+                    **{"id": None}
+                ),
+                "payment_type": cs_models.TssV2TransactionsGet200ResponsePaymentInformationPaymentType(
+                    **{"method": "VI", "name": "smartpay", "type": "credit card"}
+                ),
+                "shipping_address": cs_models.PtsV2PaymentsPost201ResponseTokenInformationShippingAddress(
+                    **{"id": None}
+                ),
+            }
+        ),
+        "payment_insights_information": cs_models.PtsV2PaymentsPost201ResponsePaymentInsightsInformation(
+            **{
+                "response_insights": cs_models.PtsV2PaymentsPost201ResponsePaymentInsightsInformationResponseInsights(
+                    **{"category": None, "category_code": None}
+                )
+            }
+        ),
+        "point_of_sale_information": cs_models.TssV2TransactionsGet200ResponsePointOfSaleInformation(
+            **{
+                "emv": None,
+                "entry_mode": None,
+                "terminal_capability": None,
+                "terminal_id": "111111",
+            }
+        ),
+        "processing_information": cs_models.TssV2TransactionsGet200ResponseProcessingInformation(
+            **{
+                "authorization_options": cs_models.TssV2TransactionsGet200ResponseProcessingInformationAuthorizationOptions(
+                    **{
+                        "auth_type": "O",
+                        "initiator": cs_models.TssV2TransactionsGet200ResponseProcessingInformationAuthorizationOptionsInitiator(
+                            **{
+                                "credential_stored_on_file": None,
+                                "merchant_initiated_transaction": cs_models.Ptsv2paymentsProcessingInformationAuthorizationOptionsInitiatorMerchantInitiatedTransaction(
+                                    **{
+                                        "original_authorized_amount": None,
+                                        "previous_transaction_id": None,
+                                        "reason": None,
+                                    }
+                                ),
+                                "stored_credential_used": None,
+                                "type": None,
+                            }
+                        ),
+                    }
+                ),
+                "bank_transfer_options": cs_models.TssV2TransactionsGet200ResponseProcessingInformationBankTransferOptions(
+                    **{"sec_code": None}
+                ),
+                "business_application_id": None,
+                "commerce_indicator": "7",
+                "industry_data_type": None,
+                "japan_payment_options": cs_models.TssV2TransactionsGet200ResponseProcessingInformationJapanPaymentOptions(
+                    **{
+                        "business_name": None,
+                        "business_name_katakana": None,
+                        "payment_method": None,
+                        "terminal_id": None,
+                    }
+                ),
+                "payment_solution": "Visa",
+            }
+        ),
+        "processor_information": cs_models.TssV2TransactionsGet200ResponseProcessorInformation(
+            **{
+                "ach_verification": cs_models.PtsV2PaymentsPost201ResponseProcessorInformationAchVerification(
+                    **{"result_code": None, "result_code_raw": "100"}
+                ),
+                "approval_code": "888888",
+                "avs": cs_models.PtsV2PaymentsPost201ResponseProcessorInformationAvs(
+                    **{"code": "X", "code_raw": "I1"}
+                ),
+                "card_verification": cs_models.Riskv1decisionsProcessorInformationCardVerification(
+                    **{"result_code": None}
+                ),
+                "electronic_verification_results": cs_models.TssV2TransactionsGet200ResponseProcessorInformationElectronicVerificationResults(
+                    **{
+                        "email": None,
+                        "email_raw": None,
+                        "name": None,
+                        "name_raw": None,
+                        "phone_number": None,
+                        "phone_number_raw": None,
+                        "postal_code": None,
+                        "postal_code_raw": None,
+                        "street": None,
+                        "street_raw": None,
+                    }
+                ),
+                "multi_processor_routing": None,
+                "network_transaction_id": "123456789619999",
+                "payment_account_reference_number": None,
+                "processor": cs_models.TssV2TransactionsGet200ResponseProcessorInformationProcessor(
+                    **{"name": "smartpay"}
+                ),
+                "response_code": "100",
+                "response_code_source": None,
+                "response_id": None,
+                "retrieval_reference_number": None,
+                "system_trace_audit_number": None,
+                "transaction_id": None,
+            }
+        ),
+        "reconciliation_id": fake_recon_id,
+        "risk_information": cs_models.TssV2TransactionsGet200ResponseRiskInformation(
+            **{
+                "local_time": None,
+                "passive_profile": None,
+                "passive_rules": None,
+                "profile": None,
+                "rules": None,
+                "score": cs_models.TssV2TransactionsGet200ResponseRiskInformationScore(
+                    **{"factor_codes": None, "result": None}
+                ),
+            }
+        ),
+        "root_id": fake_id,
+        "sender_information": cs_models.TssV2TransactionsGet200ResponseSenderInformation(
+            **{"reference_number": None}
+        ),
+        "submit_time_utc": "2023-02-03T16:55:49Z",
+        "token_information": cs_models.TssV2TransactionsGet200ResponseTokenInformation(
+            **{
+                "customer": None,
+                "instrument_identifier": None,
+                "payment_instrument": None,
+                "shipping_address": None,
+            }
+        ),
+    }
+
+    return cs_models.TssV2TransactionsGet200Response(**data_dict)
+
+
+@pytest.mark.parametrize("test_failure", [[True, False]])
+def test_get_transaction_details(mocker, test_failure):
+    """Tests to make sure the processing in get_transaction_details is working."""
+    fake_record = create_transaction_detail_record()
+    fake_id = fake_record.id
+    cybersource_gateway = CyberSourcePaymentGateway()
+    expected_exception = Exception("CyberSource API returned HTTP status 500: Error")
+
+    if test_failure:
+        mocker.patch(
+            "CyberSource.TransactionDetailsApi.get_transaction",
+            side_effect=expected_exception,
+        )
+
+        with pytest.raises(Exception):
+            cybersource_gateway.get_transaction_details(fake_id)
+    else:
+        mocker.patch(
+            "CyberSource.TransactionDetailsApi.get_transaction",
+            return_value=(fake_record, 200, {}),
+        )
+
+        (cs_response, fmt_response) = cybersource_gateway.get_transaction_details(
+            fake_id
+        )
+
+        assert cs_response == fake_record
+        assert fmt_response["transaction_id"] == fake_record.id
+        assert fmt_response["req_reference_number"] == "mitxonline-dev-4"
+
+
+@pytest.mark.parametrize("test_failure", [[None, "search", "get"]])
+def test_find_and_get_transactions(mocker, test_failure):
+    """Tests the combined find_and_get_transaction function."""
+
+    fake_ids = ["mitxonline-dev-2"]
+    faked_responses = create_transaction_search_results()
+    fake_record = create_transaction_detail_record()
+    expected_exception = Exception("CyberSource API returned HTTP status 500: Error")
+    cybersource_gateway = CyberSourcePaymentGateway()
+
+    if test_failure:
+        if test_failure == "search":
+            mocker.patch(
+                "CyberSource.SearchTransactionsApi.create_search",
+                side_effect=expected_exception,
+            )
+        else:
+            mocker.patch(
+                "CyberSource.SearchTransactionsApi.create_search",
+                return_value=(faked_responses, 200, {}),
+            )
+
+            mocker.patch(
+                "CyberSource.TransactionDetailsApi.get_transaction",
+                side_effect=expected_exception,
+            )
+
+        with pytest.raises(Exception):
+            cybersource_gateway.find_and_get_transactions(fake_ids)
+    else:
+        mocker.patch(
+            "CyberSource.SearchTransactionsApi.create_search",
+            return_value=(faked_responses, 200, {}),
+        )
+        mocker.patch(
+            "CyberSource.TransactionDetailsApi.get_transaction",
+            return_value=(fake_record, 200, {}),
+        )
+
+        results = cybersource_gateway.find_and_get_transactions(fake_ids)
+        assert len(results) == 1
+        assert fake_ids[0] in results
+        assert results[0]["req_reference_number"] == fake_ids[0]

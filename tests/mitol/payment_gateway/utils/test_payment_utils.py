@@ -2,7 +2,7 @@
 
 import pytest
 
-from mitol.payment_gateway.payment_utils import clean_request_data
+from mitol.payment_gateway.payment_utils import clean_request_data, strip_nones
 
 
 @pytest.mark.parametrize(
@@ -21,3 +21,27 @@ def test_clean_data(request_data_dict, expected_data_dict):
     # Just sanity check
     assert None not in cleaned_data_dict.values()
     assert cleaned_data_dict == expected_data_dict
+
+
+def test_strip_nones():
+    """Tests strip_nones to make sure items that are None are stripped, and that colllections with no blank spaces are left alone."""
+
+    ds1 = {
+        "keyA": "test",
+        "keyB": None,
+        "keyC": "test",
+    }
+
+    ds2 = {
+        "keyA": "test",
+        "keyB": "test",
+        "keyC": "test",
+    }
+
+    test_ds1 = strip_nones(ds1)
+
+    assert "keyB" not in test_ds1
+
+    test_ds2 = strip_nones(ds2)
+
+    assert test_ds2 == ds2

@@ -9,3 +9,15 @@ def clean_request_data(request_data):
     if isinstance(request_data, dict):
         return {key: value for key, value in request_data.items() if value is not None}
     return request_data
+
+
+def strip_nones(datasource):
+    """Strips None values from the supplied iterable. Does not recurse."""
+
+    retval = {}
+
+    for key in datasource:
+        if datasource[key] is not None:
+            retval[key] = datasource[key]
+
+    return retval
