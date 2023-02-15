@@ -2,16 +2,23 @@
 
 This repository is the home of MIT Open Learning's reusable django apps
 
+### Changelogs
+
+We maintain changelogs in `changelog.d/` directories with each app. To create a new changelog for your changes, run:
+
+- `/pants ol-project changelog create --app APPNAME`
+  - `APPNAME`: the name of an application directory
+
+Then fill out the new file that was generated with information about your changes. These changes will all be merged down into `CHANGELOG.md` when a release is generated.
+
 ### Releases
 
 Changelogs are maintained according to [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-Versioning adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-Version tags follow `{package-name}/v{major}.{minor}.{patch}`
+Versioning uses a date-based versioning scheme with incremental builds on the same day.
+Version tags follow `{package-name}/v{version`
 To perform a release, run:
-- `./pants run build-support/bin/release.py -- --app APP_NAME [--bump-major] [--bump-minor] [--bump-patch] [--version VERSION]`:
+- `./pants ol-project release create --app APPNAME --push`:
   - `APPNAME`: the name of an application directory
-  - `VERSION`: a semantic version value
-- `git push --tags`
 
 ### Navigating this repository
 

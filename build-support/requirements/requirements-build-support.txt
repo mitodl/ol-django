@@ -1,0 +1,9 @@
+bumpver
+click
+click-log
+cloup
+GitPython
+semver
+setuptools
+scriv[toml]
+toml

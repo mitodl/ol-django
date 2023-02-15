@@ -1,0 +1,15 @@
+[project]
+name = "mitol-django-mail"
+version = "2023.1.17"
+
+[tool.bumpver]
+current_version = "2023.1.17"
+version_pattern = "YYYY.MM.DD[.INC0]"
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    'version = "{version}"',
+]
+"__init__.py" = [
+    '__version__ = "{version}"',
+]

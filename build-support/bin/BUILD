@@ -1,3 +1,12 @@
-python_sources(name="python_scripts")
+python_sources(
+    name="sources",
+    sources=["**/*.py"],
+)
 
-pex_binary(name="release", entry_point="release.py")
+pex_binary(
+    name="ol-project",
+    entry_point="mitol.build_support.cli:cli",
+    dependencies=[
+        ":sources",
+    ],
+)

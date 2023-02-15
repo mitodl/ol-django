@@ -28,7 +28,7 @@ python_test_utils(
     sources=[
         "conftest.py",
     ],
-    dependencies=["//:reqs#pytest-django"],
+    dependencies=["//:reqs-testing#pytest-django"],
 )
 
 python_tests(
