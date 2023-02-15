@@ -37,6 +37,9 @@ dist/
 # OSX
 *.DS_Store
 
+# vscode
+.vscode/
+
 #pyenv
 .python-version
 

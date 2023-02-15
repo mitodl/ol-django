@@ -1,5 +1,6 @@
 python_requirements(
     name="reqs",
+    source="build-support/requirements/requirements.txt",
     module_mapping={
         "cybersource-rest-client-python": ["CyberSource"],
         "django-anymail": ["anymail"],
@@ -17,8 +18,28 @@ python_requirements(
         "python3-saml": ["onelogin"],
         "social-auth-app-django": ["social_django"],
         "setuptools": ["pkg_resources"],
+    }
+)
+
+python_requirements(
+    name="reqs-testing",
+    source="build-support/requirements/requirements-testing.txt",
+    module_mapping={
+        "factory-boy": ["factory"],
+        "pytest-lazy-fixture": ["pytest_lazyfixture"],
+        "setuptools": ["pkg_resources"],
     },
 )
+
+python_requirements(
+    name="reqs-build-support",
+    source="build-support/requirements/requirements-build-support.txt",
+    module_mapping={
+        "GitPython": ["git"],
+        "setuptools": ["pkg_resources"],
+    },
+)
+
 
 resources(
     name="license",

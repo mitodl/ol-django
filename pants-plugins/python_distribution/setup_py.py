@@ -1,12 +1,14 @@
 """Plugin for releases"""
+from os.path import join
 import re
+
 from pants.backend.python.goals.setup_py import SetupKwargs, SetupKwargsRequest
 from pants.engine.rules import Get, collect_rules, rule
 from pants.engine.target import Target
 from pants.engine.unions import UnionRule
 from pants.util.frozendict import FrozenDict
 from pants.engine.fs import DigestContents, GlobMatchErrorBehavior, PathGlobs
-from os.path import join
+import toml
 
 
 VAR_RE = re.compile(r"""(.+)\s=\s[\"'](.+)[\"']""")
@@ -42,20 +44,15 @@ async def pants_setup_kwargs(
     path = request.target.address.spec_path
 
     # read in __init__.py
-    init_contents = await Get(
+    pyproject_contents = await Get(
         DigestContents,
         PathGlobs(
-            [join(path, "__init__.py")],
+            [join(path, "pyproject.toml")],
             description_of_origin="`setup_py()` plugin",
             glob_match_error_behavior=GlobMatchErrorBehavior.error,
         ),
     )
-    about = {}
-
-    for line in init_contents[0].content.decode().split("\n"):
-        result = VAR_RE.match(line)
-        if result:
-            about[result.group(1)] = result.group(2)
+    pyproject = toml.loads(pyproject_contents[0].content.decode())
 
     # read in the readme
     readme_contents = await Get(
@@ -68,9 +65,9 @@ async def pants_setup_kwargs(
     )
 
     kwargs.update(DEFAULT_SETUP_KWARGS)
+    kwargs["version"] = pyproject["project"]["version"]
     # Add classifiers. We preserve any that were already set.
     kwargs["classifiers"] = [*STANDARD_CLASSIFIERS, *kwargs.get("classifiers", [])]
-    kwargs["version"] = about["__version__"]
     kwargs["long_description"] = readme_contents[0].content.decode()
 
     return SetupKwargs(kwargs, address=request.target.address)

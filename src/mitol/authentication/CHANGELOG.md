@@ -2,9 +2,9 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+and this project uses date-based versioning.
 
-## [Unreleased]
+<!-- scriv-insert-here -->
 
 ## [1.6.0] - 2023-01-17
 
@@ -80,21 +80,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Barebones implementation of authentication app
 - SAML metadata endpoint and boilerplate configuration
-
-[Unreleased]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.6.0...HEAD
-[1.6.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.5.1...mitol-django-authentication/v1.6.0
-[1.5.1]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.5.0...mitol-django-authentication/v1.5.1
-[1.5.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.4.1...mitol-django-authentication/v1.5.0
-[1.4.1]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.4.0...mitol-django-authentication/v1.4.1
-[1.4.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.3.1...mitol-django-authentication/v1.4.0
-[1.3.1]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.3.0...mitol-django-authentication/v1.3.1
-[1.3.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.2.0...mitol-django-authentication/v1.3.0
-[1.2.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v1.1.0...mitol-django-authentication/v1.2.0
-[1.1.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v0.2.0...mitol-django-authentication/v1.1.0
-[1.0.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v0.2.0...mitol-django-authentication/v1.0.0
-[0.7.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v0.2.0...mitol-django-authentication/v0.7.0
-[0.6.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v0.2.0...mitol-django-authentication/v0.6.0
-[0.5.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v0.2.0...mitol-django-authentication/v0.5.0
-[0.4.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v0.2.0...mitol-django-authentication/v0.4.0
-[0.3.0]: https://github.com/mitodl/ol-django/compare/mitol-django-authentication/v0.2.0...mitol-django-authentication/v0.3.0
-[0.2.0]: https://github.com/mitodl/ol-django/compare/ffca0142e4bfea14881047d3af168bd4aa32f6fa...mitol-django-authentication/v0.2.0

@@ -25,6 +25,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # fetch all history
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -45,6 +47,9 @@ jobs:
 
       - name: Tests
         run: './pants test ::'
+      
+      - name: Changelog
+        run: './pants ol-project changelog check'
 
       # - name: Upload coverage to CodeCov
       #   uses: codecov/codecov-action@v1
