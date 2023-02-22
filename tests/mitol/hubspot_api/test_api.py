@@ -349,6 +349,7 @@ def test_upsert_object_contact_dupe_email(mocker, mock_hubspot_api, is_primary_e
         ),
     )
     mock_create = mock_hubspot_api.return_value.crm.objects.basic_api.create
+    mock_update = mock_hubspot_api.return_value.crm.objects.basic_api.update
     mock_exc = ApiException(
         http_resp=mocker.Mock(
             data=json.dumps(
@@ -367,6 +368,9 @@ def test_upsert_object_contact_dupe_email(mocker, mock_hubspot_api, is_primary_e
             mock_exc,
             SimplePublicObject(id=new_hubspot_id, properties={"email": new_user.email}),
         ]
+    )
+    mock_update.return_value = SimplePublicObject(
+        id=dupe_hubspot_id if is_primary_email else new_hubspot_id
     )
     mock_secondary = mocker.patch("mitol.hubspot_api.api.delete_secondary_email")
     body = SimplePublicObjectInput(properties={"email": new_user.email})
