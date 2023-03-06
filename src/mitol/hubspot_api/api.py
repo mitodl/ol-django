@@ -262,7 +262,7 @@ def handle_create_api_error(
                     object_type=hubspot_type,
                 )
     # This was some other kind of error so raise it
-    raise
+    raise error
 
 
 def upsert_object_request(
