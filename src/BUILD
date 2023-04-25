@@ -8,6 +8,7 @@ target(
             "digitalcredentials",
             "google_sheets",
             "google_sheets_refunds",
+            "google_sheets_deferrals",
             "hubspot_api",
             "mail",
             "oauth_toolkit_extensions",
