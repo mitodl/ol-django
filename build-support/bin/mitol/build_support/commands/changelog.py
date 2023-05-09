@@ -10,9 +10,13 @@ from scriv.collect import collect
 from scriv.create import create
 from scriv.scriv import Scriv
 
-from mitol.build_support.apps import App, Apps
-from mitol.build_support.contextlib import chdir
-from mitol.build_support.decorators import apps_option, pass_apps, pass_project, apps_option_no_default
+from mitol.build_support.apps import Apps
+from mitol.build_support.decorators import (
+    apps_option,
+    apps_option_no_default,
+    pass_apps,
+    pass_project,
+)
 from mitol.build_support.project import Project
 
 

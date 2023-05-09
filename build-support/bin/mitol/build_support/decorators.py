@@ -4,7 +4,7 @@ from pathlib import Path
 from click import Choice, make_pass_decorator, option
 from cloup import Context, pass_context
 
-from mitol.build_support.apps import App, Apps, list_app_names
+from mitol.build_support.apps import Apps, list_app_names
 from mitol.build_support.project import Project
 
 pass_project = make_pass_decorator(Project)
@@ -20,14 +20,12 @@ def apps_option(*, default=AllApps):
     all_apps = list_app_names(Path.cwd())
 
     def _apps_option(func):
-
         def _callback(ctx: Context, param: str, value: str) -> str:
             project: Project = ctx.find_object(Project)
             ctx.obj = Apps(
-                (name, app)
-                for name, app
-                in project.apps.items()
-                if name in value
+                (app.module_name, app)
+                for app in project.apps
+                if app.module_name in value
             )
             return value
 
@@ -42,7 +40,7 @@ def apps_option(*, default=AllApps):
             default=(all_apps if default is AllApps else default) or [],
             type=Choice(all_apps, case_sensitive=True),
         )(func)
-    
+
     return _apps_option
 
 

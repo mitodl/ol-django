@@ -1,8 +1,7 @@
 """Utilities around library django apps"""
 from contextlib import contextmanager
-from functools import cached_property
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List
 
 import toml
 
@@ -29,6 +28,7 @@ def list_app_dirs(root_dir: str) -> List[Path]:
         if dir_path.is_dir() and (dir_path / "__init__.py").exists()
     )
 
+
 def list_app_names(root_dir: str) -> List[str]:
     """List the app names"""
     return [name.stem for name in list_app_dirs(root_dir)]
@@ -37,6 +37,10 @@ def list_app_names(root_dir: str) -> List[str]:
 class App:
     module_name: str
     app_dir: str
+
+    def __init__(self, module_name: str, app_dir: str):
+        self.module_name = module_name
+        self.app_dir = app_dir
 
     @property
     def pyproject(self):
@@ -61,5 +65,5 @@ class App:
             yield
 
 
-
-class Apps(Dict[str, App]): pass
+class Apps(Dict[str, App]):
+    pass
