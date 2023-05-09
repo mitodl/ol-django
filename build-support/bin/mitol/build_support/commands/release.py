@@ -34,8 +34,9 @@ def release():
 def create(ctx: Context, project: Project, apps: Apps, push: bool):
     """Create a new release"""
     for app in apps:
-        ctx.invoke(changelog.check, apps=[app])
-        ctx.invoke(version.update, apps=[app])
+        args = [f"--app={app.module_name}"]
+        ctx.invoke(changelog.check, args=args)
+        ctx.invoke(version.update, args=args)
         ctx.invoke(changelog.collect, version=app.version)
 
         # copy and remove irrelevant params
