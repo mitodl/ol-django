@@ -29,7 +29,7 @@ changelog.add_command(apps_option_no_default(collect))
 
 
 @changelog.command("list")
-@apps_option
+@apps_option()
 @pass_apps
 @pass_context
 def list_all(ctx: Context, apps: Apps):

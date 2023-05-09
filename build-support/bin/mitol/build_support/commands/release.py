@@ -49,7 +49,7 @@ def create(ctx: Context, project: Project, app: Apps, push: bool):
 
 
 @release.command()
-@apps_option
+@apps_option()
 @pass_apps
 @pass_project
 def commit_and_tag(project: Project, apps: Apps):
@@ -72,7 +72,7 @@ def commit_and_tag(project: Project, apps: Apps):
 
 
 @release.command()
-@apps_option
+@apps_option()
 @pass_apps
 @pass_project
 def push_to_remote(project: Project, apps: Apps):
