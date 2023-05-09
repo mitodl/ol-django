@@ -39,7 +39,7 @@ def apps_option(*, default=AllApps):
             callback=_callback,
             expose_value=False,
             multiple=True,
-            default=(all_apps if default is AllApps else default) or []
+            default=(all_apps if default is AllApps else default) or [],
             type=Choice(all_apps, case_sensitive=True),
         )(func)
     
