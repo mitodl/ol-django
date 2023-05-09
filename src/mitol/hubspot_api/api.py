@@ -8,7 +8,9 @@ import logging
 import re
 from enum import Enum
 from typing import Dict, Iterable, List
+from urllib.parse import quote
 
+import requests
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from hubspot import HubSpot
@@ -97,6 +99,22 @@ def create_filter(name: str, operator: str, value: str or int) -> dict:
     return {"propertyName": name, "operator": operator, "value": value}
 
 
+def delete_secondary_email(email: str, hubspot_id: str):
+    """
+    The CRM API Python library does not provide a function to delete secondary emails, so need to make a raw request
+
+    Args:
+        email(str): The email address to delete
+        hubspot_id: The id of the hubspot contact
+    """
+    headers = {"Authorization": f"Bearer {settings.MITOL_HUBSPOT_API_PRIVATE_TOKEN}"}
+    response = requests.delete(
+        f"https://api.hubapi.com/contacts/v1/secondary-email/{hubspot_id}/email/{quote(email)}?",
+        headers=headers,
+    )
+    response.raise_for_status()
+
+
 def get_all_objects(
     object_type: str, limit: int = 100, **kwargs
 ) -> Iterable[SimplePublicObject]:
@@ -151,6 +169,102 @@ def format_app_id(object_id: int) -> str:
     return "{}-{}".format(settings.MITOL_HUBSPOT_API_ID_PREFIX, object_id)
 
 
+def handle_secondary_email_error(content_type: str, hubspot_id: str, email: str) -> str:
+    """
+    Check if the Hubspot contact has multiple emails, and if so, remove secondary email
+
+     Args:
+        content_type(ContentType): The object content type
+        hubspot_type(str): The hubspot_api type (deals, contacts, etc)
+        hubspot_id(int): The hubspot id of the contact
+        email(str): The email of the user to add to Hubspot
+
+    Returns:
+        str: The primary email of the existing hubspot contact, if it exists
+
+    """
+    contact = find_contact(email)
+    other_hso = HubspotObject.objects.filter(
+        content_type=content_type, hubspot_id=hubspot_id
+    ).first()
+    if contact and other_hso:
+        if contact.properties["email"] == email:
+            # Delete the HubspotObject it will be synced again next time
+            other_hso.delete()
+            # Delete the secondary email for the other user
+            delete_secondary_email(other_hso.content_object.email, contact.id)
+        else:
+            # Delete the secondary email for this user
+            delete_secondary_email(email, contact.id)
+        return contact.properties["email"]
+    return None
+
+
+def handle_create_api_error(
+    error: ApiException,
+    content_type: str,
+    hubspot_type: str,
+    object_id: int = None,
+    body: SimplePublicObjectInput = None,
+    ignore_conflict=False,
+) -> SimplePublicObject:
+    """
+    Handle cases where an object already exists but hubspot_id is not in db
+
+     Args:
+        error(ApiException): The Hubspot API exception
+        content_type(ContentType): The object content type
+        hubspot_type(str): The hubspot_api type (deals, contacts, etc)
+        object_id(int): The database id of the object
+        body (SimplePublicObjectInput): The properties of the object to set in Hubspot
+        ignore_conflict(bool): If true, a conflict error on create will be retried as an update
+
+    Returns:
+        SimplePublicObject: The Hubspot object returned from the API - if an update is doable and succeeds
+
+    """
+    if error.status in (400, 409):
+        details = json.loads(error.body)
+        message = details.get("message", "")
+        hubspot_id_matches = [
+            match
+            for match in list(sum(re.findall(HUBSPOT_EXISTING_ID, message), ()))
+            if match
+        ]
+        retry_update = False
+        retry_create = False
+        if hubspot_id_matches:
+            hubspot_id = hubspot_id_matches[0]
+            if hubspot_type == HubspotObjectType.CONTACTS.value:
+                user_email = body.properties["email"]
+                secondary_email = handle_secondary_email_error(
+                    content_type, hubspot_id, user_email
+                )
+                if secondary_email == user_email:
+                    # Retry contact update w/this email
+                    retry_update = True
+                elif secondary_email:
+                    # Retry contact creation w/this email
+                    retry_create = True
+            elif object_id and not ignore_conflict:
+                retry_update = True
+            elif ignore_conflict:
+                return SimplePublicObject(id=hubspot_id)
+            if retry_update:
+                return HubspotApi().crm.objects.basic_api.update(
+                    simple_public_object_input=body,
+                    object_id=hubspot_id,
+                    object_type=hubspot_type,
+                )
+            elif retry_create:
+                return HubspotApi().crm.objects.basic_api.create(
+                    simple_public_object_input=body,
+                    object_type=hubspot_type,
+                )
+    # This was some other kind of error so raise it
+    raise error
+
+
 def upsert_object_request(
     content_type: ContentType,
     hubspot_type: str,
@@ -184,31 +298,16 @@ def upsert_object_request(
             result = api.create(
                 simple_public_object_input=body, object_type=hubspot_type
             )
-        except ApiException as err:  # pylint:disable=broad-except
-            # Handle cases where an object already exists but hubspot_id is not in db (redo as a PATCH)
-            if err.status in (400, 409):
-                details = json.loads(err.body)
-                message = details.get("message", "")
-                hubspot_id_matches = [
-                    match
-                    for match in list(sum(re.findall(HUBSPOT_EXISTING_ID, message), ()))
-                    if match
-                ]
-                if hubspot_id_matches:
-                    hubspot_id = hubspot_id_matches[0]
-                    if object_id and not ignore_conflict:
-                        HubspotObject.objects.update_or_create(
-                            object_id=object_id,
-                            content_type=content_type,
-                            hubspot_id=hubspot_id,
-                        )
-                        return upsert_object_request(
-                            content_type, hubspot_type, object_id=object_id, body=body
-                        )
-                    elif ignore_conflict:
-                        return SimplePublicObject(id=hubspot_id)
-            raise
-    if object_id and not hubspot_id:
+        except ApiException as err:
+            result = handle_create_api_error(
+                err,
+                content_type,
+                hubspot_type,
+                object_id=object_id,
+                body=body,
+                ignore_conflict=ignore_conflict,
+            )
+    if object_id and result and not hubspot_id:
         HubspotObject.objects.update_or_create(
             object_id=object_id, content_type=content_type, hubspot_id=result.id
         )
@@ -432,7 +531,9 @@ def find_contact(email: str) -> SimplePublicObject:
     Returns:
         SimplePublicObject: The Hubspot contact returned by the API
     """
-    return HubspotApi().crm.contacts.basic_api.get_by_id(email, id_property="email")
+    return HubspotApi().crm.contacts.basic_api.get_by_id(
+        email, id_property="email", properties=["email", "hs_additional_emails"]
+    )
 
 
 def find_objects(
