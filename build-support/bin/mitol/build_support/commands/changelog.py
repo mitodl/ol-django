@@ -10,9 +10,9 @@ from scriv.collect import collect
 from scriv.create import create
 from scriv.scriv import Scriv
 
-from mitol.build_support.apps import App, list_apps
+from mitol.build_support.apps import App, Apps
 from mitol.build_support.contextlib import chdir
-from mitol.build_support.decorators import app_option, pass_app, pass_project
+from mitol.build_support.decorators import apps_option, pass_apps, pass_project, apps_option_no_default
 from mitol.build_support.project import Project
 
 
@@ -24,25 +24,29 @@ def changelog(ctx):
     makedirs("changelog.d", exist_ok=True)
 
 
-changelog.add_command(app_option(create))
-changelog.add_command(app_option(collect))
+changelog.add_command(apps_option_no_default(create))
+changelog.add_command(apps_option_no_default(collect))
 
 
 @changelog.command("list")
-@app_option
-@pass_app
+@apps_option
+@pass_apps
 @pass_context
-def list_all(ctx: Context, app: App):
+def list_all(ctx: Context, apps: Apps):
     """Print out the current set of changes"""
-    scriv = Scriv()
-    fragments = scriv.fragments_to_combine()
+    for app in apps:
+        with app.with_app_dir:
+            scriv = Scriv()
+            fragments = scriv.fragments_to_combine()
 
-    if not fragments:
-        echo("No changelog fragments present.")
+            echo(f"Changes for '{app.module_name}':")
 
-    echo(f"Changelog fragments for {app.name}")
-    for fragment in fragments:
-        echo(fragment.path)
+            if not fragments:
+                echo(indent("No changelog fragments present.", "\t"))
+
+            echo(indent(f"Changelog fragments for {app.name}", "\t"))
+            for fragment in fragments:
+                echo(fragment.path)
 
 
 def _echo_change(change: Diff):
@@ -69,17 +73,18 @@ def _echo_change(change: Diff):
     default="HEAD",
 )
 @simple_verbosity_option()
+@pass_apps
 @pass_project
 @pass_context
-def check(ctx: Context, project: Project, base: str, target: str):
+def check(ctx: Context, project: Project, apps: Apps, base: str, target: str):
     """Check for missing changelogs"""
     base_commit = project.repo.commit(base)
     target_commit = project.repo.commit(target)
 
     is_error = False
 
-    for app_abs_path in list_apps():
-        app_rel_path = app_abs_path.relative_to(project.path)
+    for app in apps:
+        app_rel_path = app.app_dir.relative_to(project.path)
 
         excluded_paths = [app_rel_path / "changelog.d/*", app_rel_path / "CHANGELOG.md"]
 
@@ -114,7 +119,7 @@ def check(ctx: Context, project: Project, base: str, target: str):
             echo("")
 
         # verify the fragments aren't empty
-        with chdir(app_abs_path):
+        with app.with_app_dir:
             scriv = Scriv()
             fragments = scriv.fragments_to_combine()
             for fragment in fragments:

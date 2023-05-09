@@ -1,12 +1,12 @@
 from bumpver import cli
 
-from mitol.build_support.decorators import app_option
+from mitol.build_support.decorators import apps_option_no_default
 
 version = cli.cli
 version.name = "version"
 
-grep = app_option(cli.grep)
-init = app_option(cli.init)
-show = app_option(cli.show)
+grep = apps_option_no_default(cli.grep)
+init = apps_option_no_default(cli.init)
+show = apps_option_no_default(cli.show)
 test = cli.test  # this doesn't require config so doesn't require --app
-update = app_option(cli.update)
+update = apps_option_no_default(cli.update)

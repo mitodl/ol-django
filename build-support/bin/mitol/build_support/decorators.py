@@ -1,56 +1,52 @@
 from functools import wraps
+from pathlib import Path
 
-from click import Choice, Command, make_pass_decorator, option
+from click import Choice, make_pass_decorator, option
 from cloup import Context, pass_context
 
-from mitol.build_support.apps import App, list_app_names
+from mitol.build_support.apps import App, Apps, list_app_names
 from mitol.build_support.project import Project
 
 pass_project = make_pass_decorator(Project)
-pass_app = make_pass_decorator(App)
+pass_apps = make_pass_decorator(Apps)
+
+AllApps = object()
 
 
-def _apply_app_option(func):
+def apps_option(*, default=AllApps):
     """
     Adds an option -a/--app for the application directory
     """
+    all_apps = list_app_names(Path.cwd())
 
-    def _app_option(ctx: Context, param: str, value: str) -> str:
-        app = ctx.ensure_object(App)
-        app.module_name = value
-        return value
+    def _apps_option(func):
 
-    return option(
-        "-a",
-        "--app",
-        required=True,
-        callback=_app_option,
-        expose_value=False,
-        type=Choice(list_app_names(), case_sensitive=True),
-    )(func)
+        def _callback(ctx: Context, param: str, value: str) -> str:
+            project: Project = ctx.find_object(Project)
+            ctx.obj = Apps(
+                (name, app)
+                for name, app
+                in project.apps.items()
+                if name in value
+            )
+            return value
 
-
-def with_app(func):
-    """Contextualizes a command in an application directory"""
-
-    if isinstance(func, Command):
-        # we're trying to decorate a command/group, so decorate its callback instead
-        func.callback = with_app(func.callback)
-        return func
-
-    @wraps(func)
-    @pass_app
-    @pass_context
-    def _with_app(ctx, app, *args, **kwargs):
-        ctx.with_resource(app.with_app_dir())
-        return ctx.invoke(func, *args, **kwargs)
-
-    return _with_app
+        return option(
+            "-a",
+            "--app",
+            "apps",
+            required=True,
+            callback=_callback,
+            expose_value=False,
+            multiple=True,
+            default=(all_apps if default is AllApps else default) or []
+            type=Choice(all_apps, case_sensitive=True),
+        )(func)
+    
+    return _apps_option
 
 
-def app_option(func):
-    """Configures a command with a contextual app"""
-    return with_app(_apply_app_option(func))
+apps_option_no_default = apps_option(default=None)
 
 
 def _no_require_main_callback(ctx: Context, param: str, value: bool) -> bool:
