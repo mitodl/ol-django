@@ -14,7 +14,6 @@ from mitol.build_support.apps import Apps
 from mitol.build_support.decorators import (
     apps_option,
     apps_option_no_default,
-    pass_apps,
     pass_project,
 )
 from mitol.build_support.project import Project
@@ -34,7 +33,6 @@ changelog.add_command(apps_option_no_default(collect))
 
 @changelog.command("list")
 @apps_option()
-@pass_apps
 @pass_context
 def list_all(ctx: Context, apps: Apps):
     """Print out the current set of changes"""
@@ -77,7 +75,7 @@ def _echo_change(change: Diff):
     default="HEAD",
 )
 @simple_verbosity_option()
-@pass_apps
+@apps_option()
 @pass_project
 @pass_context
 def check(ctx: Context, project: Project, apps: Apps, base: str, target: str):

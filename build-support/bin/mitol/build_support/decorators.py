@@ -8,12 +8,11 @@ from mitol.build_support.apps import Apps, list_app_names
 from mitol.build_support.project import Project
 
 pass_project = make_pass_decorator(Project)
-pass_apps = make_pass_decorator(Apps)
 
 AllApps = object()
 
 
-def apps_option(*, default=AllApps):
+def apps_option(*, default=AllApps, **kwargs):
     """
     Adds an option -a/--app for the application directory
     """
@@ -22,12 +21,11 @@ def apps_option(*, default=AllApps):
     def _apps_option(func):
         def _callback(ctx: Context, param: str, value: str) -> str:
             project: Project = ctx.find_object(Project)
-            ctx.obj = Apps(
+            return Apps(
                 (app.module_name, app)
                 for app in project.apps
                 if app.module_name in value
             )
-            return value
 
         return option(
             "-a",
@@ -35,16 +33,19 @@ def apps_option(*, default=AllApps):
             "apps",
             required=True,
             callback=_callback,
-            expose_value=False,
             multiple=True,
             default=(all_apps if default is AllApps else default) or [],
             type=Choice(all_apps, case_sensitive=True),
+            **kwargs,
         )(func)
 
     return _apps_option
 
 
-apps_option_no_default = apps_option(default=None)
+apps_option_no_default = apps_option(
+    default=None,
+    expose_value=True,
+)
 
 
 def _no_require_main_callback(ctx: Context, param: str, value: bool) -> bool:
