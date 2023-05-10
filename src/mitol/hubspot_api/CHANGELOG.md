@@ -1,3 +1,14 @@
+
+<a id='changelog-2023.5.10'></a>
+## [2023.5.10] - 2023-05-10
+
+### Added
+
+- Handle hubspot contacts with multiple emails
+
+### Changed
+
+- Updated changelog management and versioning scheme.
 # Changelog
 All notable changes to this project will be documented in this file.
 
