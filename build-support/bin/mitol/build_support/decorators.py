@@ -56,7 +56,7 @@ def app_option(func):
 def _no_require_main_callback(ctx: Context, param: str, value: bool) -> bool:
     if not value:
         project = ctx.find_object(Project)
-        if project.repo.active_branch != "main":
+        if project.repo.active_branch.name != "main":
             ctx.fail("Must be on main branch.")
 
     return value

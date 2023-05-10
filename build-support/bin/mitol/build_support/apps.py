@@ -13,7 +13,10 @@ SOURCE_PATH = "src/mitol/"
 
 def get_source_dir() -> Path:
     """Get the source directory"""
-    return Path.cwd() / SOURCE_PATH
+    source_dir = Path.cwd()
+    if SOURCE_PATH not in str(source_dir):
+        source_dir = source_dir / SOURCE_PATH
+    return source_dir
 
 
 def get_app_dir(path: str) -> Path:
