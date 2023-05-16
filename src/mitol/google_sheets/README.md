@@ -184,7 +184,7 @@ GOOGLE_DOMAIN_VERIFICATION_TAG_VALUE=ETRM2VjAZ3BF52L_ait6r...
        4. **Click Save at the bottom**
     3. Credentials ([link](https://console.cloud.google.com/apis/credentials))
         1. Click on the name of your web app credential in the OAuth 2.0 Client ID section
-        1. In the "Authorized redirect URIs" section, click "Add URI", and enter the ngrok HTTPS URL appended with `/api/sheets/auth-complete/`, e.g.: `https://12345abc6789.ngrok.io/api/sheets/auth-complete/`
+        1. In the "Authorized redirect URIs" section, click "Add URI", and enter the ngrok HTTPS URL appended with `/sheets/auth-complete/`, e.g.: `https://12345abc6789.ngrok.io/sheets/auth-complete/`
         1. **Click Save**
 7. Log into xPRO via Django admin using the ngrok HTTP URL (e.g.: `http://12345abc6789.ngrok.io/admin/`)
 8. Authenticate/authorize the app

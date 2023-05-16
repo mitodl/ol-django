@@ -5,7 +5,7 @@ This is the Open Learning Django Google Sheets library for handling refund reque
 ### Setup
 `pip install mitol-django-google-sheets-refunds`
 
-Add the google sheets app:
+Add the google sheets refunds app:
 
 ```python
 INSTALLED_APPS = [

@@ -3,9 +3,12 @@ mitol-django-google-sheets-deferrals
 
 This is the Open Learning Django Google Sheets library for handling deferral requests over Google Sheets
 ### Setup
+Before you begin setting up this library make sure you set up `mitol-django-google-sheets` first. Follow the instructions [here](https://github.com/mitodl/ol-django/blob/85bea3ec5da01180ef943deb89b14d1463eb7c21/src/mitol/google_sheets/README.md).
+
+Once you have `mitol-django-google-sheets` installed, then:
 `pip install mitol-django-google-sheets-deferrals`
 
-Add the google sheets app:
+Add the google sheets deferrals app:
 
 ```python
 INSTALLED_APPS = [
@@ -52,13 +55,15 @@ Set the following:
 
 # settings.py
 
-MITOL_GOOGLE_SHEETS_DEFERRAL_PLUGINS = [
+MITOL_GOOGLE_SHEETS_DEFERRALS_PLUGINS = [
     "ecommerce.plugins.DeferralPlugin"
 ]
 
 # ecommerce/plugins.py
 ```python
-from mitol.google_sheets_deferral import hookimpl
+from mitol.google_sheets_deferrals.hooks import hookimpl, DeferralResult
+from mitol.google_sheets_deferrals.utils import DeferralRequestRow
+from mitol.google_sheets.utils import ResultType
 
 class DeferralPlugin:
     @hookimpl
