@@ -5,8 +5,8 @@ from mitol.common.envs import get_list_literal, get_string
 
 MITOL_GOOGLE_SHEETS_PROCESSOR_APP_NAME = get_string(
     name="MITOL_GOOGLE_SHEETS_PROCESSOR_APP_NAME",
+    default=None,
     description="Name of the app processing the request",
-    required=False,
 )
 MITOL_GOOGLE_SHEETS_GOOGLE_ACCOUNT_EMAIL_DOMAIN = get_string(
     name="MITOL_GOOGLE_SHEETS_GOOGLE_ACCOUNT_EMAIL_DOMAIN",

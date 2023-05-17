@@ -37,15 +37,14 @@ First, gather a few of ID-type values from Drive:
 MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_ID=<Client ID from step 1>
 MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_SECRET=<Client secret from step 1>
 MITOL_GOOGLE_SHEETS_DRIVE_API_PROJECT_ID=<Project ID from step 2>
+MITOL_GOOGLE_SHEETS_PROCESSOR_APP_NAME=<Name of the app processing the request>
 MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID=<Change of enrollment request sheet ID from step 3>
 ```
 
 
 ### Usage
+The usage of this library is only possible in conjusction with `mitol-google-sheets-refunds` or `mitol-google-sheets-deferrals`.
 
-In production, webhooks (also known as "file watches") are set up to make a request
-to your app, so that new changes to spreadsheets can be automatically processed. You can set
-those up locally too, but it's probably easier just to use the management commands.
 
 Here's an example workflow for making a request for refunds:
 

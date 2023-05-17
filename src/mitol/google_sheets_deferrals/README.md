@@ -6,6 +6,7 @@ This is the Open Learning Django Google Sheets library for handling deferral req
 Before you begin setting up this library make sure you set up `mitol-django-google-sheets` first. Follow the instructions [here](https://github.com/mitodl/ol-django/blob/85bea3ec5da01180ef943deb89b14d1463eb7c21/src/mitol/google_sheets/README.md).
 
 Once you have `mitol-django-google-sheets` installed, then:
+
 `pip install mitol-django-google-sheets-deferrals`
 
 Add the google sheets deferrals app:

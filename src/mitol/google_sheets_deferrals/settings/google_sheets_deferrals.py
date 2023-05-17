@@ -10,7 +10,7 @@ MITOL_GOOGLE_SHEETS_DEFERRALS_REQUEST_WORKSHEET_ID = get_string(
 )
 MITOL_GOOGLE_SHEETS_DEFERRALS_FIRST_ROW = get_int(
     name="MITOL_GOOGLE_SHEETS_DEFERRALS_FIRST_ROW",
-    default=4,
+    default=5,
     description=(
         "The first row (as it appears in the spreadsheet) of data that our scripts should consider "
         "processing in the deferral request spreadsheet"

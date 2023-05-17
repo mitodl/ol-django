@@ -110,7 +110,7 @@ class DeferralRequestHandler(GoogleSheetsChangeRequestHandler):
                 message="'from' and 'to' ids are identical",
             )
         results = self.hook.deferrals_process_request(
-            refund_request_row=deferral_req_row
+            deferral_request_row=deferral_req_row
         )
 
         failed = False
