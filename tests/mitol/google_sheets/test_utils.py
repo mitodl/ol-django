@@ -21,7 +21,7 @@ def test_generate_google_client_config(settings):
             "client_id": "some-id",
             "client_secret": "some-secret",
             "project_id": "some-project-id",
-            "redirect_uris": ["http://example.com/sheets/auth-complete/"],
+            "redirect_uris": ["http://example.com/api/sheets/auth-complete/"],
             "auth_uri": GOOGLE_AUTH_URI,
             "token_uri": GOOGLE_TOKEN_URI,
             "auth_provider_x509_cert_url": GOOGLE_AUTH_PROVIDER_X509_CERT_URL,
