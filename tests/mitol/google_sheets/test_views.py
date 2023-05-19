@@ -88,7 +88,9 @@ def test_complete_auth(mocker, settings, learner, existing_auth):
     response = complete_google_auth(request)
     patched_flow.from_client_config.assert_called_once()
     patched_flow_obj = patched_flow.from_client_config.return_value
-    assert patched_flow_obj.redirect_uri == "http://example.com/api/sheets/auth-complete/"
+    assert (
+        patched_flow_obj.redirect_uri == "http://example.com/api/sheets/auth-complete/"
+    )
     assert patched_flow_obj.code_verifier == "some-verifier"
     patched_flow_obj.fetch_token.assert_called_once_with(code=code)
     assert GoogleApiAuth.objects.count() == 1
