@@ -148,8 +148,8 @@ def test_full_sheet_process(db, settings, mocker, pygsheets_fixtures, request_cs
     mock_get_plugin_manager.assert_called_once()
 
     result = handler.process_sheet()
-    expected_processed_rows = {4, 5, 6}
-    expected_failed_rows = {7, 8}
+    expected_processed_rows = {5, 6, 7}
+    expected_failed_rows = {8, 9}
     assert ResultType.PROCESSED.value in result
     assert (
         set(result[ResultType.PROCESSED.value]) == expected_processed_rows
