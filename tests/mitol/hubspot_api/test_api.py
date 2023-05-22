@@ -257,13 +257,21 @@ def test_upsert_object_request_exists(mock_hubspot_api):
         [400, "Dupe error. {} already has that value."],
     ],
 )
+@pytest.mark.parametrize(
+    "hs_type",
+    [
+        api.HubspotObjectType.PRODUCTS.value,
+        api.HubspotObjectType.CONTACTS.value,
+    ],
+)
 @pytest.mark.django_db
 def test_upsert_object_request_missing_id(
-    mocker, mock_hubspot_api, content_type_obj, status, message
+    mocker, mock_hubspot_api, content_type_obj, status, message, hs_type
 ):
     """If an object exists in Hubspot but missing a HubspotObject in Django, retry upsert w/patch instead of post"""
     hubspot_id = "123456789"
     object_id = 123
+    new_email = "test@test.edu"
     mock_update = mock_hubspot_api.return_value.crm.objects.basic_api.update
     mock_update.return_value = SimplePublicObject(id=hubspot_id)
     mock_create = mock_hubspot_api.return_value.crm.objects.basic_api.create
@@ -278,10 +286,10 @@ def test_upsert_object_request_missing_id(
             status=status,
         )
     )
-    body = {"properties": {"foo": "bar"}}
+    body = SimplePublicObjectInput(properties={"email": new_email})
     api.upsert_object_request(
         content_type_obj,
-        api.HubspotObjectType.PRODUCTS.value,
+        hs_type,
         object_id=object_id,
         body=body,
     )
