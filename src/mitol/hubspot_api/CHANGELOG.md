@@ -1,4 +1,17 @@
 
+<a id='changelog-2023.5.22'></a>
+## [2023.5.22] - 2023-05-22
+
+### Added
+
+- Handle hubspot contacts with multiple emails
+
+### Changed
+
+- Updated changelog management and versioning scheme.
+
+- Fixed a bug in hubspot error handling when performing upserts
+
 <a id='changelog-2023.5.10'></a>
 ## [2023.5.10] - 2023-05-10
 
