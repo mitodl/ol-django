@@ -246,10 +246,11 @@ def handle_create_api_error(
                 elif secondary_email:
                     # Retry contact creation w/this email
                     retry_create = True
-            elif object_id and not ignore_conflict:
-                retry_update = True
-            elif ignore_conflict:
-                return SimplePublicObject(id=hubspot_id)
+            if not retry_create and not retry_update:
+                if object_id and not ignore_conflict:
+                    retry_update = True
+                elif ignore_conflict:
+                    return SimplePublicObject(id=hubspot_id)
             if retry_update:
                 return HubspotApi().crm.objects.basic_api.update(
                     simple_public_object_input=body,
