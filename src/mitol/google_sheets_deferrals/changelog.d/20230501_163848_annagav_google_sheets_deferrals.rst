@@ -7,10 +7,10 @@
 ..
 .. - A bullet item for the Removed category.
 ..
- Added
- -----
+Added
+-----
 
- - Added the `mitol-django-google-sheets-deferrals` app
+- Added the `mitol-django-google-sheets-deferrals` app
 
 .. Changed
 .. -------
