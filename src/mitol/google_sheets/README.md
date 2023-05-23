@@ -37,15 +37,14 @@ First, gather a few of ID-type values from Drive:
 MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_ID=<Client ID from step 1>
 MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_SECRET=<Client secret from step 1>
 MITOL_GOOGLE_SHEETS_DRIVE_API_PROJECT_ID=<Project ID from step 2>
+MITOL_GOOGLE_SHEETS_PROCESSOR_APP_NAME=<Name of the app processing the request>
 MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID=<Change of enrollment request sheet ID from step 3>
 ```
 
 
 ### Usage
+The usage of this library is only possible in conjusction with `mitol-google-sheets-refunds` or `mitol-google-sheets-deferrals`.
 
-In production, webhooks (also known as "file watches") are set up to make a request
-to your app, so that new changes to spreadsheets can be automatically processed. You can set
-those up locally too, but it's probably easier just to use the management commands.
 
 Here's an example workflow for making a request for refunds:
 
@@ -184,7 +183,7 @@ GOOGLE_DOMAIN_VERIFICATION_TAG_VALUE=ETRM2VjAZ3BF52L_ait6r...
        4. **Click Save at the bottom**
     3. Credentials ([link](https://console.cloud.google.com/apis/credentials))
         1. Click on the name of your web app credential in the OAuth 2.0 Client ID section
-        1. In the "Authorized redirect URIs" section, click "Add URI", and enter the ngrok HTTPS URL appended with `/api/sheets/auth-complete/`, e.g.: `https://12345abc6789.ngrok.io/api/sheets/auth-complete/`
+        1. In the "Authorized redirect URIs" section, click "Add URI", and enter the ngrok HTTPS URL appended with `/sheets/auth-complete/`, e.g.: `https://12345abc6789.ngrok.io/sheets/auth-complete/`
         1. **Click Save**
 7. Log into xPRO via Django admin using the ngrok HTTP URL (e.g.: `http://12345abc6789.ngrok.io/admin/`)
 8. Authenticate/authorize the app

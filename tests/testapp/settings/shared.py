@@ -26,6 +26,7 @@ import_settings_modules(
     "mitol.payment_gateway.settings.cybersource",
     "mitol.google_sheets.settings.google_sheets",
     "mitol.google_sheets_refunds.settings.google_sheets_refunds",
+    "mitol.google_sheets_deferrals.settings.google_sheets_deferrals",
     "mitol.hubspot_api.settings.hubspot_api",
 )
 
@@ -62,6 +63,7 @@ INSTALLED_APPS = [
     "mitol.digitalcredentials.apps.DigitalCredentialsApp",
     "mitol.google_sheets.apps.GoogleSheetsApp",
     "mitol.google_sheets_refunds.apps.GoogleSheetsRefundsApp",
+    "mitol.google_sheets_deferrals.apps.GoogleSheetsDeferralsApp",
     "mitol.hubspot_api.apps.HubspotApiApp",
     "mitol.mail.apps.MailApp",
     "mitol.oauth_toolkit_extensions.apps.OAuthToolkitExtensionsApp",

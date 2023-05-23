@@ -19,7 +19,7 @@ Uncomment the section that is right (remove the HTML comment wrapper).
 
 ### Changed
 
-- Updated changelog management and versioning scheme.
+- Updated README with new better instructions on setup and testing locally
 
 <!--
 ### Deprecated
