@@ -1,3 +1,10 @@
+
+<a id='changelog-2023.5.23'></a>
+## [2023.5.23] - 2023-05-23
+
+### Changed
+
+- Updated README with new better instructions on setup and testing locally
 # Changelog
 All notable changes to this project will be documented in this file.
 
