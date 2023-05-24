@@ -4,7 +4,7 @@ import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
-from mitol.common.utils.collections import group_into_dict, item_at_index_or_none
+from mitol.common.utils.collections import item_at_index_or_none
 from mitol.common.utils.config import get_missing_settings
 from mitol.common.utils.datetime import now_in_utc
 from mitol.google_sheets.constants import GOOGLE_API_TRUE_VAL
