@@ -4,6 +4,7 @@ import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
+from mitol.common.utils.collections import group_into_dict, item_at_index_or_none
 from mitol.common.utils.config import get_missing_settings
 from mitol.common.utils.datetime import now_in_utc
 from mitol.google_sheets.exceptions import SheetRowParsingException
@@ -18,6 +19,8 @@ from mitol.google_sheets_deferrals.utils import (
     DeferralRequestRow,
     deferral_sheet_config,
 )
+
+from mitol.google_sheets.constants import GOOGLE_API_TRUE_VAL
 
 log = logging.getLogger(__name__)
 User = get_user_model()
@@ -134,3 +137,16 @@ class DeferralRequestHandler(GoogleSheetsChangeRequestHandler):
             result_type=result_type,
             message=message,
         )
+
+    def filter_ignored_rows(self, enumerated_rows):
+        for row_index, row_data in enumerated_rows:
+            if (
+                item_at_index_or_none(row_data, self.sheet_metadata.SKIP_ROW_COL).strip()
+                == GOOGLE_API_TRUE_VAL
+                or item_at_index_or_none(
+                    row_data, self.sheet_metadata.COMPLETED_DATE_COL
+                )
+            ):
+                continue
+
+            yield row_index, row_data
