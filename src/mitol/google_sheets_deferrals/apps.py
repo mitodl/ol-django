@@ -10,6 +10,7 @@ class GoogleSheetsDeferralsApp(BaseApp):
     name = "mitol.google_sheets_deferrals"
     label = "google_sheets_deferrals"
     verbose_name = "Google Sheets Deferrals"
+    default_auto_field = "django.db.models.BigAutoField"
 
     required_settings = []
 
