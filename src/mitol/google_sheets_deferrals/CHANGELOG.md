@@ -1,4 +1,17 @@
 
+<a id='changelog-2023.5.25'></a>
+## [2023.5.25] - 2023-05-25
+
+### Added
+
+- Added the `mitol-django-google-sheets-deferrals` app
+
+### Changed
+
+- Updated release version format
+
+- Set default_auto_field in app config
+
 <a id='changelog-2023.5.23'></a>
 ## [2023.5.23] - 2023-05-23
 
