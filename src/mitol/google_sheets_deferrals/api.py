@@ -4,8 +4,10 @@ import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
+from mitol.common.utils.collections import item_at_index_or_none
 from mitol.common.utils.config import get_missing_settings
 from mitol.common.utils.datetime import now_in_utc
+from mitol.google_sheets.constants import GOOGLE_API_TRUE_VAL
 from mitol.google_sheets.exceptions import SheetRowParsingException
 from mitol.google_sheets.sheet_handler_api import GoogleSheetsChangeRequestHandler
 from mitol.google_sheets.utils import ResultType, RowResult
@@ -134,3 +136,25 @@ class DeferralRequestHandler(GoogleSheetsChangeRequestHandler):
             result_type=result_type,
             message=message,
         )
+
+    def filter_ignored_rows(self, enumerated_rows):
+        """
+        Takes an iterable of enumerated rows, and returns an iterable of those rows without the ones that should be
+        ignored. The row is ignored if Deferral Complete Date is entered or Ignore? column has TRUE
+
+        Args:
+            enumerated_rows (Iterable[Tuple[int, List[str]]]): Row indices paired with a list of strings
+                representing the data in each row
+
+        Returns:
+            Iterable[Tuple[int, List[str]]]: Iterable of data rows without the ones that should be ignored.
+        """
+        for row_index, row_data in enumerated_rows:
+            if item_at_index_or_none(
+                row_data, self.sheet_metadata.SKIP_ROW_COL
+            ).strip() == GOOGLE_API_TRUE_VAL or item_at_index_or_none(
+                row_data, self.sheet_metadata.COMPLETED_DATE_COL
+            ):
+                continue
+
+            yield row_index, row_data
