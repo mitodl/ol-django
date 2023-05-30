@@ -138,6 +138,17 @@ class DeferralRequestHandler(GoogleSheetsChangeRequestHandler):
         )
 
     def filter_ignored_rows(self, enumerated_rows):
+        """
+        Takes an iterable of enumerated rows, and returns an iterable of those rows without the ones that should be
+        ignored. The row is ignored if Deferral Complete Date is entered or Ignore? column has TRUE
+
+        Args:
+            enumerated_rows (Iterable[Tuple[int, List[str]]]): Row indices paired with a list of strings
+                representing the data in each row
+
+        Returns:
+            Iterable[Tuple[int, List[str]]]: Iterable of data rows without the ones that should be ignored.
+        """
         for row_index, row_data in enumerated_rows:
             if item_at_index_or_none(
                 row_data, self.sheet_metadata.SKIP_ROW_COL
