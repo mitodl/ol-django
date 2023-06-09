@@ -1,4 +1,21 @@
 
+<a id='changelog-2023.6.9'></a>
+## [2023.6.9] - 2023-06-09
+
+### Added
+
+- Added the `mitol-django-google-sheets-deferrals` app
+
+- Added implementation of filter_ignored_rows to request handler
+
+- Added DeferralRequestAdmin
+
+### Changed
+
+- Updated release version format
+
+- Set default_auto_field in app config
+
 <a id='changelog-2023.5.30'></a>
 ## [2023.5.30] - 2023-05-30
 
