@@ -18,9 +18,14 @@ python_sources(
     ],
 )
 
+poetry_requirements(name="libs")
+
 python_distribution(
     name="mitol-django-common",
-    dependencies=[":common"],
+    dependencies=[
+        ":libs",
+        ":common",
+    ],
     provides=setup_py(
         name="mitol-django-common",
         description="MIT Open Learning django app extensions for common utilities",

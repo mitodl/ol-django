@@ -13,3 +13,6 @@ version_pattern = "YYYY.MM.DD[.INC0]"
 "__init__.py" = [
     '__version__ = "{version}"',
 ]
+
+[tool.poetry.dependencies]
+pytest = ">=7.0.0"

@@ -1,11 +1,15 @@
 name: CI
 on: [push]
+
+env:
+  CACHE_BUST_ITER: 0
+
 jobs:
   tests:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     # Service containers to run
     services:
@@ -39,17 +43,27 @@ jobs:
       - name: Apt install
         run: sudo apt-get install -y libxmlsec1-dev
 
+      - name: Initialize Pants
+        uses: pantsbuild/actions/init-pants@7151afe1e66338457f7f65a894bc12a2d8f9cab7
+        with:
+          # cache0 makes it easy to bust the cache if needed
+          gha-cache-key: cache-${{ env.CACHE_BUST_ITER }}-py${{ matrix.python_version }}
+          named-caches-hash: ${{ hashFiles('build-support/lockfiles/*.lockfile') }}
+
+      - name: Prune pants cache
+        run: bash ./.github/workflows/scripts/prune_pants_cache.sh
+
       - name: Lints
-        run: './pants lint ::'
+        run: 'pants lint ::'
 
       # - name: Typecheck
-      #   run: './pants typecheck ::'
+      #   run: 'pants typecheck ::'
 
       - name: Tests
-        run: './pants test ::'
+        run: 'pants test ::'
       
       - name: Changelog
-        run: './pants ol-project changelog check'
+        run: 'pants ol-project changelog check'
 
       # - name: Upload coverage to CodeCov
       #   uses: codecov/codecov-action@v1
@@ -78,7 +92,7 @@ jobs:
           core.setOutput('app-package', appName.replace("mitol-django-", "").replace(/-/g, "_"))
 
     - name: Build
-      run: ./pants package "src/mitol/${{steps.get-app-name.outputs.app-package}}:"
+      run: pants package "src/mitol/${{steps.get-app-name.outputs.app-package}}:"
 
     - uses: pypa/gh-action-pypi-publish@release/v1
       with:
