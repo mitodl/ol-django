@@ -9,3 +9,17 @@ services:
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
+
+  shell:
+    build:
+      target: shell
+    volumes:
+      - .:/home/dev/src
+      - cache:/home/dev/.cache/
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+    depends_on:
+      - db
+
+volumes:
+  cache:

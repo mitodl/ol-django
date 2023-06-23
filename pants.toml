@@ -43,7 +43,8 @@ root_patterns = [
 
 [test]
 extra_env_vars = [
-  "DJANGO_SETTINGS_MODULE=testapp.settings.test"
+  "DATABASE_URL",
+  "DJANGO_SETTINGS_MODULE=testapp.settings.test",
 ]
 
 [repl]
