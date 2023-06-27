@@ -1,6 +1,6 @@
 [project]
 name = "mitol-django-common"
-version = "2023.01.17"
+version = "2023.6.27"
 
 [tool.bumpver]
 current_version = "2023.6.27"
