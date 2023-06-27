@@ -6,6 +6,19 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2023.01.17'></a>
+## [2023.01.17] - 2023-06-27
+
+### Added
+
+- Added `mitol.common.envs.get_crontab_kwargs` for crontab parsing from environment variables.
+
+### Changed
+
+- Updated changelog management and versioning scheme.
+
+- Updated `pytest` dependency to allow versions `>=7.0.0`.
+
 ## [2.7.0] - 2023-01-17
 
 ## [2.6.1] - 2023-01-13
