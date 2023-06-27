@@ -1,9 +1,9 @@
 [project]
 name = "mitol-django-common"
-version = "2023.6.27"
+version = "2023.6.27.1"
 
 [tool.bumpver]
-current_version = "2023.6.27"
+current_version = "2023.6.27.1"
 version_pattern = "YYYY.MM.DD[.INC0]"
 
 [tool.bumpver.file_patterns]
