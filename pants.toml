@@ -1,5 +1,5 @@
 [GLOBAL]
-pants_version = "2.15.0rc5"
+pants_version = "2.15.2"
 pants_ignore.remove = [
   # this is gitignored, which pants pulls in, so we need to un-ignore it
   "testapp/settings/dev.py",
