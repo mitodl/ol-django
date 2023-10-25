@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from geoip import models
+from mitol.geoip import models
 
 
 class NetBlockAdmin(admin.ModelAdmin):

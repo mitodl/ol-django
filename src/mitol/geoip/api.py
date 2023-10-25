@@ -7,8 +7,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.db.models import Q
 
-from geoip import models
-
+from mitol.geoip import models
 
 MAXMIND_CSV_COUNTRY_LOCATIONS_LITE = "geolite2-country-locations"
 MAXMIND_CSV_COUNTRY_BLOCKS_IPV4_LITE = "geolite2-country-ipv4"

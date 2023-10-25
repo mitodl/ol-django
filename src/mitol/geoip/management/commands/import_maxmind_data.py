@@ -3,10 +3,11 @@ Imports the MaxMind GeoLite2 databases. (Or, acts as a thin wrapper around the
 API call that does.)
 """
 
-from django.core.management import BaseCommand, CommandError
 from os import path
 
-from maxmind import api
+from django.core.management import BaseCommand, CommandError
+
+from mitol.geoip import api
 
 
 class Command(BaseCommand):

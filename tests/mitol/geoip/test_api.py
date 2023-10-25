@@ -7,9 +7,8 @@ import ipaddress
 import faker
 import pytest
 
-from geoip.api import ip_to_country_code
-from geoip.factories import NetBlockIPv4Factory, NetBlockIPv6Factory
-
+from mitol.geoip.api import ip_to_country_code
+from mitol.geoip.factories import NetBlockIPv4Factory, NetBlockIPv6Factory
 
 fake = faker.Factory.create()
 
@@ -43,8 +42,8 @@ def test_ipv4_lookup(v4, in_block):
         if (
             in_block
             and (
-                int(test_address) > int(netblock[0])
-                and int(test_address) < int(netblock[-1])
+                int(test_address) >= int(netblock[0])
+                and int(test_address) <= int(netblock[-1])
             )
         ) or (
             int(test_address) < int(netblock[0])
@@ -54,4 +53,4 @@ def test_ipv4_lookup(v4, in_block):
 
     result = ip_to_country_code(str(test_address))
 
-    return result is None and not in_block
+    assert (result is not None and in_block) or result is None
