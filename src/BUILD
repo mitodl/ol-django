@@ -14,6 +14,7 @@ target(
             "oauth_toolkit_extensions",
             "openedx",
             "payment_gateway",
+            "geoip",
         ]
     ],
 )

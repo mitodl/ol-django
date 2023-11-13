@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     "mitol.oauth_toolkit_extensions.apps.OAuthToolkitExtensionsApp",
     "mitol.openedx.apps.OpenedxApp",
     "mitol.payment_gateway.apps.PaymentGatewayApp",
+    "mitol.geoip.apps.GeoIPApp",
     # test app, integrates the reusable apps
     "testapp",
 ]
