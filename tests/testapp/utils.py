@@ -7,7 +7,7 @@ def set_request_session(request, session_dict):
     """
     Sets session variables on a RequestFactory object. Uses a fake response (empty
     string) for compatibility with Django 4, which no longer defaults to None.
-    
+
     Args:
         request (WSGIRequest): A RequestFactory-produced request object (from RequestFactory.get(), et. al.)
         session_dict (dict): Key/value pairs of session variables to set
