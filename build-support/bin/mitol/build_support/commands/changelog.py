@@ -105,12 +105,14 @@ def check(ctx: Context, project: Project, base: str, target: str):
         # requirements, and treat that as source changes.
 
         if not has_source_changes:
+            print("we're checking for changelog changes")
             reqs_paths = [
                 "requirements/requirements-testing.txt",
                 "requirements/requirements.txt",
             ]
 
             reqs_changes = base_commit.diff(target_commit, paths=reqs_paths)
+            print(reqs_changes)
             has_source_changes = len(reqs_changes) > 0
 
         if has_source_changes and not has_changelogd_changes:
