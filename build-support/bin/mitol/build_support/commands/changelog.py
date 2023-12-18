@@ -98,6 +98,21 @@ def check(ctx: Context, project: Project, base: str, target: str):
         )
         has_changelogd_changes = len(changelogd_changes) > 0
 
+        # If there's changes to the base requirements.txt, then we need to allow for
+        # changelogs to exist without the app code changing. There won't necessarily be
+        # changes in the individual apps if we're just updating project-wide dependencies.
+        # So, if there's no source changes, check if there's been changes to the
+        # requirements, and treat that as source changes.
+
+        if not has_source_changes:
+            reqs_paths = [
+                "requirements/requirements-testing.txt",
+                "requirements/requirements.txt",
+            ]
+
+            reqs_changes = base_commit.diff(target_commit, paths=reqs_paths)
+            has_source_changes = len(reqs_changes) > 0
+
         if has_source_changes and not has_changelogd_changes:
             echo(f"Changelog(s) are missing in {app_rel_path} for these changes:")
             for change in source_changes:
