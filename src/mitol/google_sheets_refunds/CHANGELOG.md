@@ -6,6 +6,20 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2023.12.19'></a>
+## [2023.12.19] - 2023-12-19
+
+### Added
+
+- Added RefundRequestAdmin
+
+### Changed
+
+- Updated README with new better instructions on setup and testing locally
+
+- Updated requirements and lockfiles to support Django 4.
+- Removed support for Django 2.2.
+
 <a id='changelog-2023.6.9'></a>
 ## [2023.6.9] - 2023-06-09
 
