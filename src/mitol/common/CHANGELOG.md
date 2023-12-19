@@ -48,7 +48,7 @@ and this project uses date-based versioning.
 
 ## [2.2.4] - 2022-05-27
 
-## Added
+### Added
 
 - Added `SingletonModel`
 
