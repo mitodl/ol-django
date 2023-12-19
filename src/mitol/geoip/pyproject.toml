@@ -1,9 +1,9 @@
 [project]
 name = "mitol-django-geoip"
-version = "2023.12.19"
+version = "2023.12.19.1"
 
 [tool.bumpver]
-current_version = "2023.12.19"
+current_version = "2023.12.19.1"
 version_pattern = "YYYY.MM.DD[.INC0]"
 
 [tool.bumpver.file_patterns]
