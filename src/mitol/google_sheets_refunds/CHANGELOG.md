@@ -1,3 +1,10 @@
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project uses date-based versioning.
+
+<!-- scriv-insert-here -->
 
 <a id='changelog-2023.6.9'></a>
 ## [2023.6.9] - 2023-06-09
@@ -16,11 +23,6 @@
 ### Changed
 
 - Updated README with new better instructions on setup and testing locally
-# Changelog
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project uses date-based versioning.
 
 ## [0.8.0] - 2023-01-17
 
