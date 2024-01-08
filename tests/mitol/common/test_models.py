@@ -13,6 +13,8 @@ from testapp.models import (
     Root,
     SecondLevel1,
     SecondLevel2,
+    TestSoftDelete,
+    TestSoftDeleteTimestamped,
     Updateable,
 )
 
@@ -102,3 +104,33 @@ def test_auditable_model():
     # auditable_instance.status = FinancialAidStatus.AUTO_APPROVED
     auditable_instance.save_and_log(user)
     assert AuditableTestModelAudit.objects.count() == 1
+
+
+def test_soft_delete_model():
+    """Verify that soft delete models work"""
+
+    soft_delete_record = TestSoftDelete.objects.create(test_data="Test Deletion")
+
+    assert TestSoftDelete.objects.count() == 1
+
+    soft_delete_record.delete()
+
+    assert TestSoftDelete.objects.count() == 0
+    assert TestSoftDelete.all_objects.count() == 1
+
+
+def test_soft_delete_model_with_timestamps():
+    """Verify that the updated_on timestamp gets updated too when deleting"""
+
+    soft_delete_record = TestSoftDeleteTimestamped.objects.create(
+        test_data="Test Deletion"
+    )
+    pk = soft_delete_record.id
+
+    assert TestSoftDeleteTimestamped.objects.count() == 1
+
+    soft_delete_record.delete()
+
+    soft_delete_record = TestSoftDeleteTimestamped.all_objects.get(pk=pk)
+
+    assert soft_delete_record.created_on != soft_delete_record.updated_on

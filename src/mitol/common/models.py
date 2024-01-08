@@ -9,9 +9,11 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import (
     PROTECT,
+    BooleanField,
     DateTimeField,
     ForeignKey,
     JSONField,
+    Manager,
     Model,
     prefetch_related_objects,
 )
@@ -44,6 +46,22 @@ class TimestampedModel(Model):
     updated_on = DateTimeField(auto_now=True)  # UTC
 
     class Meta:
+        abstract = True
+
+
+class SoftDeleteModel(Model):
+    """Model that blocks delete and instead marks the items is_active flag as false"""
+
+    is_active = BooleanField(default=True)
+
+    def delete(self):
+        """Mark items inactive instead of deleting them"""
+        self.is_active = False
+        self.save(update_fields=["is_active"])
+
+    class Meta:
+        """Meta options for SoftDeleteTimestampModel"""
+
         abstract = True
 
 
@@ -235,3 +253,11 @@ class PrefetchGenericQuerySet(QuerySet):
             self._prefetch_generic_related_lookups
         )
         return c
+
+
+class ActiveUndeleteManager(Manager):
+    """Query manager for models with soft-delete that excludes inactive records"""
+
+    def get_queryset(self):
+        """Get the active queryset for manager"""
+        return QuerySet(self.model, using=self._db).filter(is_active=True)

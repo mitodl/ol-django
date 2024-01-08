@@ -5,9 +5,11 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from mitol.common.models import (
+    ActiveUndeleteManager,
     AuditableModel,
     AuditModel,
     PrefetchGenericQuerySet,
+    SoftDeleteModel,
     TimestampedModel,
 )
 from mitol.common.utils.serializers import serialize_model_object
@@ -85,3 +87,21 @@ class DemoCourseware(models.Model):
     description = models.TextField()
 
     learner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+
+class TestSoftDelete(SoftDeleteModel):
+    """Test model for soft deletion"""
+
+    test_data = models.CharField(max_length=100)
+
+    all_objects = models.Manager()
+    objects = ActiveUndeleteManager()
+
+
+class TestSoftDeleteTimestamped(SoftDeleteModel, TimestampedModel):
+    """Test model for soft deletions with timestamps"""
+
+    test_data = models.CharField(max_length=100)
+
+    all_objects = models.Manager()
+    objects = ActiveUndeleteManager()
