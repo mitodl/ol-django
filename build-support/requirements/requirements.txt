@@ -14,7 +14,7 @@ google-auth==1.6.3
 google-auth-oauthlib>=0.5.2
 pygsheets==2.0.2
 html5lib>=1.1
-hubspot-api-client==6.1.0
+hubspot-api-client==8.2.1
 lxml>=4.6.1
 pluggy==0.13.1
 premailer>=3.7.0
