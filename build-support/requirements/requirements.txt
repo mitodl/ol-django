@@ -10,7 +10,7 @@ djangorestframework>=3.0.0
 djoser==2.2.2
 edx-opaque-keys==2.2.2
 google-api-python-client==1.7.11
-google-auth==1.6.3
+google-auth==2.29.0
 google-auth-oauthlib>=0.5.2
 pygsheets==2.0.2
 html5lib>=1.1
