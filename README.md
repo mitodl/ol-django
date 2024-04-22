@@ -6,6 +6,7 @@ This repository is the home of MIT Open Learning's reusable django apps
 
 We maintain changelogs in `changelog.d/` directories with each app. To create a new changelog for your changes, run:
 
+- `mkdir ./src/mitol/{APPNAME}/changelog.d`
 - `pants ol-project changelog create --app APPNAME`
   - `APPNAME`: the name of an application directory
 
@@ -15,7 +16,7 @@ Then fill out the new file that was generated with information about your change
 
 Changelogs are maintained according to [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning uses a date-based versioning scheme with incremental builds on the same day.
-Version tags follow `{package-name}/v{version`
+Version tags follow `{package-name}/v{version}`
 To perform a release, run:
 - `pants ol-project release create --app APPNAME --push`:
   - `APPNAME`: the name of an application directory
