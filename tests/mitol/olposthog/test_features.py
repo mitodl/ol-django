@@ -4,7 +4,6 @@ import logging
 from datetime import timedelta
 
 import pytest
-from django.conf import settings
 from django.core.cache import caches
 from freezegun import freeze_time
 
@@ -24,7 +23,7 @@ Tests for OlPosthog and caching functionality
 """
 
 
-def test_flags_from_cache(mocker, caplog):
+def test_flags_from_cache(mocker, caplog, settings):
     """Test that flags are pulled from cache successfully."""
     get_feature_flag_mock = mocker.patch(
         "posthog.get_feature_flag", autospec=True, return_value=True
@@ -64,7 +63,7 @@ def test_flags_from_cache(mocker, caplog):
     assert "from the cache" in caplog.text
 
 
-def test_cache_population(mocker):
+def test_cache_population(mocker, settings):
     """Test that the cache is populated correctly when get_all_feature_flags is called."""
 
     get_feature_flag_mock = mocker.patch(
@@ -98,7 +97,7 @@ def test_cache_population(mocker):
         get_feature_flag_mock.assert_not_called()
 
 
-def test_posthog_flag_cache_timeout(mocker):
+def test_posthog_flag_cache_timeout(mocker, settings):
     """Test that the cache gets invalidated as we expect"""
 
     get_feature_flag_mock = mocker.patch(

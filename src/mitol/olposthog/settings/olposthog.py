@@ -12,7 +12,7 @@ POSTHOG_PROJECT_API_KEY = get_string(
 )
 POSTHOG_API_HOST = get_string(
     name="POSTHOG_API_HOST",
-    default="https://us.olposthog.com",
+    default="https://us.posthog.com",
     description="Host URL for the PostHog API",
 )
 POSTHOG_FEATURE_FLAG_REQUEST_TIMEOUT_MS = get_int(
