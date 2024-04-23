@@ -1,4 +1,6 @@
 from mitol.common.envs import get_bool, get_int, get_string
+import os
+import posthog
 
 POSTHOG_ENABLED = get_bool(
     name="POSTHOG_ENABLED",
@@ -26,17 +28,3 @@ POSTHOG_MAX_RETRIES = get_int(
     default=3,
     description="Numbers of time requests to PostHog should be retried after failing.",
 )
-# CACHES = {
-#     # general durable cache (redis should be considered ephemeral)
-#     "durable": {
-#         "BACKEND": "django.core.cache.backends.db.DatabaseCache",
-#         "LOCATION": "durable_cache",
-#     },
-# }
-if os.getenv("POSTHOG_ENABLED", "False").lower() in ("true", "1", "t"):
-    posthog.api_key = POSTHOG_API_TOKEN
-    posthog.host = POSTHOG_API_HOST
-    posthog.feature_flags_request_timeout_seconds = (
-        POSTHOG_FEATURE_FLAG_REQUEST_TIMEOUT_MS / 1000
-    )
-    posthog.max_retries = POSTHOG_MAX_RETRIES

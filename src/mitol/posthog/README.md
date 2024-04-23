@@ -33,6 +33,16 @@ All settings for the `mitol-django-posthog` app are prefaced with 'POSTHOG'.
 - `POSTHOG_MAX_RETRIES` - Numbers of time requests to PostHog should be retried after failing.
 
 #### Cache table creation
+Add the following cache defintion to your `CACHES` in the settings.py file of your Django application.
+```
+CACHES = {
+  "durable": {
+      "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+      "LOCATION": "durable_cache",
+  },
+}
+```
+
 You must create the cache included in this library.  This can be done by running the following command from within the Django application that this library is being added to: `./manage.py createcachetable`.
 
 ### Usage

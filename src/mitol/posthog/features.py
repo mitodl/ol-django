@@ -3,7 +3,6 @@
 import hashlib
 import json
 import logging
-from functools import wraps
 from typing import Optional
 
 import posthog
@@ -37,10 +36,10 @@ def configure():
         poll_interval=30,
         disable_geoip=True,
         feature_flags_request_timeout_seconds=getattr(
-            settings, "POSTHOG_FEATURE_FLAG_REQUEST_TIMEOUT_MS", None
+            settings, "POSTHOG_FEATURE_FLAG_REQUEST_TIMEOUT_MS"
         )
         / 1000,
-        max_retries=getattr(settings, "POSTHOG_MAX_RETRIES", None),
+        max_retries=getattr(settings, "POSTHOG_MAX_RETRIES"),
     )
 
 
