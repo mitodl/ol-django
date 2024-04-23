@@ -107,6 +107,7 @@ def test_posthog_flag_cache_timeout(mocker, settings):
     settings.POSTHOG_ENABLED = True
     settings.HOSTNAME = "fake_host_name"
     settings.ENVIRONMENT = "prod"
+    settings.FEATURES["testing_function"] = True
 
     durable_cache.clear()
 
