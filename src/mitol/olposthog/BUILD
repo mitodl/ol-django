@@ -22,6 +22,6 @@ python_distribution(
     dependencies=[":olposthog"],
     provides=setup_py(
         name="mitol-django-olposthog",
-        description="MIT Open Learning django app extensions for OlPosthog",
+        description="MIT Open Learning django app extensions for Posthog.",
     ),
 )
