@@ -31,6 +31,8 @@ def test_flags_from_cache(mocker, caplog, settings):
     durable_cache = caches["durable"]
     settings.FEATURES["testing_function"] = True
     settings.POSTHOG_ENABLED = True
+    settings.ENVIRONMENT = "prod"
+    settings.HOSTNAME = "fake_host_name"
     cache_key = features._generate_cache_key(
         "testing_function",
         features.default_unique_id(),
@@ -85,6 +87,8 @@ def test_cache_population(mocker, settings):
     settings.FEATURES["testing_function_2"] = True
     settings.FEATURES["testing_function_3"] = True
     settings.POSTHOG_ENABLED = True
+    settings.ENVIRONMENT = "prod"
+    settings.HOSTNAME = "fake_host_name"
 
     durable_cache.clear()
 
@@ -107,7 +111,7 @@ def test_posthog_flag_cache_timeout(mocker, settings):
     settings.POSTHOG_ENABLED = True
     settings.HOSTNAME = "fake_host_name"
     settings.ENVIRONMENT = "prod"
-    settings.FEATURES = [{"testing_function_1": True}]
+    settings.FEATURES["testing_function"] = True
 
     durable_cache.clear()
 

@@ -26,4 +26,4 @@ CACHES = {
     },
 }
 
-FEATURES = []
+FEATURES = {}
