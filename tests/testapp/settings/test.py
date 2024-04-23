@@ -1,4 +1,5 @@
 """Test-only settings"""
+
 from mitol.common.envs import import_settings_modules
 
 import_settings_modules("testapp.settings.shared")
@@ -16,3 +17,11 @@ MITOL_MAIL_ENABLE_EMAIL_DEBUGGER = True
 
 # hubspot settings
 MITOL_HUBSPOT_API_PRIVATE_TOKEN = "testtoken"
+
+CACHES = {
+    # general durable cache (redis should be considered ephemeral)
+    "durable": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "durable_cache",
+    },
+}
