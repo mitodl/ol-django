@@ -3,11 +3,11 @@
 import logging
 from datetime import timedelta
 
+import features
 import pytest
 from django.core.cache import caches
 from freezegun import freeze_time
 
-import features
 from mitol.common.utils.datetime import now_in_utc
 
 pytestmark = [pytest.mark.django_db]

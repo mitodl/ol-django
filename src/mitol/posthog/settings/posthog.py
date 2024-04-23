@@ -1,4 +1,4 @@
-from mitol.common.envs import get_string, get_bool, get_int
+from mitol.common.envs import get_bool, get_int, get_string
 
 POSTHOG_ENABLED = get_bool(
     name="POSTHOG_ENABLED",

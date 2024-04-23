@@ -1,4 +1,5 @@
 import os
+
 from mitol.common.apps import BaseApp
 
 
