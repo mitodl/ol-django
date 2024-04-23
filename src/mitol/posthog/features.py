@@ -16,7 +16,7 @@ User = get_user_model()
 durable_cache = caches["durable"]
 
 
-class Features():
+class Features:
     """Enum for feature flags"""
 
 
@@ -36,7 +36,9 @@ def configure():
         sync_mode=False,
         poll_interval=30,
         disable_geoip=True,
-        feature_flags_request_timeout_seconds=getattr(settings, "POSTHOG_FEATURE_FLAG_REQUEST_TIMEOUT_MS", None)
+        feature_flags_request_timeout_seconds=getattr(
+            settings, "POSTHOG_FEATURE_FLAG_REQUEST_TIMEOUT_MS", None
+        )
         / 1000,
         max_retries=getattr(settings, "POSTHOG_MAX_RETRIES", None),
     )
@@ -142,8 +144,4 @@ def is_enabled(
 
     durable_cache.set(cache_key, value) if value is not None else None
 
-    return (
-        value
-        if value is not None
-        else settings.FEATURES.get(name, default or False)
-    )
+    return value if value is not None else settings.FEATURES.get(name, default or False)

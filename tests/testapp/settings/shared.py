@@ -70,7 +70,7 @@ INSTALLED_APPS = [
     "mitol.openedx.apps.OpenedxApp",
     "mitol.payment_gateway.apps.PaymentGatewayApp",
     "mitol.geoip.apps.GeoIPApp",
-    "mitol.posthog.apps.PostHog",
+    "mitol.posthog.apps.Posthog",
     # test app, integrates the reusable apps
     "testapp",
 ]

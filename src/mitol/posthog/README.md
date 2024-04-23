@@ -4,7 +4,7 @@ mitol-django-posthog
 This is the Open Learning Posthog app. It provides an API to interact with Posthog in order to check feature flags.
 
 
-### Getting started
+### Installation and setup
 
 Add the Posthog app:
 
