@@ -26,3 +26,10 @@ POSTHOG_MAX_RETRIES = get_int(
     default=3,
     description="Numbers of time requests to PostHog should be retried after failing.",
 )
+CACHES = {
+    # general durable cache (redis should be considered ephemeral)
+    "durable": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "durable_cache",
+    },
+}
