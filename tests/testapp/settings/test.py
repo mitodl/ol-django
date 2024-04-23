@@ -25,3 +25,5 @@ CACHES = {
         "LOCATION": "durable_cache",
     },
 }
+
+FEATURES = []
