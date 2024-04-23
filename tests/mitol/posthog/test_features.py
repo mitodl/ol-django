@@ -3,7 +3,7 @@
 import logging
 from datetime import timedelta
 
-import features
+from mitol.posthog import features
 import pytest
 from django.core.cache import caches
 from freezegun import freeze_time
@@ -31,7 +31,7 @@ def test_flags_from_cache(mocker, caplog, settings):
     durable_cache = caches["durable"]
     settings.FEATURES["testing_function"] = True
     settings.POSTHOG_ENABLED = True
-    cache_key = features.generate_cache_key(
+    cache_key = features._generate_cache_key(
         "testing_function",
         features.default_unique_id(),
         features._get_person_properties(features.default_unique_id()),  # noqa: SLF001
