@@ -5,7 +5,7 @@ import json
 import logging
 from typing import Optional
 
-import posthog
+import olposthog
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import caches
@@ -26,7 +26,7 @@ def configure():
     The posthog library normally takes care of this but it doesn't
     expose all the client config options.
     """
-    posthog.default_client = posthog.Client(
+    olposthog.default_client = olposthog.Client(
         api_key=getattr(settings, "POSTHOG_PROJECT_API_KEY", None),
         host=getattr(settings, "POSTHOG_API_HOST", None),
         debug=settings.DEBUG,
@@ -84,7 +84,7 @@ def get_all_feature_flags(opt_unique_id: Optional[str] = None):
     unique_id = opt_unique_id or default_unique_id()
     person_properties = _get_person_properties(unique_id)
 
-    flag_data = posthog.get_all_flags(
+    flag_data = olposthog.get_all_flags(
         unique_id,
         person_properties=person_properties,
     )
@@ -132,7 +132,7 @@ def is_enabled(
 
     # value will be None if either there is no value or we can't get a response back
     value = (
-        posthog.get_feature_flag(
+        olposthog.get_feature_flag(
             name,
             unique_id,
             person_properties=person_properties,
