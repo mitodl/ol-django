@@ -10,8 +10,6 @@ from freezegun import freeze_time
 from mitol.common.utils.datetime import now_in_utc
 from mitol.posthog import features
 
-
-
 pytestmark = [pytest.mark.django_db]
 
 
