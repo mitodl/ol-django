@@ -8,7 +8,7 @@ resources(
 )
 
 python_sources(
-    name="posthog",
+    name="olposthog",
     sources=[
         "**/*.py",
     ],
@@ -18,10 +18,10 @@ python_sources(
 )
 
 python_distribution(
-    name="mitol-django-posthog",
-    dependencies=[":posthog"],
+    name="mitol-django-olposthog",
+    dependencies=[":olposthog"],
     provides=setup_py(
-        name="mitol-django-posthog",
-        description="MIT Open Learning django app extensions for Posthog",
+        name="mitol-django-olposthog",
+        description="MIT Open Learning django app extensions for OlPosthog",
     ),
 )

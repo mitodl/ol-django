@@ -1,5 +1,5 @@
 [project]
-name = "mitol-posthog"
+name = "mitol-olposthog"
 version = "2024.04.16"
 
 [tool.bumpver]

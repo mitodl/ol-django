@@ -8,13 +8,13 @@ from django.core.cache import caches
 from freezegun import freeze_time
 
 from mitol.common.utils.datetime import now_in_utc
-from mitol.posthog import features
+from mitol.olposthog import features
 
 pytestmark = [pytest.mark.django_db]
 
 
 """
-Tests for Posthog and caching functionality
+Tests for OlPosthog and caching functionality
 
 - Test grabbing flags from Posthog with a cleared cache; they should hit
   Posthog and then the flag should be cached
@@ -26,7 +26,7 @@ Tests for Posthog and caching functionality
 def test_flags_from_cache(mocker, caplog, settings):
     """Test that flags are pulled from cache successfully."""
     get_feature_flag_mock = mocker.patch(
-        "get_feature_flag", autospec=True, return_value=True
+        "posthog.get_feature_flag", autospec=True, return_value=True
     )
     durable_cache = caches["durable"]
     settings.FEATURES["testing_function"] = True
@@ -67,10 +67,10 @@ def test_cache_population(mocker, settings):
     """Test that the cache is populated correctly when get_all_feature_flags is called."""
 
     get_feature_flag_mock = mocker.patch(
-        "get_feature_flag", autospec=True, return_value=True
+        "posthog.get_feature_flag", autospec=True, return_value=True
     )
     get_all_flags_mock = mocker.patch(
-        "get_all_flags",
+        "posthog.get_all_flags",
         autospec=True,
         return_value={
             "testing_function_1": True,
@@ -101,7 +101,7 @@ def test_posthog_flag_cache_timeout(mocker, settings):
     """Test that the cache gets invalidated as we expect"""
 
     get_feature_flag_mock = mocker.patch(
-        "get_feature_flag", autospec=True, return_value=True
+        "posthog.get_feature_flag", autospec=True, return_value=True
     )
     durable_cache = caches["durable"]
     settings.POSTHOG_ENABLED = True

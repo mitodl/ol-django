@@ -19,7 +19,7 @@ python_requirements(
         "social-auth-app-django": ["social_django"],
         "named-enum": ["enum"],
         "setuptools": ["pkg_resources"],
-        "posthog": ["posthog"]
+        "olposthog": ["olposthog"]
     }
 )
 

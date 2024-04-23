@@ -3444,7 +3444,7 @@
               "url": "https://files.pythonhosted.org/packages/d8/c8/8a7308d5355fedfc400098a75fd191cf615b55aa22ef2a937995326e6f5e/posthog-3.5.0.tar.gz"
             }
           ],
-          "project_name": "posthog",
+          "project_name": "olposthog",
           "requires_dists": [
             "backoff>=1.10.0",
             "black; extra == \"dev\"",

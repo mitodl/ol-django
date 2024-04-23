@@ -1,19 +1,19 @@
-mitol-django-posthog
+mitol-django-olposthog
 ---
 
-This is the Open Learning Posthog app. It provides an API to interact with Posthog in order to check feature flags.
+This is the Open Learning OlPosthog app. It provides an API to interact with Posthog in order to check feature flags.
 
 
 ### Installation and setup
 
-Add the Posthog app:
+Add the OlPosthog app:
 
-`docker-compose run -u root --rm web poetry add mitol-django-posthog`
+`docker-compose run -u root --rm web poetry add mitol-django-olposthog`
 
 Add the following to the `ready()` method for your App.
 
 ```
-from mitol.posthog.features import configure
+from mitol.olposthog.features import configure
 configure()
 
 ```
@@ -22,9 +22,9 @@ configure()
 
 - `HOSTNAME` - The website's hostname.
 
-#### Posthog app settings
+#### OlPosthog app settings
 
-All settings for the `mitol-django-posthog` app are prefaced with 'POSTHOG'.
+All settings for the `mitol-django-olposthog` app are prefaced with 'POSTHOG'.
 
 - `POSTHOG_ENABLED` - `True` in order to enable Posthog feature flags in the application.  `False` to disable Posthog feature flags.
 - `POSTHOG_PROJECT_API_KEY` - Required if POSTHOG_ENABLED is True. Private API key to communicate with PostHog.
@@ -50,7 +50,7 @@ You must create the cache included in this library.  This can be done by running
 #### Check single feature flag value
 You can check the value of a feature flag on Posthog with the following code:
 ```
-from mitol.posthog.features import is_enabled
+from mitol.olposthog.features import is_enabled
 is_enabled(<FEATURE_FLAG_NAME>)
 ```
 This will return a boolean value based on whether the Posthog feature flag is True or False.
@@ -58,6 +58,6 @@ This will return a boolean value based on whether the Posthog feature flag is Tr
 #### Retrieve all feature flags from Posthog
 You can retrieve all the feature flags from Posthog using:
 ```
-from mitol.posthog.features import is_enabled
+from mitol.olposthog.features import is_enabled
 get_all_feature_flags()
 ```
