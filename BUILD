@@ -17,7 +17,9 @@ python_requirements(
         "pytest-lazy-fixture": ["pytest_lazyfixture"],
         "python3-saml": ["onelogin"],
         "social-auth-app-django": ["social_django"],
+        "named-enum": ["enum"],
         "setuptools": ["pkg_resources"],
+        "olposthog": ["olposthog"]
     }
 )
 

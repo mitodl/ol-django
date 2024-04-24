@@ -15,6 +15,7 @@ target(
             "openedx",
             "payment_gateway",
             "geoip",
+            "olposthog",
         ]
     ],
 )
