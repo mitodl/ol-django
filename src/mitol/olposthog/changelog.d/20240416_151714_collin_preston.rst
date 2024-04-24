@@ -7,10 +7,10 @@
 ..
 .. - A bullet item for the Removed category.
 ..
-.. Added
-.. -----
-..
-.. - A bullet item for the Added category.
+Added
+-----
+
+- Added posthog application.
 ..
 .. Changed
 .. -------

@@ -58,6 +58,6 @@ This will return a boolean value based on whether the Posthog feature flag is Tr
 #### Retrieve all feature flags from Posthog
 You can retrieve all the feature flags from Posthog using:
 ```
-from mitol.olposthog.features import is_enabled
+from mitol.olposthog.features import get_all_feature_flags
 get_all_feature_flags()
 ```
