@@ -1,5 +1,5 @@
 [project]
-name = "mitol-olposthog"
+name = "mitol-django-olposthog"
 version = "2024.4.25"
 
 [tool.bumpver]
