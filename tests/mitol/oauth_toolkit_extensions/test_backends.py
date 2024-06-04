@@ -1,8 +1,8 @@
 """Backends tests"""
-import pytest
-from oauth2_provider.settings import oauth2_settings
 
+import pytest
 from mitol.oauth_toolkit_extensions.backends import ApplicationAccessOrSettingsScopes
+from oauth2_provider.settings import oauth2_settings
 
 
 @pytest.mark.parametrize(

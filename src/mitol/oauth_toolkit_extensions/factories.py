@@ -1,4 +1,5 @@
 """Oauth toolkit and extensions factories"""
+
 from factory import Faker, SelfAttribute, Sequence, SubFactory
 from factory.django import DjangoModelFactory
 from factory.fuzzy import FuzzyChoice

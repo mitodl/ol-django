@@ -1,4 +1,5 @@
 """Serializers for digital credentials"""
+
 import json
 import logging
 from typing import Dict, cast

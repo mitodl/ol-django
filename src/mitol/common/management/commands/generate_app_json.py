@@ -1,4 +1,5 @@
 """Generates app.json based on settings configuration"""
+
 import json
 
 from django.core.management.base import BaseCommand

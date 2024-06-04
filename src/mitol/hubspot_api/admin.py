@@ -1,4 +1,5 @@
 """Admin for hubspot CRM"""
+
 from django.contrib import admin
 
 from mitol.hubspot_api.models import HubspotObject

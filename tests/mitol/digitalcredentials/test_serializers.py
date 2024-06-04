@@ -1,14 +1,10 @@
 """Digital Credentials serializers"""
+
 import json
 
 import pytest
 import responses
 from django.contrib.contenttypes.models import ContentType
-from testapp.factories import (
-    DemoCoursewareDigitalCredentialFactory,
-    DemoCoursewareDigitalCredentialRequestFactory,
-)
-
 from mitol.digitalcredentials.factories import LearnerDIDFactory
 from mitol.digitalcredentials.models import (
     DigitalCredential,
@@ -18,6 +14,10 @@ from mitol.digitalcredentials.models import (
 from mitol.digitalcredentials.serializers import (
     DigitalCredentialIssueSerializer,
     DigitalCredentialRequestSerializer,
+)
+from testapp.factories import (
+    DemoCoursewareDigitalCredentialFactory,
+    DemoCoursewareDigitalCredentialRequestFactory,
 )
 
 pytestmark = pytest.mark.django_db

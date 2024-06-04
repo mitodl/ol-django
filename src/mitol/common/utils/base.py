@@ -1,4 +1,5 @@
 """Base utilities"""
+
 import abc
 
 

@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import os
 
 import dj_database_url
-
 from mitol.common.envs import get_string, import_settings_modules, init_app_settings
 
 init_app_settings(namespace="MITOL", site_name="MIT Open Learning Common Library")

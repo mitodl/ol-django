@@ -1,7 +1,7 @@
-""" Tests for hubspot_api decorators"""
+"""Tests for hubspot_api decorators"""
+
 import pytest
 from hubspot.crm.objects import ApiException
-
 from mitol.hubspot_api.decorators import raise_429
 from mitol.hubspot_api.exceptions import TooManyRequestsException
 

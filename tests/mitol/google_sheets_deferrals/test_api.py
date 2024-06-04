@@ -4,18 +4,17 @@ import os
 from types import SimpleNamespace
 
 import pytest
+from mitol.google_sheets.factories import GoogleApiAuthFactory
+from mitol.google_sheets.utils import ResultType
+from mitol.google_sheets_deferrals.api import DeferralRequestHandler
 from pygsheets import Spreadsheet, Worksheet
 from pygsheets.client import Client as PygsheetsClient
 from pygsheets.drive import DriveAPIWrapper
 from pygsheets.sheet import SheetAPIWrapper
 from pytest_lazyfixture import lazy_fixture
 
-from mitol.google_sheets.factories import GoogleApiAuthFactory
-from mitol.google_sheets.utils import ResultType
-from mitol.google_sheets_deferrals.api import DeferralRequestHandler
 
-
-@pytest.fixture
+@pytest.fixture()
 def request_csv_rows(settings):
     """Fake deferral request spreadsheet data rows (loaded from CSV)"""
     fake_request_csv_filepath = os.path.join(
@@ -26,7 +25,7 @@ def request_csv_rows(settings):
         return [line.split(",") for i, line in enumerate(f.readlines()) if i > 0]
 
 
-@pytest.fixture
+@pytest.fixture()
 def pygsheets_fixtures(mocker, db, request_csv_rows):
     """Patched functions for pygsheets client functionality"""
     Mock = mocker.Mock
@@ -61,7 +60,7 @@ def pygsheets_fixtures(mocker, db, request_csv_rows):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def google_sheets_deferral_settings(settings):
     settings.MITOL_GOOGLE_SHEETS_DEFERRALS_REQUEST_WORKSHEET_ID = "1"
     settings.MITOL_GOOGLE_SHEETS_DEFERRALS_PLUGINS = "app.plugins.DeferralPlugin"
@@ -151,14 +150,12 @@ def test_full_sheet_process(db, settings, mocker, pygsheets_fixtures, request_cs
     expected_processed_rows = {7, 8}
     expected_failed_rows = {9}
     assert ResultType.PROCESSED.value in result
-    assert (
-        set(result[ResultType.PROCESSED.value]) == expected_processed_rows
-    ), "Rows %s as defined in deferral_requests.csv should be processed" % str(
-        expected_processed_rows
+    assert set(result[ResultType.PROCESSED.value]) == expected_processed_rows, (
+        "Rows %s as defined in deferral_requests.csv should be processed"
+        % str(expected_processed_rows)
     )
     assert ResultType.FAILED.value in result
-    assert (
-        set(result[ResultType.FAILED.value]) == expected_failed_rows
-    ), "Rows %s as defined in deferral_requests.csv should fail" % str(
-        expected_failed_rows
+    assert set(result[ResultType.FAILED.value]) == expected_failed_rows, (
+        "Rows %s as defined in deferral_requests.csv should fail"
+        % str(expected_failed_rows)
     )

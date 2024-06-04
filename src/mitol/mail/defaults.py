@@ -1,4 +1,5 @@
 """Mail utils"""
+
 from email.utils import formataddr
 
 from django.contrib.auth import get_user_model

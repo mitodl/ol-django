@@ -1,4 +1,5 @@
 """Functions reading and parsing environment variables"""
+
 import importlib
 import inspect
 import json
@@ -113,9 +114,7 @@ def parse_bool(name: str, value: str, default: bool) -> bool:
         return False
 
     raise EnvironmentVariableParseException(
-        "Expected value in {name}={value} to be a boolean".format(
-            name=name, value=value
-        )
+        f"Expected value in {name}={value} to be a boolean"
     )
 
 
@@ -143,9 +142,7 @@ def parse_int(name: str, value: str, default: int) -> int:
         parsed_value = int(value)
     except ValueError as ex:
         raise EnvironmentVariableParseException(
-            "Expected value in {name}={value} to be an int".format(
-                name=name, value=value
-            )
+            f"Expected value in {name}={value} to be an int"
         ) from ex
 
     return parsed_value
@@ -186,9 +183,7 @@ def parse_list_literal(
         return value
 
     parse_exception = EnvironmentVariableParseException(
-        "Expected value in {name}={value} to be a list literal".format(
-            name=name, value=value
-        )
+        f"Expected value in {name}={value} to be a list literal"
     )
 
     try:

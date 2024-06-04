@@ -1,8 +1,8 @@
 """Utils tests"""
+
 from decimal import Decimal
 
 import pytest
-
 from mitol.common.utils.currency import format_price
 
 

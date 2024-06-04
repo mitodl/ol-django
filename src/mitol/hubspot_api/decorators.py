@@ -1,4 +1,5 @@
 """Decorators for hubspot_api"""
+
 import functools
 from typing import Callable
 

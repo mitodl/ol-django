@@ -1,4 +1,5 @@
 """API with general functionality for all enrollment change spreadsheets"""
+
 import json
 import logging
 import operator as op
@@ -129,9 +130,7 @@ class SheetHandler:
         """
         for row_result in failed_row_results:
             self.worksheet.update_value(
-                "{}{}".format(
-                    self.sheet_metadata.ERROR_COL_LETTER, row_result.row_index
-                ),
+                f"{self.sheet_metadata.ERROR_COL_LETTER}{row_result.row_index}",
                 row_result.message,
             )
 
@@ -265,7 +264,7 @@ class SheetHandler:
                     row_db_record=None,
                     row_object=None,
                     result_type=ResultType.FAILED,
-                    message="Error: {}".format(str(exc)),
+                    message=f"Error: {exc!s}",
                 )
             finally:
                 if row_result:
@@ -327,11 +326,7 @@ class GoogleSheetsChangeRequestHandler(SheetHandler):
     def update_completed_rows(self, success_row_results):
         for row_result in success_row_results:
             self.worksheet.update_values(
-                crange="{processor_col}{row_index}:{error_col}{row_index}".format(
-                    processor_col=self.sheet_metadata.PROCESSOR_COL_LETTER,
-                    error_col=self.sheet_metadata.ERROR_COL_LETTER,
-                    row_index=row_result.row_index,
-                ),
+                crange=f"{self.sheet_metadata.PROCESSOR_COL_LETTER}{row_result.row_index}:{self.sheet_metadata.ERROR_COL_LETTER}{row_result.row_index}",
                 values=[
                     [
                         settings.MITOL_GOOGLE_SHEETS_PROCESSOR_APP_NAME,

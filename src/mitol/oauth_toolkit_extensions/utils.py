@@ -1,4 +1,5 @@
 """Common utilities"""
+
 import datetime
 import itertools
 import logging

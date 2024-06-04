@@ -1,14 +1,14 @@
 """Requests utils tests"""
+
 import base64
 import hashlib
 
 import pytest
-from requests.models import PreparedRequest
-
 from mitol.digitalcredentials.requests_utils import (
     prepare_request_digest,
     prepare_request_hmac_signature,
 )
+from requests.models import PreparedRequest
 
 REQUEST_BODY = '{"content": 1}'
 REQUEST_DIGEST = base64.b64encode(

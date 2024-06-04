@@ -11,7 +11,6 @@ import ipaddress
 from decimal import Decimal
 
 from django.core.management import BaseCommand, CommandError
-
 from mitol.geoip.models import Geoname, NetBlock
 
 
@@ -46,7 +45,7 @@ class Command(BaseCommand):
 
         netblocks = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
 
-        if "remove" in kwargs and kwargs["remove"]:
+        if kwargs.get("remove"):
             removed_count = NetBlock.objects.filter(network__in=netblocks).delete()
 
             self.stdout.write(

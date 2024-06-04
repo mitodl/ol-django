@@ -1,10 +1,13 @@
 """Tests for common models"""
+
 from datetime import datetime, timedelta
 from random import choice, randint, sample
 
 import pytest
 import pytz
 from freezegun import freeze_time
+from mitol.common.factories import UserFactory
+from mitol.common.utils.serializers import serialize_model_object
 from testapp.models import (
     AuditableTestModel,
     AuditableTestModelAudit,
@@ -15,9 +18,6 @@ from testapp.models import (
     SecondLevel2,
     Updateable,
 )
-
-from mitol.common.factories import UserFactory
-from mitol.common.utils.serializers import serialize_model_object
 
 pytestmark = pytest.mark.django_db
 

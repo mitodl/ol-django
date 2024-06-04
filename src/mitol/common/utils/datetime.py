@@ -1,4 +1,5 @@
 """Datetime utilities"""
+
 from datetime import datetime, timedelta
 
 import pytz

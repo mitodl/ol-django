@@ -1,4 +1,5 @@
 """Collections utilities"""
+
 from collections.abc import Iterable
 from itertools import groupby, islice, tee
 

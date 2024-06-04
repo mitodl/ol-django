@@ -1,4 +1,5 @@
 """Test Cases for Djoser Views"""
+
 import pytest
 from django.urls import reverse
 from rest_framework import status
@@ -8,7 +9,7 @@ pytestmark = pytest.mark.django_db
 EMAIL = "email@example.com"
 
 
-@pytest.fixture
+@pytest.fixture()
 def user():
     from mitol.common.factories import UserFactory
 

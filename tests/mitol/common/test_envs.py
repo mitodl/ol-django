@@ -1,9 +1,9 @@
 """Tests for environment variable parsing functions"""
+
 import json
 
 import pytest
 from django.core.exceptions import ImproperlyConfigured
-
 from mitol.common import envs
 
 FAKE_ENVIRONS = {
@@ -62,11 +62,7 @@ def test_get_int():
         if key not in ("POSITIVE", "NEGATIVE", "ZERO"):
             with pytest.raises(envs.EnvironmentVariableParseException) as ex:
                 envs.get_int(name=key, default=1234, description="description")
-            assert ex.value.args[
-                0
-            ] == "Expected value in {key}={value} to be an int".format(
-                key=key, value=value
-            )
+            assert ex.value.args[0] == f"Expected value in {key}={value} to be an int"
 
     assert (
         envs.get_int(name="missing", default=1_234_567_890, description="description")
@@ -87,10 +83,8 @@ def test_get_bool():
         ):
             with pytest.raises(envs.EnvironmentVariableParseException) as ex:
                 envs.get_bool(name=key, default=1234, description="description")
-            assert ex.value.args[
-                0
-            ] == "Expected value in {key}={value} to be a boolean".format(
-                key=key, value=value
+            assert (
+                ex.value.args[0] == f"Expected value in {key}={value} to be a boolean"
             )
 
     assert (
@@ -128,10 +122,9 @@ def test_get_list_literal():
                 envs.get_list_literal(
                     name=key, default=["noth", "ing"], description="description"
                 )
-            assert ex.value.args[
-                0
-            ] == "Expected value in {key}={value} to be a list literal".format(
-                key=key, value=value
+            assert (
+                ex.value.args[0]
+                == f"Expected value in {key}={value} to be a list literal"
             )
 
     assert envs.get_list_literal(

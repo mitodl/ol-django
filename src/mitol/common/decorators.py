@@ -73,7 +73,7 @@ def single_task(
                     return_value = func(*args, **kwargs)
                 else:
                     if raise_block:
-                        raise BlockingIOError()
+                        raise BlockingIOError
                     return_value = None
             finally:
                 if has_lock and lock.locked():

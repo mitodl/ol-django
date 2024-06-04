@@ -2,8 +2,8 @@
 Parses refund request row(s), reverses orders/enrollments, and updates the spreadsheet
 to reflect the processed request(s).
 """
-from django.core.management import BaseCommand
 
+from django.core.management import BaseCommand
 from mitol.google_sheets_refunds.api import RefundRequestHandler
 
 
@@ -27,7 +27,5 @@ class Command(BaseCommand):
             limit_row_index=options.get("row", None)
         )
         self.stdout.write(
-            self.style.SUCCESS(
-                "Refund sheet successfully processed.\n{}".format(results)
-            )
+            self.style.SUCCESS(f"Refund sheet successfully processed.\n{results}")
         )

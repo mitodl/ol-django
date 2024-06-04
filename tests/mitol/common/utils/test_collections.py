@@ -1,10 +1,10 @@
 """Utils tests"""
+
 import operator as op
 from math import ceil
 from types import SimpleNamespace
 
 import pytest
-
 from mitol.common.utils.collections import (
     all_equal,
     all_unique,

@@ -6,7 +6,6 @@ API call that does.)
 from os import path
 
 from django.core.management import BaseCommand, CommandError
-
 from mitol.geoip import api
 
 

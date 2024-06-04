@@ -1,4 +1,5 @@
 """Integration tests"""
+
 import json
 from urllib.parse import parse_qs, urljoin, urlparse
 
@@ -6,8 +7,6 @@ import pytest
 import responses
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
-from testapp.factories import DemoCoursewareDigitalCredentialRequestFactory
-
 from mitol.digitalcredentials.backend import (
     build_api_url,
     build_credential,
@@ -15,6 +14,7 @@ from mitol.digitalcredentials.backend import (
     issue_credential,
     verify_presentations,
 )
+from testapp.factories import DemoCoursewareDigitalCredentialRequestFactory
 
 
 def test_build_api_url():
@@ -30,7 +30,7 @@ def test_build_api_url_invalid(settings):
         build_api_url("/path")
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_create_deep_link_url(settings):
     """Test create_deep_link_url()"""
     settings.MITOL_DIGITAL_CREDENTIALS_AUTH_TYPE = "test_auth_type"

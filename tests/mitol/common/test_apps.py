@@ -1,8 +1,8 @@
 """Tests for apps"""
+
 import pytest
 import testapp
 from django.core.exceptions import ImproperlyConfigured
-
 from mitol.common.apps import BaseApp
 
 

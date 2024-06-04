@@ -1,6 +1,6 @@
-""" Message tests """
-import pytest
+"""Message tests"""
 
+import pytest
 from mitol.mail.messages import TemplatedMessage
 
 

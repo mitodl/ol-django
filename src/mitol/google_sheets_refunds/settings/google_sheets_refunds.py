@@ -1,4 +1,5 @@
-"""google sheets refunds settings """
+"""google sheets refunds settings"""
+
 from mitol.common.envs import get_int, get_string
 
 MITOL_GOOGLE_SHEETS_REFUNDS_REQUEST_WORKSHEET_ID = get_string(

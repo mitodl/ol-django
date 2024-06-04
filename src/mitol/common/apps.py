@@ -1,4 +1,5 @@
 """Common app AppConfigs"""
+
 import os
 from typing import List
 

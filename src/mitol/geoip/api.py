@@ -136,9 +136,10 @@ def import_maxmind_database(import_type: str, import_filename: str) -> None:
         if import_type == MAXMIND_CSV_COUNTRY_LOCATIONS_LITE:
             models.Geoname.objects.all().delete()
             models.Geoname.objects.bulk_create(rows)
-        elif import_type == MAXMIND_CSV_COUNTRY_BLOCKS_IPV4_LITE:
-            models.NetBlock.objects.filter(is_ipv6=False).delete()
-        elif import_type == MAXMIND_CSV_COUNTRY_BLOCKS_IPV6_LITE:
+        elif (
+            import_type == MAXMIND_CSV_COUNTRY_BLOCKS_IPV4_LITE
+            or import_type == MAXMIND_CSV_COUNTRY_BLOCKS_IPV6_LITE
+        ):
             models.NetBlock.objects.filter(is_ipv6=False).delete()
 
         if import_type in [

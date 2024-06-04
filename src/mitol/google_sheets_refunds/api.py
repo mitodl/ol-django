@@ -1,4 +1,5 @@
 """Enrollment refund API"""
+
 import logging
 
 from django.conf import settings
@@ -72,7 +73,7 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
                 row_db_record=refund_request,
                 row_object=None,
                 result_type=ResultType.FAILED,
-                message="Parsing failure: {}".format(str(exc)),
+                message=f"Parsing failure: {exc!s}",
             )
         is_unchanged_error_row = (
             refund_req_row.errors and not request_created and not request_updated

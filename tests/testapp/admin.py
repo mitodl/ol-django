@@ -1,5 +1,7 @@
-""" testapp admin """
+"""testapp admin"""
+
 from django.contrib import admin
+
 from testapp.models import DemoCourseware
 
 

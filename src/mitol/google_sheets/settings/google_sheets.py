@@ -1,6 +1,6 @@
-"""google sheets settings """
-import pytz
+"""google sheets settings"""
 
+import pytz
 from mitol.common.envs import get_list_literal, get_string
 
 MITOL_GOOGLE_SHEETS_PROCESSOR_APP_NAME = get_string(

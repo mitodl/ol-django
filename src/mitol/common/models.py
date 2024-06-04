@@ -1,6 +1,7 @@
 """
 Common model classes
 """
+
 import copy
 from typing import Dict, Iterable, List, Type, TypeVar, Union
 
@@ -133,8 +134,8 @@ class SingletonModel(Model):
     ):
         if force_insert and self._meta.model.objects.count() > 0:
             raise ValidationError(
-                "Only one {} object should exist. Update the existing object instead "
-                "of creating a new one.".format(self.__class__.__name__)
+                f"Only one {self.__class__.__name__} object should exist. Update the existing object instead "
+                "of creating a new one."
             )
         return super().save(
             force_insert=force_insert,

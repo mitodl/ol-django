@@ -1,4 +1,5 @@
 """Mail messages"""
+
 from typing import Tuple
 
 from anymail.message import AnymailMessage

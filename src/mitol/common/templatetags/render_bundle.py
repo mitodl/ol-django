@@ -1,4 +1,5 @@
 """Templatetags for rendering webpack bundle script tags"""
+
 from os import path
 from typing import Any, Dict, Iterator
 
@@ -6,9 +7,8 @@ from django import template
 from django.conf import settings
 from django.http import HttpRequest
 from django.utils.safestring import SafeText, mark_safe
-from webpack_loader.utils import get_loader
-
 from mitol.common.utils.webpack import webpack_public_path
+from webpack_loader.utils import get_loader
 
 register = template.Library()
 

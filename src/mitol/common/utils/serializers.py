@@ -1,4 +1,5 @@
 """Model Serialization utils"""
+
 import json
 
 from django.core.serializers import serialize

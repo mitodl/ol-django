@@ -1,4 +1,5 @@
 """Requests utilities"""
+
 import logging
 from http import HTTPStatus
 

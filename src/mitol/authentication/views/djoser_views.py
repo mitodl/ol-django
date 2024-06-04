@@ -1,6 +1,7 @@
 """
 Custom views to override default djoser behaviours
 """
+
 from anymail.message import AnymailMessage
 from django.conf import settings
 from django.contrib.auth import update_session_auth_hash

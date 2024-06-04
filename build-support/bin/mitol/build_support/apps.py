@@ -1,4 +1,5 @@
 """Utilities around library django apps"""
+
 from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
@@ -43,7 +44,7 @@ class App:
 
     @property
     def pyproject(self):
-        with open(self.app_dir / "pyproject.toml", "r") as f:
+        with open(self.app_dir / "pyproject.toml") as f:
             return toml.loads(f.read())
 
     @property

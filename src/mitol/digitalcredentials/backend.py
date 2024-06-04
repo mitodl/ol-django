@@ -1,4 +1,5 @@
 """Digital credentials proxy to sign-and-verify service"""
+
 from typing import Dict
 from urllib.parse import urlencode, urljoin
 

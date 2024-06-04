@@ -1,4 +1,5 @@
 """Pytest testing utils"""
+
 import abc
 import json
 import logging

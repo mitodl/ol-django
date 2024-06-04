@@ -1,4 +1,5 @@
 """Sheets app util functions"""
+
 import datetime
 import email.utils
 from collections import namedtuple
@@ -232,7 +233,7 @@ def spreadsheet_repr(spreadsheet=None, spreadsheet_metadata=None):
         sheet_id, title = None, None
     if not sheet_id or not title:
         raise ValueError("Invalid spreadsheet/metadata provided")
-    return "'{}', id: {}".format(title, sheet_id)
+    return f"'{title}', id: {sheet_id}"
 
 
 def clean_sheet_value(value):

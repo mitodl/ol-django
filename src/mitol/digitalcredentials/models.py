@@ -1,4 +1,5 @@
 """Digital credentials models"""
+
 import uuid
 from hashlib import sha256
 

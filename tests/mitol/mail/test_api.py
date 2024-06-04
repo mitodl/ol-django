@@ -1,8 +1,8 @@
 """API tests"""
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
-
 from mitol.mail.api import (
     build_message,
     can_email_user,
@@ -19,7 +19,7 @@ pytestmark = [pytest.mark.django_db, pytest.mark.usefixtures("email_settings")]
 User = get_user_model()
 
 
-@pytest.fixture
+@pytest.fixture()
 def email_settings(settings):
     """Default settings for email tests"""
     settings.MITOL_MAIL_RECIPIENT_OVERRIDE = None

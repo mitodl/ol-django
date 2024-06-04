@@ -1,6 +1,7 @@
 """
 API for the Payment Gateway
 """
+
 import abc
 import hashlib
 import hmac
@@ -187,7 +188,6 @@ class PaymentGateway(abc.ABC):
         class that handles this should format the data as needed for the
         processor in question (or ignore it entirely).
         """
-        pass
 
     @staticmethod
     @abc.abstractmethod
@@ -200,7 +200,6 @@ class PaymentGateway(abc.ABC):
             Object (Refund): Refund An object of Refund class that can be used for Refund operations
 
         """
-        pass
 
     @abc.abstractmethod
     def perform_processor_response_validation(self, request):
@@ -214,7 +213,6 @@ class PaymentGateway(abc.ABC):
         Returns:
             True or False
         """
-        pass
 
     @abc.abstractmethod
     def decode_processor_response(self, request):
@@ -228,7 +226,6 @@ class PaymentGateway(abc.ABC):
         Returns:
             ProcessorResponse
         """
-        pass
 
     @staticmethod
     @abc.abstractmethod
@@ -236,7 +233,6 @@ class PaymentGateway(abc.ABC):
         """
         This is the function that will provide required configuration for a PaymentGateway
         """
-        pass
 
     @abc.abstractmethod
     def perform_refund(self, refund):
@@ -249,7 +245,6 @@ class PaymentGateway(abc.ABC):
             ProcessorResponse
 
         """
-        pass
 
     @classmethod
     @find_gateway_class
@@ -535,7 +530,6 @@ class CyberSourcePaymentGateway(
         performing the appropriate operation on the data.
 
         returns:
-
             i) API Success:
                 Returns a ProcessorResponse object that the caller app can use to perform whatever they need
 
@@ -652,7 +646,7 @@ class CyberSourcePaymentGateway(
         """
         items = []
 
-        for i in range(0, int(response["req_line_item_count"])):
+        for i in range(int(response["req_line_item_count"])):
             line = CartItem(
                 code=response[f"req_item_{i}_code"],
                 name=response[f"req_item_{i}_name"],
@@ -802,7 +796,7 @@ class CyberSourcePaymentGateway(
 
         if status > 299:
             raise Exception(
-                f"CyberSource API returned HTTP status {status}: {str(response)}"
+                f"CyberSource API returned HTTP status {status}: {response!s}"
             )
 
         if response.total_count == 0:
@@ -842,7 +836,7 @@ class CyberSourcePaymentGateway(
 
         if status > 299:
             raise Exception(
-                f"CyberSource API returned HTTP status {status}: {str(response)}"
+                f"CyberSource API returned HTTP status {status}: {response!s}"
             )
 
         payload = {

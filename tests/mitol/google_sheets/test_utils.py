@@ -1,13 +1,12 @@
 """Sheets app util function tests"""
 
-from pygsheets.worksheet import Worksheet
-
 from mitol.google_sheets.constants import (
     GOOGLE_AUTH_PROVIDER_X509_CERT_URL,
     GOOGLE_AUTH_URI,
     GOOGLE_TOKEN_URI,
 )
 from mitol.google_sheets.utils import generate_google_client_config, get_data_rows
+from pygsheets.worksheet import Worksheet
 
 
 def test_generate_google_client_config(settings):

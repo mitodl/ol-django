@@ -1,4 +1,5 @@
 """OAuth toolkit backends"""
+
 from django.http import HttpRequest
 from oauth2_provider.models import AbstractApplication
 from oauth2_provider.scopes import SettingsScopes
@@ -12,7 +13,7 @@ class ApplicationAccessOrSettingsScopes(SettingsScopes):
         application: AbstractApplication = None,
         request: HttpRequest = None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """Return a list of scopes available for the current application/request"""
         if application is not None and getattr(application, "access", None) is not None:
@@ -26,7 +27,7 @@ class ApplicationAccessOrSettingsScopes(SettingsScopes):
         application: AbstractApplication = None,
         request: HttpRequest = None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         if application is not None and getattr(application, "access", None) is not None:
             return application.access.scopes_list

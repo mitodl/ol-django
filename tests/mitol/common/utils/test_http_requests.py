@@ -1,16 +1,16 @@
 """Utils tests"""
+
 from http import HTTPStatus
 
 import pytest
 import responses
-from requests.exceptions import HTTPError
-
 from mitol.common.pytest_utils import MockResponse
 from mitol.common.utils.http_requests import (
     get_error_response_summary,
     is_json_response,
     request_get_with_timeout_retry,
 )
+from requests.exceptions import HTTPError
 
 
 @pytest.mark.parametrize(

@@ -1,4 +1,5 @@
 """Digital credentials request utils"""
+
 import base64
 import hashlib
 import hmac
@@ -61,7 +62,7 @@ def prepare_request_hmac_signature(
     )
     signature = base64.b64encode(signature_hmac.digest()).decode("utf-8")
     signature_headers = " ".join(signature_data.headers)
-    request.headers[
-        "Signature"
-    ] = f'keyId="abc",algorithm="hmac-sha512",headers="(request-target) {signature_headers}",signature="{signature}"'
+    request.headers["Signature"] = (
+        f'keyId="abc",algorithm="hmac-sha512",headers="(request-target) {signature_headers}",signature="{signature}"'
+    )
     return request

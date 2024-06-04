@@ -1,6 +1,6 @@
 """URLs utils tests"""
-import pytest
 
+import pytest
 from mitol.common.utils.urls import ensure_trailing_slash, remove_password_from_url
 
 

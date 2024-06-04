@@ -1,7 +1,6 @@
 """Tests for payment_gateway application utils"""
 
 import pytest
-
 from mitol.payment_gateway.payment_utils import clean_request_data, strip_nones
 
 

@@ -12,9 +12,6 @@ from CyberSource import models as cs_models
 from CyberSource.rest import ApiException
 from django.conf import settings
 from factory import fuzzy
-from testapp.factories import CartItemFactory, OrderFactory, RefundFactory
-from urllib3.response import HTTPResponse
-
 from mitol.common.utils.datetime import now_in_utc
 from mitol.payment_gateway.api import (
     CyberSourcePaymentGateway,
@@ -26,6 +23,8 @@ from mitol.payment_gateway.exceptions import (
     InvalidTransactionException,
     RefundDuplicateException,
 )
+from testapp.factories import CartItemFactory, OrderFactory, RefundFactory
+from urllib3.response import HTTPResponse
 
 ISO_8601_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -45,7 +44,7 @@ def cartitems():
     return CartItemFactory.create_batch(5)
 
 
-@pytest.fixture
+@pytest.fixture()
 def response_payload(request):
     """Fixture to return dictionary of a specific JSON file with provided name in request param"""
 
@@ -53,7 +52,6 @@ def response_payload(request):
         os.path.join(
             os.getcwd(), "tests/data/payment_gateway/api", f"{request.param}.json"
         ),
-        mode="r",
     ) as f:
         response_txt = f.read()
         response_json = json.loads(response_txt)
@@ -377,7 +375,8 @@ def test_cybersource_refund_response_failure_general(response_payload, refund, m
 )
 def test_create_refund_request(response_payload):
     """Tests that create_refund_request creates the correct Refund Request object out of provided
-    payment transaction dictionary"""
+    payment transaction dictionary
+    """
 
     payment_response_json = response_payload
     refund_request = PaymentGateway.create_refund_request(

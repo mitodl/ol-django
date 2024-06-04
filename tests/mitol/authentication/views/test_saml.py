@@ -1,4 +1,5 @@
 """SAML view tests"""
+
 from xml.etree import ElementTree
 
 from django.urls import reverse

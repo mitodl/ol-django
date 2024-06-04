@@ -1,4 +1,5 @@
-"""google sheets deferrals settings """
+"""google sheets deferrals settings"""
+
 from mitol.common.envs import get_int, get_string
 
 MITOL_GOOGLE_SHEETS_DEFERRALS_REQUEST_WORKSHEET_ID = get_string(

@@ -1,15 +1,15 @@
 """Models tests"""
+
 # Models require an installed app, so most of the tests are instead in:
 #   mitol-django-digitalcredentials/testapp/models_test.py
 from hashlib import sha256
 
 import pytest
+from mitol.digitalcredentials.factories import LearnerDIDFactory
 from testapp.factories import (
     DemoCoursewareDigitalCredentialFactory,
     DemoCoursewareDigitalCredentialRequestFactory,
 )
-
-from mitol.digitalcredentials.factories import LearnerDIDFactory
 
 pytestmark = pytest.mark.django_db
 

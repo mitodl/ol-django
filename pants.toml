@@ -36,9 +36,8 @@ extra_env_vars = [
 [repl]
 shell = "ipython"
 
-# [ipython]
-# version = "ipython==7.23.1"
-# lockfile = "build-support/lockfiles/ipython.lockfile"
+[ipython]
+install_from_resolve = "testing"
 
 [python]
 interpreter_constraints = ['>=3.8']
@@ -46,17 +45,20 @@ enable_resolves = true
 
 [python.resolves]
 python-default = "build-support/lockfiles/python-default.lockfile" 
+testing = "build-support/lockfiles/testing.lockfile"
 
 [setup-py-generation]
 first_party_dependency_version_scheme = "any"
 
 [mypy]
+install_from_resolve = "testing"
 requirements = [
-  "django-stubs==1.13.1",
-  "djangorestframework-stubs[compatible-mypy]==1.8.0"
+  "//build-support#django-stubs",
+  "//build-support#djangorestframework-stubs[compatible-mypy]"
 ]
 
 [pytest]
+install_from_resolve = "testing"
 args = [
   "--cov .",
   "--cov-report term ",
@@ -64,14 +66,12 @@ args = [
   "--cov-report xml",
   "--reuse-db"
 ]
-requirements.add = [
-  "pytest-django==3.10.0",
-  "pytest-mock==1.10.1",
-  "ipdb"
+requirements = [
+  "//build-support#pytest-django",
+  "//build-support#pytest-mock",
+  "//build-support#ipdb"
 ]
 execution_slot_var = "PANTS_EXECUTION_SLOT"
 
 [ruff]
-args = [
-  "--fix"
-]
+install_from_resolve = "testing"

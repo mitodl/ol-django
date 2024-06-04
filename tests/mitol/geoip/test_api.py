@@ -6,7 +6,6 @@ import ipaddress
 
 import faker
 import pytest
-
 from mitol.geoip.api import ip_to_country_code
 from mitol.geoip.factories import NetBlockIPv4Factory, NetBlockIPv6Factory
 

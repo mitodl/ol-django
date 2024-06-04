@@ -1,4 +1,5 @@
 """Payment Gateway app AppConfigs"""
+
 import os
 
 from mitol.common.apps import BaseApp

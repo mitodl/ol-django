@@ -1,4 +1,5 @@
 """OAuth toolkit extensions model classes"""
+
 from typing import List
 
 from django.db import models

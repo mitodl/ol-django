@@ -1,8 +1,8 @@
 """Tests for decorators"""
+
 from typing import List
 
 import pytest
-
 from mitol.common.decorators import single_task
 
 

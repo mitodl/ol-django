@@ -1,4 +1,5 @@
 """Admin for DeferralRequest"""
+
 from django.contrib import admin
 
 from mitol.google_sheets_deferrals.models import DeferralRequest

@@ -1,4 +1,5 @@
 """Google Sheets app AppConfigs"""
+
 import os
 
 from mitol.common.apps import BaseApp

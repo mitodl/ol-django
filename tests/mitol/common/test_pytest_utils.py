@@ -1,8 +1,8 @@
 """Tests for test utils"""
+
 import json
 
 import pytest
-
 from mitol.common.pytest_utils import MockResponse, any_instance_of, assert_not_raises
 from mitol.common.pytest_utils import test_app_json_modified as _test_app_json_modified
 
@@ -31,7 +31,7 @@ def test_assert_not_raises_exception(mocker):
     # Here there be dragons
     fail_mock = mocker.patch("pytest.fail", autospec=True)
     with assert_not_raises():
-        raise TabError()
+        raise TabError
     assert fail_mock.called is True
 
 
@@ -52,7 +52,7 @@ def test_assert_not_raises_failure():
     ],
 )
 def test_mock_response(content, expected_content, expected_json):
-    """assert MockResponse returns correct values"""
+    """Assert MockResponse returns correct values"""
     response = MockResponse(content, 404)
     assert response.status_code == 404
     assert response.content == expected_content

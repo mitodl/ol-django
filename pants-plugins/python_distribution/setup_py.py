@@ -1,15 +1,17 @@
 """Plugin for releases"""
-from os.path import join
-import re
 
-from pants.backend.python.util_rules.package_dists import SetupKwargs, SetupKwargsRequest
+import re
+from os.path import join
+
+import toml
+from pants.backend.python.util_rules.package_dists import (
+    SetupKwargs,
+    SetupKwargsRequest,
+)
+from pants.engine.fs import DigestContents, GlobMatchErrorBehavior, PathGlobs
 from pants.engine.rules import Get, collect_rules, rule
 from pants.engine.target import Target
 from pants.engine.unions import UnionRule
-from pants.util.frozendict import FrozenDict
-from pants.engine.fs import DigestContents, GlobMatchErrorBehavior, PathGlobs
-import toml
-
 
 VAR_RE = re.compile(r"""(.+)\s=\s[\"'](.+)[\"']""")
 STANDARD_CLASSIFIERS = [
@@ -29,6 +31,7 @@ DEFAULT_SETUP_KWARGS = dict(
     zip_safe=True,
 )
 
+
 class PantsSetupKwargsRequest(SetupKwargsRequest):
     @classmethod
     def is_applicable(cls, _: Target) -> bool:
@@ -38,9 +41,7 @@ class PantsSetupKwargsRequest(SetupKwargsRequest):
 
 
 @rule
-async def pants_setup_kwargs(
-    request: PantsSetupKwargsRequest
-) -> SetupKwargs:
+async def pants_setup_kwargs(request: PantsSetupKwargsRequest) -> SetupKwargs:
     kwargs = request.explicit_kwargs.copy()
     path = request.target.address.spec_path
 

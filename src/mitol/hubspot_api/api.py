@@ -3,6 +3,7 @@ Hubspot CRM API utilities
 
 https://developers.hubspot.com/docs/api/overview
 """
+
 import json
 import logging
 import re
@@ -166,7 +167,7 @@ def format_app_id(object_id: int) -> str:
     Returns:
         str: The hubspot_api id
     """
-    return "{}-{}".format(settings.MITOL_HUBSPOT_API_ID_PREFIX, object_id)
+    return f"{settings.MITOL_HUBSPOT_API_ID_PREFIX}-{object_id}"
 
 
 def handle_secondary_email_error(content_type: str, hubspot_id: str, email: str) -> str:
@@ -364,7 +365,7 @@ def transform_object_properties(object_data: dict, mapping: dict) -> dict:
 
     """
     hubspot_dict = {}
-    for key in object_data.keys():
+    for key in object_data:
         value = object_data.get(key)
         hubspot_key = mapping.get(key)
         if hubspot_key:

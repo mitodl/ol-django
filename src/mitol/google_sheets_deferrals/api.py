@@ -1,4 +1,5 @@
 """Enrollment deferral API"""
+
 import logging
 
 from django.conf import settings
@@ -51,9 +52,7 @@ class DeferralRequestHandler(GoogleSheetsChangeRequestHandler):
             REQUIRED_GOOGLE_SHEETS_DEFERRALS_SETTINGS
         )
 
-    def process_row(
-        self, row_index, row_data
-    ):  # pylint: disable=too-many-return-statements
+    def process_row(self, row_index, row_data):  # pylint: disable=too-many-return-statements
         """
         Ensures that the given spreadsheet row is correctly represented in the database,
         attempts to parse it, defers the given enrollment if appropriate, and returns the
@@ -78,7 +77,7 @@ class DeferralRequestHandler(GoogleSheetsChangeRequestHandler):
                 row_db_record=deferral_request,
                 row_object=None,
                 result_type=ResultType.FAILED,
-                message="Parsing failure: {}".format(str(exc)),
+                message=f"Parsing failure: {exc!s}",
             )
         is_unchanged_error_row = (
             deferral_req_row.errors and not request_created and not request_updated

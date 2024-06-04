@@ -1,4 +1,5 @@
 """Boilerplate settings parsing"""
+
 # pragma: no cover
 from mitol.common.envs import get_string
 

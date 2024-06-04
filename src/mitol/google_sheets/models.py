@@ -1,4 +1,5 @@
 """Sheets app models"""
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -41,10 +42,8 @@ class GoogleFileWatch(TimestampedModel):
             and self._meta.model.objects.filter(file_id=self.file_id).count() > 0
         ):
             raise ValidationError(
-                "Only one {} object should exist for each unique file_id (file_id provided: {}). "
-                "Update the existing object instead of creating a new one.".format(
-                    self.__class__.__name__, self.file_id
-                )
+                f"Only one {self.__class__.__name__} object should exist for each unique file_id (file_id provided: {self.file_id}). "
+                "Update the existing object instead of creating a new one."
             )
         return super().save(
             force_insert=force_insert,
@@ -54,9 +53,7 @@ class GoogleFileWatch(TimestampedModel):
         )
 
     def __str__(self):
-        return "GoogleFileWatch: id={}, channel_id={}, file_id={}, expires={}".format(
-            self.id, self.channel_id, self.file_id, self.expiration_date.isoformat()
-        )
+        return f"GoogleFileWatch: id={self.id}, channel_id={self.channel_id}, file_id={self.file_id}, expires={self.expiration_date.isoformat()}"
 
 
 class FileWatchRenewalAttempt(Model):

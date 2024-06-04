@@ -1,4 +1,5 @@
 """Common app AppConfigs"""
+
 import os
 
 from mitol.common.apps import AppConfig

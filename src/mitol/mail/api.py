@@ -9,6 +9,7 @@ recipients = User.objects.all()[:10]
 with get_message_sender(TestMessage) as sender:
     sender.build_and_send_message(user=user)
 """
+
 import contextlib
 import logging
 import re
@@ -59,7 +60,7 @@ def get_message_classes() -> Iterable[Type[TemplatedMessage]]:
 
 
 def safe_format_recipient(
-    recipient_or_user: Union[AbstractBaseUser, str]
+    recipient_or_user: Union[AbstractBaseUser, str],
 ) -> Optional[str]:
     """
     Returns a "safe"formatted recipient

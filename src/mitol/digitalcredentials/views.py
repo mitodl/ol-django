@@ -1,4 +1,5 @@
 """Digital credential views"""
+
 import json
 
 from django.db import transaction

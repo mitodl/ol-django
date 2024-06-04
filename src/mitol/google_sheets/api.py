@@ -1,4 +1,5 @@
 """API for the Sheets app"""
+
 import datetime
 import json
 import logging
@@ -167,7 +168,7 @@ class ExpandedSheetsClient:
                 )
             )
         return self.pygsheets_client.drive.list(
-            **extra_list_params, fields="files({})".format(file_fields), q=query
+            **extra_list_params, fields=f"files({file_fields})", q=query
         )
 
     def update_spreadsheet_properties(self, file_id, property_dict):

@@ -6,7 +6,6 @@ from datetime import timedelta
 import pytest
 from django.core.cache import caches
 from freezegun import freeze_time
-
 from mitol.common.utils.datetime import now_in_utc
 from mitol.olposthog import features
 
