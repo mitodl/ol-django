@@ -2,7 +2,7 @@
 from os.path import join
 import re
 
-from pants.backend.python.goals.setup_py import SetupKwargs, SetupKwargsRequest
+from pants.backend.python.util_rules.package_dists import SetupKwargs, SetupKwargsRequest
 from pants.engine.rules import Get, collect_rules, rule
 from pants.engine.target import Target
 from pants.engine.unions import UnionRule
@@ -16,10 +16,11 @@ STANDARD_CLASSIFIERS = [
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8"
-
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 DEFAULT_SETUP_KWARGS = dict(
     authors=["MIT Office of Open Learning <mitx-devops@mit.edu>"],
