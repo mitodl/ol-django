@@ -21,13 +21,13 @@ def build_api_url(path: str) -> str:
     """Build a url for the verify service"""
     base_url = settings.MITOL_DIGITAL_CREDENTIALS_VERIFY_SERVICE_BASE_URL
     if not base_url:
-        raise ImproperlyConfigured(
-            "MITOL_DIGITAL_CREDENTIALS_VERIFY_SERVICE_BASE_URL is not set"
+        raise ImproperlyConfigured(  # noqa: TRY003
+            "MITOL_DIGITAL_CREDENTIALS_VERIFY_SERVICE_BASE_URL is not set"  # noqa: EM101
         )
     return urljoin(base_url, path)
 
 
-def _extract_verification_method(presentation: Dict) -> str:
+def _extract_verification_method(presentation: Dict) -> str:  # noqa: FA100
     """Extract the verification method from the presentation"""
     proof = presentation.get("proof", {})
 
@@ -43,10 +43,11 @@ def _extract_verification_method(presentation: Dict) -> str:
 
 
 def verify_presentations(
-    credential_request: DigitalCredentialRequest, presentation: Dict
+    credential_request: DigitalCredentialRequest,
+    presentation: Dict,  # noqa: FA100
 ) -> requests.Response:
-    """Verifies the learner's presentation against the backend service"""
-    return requests.post(
+    """Verifies the learner's presentation against the backend service"""  # noqa: D401
+    return requests.post(  # noqa: S113
         build_api_url("/verify/presentations"),
         json={
             "verifiablePresentation": presentation,
@@ -58,14 +59,14 @@ def verify_presentations(
     )
 
 
-def build_credential(credentialed_object: Dict, learner_did: LearnerDID) -> Dict:
+def build_credential(credentialed_object: Dict, learner_did: LearnerDID) -> Dict:  # noqa: FA100
     """Build the credential"""
     build_credendial_func_name = (
         settings.MITOL_DIGITAL_CREDENTIALS_BUILD_CREDENTIAL_FUNC
     )
     if not build_credendial_func_name:
-        raise ImproperlyConfigured(
-            "MITOL_DIGITAL_CREDENTIALS_BUILD_CREDENTIAL_FUNC is not set"
+        raise ImproperlyConfigured(  # noqa: TRY003
+            "MITOL_DIGITAL_CREDENTIALS_BUILD_CREDENTIAL_FUNC is not set"  # noqa: EM101
         )
 
     build_credendial_func = import_string(build_credendial_func_name)
@@ -73,7 +74,7 @@ def build_credential(credentialed_object: Dict, learner_did: LearnerDID) -> Dict
     return build_credendial_func(credentialed_object, learner_did)
 
 
-def issue_credential(credential: Dict) -> Dict:
+def issue_credential(credential: Dict) -> Dict:  # noqa: FA100
     """Request signed credential from the sign-and-verify service"""
     request = requests.Request(
         "POST",
@@ -81,7 +82,7 @@ def issue_credential(credential: Dict) -> Dict:
         json=credential,
         headers={"Date": now_in_utc().strftime("%a, %d %b %Y %H:%M:%S GMT")},
     ).prepare()
-    # compute the digest after the request is prepared because we need the JSON body serialized
+    # compute the digest after the request is prepared because we need the JSON body serialized  # noqa: E501
     request = prepare_request_digest(request)
     if settings.MITOL_DIGITAL_CREDENTIALS_HMAC_SECRET:
         request = prepare_request_hmac_signature(
@@ -95,17 +96,17 @@ def issue_credential(credential: Dict) -> Dict:
 
 
 def create_deep_link_url(credential_request: DigitalCredentialRequest) -> str:
-    """Creates and returns a deep link credential url"""
+    """Creates and returns a deep link credential url"""  # noqa: D401
     auth_type = settings.MITOL_DIGITAL_CREDENTIALS_AUTH_TYPE
     deep_link_url = settings.MITOL_DIGITAL_CREDENTIALS_DEEP_LINK_URL
 
     if not auth_type:
-        raise ImproperlyConfigured(
-            "MITOL_DIGITAL_CREDENTIALS_AUTH_TYPE is required to create deep links"
+        raise ImproperlyConfigured(  # noqa: TRY003
+            "MITOL_DIGITAL_CREDENTIALS_AUTH_TYPE is required to create deep links"  # noqa: EM101
         )
     if not deep_link_url:
-        raise ImproperlyConfigured(
-            "MITOL_DIGITAL_CREDENTIALS_DEEP_LINK_URL is required to create deep links"
+        raise ImproperlyConfigured(  # noqa: TRY003
+            "MITOL_DIGITAL_CREDENTIALS_DEEP_LINK_URL is required to create deep links"  # noqa: EM101
         )
 
     params = {

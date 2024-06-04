@@ -24,7 +24,7 @@ STANDARD_CLASSIFIERS = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
-DEFAULT_SETUP_KWARGS = dict(
+DEFAULT_SETUP_KWARGS = dict(  # noqa: C408
     authors=["MIT Office of Open Learning <mitx-devops@mit.edu>"],
     license="BSD 3-Clause License",
     long_description_content_type="text/markdown",
@@ -32,16 +32,16 @@ DEFAULT_SETUP_KWARGS = dict(
 )
 
 
-class PantsSetupKwargsRequest(SetupKwargsRequest):
+class PantsSetupKwargsRequest(SetupKwargsRequest):  # noqa: D101
     @classmethod
-    def is_applicable(cls, _: Target) -> bool:
-        # We always use our custom `setup()` kwargs generator for `python_distribution` targets in
+    def is_applicable(cls, _: Target) -> bool:  # noqa: D102
+        # We always use our custom `setup()` kwargs generator for `python_distribution` targets in  # noqa: E501
         # this repo.
         return True
 
 
 @rule
-async def pants_setup_kwargs(request: PantsSetupKwargsRequest) -> SetupKwargs:
+async def pants_setup_kwargs(request: PantsSetupKwargsRequest) -> SetupKwargs:  # noqa: D103
     kwargs = request.explicit_kwargs.copy()
     path = request.target.address.spec_path
 
@@ -49,7 +49,7 @@ async def pants_setup_kwargs(request: PantsSetupKwargsRequest) -> SetupKwargs:
     pyproject_contents = await Get(
         DigestContents,
         PathGlobs(
-            [join(path, "pyproject.toml")],
+            [join(path, "pyproject.toml")],  # noqa: PTH118
             description_of_origin="`setup_py()` plugin",
             glob_match_error_behavior=GlobMatchErrorBehavior.error,
         ),
@@ -60,7 +60,7 @@ async def pants_setup_kwargs(request: PantsSetupKwargsRequest) -> SetupKwargs:
     readme_contents = await Get(
         DigestContents,
         PathGlobs(
-            [join(path, "README.md")],
+            [join(path, "README.md")],  # noqa: PTH118
             description_of_origin="`setup_py()` plugin",
             glob_match_error_behavior=GlobMatchErrorBehavior.error,
         ),
@@ -75,5 +75,5 @@ async def pants_setup_kwargs(request: PantsSetupKwargsRequest) -> SetupKwargs:
     return SetupKwargs(kwargs, address=request.target.address)
 
 
-def rules():
+def rules():  # noqa: D103
     return (*collect_rules(), UnionRule(SetupKwargsRequest, PantsSetupKwargsRequest))

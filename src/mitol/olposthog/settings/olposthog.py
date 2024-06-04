@@ -1,4 +1,4 @@
-from mitol.common.envs import get_bool, get_int, get_string
+from mitol.common.envs import get_bool, get_int, get_string  # noqa: D100
 
 POSTHOG_ENABLED = get_bool(
     name="POSTHOG_ENABLED",

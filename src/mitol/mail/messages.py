@@ -14,7 +14,7 @@ class TemplatedMessage(AnymailMessage):
 
     @staticmethod
     def get_base_template_context() -> dict:
-        """Returns a dict of context variables that are needed in all emails"""
+        """Returns a dict of context variables that are needed in all emails"""  # noqa: D401
         return {
             "base_url": settings.SITE_BASE_URL,
             "site_name": settings.SITE_NAME,
@@ -22,16 +22,16 @@ class TemplatedMessage(AnymailMessage):
 
     @staticmethod
     def get_debug_template_context() -> dict:
-        """Returns the extra context for the email debugger"""
+        """Returns the extra context for the email debugger"""  # noqa: D401
         return {}
 
     @staticmethod
     def get_default_headers() -> dict:
-        """The message's default headers"""
+        """The message's default headers"""  # noqa: D401
         return {"Reply-To": settings.MITOL_MAIL_REPLY_TO_ADDRESS}
 
     @classmethod
-    def render_templates(cls, template_context: dict) -> Tuple[str, str, str]:
+    def render_templates(cls, template_context: dict) -> Tuple[str, str, str]:  # noqa: FA100
         """
         Render the email's templates
         """
@@ -42,13 +42,13 @@ class TemplatedMessage(AnymailMessage):
 
     @classmethod
     def create(cls, **kwargs) -> "TemplatedMessage":
-        """Factory method for an instance of this message, rendering the template to html and plaintext"""
+        """Factory method for an instance of this message, rendering the template to html and plaintext"""  # noqa: E501, D401
 
         if not getattr(cls, "template_name", None):
-            raise ValueError(f"{cls.__name__}.template_name not defined")
+            raise ValueError(f"{cls.__name__}.template_name not defined")  # noqa: EM102, TRY003
 
         if not getattr(cls, "name", None):
-            raise ValueError(f"{cls.__name__}.name not defined")
+            raise ValueError(f"{cls.__name__}.name not defined")  # noqa: EM102, TRY003
 
         from_email = kwargs.pop("from_email", settings.MITOL_MAIL_FROM_EMAIL)
         headers = {**cls.get_default_headers(), **kwargs.pop("headers", {})}

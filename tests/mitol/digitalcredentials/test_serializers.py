@@ -144,7 +144,7 @@ def test_digital_credential_issue_serializer_error(learner):
     )
     serializer.is_valid(raise_exception=True)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017, PT011
         serializer.save()
 
     request.refresh_from_db()

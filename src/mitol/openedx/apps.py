@@ -13,7 +13,7 @@ class OpenedxApp(AppConfig):
     verbose_name = "Openedx"
 
     # necessary because this is a namespaced app
-    path = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.dirname(os.path.abspath(__file__))  # noqa: PTH100, PTH120
 
 
 class TransitionalOpenedxApp(AppConfig):
@@ -24,4 +24,4 @@ class TransitionalOpenedxApp(AppConfig):
     verbose_name = "Openedx"
 
     # necessary because this is a namespaced app
-    path = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.dirname(os.path.abspath(__file__))  # noqa: PTH100, PTH120

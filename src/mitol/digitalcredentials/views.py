@@ -15,9 +15,9 @@ from mitol.digitalcredentials.serializers import DigitalCredentialIssueSerialize
 class DigitalCredentialIssueView(GenericAPIView):
     """Digital credential API views"""
 
-    authentication_classes = [OAuth2Authentication]
-    permission_classes = [IsAuthenticated, TokenHasScope]
-    required_scopes = ["digitalcredentials"]
+    authentication_classes = [OAuth2Authentication]  # noqa: RUF012
+    permission_classes = [IsAuthenticated, TokenHasScope]  # noqa: RUF012
+    required_scopes = ["digitalcredentials"]  # noqa: RUF012
     serializer_class = DigitalCredentialIssueSerializer
     lookup_field = "uuid"
 
@@ -27,7 +27,7 @@ class DigitalCredentialIssueView(GenericAPIView):
 
         return learner.digital_credential_requests.filter(consumed=False)
 
-    def post(self, request: Request, *args, **kwargs):
+    def post(self, request: Request, *args, **kwargs):  # noqa: ARG002
         """Consume the credential request for a verified credential"""
         # normally POST is only supported for DRF create operations
         # but we need to map the verb to an update, hence this custom view code

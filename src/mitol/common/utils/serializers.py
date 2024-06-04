@@ -15,7 +15,7 @@ def serialize_model_object(obj):
             A representation of the model
     """
     # serialize works on iterables so we need to wrap object in a list, then unwrap it
-    if obj:
+    if obj:  # noqa: RET503
         data = json.loads(serialize("json", [obj]))[0]
         serialized = data["fields"]
         serialized["id"] = data["pk"]

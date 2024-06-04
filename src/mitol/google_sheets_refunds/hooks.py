@@ -1,4 +1,4 @@
-import typing
+import typing  # noqa: D100
 
 import pluggy
 from django.conf import settings
@@ -7,7 +7,7 @@ from django.utils.module_loading import import_string
 from mitol.google_sheets_refunds.utils import RefundRequestRow
 
 
-class RefundResult(typing.NamedTuple):
+class RefundResult(typing.NamedTuple):  # noqa: D101
     result_type: str
     message: str = None
 
@@ -18,7 +18,7 @@ hookimpl = pluggy.HookimplMarker(APP_NAME)
 hookspec = pluggy.HookspecMarker(APP_NAME)
 
 
-def get_plugin_manager():
+def get_plugin_manager():  # noqa: D103
     pm = pluggy.PluginManager(APP_NAME)
 
     for module_path in settings.MITOL_GOOGLE_SHEETS_REFUNDS_PLUGINS:
@@ -28,7 +28,7 @@ def get_plugin_manager():
     return pm
 
 
-class RefundHooks:
+class RefundHooks:  # noqa: D101
     @hookspec
     def refunds_process_request(self, refund_request: RefundRequestRow) -> RefundResult:
-        """Hook for processing refund requests"""
+        """Hook for processing refund requests"""  # noqa: D401

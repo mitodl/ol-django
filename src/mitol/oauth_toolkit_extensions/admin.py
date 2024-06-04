@@ -17,7 +17,7 @@ class ApplicationAccessInlineAdmin(admin.StackedInline):
 class ApplicationWithAccessAdmin(ApplicationAdmin):
     """Admin for Application"""
 
-    inlines = [ApplicationAccessInlineAdmin]
+    inlines = [ApplicationAccessInlineAdmin]  # noqa: RUF012
 
 
 Application = get_application_model()

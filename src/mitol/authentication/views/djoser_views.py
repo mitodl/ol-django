@@ -18,7 +18,7 @@ from mitol.mail.api import render_email_templates, send_message
 class CustomDjoserAPIView(UserViewSet, ActionViewMixin):
     """
     Overrides the post method of a Djoser view to update session after successful password change
-    """
+    """  # noqa: E501
 
     @action(["post"], detail=False)
     def set_password(self, request, *args, **kwargs):
@@ -26,7 +26,7 @@ class CustomDjoserAPIView(UserViewSet, ActionViewMixin):
         Overrides CustomDjoserAPIView.set_password to update the session after a successful
         password change. Without this explicit refresh, the user's session would be
         invalid and they would be logged out.
-        """
+        """  # noqa: E501, D401
         response = super().set_password(request, *args, **kwargs)
         if response.status_code in (status.HTTP_200_OK, status.HTTP_204_NO_CONTENT):
             update_session_auth_hash(self.request, self.request.user)
@@ -36,10 +36,10 @@ class CustomDjoserAPIView(UserViewSet, ActionViewMixin):
 class CustomPasswordResetEmail(DjoserPasswordResetEmail):
     """Custom class to modify base functionality in Djoser's PasswordResetEmail class"""
 
-    def send(self, to, *args, **kwargs):
+    def send(self, to, *args, **kwargs):  # noqa: ARG002
         """
         Overrides djoser.email.PasswordResetEmail#send to use our mail API.
-        """
+        """  # noqa: D401
         context = self.get_context_data()
         context.update(self.context)
         with django_mail.get_connection(
@@ -60,7 +60,7 @@ class CustomPasswordResetEmail(DjoserPasswordResetEmail):
             send_message(msg)
 
     def get_context_data(self):
-        """Adds base_url to the template context"""
+        """Adds base_url to the template context"""  # noqa: D401
         context = super().get_context_data()
         context["base_url"] = settings.SITE_BASE_URL
         return context

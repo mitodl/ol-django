@@ -20,7 +20,7 @@ class GroupFactory(DjangoModelFactory):
 
     name = FuzzyText()
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Group
 
 
@@ -34,7 +34,7 @@ class HubspotObjectFactory(DjangoModelFactory):
     object_id = FuzzyInteger(1, 999999999)
     hubspot_id = FuzzyText(chars=string.digits)
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = HubspotObject
 
 
@@ -44,5 +44,5 @@ class SimplePublicObjectFactory(Factory):
     id = Sequence(lambda number: f"111000{number}")
     properties = Faker("pydict")
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = SimplePublicObject

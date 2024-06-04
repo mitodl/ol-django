@@ -31,7 +31,7 @@ class TimestampedModelQuerySet(QuerySet):
         Automatically update updated_on timestamp when .update(). This is because .update()
         does not go through .save(), thus will not auto_now, because it happens on the
         database level without loading objects into memory.
-        """
+        """  # noqa: E501, D402
         if "updated_on" not in kwargs:
             kwargs["updated_on"] = now_in_utc()
         return super().update(**kwargs)
@@ -44,7 +44,7 @@ class TimestampedModel(Model):
     created_on = DateTimeField(auto_now_add=True)  # UTC
     updated_on = DateTimeField(auto_now=True)  # UTC
 
-    class Meta:
+    class Meta:  # noqa: D106
         abstract = True
 
 
@@ -55,7 +55,7 @@ class AuditModel(TimestampedModel):
     data_before = JSONField(blank=True, null=True)
     data_after = JSONField(blank=True, null=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         abstract = True
 
     @classmethod
@@ -63,14 +63,14 @@ class AuditModel(TimestampedModel):
         """
         Returns:
             str: A field name which links the Auditable model to this model
-        """
+        """  # noqa: D401
         raise NotImplementedError
 
 
 class AuditableModel(Model):
     """An abstract base class for auditable models"""
 
-    class Meta:
+    class Meta:  # noqa: D106
         abstract = True
 
     def to_dict(self):
@@ -78,7 +78,7 @@ class AuditableModel(Model):
         Returns:
             dict:
                 A serialized representation of the model object
-        """
+        """  # noqa: D401
         raise NotImplementedError
 
     @classmethod
@@ -90,7 +90,7 @@ class AuditableModel(Model):
 
         Returns:
              django.db.models.manager.Manager: The correct model manager for the auditable model
-        """
+        """  # noqa: E501, D401
         return cls.objects
 
     @classmethod
@@ -99,7 +99,7 @@ class AuditableModel(Model):
         Returns:
             class of Model:
                 A class of a Django model used as the audit table
-        """
+        """  # noqa: D401
         raise NotImplementedError
 
     @transaction.atomic
@@ -110,7 +110,7 @@ class AuditableModel(Model):
         Args:
             acting_user (User):
                 The user who made the change to the model. May be None if inapplicable.
-        """
+        """  # noqa: D401
         before_obj = self.objects_for_audit().filter(id=self.id).first()
         self.save(*args, **kwargs)
         self.refresh_from_db()
@@ -118,7 +118,7 @@ class AuditableModel(Model):
         if before_obj is not None:
             before_dict = before_obj.to_dict()
 
-        audit_kwargs = dict(
+        audit_kwargs = dict(  # noqa: C408
             acting_user=acting_user, data_before=before_dict, data_after=self.to_dict()
         )
         audit_class = self.get_audit_class()
@@ -127,14 +127,18 @@ class AuditableModel(Model):
 
 
 class SingletonModel(Model):
-    """Model class for models representing tables that should only have a single record"""
+    """Model class for models representing tables that should only have a single record"""  # noqa: E501
 
-    def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
+    def save(  # noqa: D102
+        self,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None,
     ):
         if force_insert and self._meta.model.objects.count() > 0:
-            raise ValidationError(
-                f"Only one {self.__class__.__name__} object should exist. Update the existing object instead "
+            raise ValidationError(  # noqa: TRY003
+                f"Only one {self.__class__.__name__} object should exist. Update the existing object instead "  # noqa: EM102, E501
                 "of creating a new one."
             )
         return super().save(
@@ -144,7 +148,7 @@ class SingletonModel(Model):
             update_fields=update_fields,
         )
 
-    class Meta:
+    class Meta:  # noqa: D106
         abstract = True
 
 
@@ -155,9 +159,11 @@ _PrefetchGenericQuerySet = TypeVar(
 
 
 def _items_for_class(
-    content_type_field: str, items: Iterable[_ModelClass], model_cls: Type[_ModelClass]
+    content_type_field: str,
+    items: Iterable[_ModelClass],
+    model_cls: Type[_ModelClass],  # noqa: FA100
 ) -> Iterable[_ModelClass]:
-    """Returns a list of items that matches a class by content_type"""
+    """Returns a list of items that matches a class by content_type"""  # noqa: D401
     return [
         item
         for item in items
@@ -168,7 +174,7 @@ def _items_for_class(
 class PrefetchGenericQuerySet(QuerySet):
     """QuerySet supporting for prefetching over generic relationships"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # noqa: D107
         super().__init__(*args, **kwargs)
         self._prefetch_generic_related_lookups = {}
         self._prefetch_generic_done = False
@@ -176,8 +182,8 @@ class PrefetchGenericQuerySet(QuerySet):
     def prefetch_generic_related(
         self,
         content_type_field: str,
-        model_lookups: Dict[
-            Union[List[Type[_ModelClass]], Type[_ModelClass]], List[str]
+        model_lookups: Dict[  # noqa: FA100
+            Union[List[Type[_ModelClass]], Type[_ModelClass]], List[str]  # noqa: FA100
         ],
     ) -> _PrefetchGenericQuerySet:
         """
@@ -192,10 +198,10 @@ class PrefetchGenericQuerySet(QuerySet):
             QuerySet: the new queryset with prefetching configured
 
         """
-        qs = self._chain()  # type: ignore
+        qs = self._chain()  # type: ignore  # noqa: PGH003
 
         for model_classes, lookups in model_lookups.items():
-            model_classes = (
+            model_classes = (  # noqa: PLW2901
                 model_classes
                 if isinstance(model_classes, Iterable)
                 else [model_classes]
@@ -203,8 +209,8 @@ class PrefetchGenericQuerySet(QuerySet):
             for model_cls in model_classes:
                 key = (content_type_field, model_cls)
 
-                qs._prefetch_generic_related_lookups[key] = [
-                    *qs._prefetch_generic_related_lookups.get(key, []),
+                qs._prefetch_generic_related_lookups[key] = [  # noqa: SLF001
+                    *qs._prefetch_generic_related_lookups.get(key, []),  # noqa: SLF001
                     *lookups,
                 ]
 
@@ -221,8 +227,8 @@ class PrefetchGenericQuerySet(QuerySet):
         self._prefetch_generic_done = True
 
     def _fetch_all(self):
-        """Called when a query is evaluated"""
-        # first fetch non-generic data, this avoid N+1 issues on the generic items themselves
+        """Called when a query is evaluated"""  # noqa: D401
+        # first fetch non-generic data, this avoid N+1 issues on the generic items themselves  # noqa: E501
         super()._fetch_all()
 
         if self._prefetch_generic_related_lookups and not self._prefetch_generic_done:
@@ -232,7 +238,7 @@ class PrefetchGenericQuerySet(QuerySet):
         """Clone the queryset"""
 
         c = super()._clone()
-        c._prefetch_generic_related_lookups = copy.deepcopy(
+        c._prefetch_generic_related_lookups = copy.deepcopy(  # noqa: SLF001
             self._prefetch_generic_related_lookups
         )
         return c

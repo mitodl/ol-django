@@ -11,11 +11,11 @@ def test_ensure_trailing_slash():
 
 
 @pytest.mark.parametrize(
-    "url, expected",
+    "url, expected",  # noqa: PT006
     [
-        ["", ""],
-        ["http://url.com/url/here#other", "http://url.com/url/here#other"],
-        ["https://user:pass@sentry.io/12345", "https://user@sentry.io/12345"],
+        ["", ""],  # noqa: PT007
+        ["http://url.com/url/here#other", "http://url.com/url/here#other"],  # noqa: PT007
+        ["https://user:pass@sentry.io/12345", "https://user@sentry.io/12345"],  # noqa: PT007
     ],
 )
 def test_remove_password_from_url(url, expected):

@@ -12,7 +12,7 @@ class HubspotObjectAdmin(admin.ModelAdmin):
     list_display = ("content_object", "content_type", "object_id", "hubspot_id")
     list_filter = ("content_type",)
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request):  # noqa: ARG002, D102
         return False
 
 

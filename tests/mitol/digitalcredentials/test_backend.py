@@ -74,11 +74,11 @@ def test_create_deep_link_url_misconfigured(settings, missing_setting_name):
 
 @responses.activate
 @pytest.mark.parametrize(
-    "value, expected_value",
+    "value, expected_value",  # noqa: PT006
     [({"id": "verify:abc"}, "verify:abc"), ("verify:abc", "verify:abc"), (None, "")],
 )
 @pytest.mark.parametrize(
-    "verification_method, matches",
+    "verification_method, matches",  # noqa: PT006
     [
         ("verificationMethod", True),
         ("https://w3id.org/security#verificationMethod", True),

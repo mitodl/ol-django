@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta  # noqa: D100
 from os import environ
 from types import SimpleNamespace
 
@@ -10,7 +10,7 @@ from pytest_django.lazy_django import skip_if_no_django
 
 
 @pytest.fixture(scope="session")
-def django_db_modify_db_settings_pants_suffix() -> None:
+def django_db_modify_db_settings_pants_suffix() -> None:  # noqa: PT004, D103
     skip_if_no_django()
 
     slot_id = environ.get("PANTS_EXECUTION_SLOT", None)
@@ -20,7 +20,7 @@ def django_db_modify_db_settings_pants_suffix() -> None:
 
 
 @pytest.fixture(scope="session")
-def django_db_modify_db_settings_parallel_suffix(
+def django_db_modify_db_settings_parallel_suffix(  # noqa: PT004, D103
     django_db_modify_db_settings_pants_suffix,
 ) -> None:
     skip_if_no_django()
@@ -62,7 +62,7 @@ def learner_and_oauth2(learner):
     )
     access_token = AccessToken.objects.create(
         user=learner,
-        token="1234567890",
+        token="1234567890",  # noqa: S106
         application=application,
         expires=now_in_utc() + timedelta(days=1),
         scope="digitalcredentials",

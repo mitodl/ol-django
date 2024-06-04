@@ -17,8 +17,8 @@ class NoTemplateNameMessage(TemplatedMessage):
 
 
 @pytest.fixture(autouse=True)
-def default_settings(settings):
-    """Default settings for tests"""
+def default_settings(settings):  # noqa: PT004
+    """Default settings for tests"""  # noqa: D401
     settings.SITE_BASE_URL = "http://mit.edu/"
     settings.SITE_NAME = "MIT"
     settings.MITOL_MAIL_REPLY_TO_ADDRESS = "user@localhost"
@@ -38,12 +38,12 @@ def test_static_methods(settings):
 
 def test_create_validations():
     """Verify the create() function validates the subclass setup"""
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError) as exc_info:  # noqa: PT011
         NoNameMessage.create()
 
     assert exc_info.value.args[0] == "NoNameMessage.name not defined"
 
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError) as exc_info:  # noqa: PT011
         NoTemplateNameMessage.create()
 
     assert exc_info.value.args[0] == "NoTemplateNameMessage.template_name not defined"

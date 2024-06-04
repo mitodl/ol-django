@@ -19,8 +19,8 @@ MITOL_MAIL_MESSAGE_CLASSES = ["testapp.messages.SampleMessage"]
 
 MITOL_MAIL_FROM_EMAIL = "invalid@localhost"
 MITOL_MAIL_REPLY_TO_ADDRESS = "invalid@localhost"
-# MITOL_MAIL_RECIPIENT_OVERRIDE = "invalid@localhost"
+# MITOL_MAIL_RECIPIENT_OVERRIDE = "invalid@localhost"  # noqa: ERA001
 MITOL_MAIL_ENABLE_EMAIL_DEBUGGER = True
-# MITOL_MAIL_FORMAT_RECIPIENT_FUNC = "mitol.mail.defaults.format_recipient"
-# MITOL_MAIL_CAN_EMAIL_USER_FUNC = "mitol.mail.defaults.can_email_user"
-# MITOL_MAIL_CONNECTION_BACKEND = "anymail.backends.mailgun.EmailBackend"
+# MITOL_MAIL_FORMAT_RECIPIENT_FUNC = "mitol.mail.defaults.format_recipient"  # noqa: ERA001
+# MITOL_MAIL_CAN_EMAIL_USER_FUNC = "mitol.mail.defaults.can_email_user"  # noqa: ERA001
+# MITOL_MAIL_CONNECTION_BACKEND = "anymail.backends.mailgun.EmailBackend"  # noqa: ERA001

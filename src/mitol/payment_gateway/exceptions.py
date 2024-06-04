@@ -1,10 +1,10 @@
 """Exceptions for CyberSource"""
 
 
-class RefundDuplicateException(Exception):
+class RefundDuplicateException(Exception):  # noqa: N818
     """Exception class for Duplicate Refund requests"""
 
-    def __init__(
+    def __init__(  # noqa: D107, PLR0913
         self,
         refund_reason_code,
         refund_transaction_id,
@@ -18,18 +18,18 @@ class RefundDuplicateException(Exception):
         self.body = response_body
 
         if message is None:
-            message = f"There was an error in Refund API for transaction_id={self.transaction_id} with ReasonCode={self.reason_code}"
+            message = f"There was an error in Refund API for transaction_id={self.transaction_id} with ReasonCode={self.reason_code}"  # noqa: E501
         super().__init__(message)
 
 
-class InvalidTransactionException(Exception):
+class InvalidTransactionException(Exception):  # noqa: N818
     """Exception class for Invalid transaction data"""
 
-    def __init__(
+    def __init__(  # noqa: D107
         self,
         message=None,
     ):
         if message is None:
-            message = "The provided transaction dictionary is invalid. Please check it contains transaction_id, req_amount, req_currency"
+            message = "The provided transaction dictionary is invalid. Please check it contains transaction_id, req_amount, req_currency"  # noqa: E501
 
         super().__init__(message)

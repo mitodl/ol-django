@@ -17,10 +17,10 @@ REQUEST_DIGEST = base64.b64encode(
 
 
 @pytest.mark.parametrize(
-    "body, expected",
+    "body, expected",  # noqa: PT006
     [
-        [REQUEST_BODY, REQUEST_DIGEST],
-        [REQUEST_BODY.encode("utf-8"), REQUEST_DIGEST],
+        [REQUEST_BODY, REQUEST_DIGEST],  # noqa: PT007
+        [REQUEST_BODY.encode("utf-8"), REQUEST_DIGEST],  # noqa: PT007
     ],
 )
 def test_prepare_request_digest(mocker, body, expected):
@@ -38,7 +38,7 @@ def test_prepare_request_digest_invalid_body(mocker):
     """Verify prepare_request_digest raises an exception if the body isn't a str oy btes"""
     mock_request = mocker.Mock(spec=PreparedRequest, body=None)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prepare_request_digest(mock_request)
 
 
@@ -66,5 +66,5 @@ def test_prepare_request_hmac_signature_invalid_method(mocker):
     mock_request = mocker.Mock(spec=PreparedRequest)
     copied_request = mock_request.copy.return_value
     copied_request.method = None
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prepare_request_hmac_signature(mock_request, "secret")

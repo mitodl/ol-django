@@ -31,7 +31,7 @@ FAKE_ENVIRONS = {
 
 
 @pytest.fixture(autouse=True)
-def clean_env(mocker):
+def clean_env(mocker):  # noqa: PT004
     """Clean the configured environment variables before a test"""
     mocker.patch.dict("os.environ", FAKE_ENVIRONS, clear=True)
     envs.env.reload()
@@ -52,9 +52,9 @@ def test_get_string():
 
 def test_get_int():
     """get_int should get the int from the environment variable, or raise an exception if it's not parseable as an int"""
-    assert envs.get_int(name="POSITIVE", default=1234, description="description") == 123
+    assert envs.get_int(name="POSITIVE", default=1234, description="description") == 123  # noqa: PLR2004
     assert (
-        envs.get_int(name="NEGATIVE", default=1234, description="description") == -456
+        envs.get_int(name="NEGATIVE", default=1234, description="description") == -456  # noqa: PLR2004
     )
     assert envs.get_int(name="ZERO", default=1234, description="description") == 0
 
@@ -66,7 +66,7 @@ def test_get_int():
 
     assert (
         envs.get_int(name="missing", default=1_234_567_890, description="description")
-        == 1_234_567_890
+        == 1_234_567_890  # noqa: PLR2004
     )
 
 
@@ -133,9 +133,9 @@ def test_get_list_literal():
 
 
 @pytest.mark.parametrize(
-    "env_var, default",
+    "env_var, default",  # noqa: PT006
     [
-        ("MISSING", dict(invalid_key="*")),
+        ("MISSING", dict(invalid_key="*")),  # noqa: C408
         ("MISSING", 2345),
         ("CRONTAB_BLANK", None),
         ("CRONTAB_EMPTY", None),
@@ -146,7 +146,9 @@ def test_get_crontab_kwargs_invalid(env_var, default):
     # invalid
     with pytest.raises(ImproperlyConfigured):
         envs.get_crontab_kwargs(
-            name="MISSING", default=dict(invalid_key="*"), description="desc"
+            name="MISSING",
+            default=dict(invalid_key="*"),
+            description="desc",
         )
 
     with pytest.raises(ImproperlyConfigured):
@@ -160,21 +162,21 @@ def test_get_crontab_kwargs_invalid(env_var, default):
 
 
 @pytest.mark.parametrize(
-    "env_var, default",
+    "env_var, default",  # noqa: PT006
     [
         ("CRONTAB_VALID", None),
         ("CRONTAB_VALID", "1 2 3 4 5"),
         ("CRONTAB_VALID", dict(zip(envs.CRONTAB_KEYS, map(str, range(5))))),
     ],
 )
-def test_get_crontab_kwargs_valid(env_var, default):
+def test_get_crontab_kwargs_valid(env_var, default):  # noqa: D103
     assert envs.get_crontab_kwargs(
         name=env_var, default=default, description="desc"
     ) == {key: "*" for key in envs.CRONTAB_KEYS}
 
 
 @pytest.mark.parametrize(
-    "default, expected",
+    "default, expected",  # noqa: PT006
     [
         (None, {}),
         (
@@ -185,7 +187,7 @@ def test_get_crontab_kwargs_valid(env_var, default):
         * 2,  # turns to (dict, dict) to get same value for both args
     ],
 )
-def test_get_crontab_kwargs_valid_default(default, expected):
+def test_get_crontab_kwargs_valid_default(default, expected):  # noqa: D103
     assert (
         envs.get_crontab_kwargs(name="MISSING", default=default, description="desc")
         == expected
@@ -222,7 +224,7 @@ def test_validate():
 def test_duplicate_vars():
     """Verify that trying to parse an environment variable more than once fails"""
     envs.get_bool(name="TRUE", default=True, description="description")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         assert envs.get_bool(name="TRUE", default=True, description="description")
 
 

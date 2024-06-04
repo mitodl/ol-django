@@ -17,10 +17,10 @@ from pytest_lazyfixture import lazy_fixture
 @pytest.fixture()
 def request_csv_rows(settings):
     """Fake deferral request spreadsheet data rows (loaded from CSV)"""
-    fake_request_csv_filepath = os.path.join(
+    fake_request_csv_filepath = os.path.join(  # noqa: PTH118
         settings.BASE_DIR, "data/google_sheets_deferrals/deferral_requests.csv"
     )
-    with open(fake_request_csv_filepath) as f:
+    with open(fake_request_csv_filepath) as f:  # noqa: PTH123
         # Return all rows except for the header
         return [line.split(",") for i, line in enumerate(f.readlines()) if i > 0]
 
@@ -61,7 +61,7 @@ def pygsheets_fixtures(mocker, db, request_csv_rows):
 
 
 @pytest.fixture()
-def google_sheets_deferral_settings(settings):
+def google_sheets_deferral_settings(settings):  # noqa: D103
     settings.MITOL_GOOGLE_SHEETS_DEFERRALS_REQUEST_WORKSHEET_ID = "1"
     settings.MITOL_GOOGLE_SHEETS_DEFERRALS_PLUGINS = "app.plugins.DeferralPlugin"
     return settings
@@ -81,7 +81,7 @@ def google_sheets_deferral_settings(settings):
 @pytest.mark.parametrize(
     "has_deferral_settings, ", [lazy_fixture("google_sheets_deferral_settings"), False]
 )
-def test_is_configured(
+def test_is_configured(  # noqa: PLR0913
     db,
     settings,
     mocker,
@@ -151,11 +151,11 @@ def test_full_sheet_process(db, settings, mocker, pygsheets_fixtures, request_cs
     expected_failed_rows = {9}
     assert ResultType.PROCESSED.value in result
     assert set(result[ResultType.PROCESSED.value]) == expected_processed_rows, (
-        "Rows %s as defined in deferral_requests.csv should be processed"
+        "Rows %s as defined in deferral_requests.csv should be processed"  # noqa: UP031
         % str(expected_processed_rows)
     )
     assert ResultType.FAILED.value in result
     assert set(result[ResultType.FAILED.value]) == expected_failed_rows, (
-        "Rows %s as defined in deferral_requests.csv should fail"
+        "Rows %s as defined in deferral_requests.csv should fail"  # noqa: UP031
         % str(expected_failed_rows)
     )

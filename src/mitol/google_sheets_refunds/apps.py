@@ -12,7 +12,7 @@ class GoogleSheetsRefundsApp(BaseApp):
     label = "google_sheets_refunds"
     verbose_name = "Google Sheets Refunds"
 
-    required_settings = []
+    required_settings = []  # noqa: RUF012
 
     # necessary because this is a namespaced app
-    path = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.dirname(os.path.abspath(__file__))  # noqa: PTH100, PTH120

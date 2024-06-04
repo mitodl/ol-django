@@ -6,7 +6,7 @@ from oauth2_provider.settings import oauth2_settings
 
 
 @pytest.mark.parametrize(
-    "application_exists, is_configured",
+    "application_exists, is_configured",  # noqa: PT006
     [
         (True, False),
         (True, True),

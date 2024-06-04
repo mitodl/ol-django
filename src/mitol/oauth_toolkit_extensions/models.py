@@ -20,6 +20,6 @@ class ApplicationAccess(TimestampedModel):
     scopes = models.CharField(max_length=512)
 
     @property
-    def scopes_list(self) -> List[str]:
+    def scopes_list(self) -> List[str]:  # noqa: FA100
         """Return a list of scopes this application is permitted"""
         return [scope.strip() for scope in self.scopes.split(",")]

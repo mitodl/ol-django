@@ -3,7 +3,7 @@
 from python_distribution import setup_py
 
 
-def rules():
+def rules():  # noqa: D103
     return [
         *setup_py.rules(),
     ]

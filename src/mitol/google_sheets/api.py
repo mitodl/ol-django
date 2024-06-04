@@ -29,8 +29,8 @@ from mitol.google_sheets.utils import format_datetime_for_google_timestamp
 
 log = logging.getLogger(__name__)
 
-DEV_TOKEN_PATH = "localdev/google.token"
-FileWatchSpec = namedtuple(
+DEV_TOKEN_PATH = "localdev/google.token"  # noqa: S105
+FileWatchSpec = namedtuple(  # noqa: PYI024
     "FileWatchSpec",
     ["sheet_metadata", "sheet_file_id", "channel_id", "handler_url", "force"],
 )
@@ -40,17 +40,17 @@ def get_google_creds_from_pickled_token_file(token_file_path):
     """
     Helper method to get valid credentials from a local token file (and refresh as necessary).
     For dev use only.
-    """
-    with open(token_file_path, "rb") as f:
-        creds = pickle.loads(f.read())
+    """  # noqa: E501, D401
+    with open(token_file_path, "rb") as f:  # noqa: PTH123
+        creds = pickle.loads(f.read())  # noqa: S301
     if creds and creds.expired and creds.refresh_token:
         creds.refresh(Request())
-        with open(token_file_path, "wb") as token:
+        with open(token_file_path, "wb") as token:  # noqa: PTH123
             pickle.dump(creds, token)
     if not creds:
-        raise ImproperlyConfigured("Local token file credentials are empty")
+        raise ImproperlyConfigured("Local token file credentials are empty")  # noqa: EM101, TRY003
     if not creds.valid:
-        raise ImproperlyConfigured("Local token file credentials are invalid")
+        raise ImproperlyConfigured("Local token file credentials are invalid")  # noqa: EM101, TRY003
     return creds
 
 
@@ -63,7 +63,7 @@ def get_credentials():
 
     Raises:
         ImproperlyConfigured: Raised if no credentials have been configured
-    """
+    """  # noqa: E501, D401
     if settings.MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS:
         is_sharing_to_service_account = any(
             email
@@ -71,10 +71,10 @@ def get_credentials():
             if email.endswith(settings.MITOL_GOOGLE_SHEETS_GOOGLE_ACCOUNT_EMAIL_DOMAIN)
         )
         if not is_sharing_to_service_account:
-            raise ImproperlyConfigured(
-                "If Service Account auth is being used, the MITOL_GOOGLE_SHEETS_ADMIN_EMAILS setting must "
-                "include a Service Account email for spreadsheet updates/creation to work. "
-                "Add the Service Account email to that setting, or remove the MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS "
+            raise ImproperlyConfigured(  # noqa: TRY003
+                "If Service Account auth is being used, the MITOL_GOOGLE_SHEETS_ADMIN_EMAILS setting must "  # noqa: EM101, E501
+                "include a Service Account email for spreadsheet updates/creation to work. "  # noqa: E501
+                "Add the Service Account email to that setting, or remove the MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS "  # noqa: E501
                 "setting and use a different auth method."
             )
         return ServiceAccountCredentials.from_service_account_info(
@@ -111,10 +111,10 @@ def get_credentials():
     # A script with more helpful options than the one in that guide can be found here:
     # https://gist.github.com/gsidebo/b87abaafda3e79186c1e5f7f964074ab
     if settings.ENVIRONMENT == "dev":
-        token_file_path = os.path.join(settings.BASE_DIR, DEV_TOKEN_PATH)
-        if os.path.exists(token_file_path):
+        token_file_path = os.path.join(settings.BASE_DIR, DEV_TOKEN_PATH)  # noqa: PTH118
+        if os.path.exists(token_file_path):  # noqa: PTH110
             return get_google_creds_from_pickled_token_file(token_file_path)
-    raise ImproperlyConfigured("Authorization with Google has not been completed.")
+    raise ImproperlyConfigured("Authorization with Google has not been completed.")  # noqa: EM101, TRY003
 
 
 def get_authorized_pygsheets_client():
@@ -123,7 +123,7 @@ def get_authorized_pygsheets_client():
 
     Returns:
         pygsheets.client.Client: The authorized Client object
-    """
+    """  # noqa: D401
     credentials = get_credentials()
     pygsheets_client = pygsheets.authorize(custom_credentials=credentials)
     if settings.MITOL_GOOGLE_SHEETS_DRIVE_SHARED_ID:
@@ -136,7 +136,7 @@ def get_authorized_pygsheets_client():
 class ExpandedSheetsClient:
     """
     Helper class that executes some Drive/Sheets API requests that pygsheets doesn't directly support
-    """
+    """  # noqa: E501
 
     def __init__(self, pygsheets_client):
         """
@@ -156,11 +156,11 @@ class ExpandedSheetsClient:
 
         Returns:
             list of dict: A dict of metadata for each file that matched the given query
-        """
+        """  # noqa: E501, D401
         extra_list_params = {}
         if self.supports_team_drives:
             extra_list_params.update(
-                dict(
+                dict(  # noqa: C408
                     corpora="teamDrive",
                     teamDriveId=settings.MITOL_GOOGLE_SHEETS_DRIVE_SHARED_ID,
                     supportsTeamDrives=True,
@@ -182,7 +182,7 @@ class ExpandedSheetsClient:
 
         Returns:
             dict: Google Drive API response to the files.update request
-        """
+        """  # noqa: D401
         return (
             self.pygsheets_client.drive.service.files()
             .update(
@@ -204,7 +204,7 @@ class ExpandedSheetsClient:
 
         Returns:
            dict: The file metadata, which includes the specified fields.
-        """
+        """  # noqa: E501, D401
         return (
             self.pygsheets_client.drive.service.files()
             .get(
@@ -226,7 +226,7 @@ class ExpandedSheetsClient:
 
         Returns:
             dict: appProperties (if any) for the given sheet according to Drive
-        """
+        """  # noqa: E501, D401
         result = self.get_drive_file_metadata(file_id=file_id, fields="appProperties")
         if result and "appProperties" in result:
             return result["appProperties"]
@@ -243,7 +243,7 @@ class ExpandedSheetsClient:
 
         Returns:
             dict: Google API response to the spreadsheets.values.batchUpdate request
-        """
+        """  # noqa: D401
         return (
             self.pygsheets_client.sheet.service.spreadsheets()
             .batchUpdate(spreadsheetId=sheet_id, body={"requests": request_objects})
@@ -263,7 +263,7 @@ def build_drive_service(credentials=None):
     Returns:
         googleapiclient.discovery.Resource: The Drive API service. The methods available on this resource are
             defined dynamically (ref: http://googleapis.github.io/google-api-python-client/docs/dyn/drive_v3.html)
-    """
+    """  # noqa: E501, D401
     credentials = credentials or get_credentials()
     return build("drive", "v3", credentials=credentials, cache_discovery=False)
 
@@ -287,7 +287,7 @@ def request_file_watch(
             Google Drive client
     Returns:
         dict: The Google file watch API response
-    """
+    """  # noqa: E501, D401
     drive_service = build_drive_service(credentials=credentials)
     extra_body_params = {}
     if expiration:

@@ -25,7 +25,7 @@ FAKE_COMMON_BUNDLE = [
 
 
 @pytest.fixture(autouse=True)
-def dont_disable_webpack(settings):
+def dont_disable_webpack(settings):  # noqa: PT004
     """Re-enable webpack loader stats for these tests."""
     settings.WEBPACK_DISABLE_LOADER_STATS = False
 
@@ -44,7 +44,7 @@ def test_render_bundle_disable_loader_stats(settings, mocker, rf):
 
 
 @pytest.mark.parametrize(
-    "attrs, expected",
+    "attrs, expected",  # noqa: PT006
     [
         ("", ""),
         ("added_attrs='defer'", "defer"),
@@ -73,8 +73,8 @@ def test_render_bundle(mocker, rf, attrs, expected):
         f"{{% load render_bundle %}}{{% render_bundle '{bundle_name}' {attrs} %}}"
     )
 
-    script_url = path.join("/", FAKE_COMMON_BUNDLE[0]["name"])
-    style_url = path.join("/", FAKE_COMMON_BUNDLE[1]["name"])
+    script_url = path.join("/", FAKE_COMMON_BUNDLE[0]["name"])  # noqa: PTH118
+    style_url = path.join("/", FAKE_COMMON_BUNDLE[1]["name"])  # noqa: PTH118
     assert template.render(context) == dedent(
         f"""\
     <script type="text/javascript" src="{script_url}" {expected} ></script>

@@ -55,10 +55,10 @@ def test_has_equal_properties():
     """
     obj = SimpleNamespace(a=1, b=2, c=3)
     assert has_equal_properties(obj, {}) is True
-    assert has_equal_properties(obj, dict(a=1, b=2)) is True
-    assert has_equal_properties(obj, dict(a=1, b=2, c=3)) is True
-    assert has_equal_properties(obj, dict(a=2)) is False
-    assert has_equal_properties(obj, dict(d=4)) is False
+    assert has_equal_properties(obj, dict(a=1, b=2)) is True  # noqa: C408
+    assert has_equal_properties(obj, dict(a=1, b=2, c=3)) is True  # noqa: C408
+    assert has_equal_properties(obj, dict(a=2)) is False  # noqa: C408
+    assert has_equal_properties(obj, dict(d=4)) is False  # noqa: C408
 
 
 def test_find_object_with_matching_attr():
@@ -121,15 +121,15 @@ def test_first_matching_item():
     """
     Assert that first_matching_item returns the first item that matches the predicate
     """
-    assert first_matching_item(range(10), lambda i: i > 5) == 6
+    assert first_matching_item(range(10), lambda i: i > 5) == 6  # noqa: PLR2004
 
 
 def test_max_or_none():
     """
     Assert that max_or_none returns the max of some iterable, or None if the iterable has no items
     """
-    assert max_or_none(i for i in [5, 4, 3, 2, 1]) == 5
-    assert max_or_none([1, 3, 5, 4, 2]) == 5
+    assert max_or_none(i for i in [5, 4, 3, 2, 1]) == 5  # noqa: PLR2004
+    assert max_or_none([1, 3, 5, 4, 2]) == 5  # noqa: PLR2004
     assert max_or_none([]) is None
 
 
@@ -155,7 +155,7 @@ def test_item_at_index_or_none():
     doesn't exist
     """
     arr = [1, 2, 3]
-    assert item_at_index_or_none(arr, 1) == 2
+    assert item_at_index_or_none(arr, 1) == 2  # noqa: PLR2004
     assert item_at_index_or_none(arr, 10) is None
 
 
@@ -257,7 +257,7 @@ def test_chunks_iterable():
     input_range = range(count)
     chunk_output = []
     for chunk in chunks(input_range, chunk_size=10):
-        chunk_output.append(chunk)
+        chunk_output.append(chunk)  # noqa: PERF402
     assert len(chunk_output) == ceil(113 / 10)
 
     range_list = []
@@ -272,7 +272,7 @@ def test_matching_item_index():
     with pytest.raises(StopIteration):
         matching_item_index(["a", "b", "c", "d"], "e")
     number_iter = (i for i in [0, 1, 2, 3, 4])
-    assert matching_item_index(number_iter, 2) == 2
+    assert matching_item_index(number_iter, 2) == 2  # noqa: PLR2004
 
 
 def test_replace_null_values():

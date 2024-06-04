@@ -11,7 +11,7 @@ from django.core.exceptions import ImproperlyConfigured
 class BaseApp(AppConfig):
     """Base application class"""
 
-    required_settings: List[str] = []
+    required_settings: List[str] = []  # noqa: FA100, RUF012
 
     def validate_required_settings(self):
         """
@@ -24,17 +24,17 @@ class BaseApp(AppConfig):
 
         for setting_name in self.required_settings:
             if not hasattr(settings, setting_name):
-                missing_settings.append(setting_name)
+                missing_settings.append(setting_name)  # noqa: PERF401
 
         if missing_settings:
             raise ImproperlyConfigured(
-                "The following settings are missing: {}. You need to add these environment variables in .env file.".format(
+                "The following settings are missing: {}. You need to add these environment variables in .env file.".format(  # noqa: EM103, E501
                     ", ".join(missing_settings)
                 )
             )
 
     def ready(self):
-        """The application is ready"""
+        """The application is ready"""  # noqa: D401
         self.validate_required_settings()
 
 
@@ -46,4 +46,4 @@ class CommonApp(AppConfig):
     verbose_name = "Common"
 
     # necessary because this is a namespaced app
-    path = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.dirname(os.path.abspath(__file__))  # noqa: PTH100, PTH120

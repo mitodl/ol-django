@@ -23,7 +23,7 @@ class GeonameFactory(DjangoModelFactory):
     country_iso_code = fake.unique.country_code()
     country_name = fake.unique.country()
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = models.Geoname
 
 
@@ -45,7 +45,7 @@ class NetBlockIPv4Factory(DjangoModelFactory):
     ip_start = LazyAttribute(lambda obj: ipaddress.IPv4Network(obj.network)[0])
     ip_end = LazyAttribute(lambda obj: ipaddress.IPv4Network(obj.network)[-1])
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = models.NetBlock
 
 
@@ -67,5 +67,5 @@ class NetBlockIPv6Factory(DjangoModelFactory):
     ip_start = LazyAttribute(lambda obj: ipaddress.IPv6Network(obj.network)[0])
     ip_end = LazyAttribute(lambda obj: ipaddress.IPv6Network(obj.network)[-1])
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = models.NetBlock

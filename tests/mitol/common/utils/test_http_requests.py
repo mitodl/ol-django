@@ -14,11 +14,11 @@ from requests.exceptions import HTTPError
 
 
 @pytest.mark.parametrize(
-    "content,content_type,exp_summary_content,exp_url_in_summary",
+    "content,content_type,exp_summary_content,exp_url_in_summary",  # noqa: PT006
     [
-        ['{"bad": "response"}', "application/json", '{"bad": "response"}', False],
-        ["plain text", "text/plain", "plain text", False],
-        [
+        ['{"bad": "response"}', "application/json", '{"bad": "response"}', False],  # noqa: PT007
+        ["plain text", "text/plain", "plain text", False],  # noqa: PT007
+        [  # noqa: PT007
             "<div>HTML content</div>",
             "text/html; charset=utf-8",
             "(HTML body ignored)",
@@ -45,11 +45,11 @@ def test_get_error_response_summary(
 
 
 @pytest.mark.parametrize(
-    "content,content_type,expected",
+    "content,content_type,expected",  # noqa: PT006
     [
-        ['{"bad": "response"}', "application/json", True],
-        ["plain text", "text/plain", False],
-        ["<div>HTML content</div>", "text/html; charset=utf-8", False],
+        ['{"bad": "response"}', "application/json", True],  # noqa: PT007
+        ["plain text", "text/plain", False],  # noqa: PT007
+        ["<div>HTML content</div>", "text/html; charset=utf-8", False],  # noqa: PT007
     ],
 )
 def test_is_json_response(content, content_type, expected):

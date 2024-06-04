@@ -23,7 +23,7 @@ def raise_429(func) -> Callable:
             return func(*args, **kwargs)
         except ApiException as ae:
             if int(ae.status) == HTTP_429_TOO_MANY_REQUESTS:
-                raise TooManyRequestsException(ae)
+                raise TooManyRequestsException(ae)  # noqa: B904
             else:
                 raise
 

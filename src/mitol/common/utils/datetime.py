@@ -25,6 +25,6 @@ def is_near_now(time: datetime, epsilon: timedelta = timedelta(seconds=5)) -> bo
     Returns:
         bool:
             True if near now, false otherwise
-    """
+    """  # noqa: D401
     now = now_in_utc()
     return now - epsilon < time < now + epsilon

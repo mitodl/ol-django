@@ -75,3 +75,4 @@ execution_slot_var = "PANTS_EXECUTION_SLOT"
 
 [ruff]
 install_from_resolve = "testing"
+config = "pyproject.toml"

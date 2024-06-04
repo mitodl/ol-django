@@ -16,7 +16,7 @@ def prepare_request_digest(request: PreparedRequest) -> PreparedRequest:
     elif isinstance(request.body, bytes):
         body = request.body
     else:
-        raise ValueError(f"Request body cannot be {type(request.body)}")
+        raise ValueError(f"Request body cannot be {type(request.body)}")  # noqa: EM102, TRY003, TRY004
     request = request.copy()
     digest = hashlib.sha512(body).digest()
     encoded = base64.b64encode(digest).decode("ascii")
@@ -28,20 +28,20 @@ class HttpSignatureData(NamedTuple):
     """HTTP signature and headers"""
 
     signature: str
-    headers: List[str]
+    headers: List[str]  # noqa: FA100
 
 
 def _generate_signature_data(request: PreparedRequest) -> HttpSignatureData:
     """Generate an http signature"""
     if not isinstance(request.method, str):
-        raise ValueError("Request.method must be a string")
-    header_names: List[str] = []
+        raise ValueError("Request.method must be a string")  # noqa: EM101, TRY003, TRY004
+    header_names: List[str] = []  # noqa: FA100
     path = urlparse(request.url).path
     signing_string_lines = [
-        f"(request-target): {request.method.lower()} {path if isinstance(path, str) else path.decode('utf-8')}"
+        f"(request-target): {request.method.lower()} {path if isinstance(path, str) else path.decode('utf-8')}"  # noqa: E501
     ]
     for name, value in request.headers.items():
-        name = name.lower()
+        name = name.lower()  # noqa: PLW2901
         signing_string_lines.append(f"{name}: {value}")
         header_names.append(name)
 
@@ -63,6 +63,6 @@ def prepare_request_hmac_signature(
     signature = base64.b64encode(signature_hmac.digest()).decode("utf-8")
     signature_headers = " ".join(signature_data.headers)
     request.headers["Signature"] = (
-        f'keyId="abc",algorithm="hmac-sha512",headers="(request-target) {signature_headers}",signature="{signature}"'
+        f'keyId="abc",algorithm="hmac-sha512",headers="(request-target) {signature_headers}",signature="{signature}"'  # noqa: E501
     )
     return request

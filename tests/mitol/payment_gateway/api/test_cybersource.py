@@ -1,4 +1,4 @@
-import hashlib
+import hashlib  # noqa: D100
 import json
 import os
 import random
@@ -30,17 +30,17 @@ ISO_8601_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
 @pytest.fixture()
-def order():
+def order():  # noqa: D103
     return OrderFactory()
 
 
 @pytest.fixture()
-def refund():
+def refund():  # noqa: D103
     return RefundFactory()
 
 
 @pytest.fixture()
-def cartitems():
+def cartitems():  # noqa: D103
     return CartItemFactory.create_batch(5)
 
 
@@ -48,9 +48,11 @@ def cartitems():
 def response_payload(request):
     """Fixture to return dictionary of a specific JSON file with provided name in request param"""
 
-    with open(
-        os.path.join(
-            os.getcwd(), "tests/data/payment_gateway/api", f"{request.param}.json"
+    with open(  # noqa: PTH123
+        os.path.join(  # noqa: PTH118
+            os.getcwd(),
+            "tests/data/payment_gateway/api",
+            f"{request.param}.json",
         ),
     ) as f:
         response_txt = f.read()
@@ -65,7 +67,7 @@ class FakeRequest:
     the response.
     """
 
-    data: Dict
+    data: Dict  # noqa: FA100
     method: str
 
 
@@ -73,7 +75,7 @@ def generate_test_cybersource_payload(order, cartitems, transaction_uuid):
     """
     Generates a test payload based on the order and cart items passed in, ready
     for signing.
-    """
+    """  # noqa: D401
     backoffice_post_url = "https://www.google.com"
     receipt_url = "https://www.google.com"
     cancel_url = "https://duckduckgo.com"
@@ -165,7 +167,7 @@ def test_cybersource_payload_generation(order, cartitems):
 
     gateway = CyberSourcePaymentGateway()
 
-    signed_test_payload = gateway._sign_cybersource_payload(test_payload)
+    signed_test_payload = gateway._sign_cybersource_payload(test_payload)  # noqa: SLF001
 
     assert signed_test_payload == checkout_data["payload"]
 
@@ -204,7 +206,7 @@ def test_cybersource_response_auth(order, cartitems):
 
     gateway = CyberSourcePaymentGateway()
 
-    signed_test_payload = gateway._sign_cybersource_payload(test_payload)
+    signed_test_payload = gateway._sign_cybersource_payload(test_payload)  # noqa: SLF001
 
     fake_request = FakeRequest(signed_test_payload, "POST")
 
@@ -214,7 +216,7 @@ def test_cybersource_response_auth(order, cartitems):
 
 
 @pytest.mark.parametrize(
-    "response_payload, expected_response_code",
+    "response_payload, expected_response_code",  # noqa: PT006
     [
         ("test_success_payload", ProcessorResponse.STATE_ACCEPTED),
         ("test_cancel_payload", ProcessorResponse.STATE_CANCELLED),
@@ -415,21 +417,21 @@ def test_create_refund_request_invalid_data_exception(transaction_data):
 
 
 def create_transaction_search_results():
-    """Mocks a transaction search result. This only mocks up the things the find_transactions call actually uses."""
+    """Mocks a transaction search result. This only mocks up the things the find_transactions call actually uses."""  # noqa: D401
 
-    class fake_reference:
+    class fake_reference:  # noqa: N801
         code = "mitxonline-test-12345"
 
-    class fake_summary:
+    class fake_summary:  # noqa: N801
         def __init__(self):
             self.id = 123456789
             self.client_reference_information = fake_reference
-            self.submit_time_utc = datetime.today()
+            self.submit_time_utc = datetime.today()  # noqa: DTZ002
 
-    class fake_response:
+    class fake_response:  # noqa: N801
         def __init__(self):
             self.total_count = 1
-            self._embedded = namedtuple("embedded", "transaction_summaries")(
+            self._embedded = namedtuple("embedded", "transaction_summaries")(  # noqa: PYI024
                 **{"transaction_summaries": [fake_summary()]}
             )
 
@@ -437,7 +439,7 @@ def create_transaction_search_results():
 
 
 @pytest.mark.parametrize("test_failure", [True, False])
-def test_find_transactions(test_failure, mocker):
+def test_find_transactions(test_failure, mocker):  # noqa: D103
     fake_ids = ["mitxonline-test-12345", "mitxonline-test-54321"]
 
     faked_responses = create_transaction_search_results()
@@ -458,7 +460,7 @@ def test_find_transactions(test_failure, mocker):
     cybersource_gateway = CyberSourcePaymentGateway()
 
     if test_failure:
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017, PT011
             response = cybersource_gateway.find_transactions(fake_ids)
     else:
         response = cybersource_gateway.find_transactions(fake_ids)
@@ -467,9 +469,9 @@ def test_find_transactions(test_failure, mocker):
 
 
 def create_transaction_detail_record():
-    """Returns a faked out detail record in the same format you'd get from CyberSource for a TransactionDetailApi request."""
+    """Returns a faked out detail record in the same format you'd get from CyberSource for a TransactionDetailApi request."""  # noqa: D401
 
-    fake_id = random.randrange(1000000000000000000000, 9999999999999999999999)
+    fake_id = random.randrange(1000000000000000000000, 9999999999999999999999)  # noqa: S311
     fake_recon_id = fuzzy.FuzzyText(length=16)
 
     data_dict = {
@@ -822,7 +824,7 @@ def test_get_transaction_details(mocker, test_failure):
             side_effect=expected_exception,
         )
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017, PT011
             cybersource_gateway.get_transaction_details(fake_id)
     else:
         mocker.patch(
@@ -866,7 +868,7 @@ def test_find_and_get_transactions(mocker, test_failure):
                 side_effect=expected_exception,
             )
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017, PT011
             cybersource_gateway.find_and_get_transactions(fake_ids)
     else:
         mocker.patch(

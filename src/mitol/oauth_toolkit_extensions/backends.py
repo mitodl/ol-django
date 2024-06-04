@@ -6,7 +6,7 @@ from oauth2_provider.scopes import SettingsScopes
 
 
 class ApplicationAccessOrSettingsScopes(SettingsScopes):
-    """Scopes backend that uses ApplicationAccess or defaults to SettingsScopes if not present"""
+    """Scopes backend that uses ApplicationAccess or defaults to SettingsScopes if not present"""  # noqa: E501
 
     def get_available_scopes(
         self,
@@ -19,10 +19,13 @@ class ApplicationAccessOrSettingsScopes(SettingsScopes):
         if application is not None and getattr(application, "access", None) is not None:
             return application.access.scopes_list
         return super().get_available_scopes(
-            application=application, request=request, *args, **kwargs
+            application=application,
+            request=request,
+            *args,
+            **kwargs,
         )
 
-    def get_default_scopes(
+    def get_default_scopes(  # noqa: D102
         self,
         application: AbstractApplication = None,
         request: HttpRequest = None,
@@ -32,5 +35,8 @@ class ApplicationAccessOrSettingsScopes(SettingsScopes):
         if application is not None and getattr(application, "access", None) is not None:
             return application.access.scopes_list
         return super().get_default_scopes(
-            application=application, request=request, *args, **kwargs
+            application=application,
+            request=request,
+            *args,
+            **kwargs,
         )

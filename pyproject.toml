@@ -1,7 +1,10 @@
 [tool.ruff]
 target-version = "py38"
 line-length = 88
-lint.select = [
+
+[tool.ruff.lint]
+fixable = ["ALL"]
+select = [
     "A",  # flake8-builtins
     # "AIR",  # Airflow
     # "ANN",  # flake8-annotations
@@ -59,7 +62,7 @@ lint.select = [
     "W",  # Pycodestyle Warning
     "YTT",  # flake8-2020
 ]
-lint.ignore = [
+ignore = [
     "B008",
     "B905",
     "D104",
@@ -76,9 +79,8 @@ lint.ignore = [
     "RET506",
     "RET507",
     "RET508",
-    "UP007"
 ]
-lint.typing-modules = ["colour.hints"]
+typing-modules = ["colour.hints"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"
@@ -87,6 +89,6 @@ convention = "pep257"
 inline-quotes = "double"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S105", "E501", "ARG001"]
+"tests/**" = ["S101", "S105", "E501", "ARG001", "INP001"]
 "test_*.py" = ["S101", "S105", "E501", "ARG001"]
 "*_test.py" = ["S101", "S105", "E501", "ARG001"]

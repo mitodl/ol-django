@@ -5,7 +5,7 @@ from mitol.payment_gateway.payment_utils import clean_request_data, strip_nones
 
 
 @pytest.mark.parametrize(
-    "request_data_dict, expected_data_dict",
+    "request_data_dict, expected_data_dict",  # noqa: PT006
     [
         ({"key1": 1, "key2": 2, "key3": None}, {"key1": 1, "key2": 2}),
         ({"key1": "val1", "key2": None, "key3": 1}, {"key1": "val1", "key3": 1}),

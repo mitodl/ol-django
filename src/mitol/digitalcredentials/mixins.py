@@ -14,10 +14,10 @@ from mitol.digitalcredentials.serializers import DigitalCredentialRequestSeriali
 class LearnerObjectModelViewSet(ABC):  # pragma: no cover
     """ViewSet for models that are associated with a learner/user"""
 
-    # Note: this would ideally be typed with User as the return type, but mypy was uncooperative
+    # Note: this would ideally be typed with User as the return type, but mypy was uncooperative  # noqa: E501
     @abstractmethod
     def get_learner_for_obj(self, obj: Any) -> Any:
-        """Returns the learner for a given object"""
+        """Returns the learner for a given object"""  # noqa: D401
         ...
 
 
@@ -36,8 +36,8 @@ class DigitalCredentialsRequestViewSetMixin(_Base):
         url_path="request-digital-credential",
         url_name="request_digital_credentials",
     )
-    def request_digital_credential(self, request: Request, *args: Any, **kwargs: Any):
-        """Action to create a digital credentials request"""
+    def request_digital_credential(self, request: Request, *args: Any, **kwargs: Any):  # noqa: ARG002
+        """Action to create a digital credentials request"""  # noqa: D401
         credentialed_object = self.get_object()
         learner = self.get_learner_for_obj(credentialed_object)
 

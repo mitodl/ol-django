@@ -34,7 +34,7 @@ def test_get_data_rows(mocker):
         ["row 1 - column 1", "row 1 - column 2"],
         ["row 2 - column 1", "row 2 - column 2"],
     ]
-    sheet_rows = [["HEADER 1", "HEADER 2"]] + non_header_rows
+    sheet_rows = [["HEADER 1", "HEADER 2"]] + non_header_rows  # noqa: RUF005
     mocked_worksheet = mocker.MagicMock(
         spec=Worksheet, get_all_values=mocker.Mock(return_value=sheet_rows)
     )

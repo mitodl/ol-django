@@ -20,7 +20,7 @@ from mitol.google_sheets.constants import (
 
 
 def generate_google_client_config():
-    """Helper method to generate Google client config based on app settings"""
+    """Helper method to generate Google client config based on app settings"""  # noqa: D401
     return {
         "web": {
             "client_id": settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_ID,
@@ -48,9 +48,9 @@ def get_column_letter(column_index):
 
     Returns:
         str: The column index expressed as a letter
-    """
-    if column_index > 25:
-        raise ValueError("Cannot generate a column letter past 'Z'")
+    """  # noqa: E501, D401
+    if column_index > 25:  # noqa: PLR2004
+        raise ValueError("Cannot generate a column letter past 'Z'")  # noqa: EM101, TRY003
     uppercase_a_ord = ord("A")
     return chr(column_index + uppercase_a_ord)
 
@@ -63,7 +63,7 @@ class SheetConfigMixin:
     worksheet_type = None
     worksheet_name = None
     first_data_row = None
-    non_input_column_indices = set()
+    non_input_column_indices = set()  # noqa: RUF012
     num_columns = 0
 
     @property
@@ -87,8 +87,8 @@ class SheetConfigMixin:
 
         Returns:
             str: The URL that Google will send file watch requests to
-        """
-        params = dict(sheet=quote_plus(self.sheet_type))
+        """  # noqa: E501, D401
+        params = dict(sheet=quote_plus(self.sheet_type))  # noqa: C408
         if file_id:
             params["fileId"] = file_id
         param_str = "&".join([f"{k}={v}" for k, v in params.items()])
@@ -104,7 +104,7 @@ class SheetConfigMixin:
 
         Returns:
             list: Values for columns that contain data entered by a user in a form
-        """
+        """  # noqa: E501, D401
         return [
             col for i, col in enumerate(row_data) if i in self.form_input_column_indices
         ]
@@ -113,7 +113,7 @@ class SheetConfigMixin:
 class SingletonSheetConfigMixin(SheetConfigMixin):
     """
     Metadata for a type of Google Sheet that this app interacts with, and of which only one should exist
-    """
+    """  # noqa: E501
 
     sheet_file_id = None
 
@@ -129,26 +129,26 @@ class ResultType(Enum):
     OUT_OF_SYNC = "out_of_sync"
     PROCESSED = "processed"
 
-    def __lt__(self, other):
+    def __lt__(self, other):  # noqa: D105
         return self.value < other.value
 
 
-RowResult = namedtuple(
+RowResult = namedtuple(  # noqa: PYI024
     "RowResult", ["row_index", "row_db_record", "row_object", "message", "result_type"]
 )
-ProcessedRequest = namedtuple(
+ProcessedRequest = namedtuple(  # noqa: PYI024
     "ProcessedRequest", ["row_index", "coupon_req_row", "request_id", "date_processed"]
 )
-FailedRequest = namedtuple(
+FailedRequest = namedtuple(  # noqa: PYI024
     "FailedRequest", ["row_index", "exception", "sheet_error_text"]
 )
-IgnoredRequest = namedtuple("IgnoredRequest", ["row_index", "coupon_req_row", "reason"])
-AssignmentRowUpdate = namedtuple(
+IgnoredRequest = namedtuple("IgnoredRequest", ["row_index", "coupon_req_row", "reason"])  # noqa: PYI024
+AssignmentRowUpdate = namedtuple(  # noqa: PYI024
     "AssignmentRowUpdate", ["row_index", "status", "status_date", "alternate_email"]
 )
 
 
-def get_data_rows(worksheet, include_trailing_empty=False):
+def get_data_rows(worksheet, include_trailing_empty=False):  # noqa: FBT002
     """
     Yields the data rows of a spreadsheet that has a header row
 
@@ -158,7 +158,7 @@ def get_data_rows(worksheet, include_trailing_empty=False):
 
     Yields:
         list of str: List of cell values in a given row
-    """
+    """  # noqa: E501, D401
     row_iter = iter(
         worksheet.get_all_values(
             # These param names are a typo in the pygsheets library
@@ -196,7 +196,7 @@ def get_data_rows_after_start(
 
     Yields:
         list of str: List of cell values in a given row
-    """
+    """  # noqa: E501, D401
     request_count = 0
     values = []
     while request_count == 0 or (values and len(values) == page_size):
@@ -224,7 +224,7 @@ def spreadsheet_repr(spreadsheet=None, spreadsheet_metadata=None):
 
     Returns:
         str: String representation of the spreadsheet
-    """
+    """  # noqa: D401
     if spreadsheet:
         sheet_id, title = spreadsheet.id, spreadsheet.title
     elif spreadsheet_metadata:
@@ -232,7 +232,7 @@ def spreadsheet_repr(spreadsheet=None, spreadsheet_metadata=None):
     else:
         sheet_id, title = None, None
     if not sheet_id or not title:
-        raise ValueError("Invalid spreadsheet/metadata provided")
+        raise ValueError("Invalid spreadsheet/metadata provided")  # noqa: EM101, TRY003
     return f"'{title}', id: {sheet_id}"
 
 
@@ -245,7 +245,7 @@ def clean_sheet_value(value):
 
     Returns:
         str or None: A string with whitespace stripped, or None if the resulting value was an empty string
-    """
+    """  # noqa: E501, D401
     stripped = value.strip()
     return None if stripped == "" else stripped
 
@@ -273,8 +273,8 @@ def format_datetime_for_google_timestamp(dt):
 
     Returns:
         int: The datetime formatted as a timestamp for use in a Google API request
-    """
-    # Google expects the timestamp to be in milliseconds, not seconds, hence the '* 1000'
+    """  # noqa: D401, RUF002
+    # Google expects the timestamp to be in milliseconds, not seconds, hence the '* 1000'  # noqa: E501
     return int(dt.timestamp() * 1000)
 
 
@@ -300,8 +300,8 @@ def format_datetime_for_sheet_formula(dt):
 
     Returns:
         str: The datetime formatted for a Google Sheets cell value
-    """
-    return f"=DATE({dt.year},{dt.month},{dt.day}) + TIME({dt.hour},{dt.minute},{dt.second})"
+    """  # noqa: E501
+    return f"=DATE({dt.year},{dt.month},{dt.day}) + TIME({dt.hour},{dt.minute},{dt.second})"  # noqa: E501
 
 
 def _parse_sheet_date_str(date_str, date_format):
@@ -314,7 +314,7 @@ def _parse_sheet_date_str(date_str, date_format):
 
     Returns:
         datetime.datetime or None: The parsed datetime (in UTC) or None
-    """
+    """  # noqa: E501, D401
     if not date_str:
         return None
     dt = datetime.datetime.strptime(date_str, date_format).astimezone(
@@ -336,7 +336,7 @@ def parse_sheet_datetime_str(datetime_str):
 
     Returns:
         datetime.datetime or None: The parsed datetime (in UTC) or None
-    """
+    """  # noqa: D401
     return _parse_sheet_date_str(datetime_str, settings.SHEETS_DATE_FORMAT)
 
 
@@ -349,7 +349,7 @@ def parse_sheet_date_only_str(date_str):
 
     Returns:
         datetime.datetime or None: The parsed datetime (in UTC) or None
-    """
+    """  # noqa: D401
     return _parse_sheet_date_str(date_str, settings.MITOL_GOOGLE_SHEETS_DATE_FORMAT)
 
 
@@ -362,7 +362,7 @@ def google_timestamp_to_datetime(google_timestamp):
 
     Returns:
         datetime.datetime: The parsed timestamp with UTC timezone
-    """
+    """  # noqa: D401
     # Google timestamps are expressed in milliseconds, hence the '/ 1000'
     timestamp_in_seconds = int(google_timestamp) / 1000
     return datetime.datetime.fromtimestamp(timestamp_in_seconds, pytz.UTC)
@@ -377,7 +377,7 @@ def google_date_string_to_datetime(google_date_str):
 
     Returns:
         datetime.datetime: The parsed timestamp with UTC timezone
-    """
+    """  # noqa: D401
     return datetime.datetime.strptime(
         google_date_str, "%Y-%m-%dT%H:%M:%S.%fZ"
     ).astimezone(pytz.UTC)
@@ -392,7 +392,7 @@ def mailgun_timestamp_to_datetime(timestamp):
 
     Returns:
         datetime.datetime: The parsed timestamp
-    """
+    """  # noqa: D401
     return datetime.datetime.fromtimestamp(timestamp, pytz.UTC)
 
 
@@ -410,7 +410,7 @@ def build_multi_cell_update_request_body(
 
     Returns:
         dict: A single update request object for use in a Google Sheets API batch update request
-    """
+    """  # noqa: E501, D401
     return {
         "updateCells": {
             "range": {
@@ -426,13 +426,13 @@ def build_multi_cell_update_request_body(
     }
 
 
-def build_protected_range_request_body(
+def build_protected_range_request_body(  # noqa: PLR0913
     start_row_index,
     num_rows,
     start_col_index,
     num_cols,
     worksheet_id=0,
-    warning_only=False,
+    warning_only=False,  # noqa: FBT002
     description=None,
 ):
     """
@@ -450,7 +450,7 @@ def build_protected_range_request_body(
 
     Returns:
         dict: A request body that will be sent to the Google Sheets API to create a protected range
-    """
+    """  # noqa: E501, D401
     extra_params = {} if description is None else {"description": description}
     return {
         "addProtectedRange": {
@@ -479,7 +479,7 @@ def build_drive_file_email_share_request(file_id, email_to_share):
 
     Returns:
         dict: A dictionary of parameters for the body of a share request
-    """
+    """  # noqa: D401
     added_kwargs = (
         {"sendNotificationEmail": False}
         if email_to_share.endswith(
