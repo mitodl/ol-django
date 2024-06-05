@@ -38,8 +38,8 @@ def test_prefetch_generic_related(django_assert_num_queries):
         first_levels2.append(first_level)
 
     roots = [
-        Root.objects.create(content_object=choice(first_levels1))
-        for _ in range(5)
+        Root.objects.create(content_object=choice(first_levels1))  # noqa: S311
+        for _ in range(5)  # noqa: RUF100, S311
     ] + [Root.objects.create(content_object=choice(first_levels2)) for _ in range(5)]  # noqa: S311
 
     with django_assert_num_queries(0):

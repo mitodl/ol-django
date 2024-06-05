@@ -57,7 +57,7 @@ jobs:
         run: 'pants lint ::'
 
       # - name: Typecheck
-      #   run: 'pants typecheck ::'
+      #   run: 'pants check ::'
 
       - name: Tests
         run: 'pants test ::'

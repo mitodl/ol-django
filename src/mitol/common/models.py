@@ -131,8 +131,8 @@ class SingletonModel(Model):
 
     def save(  # noqa: D102
         self,
-        force_insert=False,
-        force_update=False,
+        force_insert=False,  # noqa: FBT002
+        force_update=False,  # noqa: FBT002
         using=None,
         update_fields=None,
     ):

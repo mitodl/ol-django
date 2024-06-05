@@ -27,6 +27,14 @@ root_patterns = [
   "/pants-plugins",
 ]
 
+# Increase batch sizes to account for Ruff rules that need to incorporate a whole
+# package space (e.g. I001)
+[lint]
+batch_size=1024
+
+[fix]
+batch_size=1024
+
 [test]
 extra_env_vars = [
   "DATABASE_URL",

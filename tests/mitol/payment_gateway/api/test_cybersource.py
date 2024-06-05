@@ -50,7 +50,7 @@ def response_payload(request):
 
     with open(  # noqa: PTH123
         os.path.join(  # noqa: PTH118
-            os.getcwd(),
+            os.getcwd(),  # noqa: PTH109
             "tests/data/payment_gateway/api",
             f"{request.param}.json",
         ),

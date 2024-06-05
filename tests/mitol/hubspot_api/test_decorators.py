@@ -13,7 +13,7 @@ def dummy_function(status):
 
 
 @pytest.mark.parametrize(
-    "status,expected_error",
+    "status,expected_error",  # noqa: PT006
     [[429, TooManyRequestsException], [500, ApiException]],  # noqa: PT007
 )
 def test_raise_429(status, expected_error):

@@ -8,7 +8,7 @@ import json
 import logging
 import re
 from enum import Enum
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Optional
 from urllib.parse import quote
 
 import requests
@@ -605,7 +605,7 @@ def find_object(
 
 def find_product(
     name: str,
-    price: str = None,
+    price: Optional[str] = None,  # noqa: FA100
     raise_count_error: bool = True,  # noqa: FBT001, FBT002
 ) -> SimplePublicObject:
     """
@@ -628,7 +628,7 @@ def find_product(
 
 def find_deal(
     name,
-    amount: str = None,
+    amount: Optional[str] = None,  # noqa: FA100
     raise_count_error: bool = True,  # noqa: FBT001, FBT002
 ) -> SimplePublicObject:
     """

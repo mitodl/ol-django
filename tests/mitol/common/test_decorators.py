@@ -8,7 +8,7 @@ from mitol.common.decorators import single_task
 
 def task_obj_lock(
     func_name: str,
-    args: List[object],
+    args: List[object],  # noqa: FA100
     kwargs: dict,
 ) -> str:  # @pylint:unused-argument
     """

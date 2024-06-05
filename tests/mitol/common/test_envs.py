@@ -147,7 +147,7 @@ def test_get_crontab_kwargs_invalid(env_var, default):
     with pytest.raises(ImproperlyConfigured):
         envs.get_crontab_kwargs(
             name="MISSING",
-            default=dict(invalid_key="*"),
+            default={"invalid_key": "*"},
             description="desc",
         )
 

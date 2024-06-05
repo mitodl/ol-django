@@ -21,7 +21,7 @@ class ApplicationAccessOrSettingsScopes(SettingsScopes):
         return super().get_available_scopes(
             application=application,
             request=request,
-            *args,
+            *args,  # noqa: B026
             **kwargs,
         )
 
@@ -37,6 +37,6 @@ class ApplicationAccessOrSettingsScopes(SettingsScopes):
         return super().get_default_scopes(
             application=application,
             request=request,
-            *args,
+            *args,  # noqa: B026
             **kwargs,
         )

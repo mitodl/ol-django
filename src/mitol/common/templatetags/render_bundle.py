@@ -35,7 +35,7 @@ def _get_bundle(request: HttpRequest, bundle_name: str) -> Iterator[dict]:
 
 @register.simple_tag(takes_context=True)
 def render_bundle(
-    context: Dict[str, Any],
+    context: Dict[str, Any],  # noqa: FA100
     bundle_name: str,
     added_attrs: str = "",
 ) -> SafeText:
