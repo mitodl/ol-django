@@ -1,0 +1,93 @@
+[project]
+name = "ol-django"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "MIT Open Learning Engineering", email = "odl-devops@mit.edu" }
+]
+dependencies = [
+  "beautifulsoup4>=4.6.0",
+  "cybersource-rest-client-python>=0.0.36",
+  "dj-database-url>=0.5.0",
+  "django-anymail>=6.0",
+  "django-oauth-toolkit>=1.3.3",
+  "django-redis~=5.0.0",
+  "django-webpack-loader>=0.7.0",
+  "django>=3.0",
+  "djangorestframework>=3.0.0",
+  "djoser==2.2.2",
+  "edx-opaque-keys==2.2.2",
+  "google-api-python-client==1.7.11",
+  "google-auth-oauthlib>=0.5.2",
+  "google-auth==1.6.3",
+  "html5lib>=1.1",
+  "hubspot-api-client==6.1.0",
+  "lxml>=4.6.1",
+  "pluggy==0.13.1",
+  "posthog>=3.5.0",
+  "premailer>=3.7.0",
+  "psycopg2-binary>=2.8.3",
+  "pygsheets==2.0.2",
+  "python-dateutil>=2.8.1",
+  "python3-saml>=1.10.1",
+  "pytz>=2020.4",
+  "requests>=2.20.0",
+  "setuptools",
+  "social-auth-app-django>=5.4.0",
+  "social-auth-core>=4.5.1",
+  "toolz>=0.10.0",
+  "urllib3>=1.26.5"
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+virtual = true
+dev-dependencies = [
+  "GitPython",
+  "bumpver",
+  "click",
+  "click-log",
+  "cloup",
+  "coverage==5.3",
+  "factory-boy~=3.2",
+  "faker==4.17.1",
+  "freezegun==1.0.0",
+  "ipdb",
+  "mypy",
+  "mypy-extensions",
+  "pytest",
+  "pytest-cov==2.10.1",
+  "pytest-django==3.10.0",
+  "pytest-lazy-fixture==0.6.3",
+  "pytest-mock==1.10.1",
+  "responses==0.12.1",
+  "ruff",
+  "scriv[toml]",
+  "semver",
+  "setuptools",
+  "toml",
+  "typing-extensions"
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+# [tool.hatch.build.targets.wheel]
+# packages = ["src/ol_django"]
+
+[tool.hatch.build.targets.sdist]
+include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]
+exclude = ["BUILD", "pyproject.toml"]
+
+[tool.hatch.build.targets.wheel]
+include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]
+exclude = ["BUILD", "pyproject.toml"]
+
+[tool.rye.workspace]
+members = ["src/*"]
