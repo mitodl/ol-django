@@ -91,3 +91,32 @@ exclude = ["BUILD", "pyproject.toml"]
 
 [tool.rye.workspace]
 members = ["src/*"]
+
+[tool.pytest.ini_options]
+addopts = "--cov . --cov-report term --cov-report html --cov-report xml --reuse-db"
+norecursedirs = ".git .tox .* CVS _darcs {arch} *.egg dist"
+
+[tool.mypy]
+namespace_packages = true
+plugins = [
+  "mypy_django_plugin.main",
+  "mypy_drf_plugin.main"
+]
+
+[[tool.mypy.overrides]]
+module = "django-stubs"
+django_settings_module = "testapp.settings.test"
+
+[[tool.mypy.overrides]]
+module = [
+  "mypy-factory.*",
+  "mypy-freezegun.*",
+  "mypy-pytest.*",
+  "mypy-oauth2_provider.*",
+  "mypy-responses.*",
+  "mypy-anymail.*",
+  "mypy-bs4.*",
+  "mypy-premailer.*",
+  "mypy-toolz.*",
+  "mypy-dj_database_url.*",
+]

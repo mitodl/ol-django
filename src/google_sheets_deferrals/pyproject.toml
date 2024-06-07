@@ -1,6 +1,9 @@
 [project]
 name = "mitol-django-google-sheets-deferrals"
 version = "2023.12.19"
+dependencies = [
+  "mitol-django-common"
+]
 
 [tool.bumpver]
 current_version = "2023.12.19"
