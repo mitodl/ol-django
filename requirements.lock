@@ -8,19 +8,31 @@
 #   with-sources: false
 #   generate-hashes: false
 
--e file:src/mitol/authentication
--e file:src/mitol/common
--e file:src/mitol/digitalcredentials
--e file:src/mitol/geoip
--e file:src/mitol/google_sheets
--e file:src/mitol/google_sheets_deferrals
--e file:src/mitol/google_sheets_refunds
--e file:src/mitol/hubspot_api
--e file:src/mitol/mail
--e file:src/mitol/oauth_toolkit_extensions
--e file:src/mitol/olposthog
--e file:src/mitol/openedx
--e file:src/mitol/payment_gateway
+-e file:src/authentication
+-e file:src/common
+    # via mitol-django-authentication
+    # via mitol-django-digitalcredentials
+    # via mitol-django-geoip
+    # via mitol-django-google-sheets
+    # via mitol-django-google-sheets-deferrals
+    # via mitol-django-google-sheets-refunds
+    # via mitol-django-hubspot-api
+    # via mitol-django-mail
+    # via mitol-django-oauth-toolkit-extensions
+    # via mitol-django-olposthog
+    # via mitol-django-openedx
+    # via mitol-django-payment-gateway
+-e file:src/digitalcredentials
+-e file:src/geoip
+-e file:src/google_sheets
+-e file:src/google_sheets_deferrals
+-e file:src/google_sheets_refunds
+-e file:src/hubspot_api
+-e file:src/mail
+-e file:src/oauth_toolkit_extensions
+-e file:src/olposthog
+-e file:src/openedx
+-e file:src/payment_gateway
 asgiref==3.8.1
     # via django
 async-timeout==4.0.3

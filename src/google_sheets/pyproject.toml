@@ -1,9 +1,12 @@
 [project]
 name = "mitol-django-google-sheets"
-version = "2024.7.3"
+version = "2023.12.19.1"
+dependencies = [
+  "mitol-django-common"
+]
 
 [tool.bumpver]
-current_version = "2024.7.3"
+current_version = "2023.12.19.1"
 version_pattern = "YYYY.MM.DD[.INC0]"
 
 [tool.bumpver.file_patterns]

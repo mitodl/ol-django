@@ -2,6 +2,9 @@
 name = "mitol-django-authentication"
 description = "MIT Open Learning django app extensions for oauth toolkit"
 version = "2023.12.19"
+dependencies = [
+  "mitol-django-common"
+]
 
 [tool.bumpver]
 current_version = "2023.12.19"

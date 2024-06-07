@@ -23,51 +23,17 @@ USER dev
 WORKDIR /home/dev
 
 # ===================================================================
-FROM base as pyenv
-
-RUN curl https://pyenv.run | bash
-RUN <<EOT bash
-    echo 'export PYENV_ROOT="\$HOME/.pyenv"' >> ~/.bashrc
-    echo 'command -v pyenv >/dev/null || export PATH="\$PYENV_ROOT/bin:\$PATH"' >> ~/.bashrc
-    echo 'eval "\$(pyenv init -)"' >> ~/.bashrc
-    echo 'export PYENV_ROOT="\$HOME/.pyenv"' >> ~/.profile
-    echo 'command -v pyenv >/dev/null || export PATH="\$PYENV_ROOT/bin:\$PATH"' >> ~/.profile
-    echo 'eval "\$(pyenv init -)"' >> ~/.profile
-EOT
-
-# ===================================================================
-FROM pyenv as py38
-RUN pyenv install 3.8
-
-# ===================================================================
-FROM pyenv as py39
-RUN pyenv install 3.9
-
-# ===================================================================
-FROM pyenv as py310
-RUN pyenv install 3.10
-
-# ===================================================================
-FROM pyenv as py311
-RUN pyenv install 3.11
+FROM base as rye
+curl -sSf https://rye.astral.sh/get | bash
 
 # ===================================================================
 FROM pyenv as shell
 
-
-RUN curl --proto '=https' --tlsv1.2 -fsSL https://static.pantsbuild.org/setup/get-pants.sh | bash
-RUN <<EOT bash
-    echo 'export PATH="$PATH:\$HOME/.local/bin"' >> ~/.bashrc
-EOT
+ENV PATH="${PATH}:/home/dev/bin"
 
 # the pants installer puts things in ~/cache/nce and it needs to be persistent
 RUN mkdir -p .cache && chown dev:dev .cache
 
-# these are all separate stages to make them build in parallel
-COPY --from=py38 /home/dev/.pyenv/versions ./.pyenv/versions/
-COPY --from=py39 /home/dev/.pyenv/versions ./.pyenv/versions/
-COPY --from=py310 /home/dev/.pyenv/versions ./.pyenv/versions/
-COPY --from=py311 /home/dev/.pyenv/versions ./.pyenv/versions/
 
 VOLUME /home/dev/.cache
 WORKDIR /home/dev/src

@@ -1,6 +1,9 @@
 [project]
 name = "mitol-django-olposthog"
 version = "2024.5.14"
+dependencies = [
+  "mitol-django-common"
+]
 
 [tool.bumpver]
 current_version = "2024.5.14"
