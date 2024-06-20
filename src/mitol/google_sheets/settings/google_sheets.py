@@ -47,6 +47,13 @@ MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID = get_string(
         "ID of the Google Sheet that contains the enrollment change request worksheets (refunds, transfers, etc)"
     ),
 )
+MITOL_GOOGLE_SHEETS_PROCESS_ONLY_LAST_ROWS_NUM = get_string(
+    name="MITOL_GOOGLE_SHEETS_PROCESS_ONLY_LAST_ROWS_NUM",
+    default=30,
+    description=(
+        "Process only the last N rows of data. If set to 0 then process all rows. "
+    ),
+)
 MITOL_GOOGLE_SHEETS_DATE_FORMAT = get_string(
     name="MITOL_GOOGLE_SHEETS_DATE_FORMAT",
     default="%m/%d/%Y",

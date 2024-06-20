@@ -98,7 +98,7 @@ class SheetHandler:
         # By default, the first worksheet of the spreadsheet should be used
         return self.spreadsheet.sheet1
 
-    def get_enumerated_rows(self):
+    def get_enumerated_rows(self, from_row=None):
         """
         Yields enumerated data rows of a spreadsheet (excluding header row(s))
 
@@ -108,7 +108,7 @@ class SheetHandler:
         """
         yield from enumerate(
             get_data_rows(self.worksheet, include_trailing_empty=False),
-            start=GOOGLE_SHEET_FIRST_ROW + 1,
+            start=from_row if from_row is not None else (GOOGLE_SHEET_FIRST_ROW + 1),
         )
 
     def update_completed_rows(self, success_row_results):
