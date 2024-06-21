@@ -39,6 +39,7 @@ MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_SECRET=<Client secret from step 1>
 MITOL_GOOGLE_SHEETS_DRIVE_API_PROJECT_ID=<Project ID from step 2>
 MITOL_GOOGLE_SHEETS_PROCESSOR_APP_NAME=<Name of the app processing the request>
 MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID=<Change of enrollment request sheet ID from step 3>
+MITOL_GOOGLE_SHEETS_PROCESS_ONLY_LAST_ROWS_NUM=<Optional: the number of rows to process from the bottom>
 ```
 
 

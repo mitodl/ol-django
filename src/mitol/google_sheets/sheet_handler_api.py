@@ -100,7 +100,8 @@ class SheetHandler:
 
     def get_enumerated_rows(self, from_row=None):
         """
-        Yields enumerated data rows of a spreadsheet (excluding header row(s))
+        Yields enumerated data rows of a spreadsheet (excluding header row(s)) or
+        from a specified row.
 
         Yields:
             Tuple[int, List[str]]: Row index (according to the Google Sheet, NOT zero-indexed) paired with the list
