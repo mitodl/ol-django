@@ -32,6 +32,7 @@ To perform a release, run:
 
 #### Use the docker-compose container (recommended)
 
+- You'll need to make sure other users (the docker container user), can write to the repo root directory. Run `chmod o+w .`
 - Run `docker compose run --rm shell bash` to get a clean sandbox environment
 
 #### Use on your host system

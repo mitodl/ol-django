@@ -52,18 +52,16 @@ FROM pyenv as py311
 RUN pyenv install 3.11
 
 # ===================================================================
-FROM base as pants
-RUN curl --proto '=https' --tlsv1.2 -fsSL https://static.pantsbuild.org/setup/get-pants.sh | bash
-
-# ===================================================================
 FROM pyenv as shell
 
-ENV PATH="${PATH}:/home/dev/bin"
+
+RUN curl --proto '=https' --tlsv1.2 -fsSL https://static.pantsbuild.org/setup/get-pants.sh | bash
+RUN <<EOT bash
+    echo 'export PATH="$PATH:\$HOME/.local/bin"' >> ~/.bashrc
+EOT
 
 # the pants installer puts things in ~/cache/nce and it needs to be persistent
 RUN mkdir -p .cache && chown dev:dev .cache
-
-COPY --from=pants /home/dev/bin ./bin
 
 # these are all separate stages to make them build in parallel
 COPY --from=py38 /home/dev/.pyenv/versions ./.pyenv/versions/
