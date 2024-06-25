@@ -1,4 +1,4 @@
-from fnmatch import fnmatch
+from fnmatch import fnmatch  # noqa: D100
 from os import makedirs
 from textwrap import indent
 
@@ -18,10 +18,10 @@ from mitol.build_support.project import Project
 
 @group("changelog")
 @pass_context
-def changelog(ctx):
+def changelog(ctx):  # noqa: ARG001
     """Manage application changelogs"""
 
-    makedirs("changelog.d", exist_ok=True)
+    makedirs("changelog.d", exist_ok=True)  # noqa: PTH103
 
 
 changelog.add_command(app_option(create))
@@ -32,7 +32,7 @@ changelog.add_command(app_option(collect))
 @app_option
 @pass_app
 @pass_context
-def list_all(ctx: Context, app: App):
+def list_all(ctx: Context, app: App):  # noqa: ARG001
     """Print out the current set of changes"""
     scriv = Scriv()
     fragments = scriv.fragments_to_combine()
@@ -71,7 +71,7 @@ def _echo_change(change: Diff):
 @simple_verbosity_option()
 @pass_project
 @pass_context
-def check(ctx: Context, project: Project, base: str, target: str):
+def check(ctx: Context, project: Project, base: str, target: str):  # noqa: C901
     """Check for missing changelogs"""
     base_commit = project.repo.commit(base)
     target_commit = project.repo.commit(target)
@@ -84,7 +84,7 @@ def check(ctx: Context, project: Project, base: str, target: str):
         excluded_paths = [app_rel_path / "changelog.d/*", app_rel_path / "CHANGELOG.md"]
 
         def _is_excluded(path):
-            return any([fnmatch(path, exclude) for exclude in excluded_paths])
+            return any([fnmatch(path, exclude) for exclude in excluded_paths])  # noqa: B023, C419
 
         source_changes = [
             change
@@ -100,7 +100,7 @@ def check(ctx: Context, project: Project, base: str, target: str):
 
         # If there's changes to the base requirements.txt, then we need to allow for
         # changelogs to exist without the app code changing. There won't necessarily be
-        # changes in the individual apps if we're just updating project-wide dependencies.
+        # changes in the individual apps if we're just updating project-wide dependencies.  # noqa: E501
         # So, if there's no source changes, check if there's been changes to the
         # requirements, and treat that as source changes.
 
@@ -121,7 +121,7 @@ def check(ctx: Context, project: Project, base: str, target: str):
             echo("")
         elif not has_source_changes and has_changelogd_changes:
             echo(
-                f"Changelog(s) are present in {app_rel_path} but there are no source changes:"
+                f"Changelog(s) are present in {app_rel_path} but there are no source changes:"  # noqa: E501
             )
             for change in changelogd_changes:
                 _echo_change(change)

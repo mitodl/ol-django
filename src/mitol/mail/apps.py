@@ -1,4 +1,5 @@
 """Mail app AppConfigs"""
+
 import os
 
 from django.apps import AppConfig
@@ -12,4 +13,4 @@ class MailApp(AppConfig):
     verbose_name = "Mail"
 
     # necessary because this is a namespaced app
-    path = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.dirname(os.path.abspath(__file__))  # noqa: PTH100, PTH120

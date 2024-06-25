@@ -1,4 +1,5 @@
 """SAML-specific auth views"""
+
 from django.http import HttpRequest, HttpResponse
 from django.urls import reverse
 from social_django.utils import load_backend, load_strategy

@@ -1,4 +1,5 @@
 """Webpack utilities"""
+
 from django.conf import settings
 from django.http import HttpRequest
 from django.templatetags.static import static
@@ -27,6 +28,6 @@ def webpack_dev_server_url(request: HttpRequest) -> str:
     """
     Get the full URL where the webpack dev server should be running
     """
-    return "http://{}:{}".format(
-        webpack_dev_server_host(request), settings.WEBPACK_DEV_SERVER_PORT
+    return (
+        f"http://{webpack_dev_server_host(request)}:{settings.WEBPACK_DEV_SERVER_PORT}"
     )

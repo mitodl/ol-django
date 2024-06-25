@@ -10,12 +10,12 @@ class UserFactory(DjangoModelFactory):
     User factory for default django model
 
     This expects the user model to be django.contrib.auth.models.User or a subclass of it
-    """
+    """  # noqa: E501
 
     username = Sequence(lambda n: f"user-{n}")
     email = Sequence(lambda n: f"user-{n}@example.com")
     first_name = Faker("first_name")
     last_name = Faker("first_name")
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = get_user_model()

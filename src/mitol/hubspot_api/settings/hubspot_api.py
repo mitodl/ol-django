@@ -1,6 +1,6 @@
 """
 Hubspot settings
-"""
+"""  # noqa: INP001
 
 from mitol.common.envs import get_int, get_string
 

@@ -1,4 +1,4 @@
-from functools import wraps
+from functools import wraps  # noqa: D100
 
 from click import Choice, Command, make_pass_decorator, option
 from cloup import Context, pass_context
@@ -13,9 +13,9 @@ pass_app = make_pass_decorator(App)
 def _apply_app_option(func):
     """
     Adds an option -a/--app for the application directory
-    """
+    """  # noqa: D401
 
-    def _app_option(ctx: Context, param: str, value: str) -> str:
+    def _app_option(ctx: Context, param: str, value: str) -> str:  # noqa: ARG001
         app = ctx.ensure_object(App)
         app.module_name = value
         return value
@@ -49,11 +49,11 @@ def with_app(func):
 
 
 def app_option(func):
-    """Configures a command with a contextual app"""
+    """Configures a command with a contextual app"""  # noqa: D401
     return with_app(_apply_app_option(func))
 
 
-def _no_require_main_callback(ctx: Context, param: str, value: bool) -> bool:
+def _no_require_main_callback(ctx: Context, param: str, value: bool) -> bool:  # noqa: FBT001, ARG001
     if not value:
         project = ctx.find_object(Project)
         if project.repo.active_branch.name != "main":
@@ -72,14 +72,14 @@ no_require_main = option(
 )
 
 
-def require_no_changes(func):
+def require_no_changes(func):  # noqa: D103
     @wraps(func)
     @pass_project
     @pass_context
     def wrapper(ctx: Context, project: Project, *args, **kwargs):
         if project.repo.is_dirty():
             ctx.fail(
-                "Cannot proceed with local git changes present.\n\nCommit or remove them and try again."
+                "Cannot proceed with local git changes present.\n\nCommit or remove them and try again."  # noqa: E501
             )
 
         return ctx.invoke(func, *args, **kwargs)

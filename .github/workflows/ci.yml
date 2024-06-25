@@ -54,10 +54,10 @@ jobs:
         run: bash ./.github/workflows/scripts/prune_pants_cache.sh
 
       - name: Lints
-        run: 'pants lint ::'
+        run: 'pants lint --extend-ignore=I001 ::'
 
       # - name: Typecheck
-      #   run: 'pants typecheck ::'
+      #   run: 'pants check ::'
 
       - name: Tests
         run: 'pants test ::'

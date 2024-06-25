@@ -1,17 +1,17 @@
 """Views tests"""
+
 from http import HTTPStatus
 
 import pytest
 import responses
 from django.urls import reverse
+from mitol.digitalcredentials.backend import create_deep_link_url
+from mitol.digitalcredentials.models import DigitalCredentialRequest
 from rest_framework.test import APIClient
 from testapp.factories import (
     DemoCoursewareDigitalCredentialRequestFactory,
     DemoCoursewareFactory,
 )
-
-from mitol.digitalcredentials.backend import create_deep_link_url
-from mitol.digitalcredentials.models import DigitalCredentialRequest
 
 pytestmark = pytest.mark.django_db
 

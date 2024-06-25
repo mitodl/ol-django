@@ -1,17 +1,20 @@
 # testing
 coverage==5.3
+django-stubs>=1.13.1
+djangorestframework-stubs[compatible-mypy]>=3.0.0
 factory-boy~=3.2
 faker==4.17.1
 freezegun==1.0.0
 ipdb
-mypy-extensions==0.4.3
-mypy==0.782
-pylint-django==2.3.0
-pylint-plugin-utils==0.6
+ipython
+mypy-extensions==1.0.0
+mypy==1.10.0
+pytest
 pytest-cov==2.10.1
 pytest-django==3.10.0
-pytest-mock==1.10.1
-pytest
 pytest-lazy-fixture==0.6.3
+pytest-mock==1.10.1
+pytest-xdist<3,>=2.5
 responses==0.12.1
+ruff==0.4.7
 typing-extensions

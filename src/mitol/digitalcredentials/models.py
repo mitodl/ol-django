@@ -1,4 +1,5 @@
 """Digital credentials models"""
+
 import uuid
 from hashlib import sha256
 
@@ -28,8 +29,8 @@ class DigitalCredentialRequest(TimestampedModel):
 
     consumed = models.BooleanField(default=False)
 
-    def __str__(self):
-        return f"Credential request uuid={self.uuid} learner={self.learner} courseware={self.credentialed_object}"
+    def __str__(self):  # noqa: D105
+        return f"Credential request uuid={self.uuid} learner={self.learner} courseware={self.credentialed_object}"  # noqa: E501
 
 
 class LearnerDID(TimestampedModel):
@@ -46,7 +47,7 @@ class LearnerDID(TimestampedModel):
         return sha256(did.encode("ascii")).hexdigest()
 
     def save(self, *args, **kwargs):
-        """Override save() to hash the did"""
+        """Override save() to hash the did"""  # noqa: D402
         self.did_sha256 = self.sha256_hash_did(self.did)
         return super().save(*args, **kwargs)
 
@@ -65,5 +66,5 @@ class DigitalCredential(TimestampedModel):
 
     credential_json = models.TextField()  # for now, just store the JSON as plaintext
 
-    def __str__(self):
-        return f"Digital credential learner={self.learner} did={self.learner_did.did} courseware={self.credentialed_object}"
+    def __str__(self):  # noqa: D105
+        return f"Digital credential learner={self.learner} did={self.learner_did.did} courseware={self.credentialed_object}"  # noqa: E501

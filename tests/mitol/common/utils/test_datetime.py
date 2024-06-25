@@ -1,8 +1,8 @@
 """Utils tests"""
+
 from datetime import datetime, timedelta
 
 import pytz
-
 from mitol.common.utils.datetime import is_near_now, now_in_utc
 
 

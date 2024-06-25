@@ -1,8 +1,9 @@
 """Test views"""
-from rest_framework.viewsets import ModelViewSet
-from testapp.models import DemoCourseware
 
 from mitol.digitalcredentials.mixins import DigitalCredentialsRequestViewSetMixin
+from rest_framework.viewsets import ModelViewSet
+
+from testapp.models import DemoCourseware
 
 
 class DemoCoursewareViewSet(ModelViewSet, DigitalCredentialsRequestViewSetMixin):

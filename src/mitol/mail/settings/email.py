@@ -22,7 +22,7 @@ EMAIL_RECIPIENT_OVERRIDE = get_string(
 EMAIL_BACKEND = get_string(
     name=app_namespaced("EMAIL_BACKEND"),
     default="django.core.mail.backends.smtp.EmailBackend",
-    description="The default email backend to use for outgoing email. This is used in some places by django itself. See `NOTIFICATION_EMAIL_BACKEND` for the backend used for most application emails.",
+    description="The default email backend to use for outgoing email. This is used in some places by django itself. See `NOTIFICATION_EMAIL_BACKEND` for the backend used for most application emails.",  # noqa: E501
 )
 EMAIL_HOST = get_string(
     name=app_namespaced("EMAIL_HOST"),

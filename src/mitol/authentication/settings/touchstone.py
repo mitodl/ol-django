@@ -1,4 +1,5 @@
 """Touchstone configuration settings"""
+
 from urllib.parse import urlparse
 
 from mitol.common.envs import get_bool, get_site_name, get_string

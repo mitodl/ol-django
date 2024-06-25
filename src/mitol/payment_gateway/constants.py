@@ -1,4 +1,5 @@
 """Constants for the Payment Gateway."""
+
 MITOL_PAYMENT_GATEWAY_CYBERSOURCE = "CyberSource"
 
 CYBERSOURCE_DECISION_ACCEPT = "ACCEPT"

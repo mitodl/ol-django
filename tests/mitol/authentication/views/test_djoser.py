@@ -1,4 +1,5 @@
 """Test Cases for Djoser Views"""
+
 import pytest
 from django.urls import reverse
 from rest_framework import status
@@ -8,8 +9,8 @@ pytestmark = pytest.mark.django_db
 EMAIL = "email@example.com"
 
 
-@pytest.fixture
-def user():
+@pytest.fixture()
+def user():  # noqa: D103
     from mitol.common.factories import UserFactory
 
     return UserFactory.create(email=EMAIL)
@@ -19,14 +20,14 @@ class TestDjoserView:
     """Tests for views that modify Djoser views"""
 
     @pytest.mark.parametrize(
-        "response_status,expected_session_update",
+        "response_status,expected_session_update",  # noqa: PT006
         [
-            [status.HTTP_200_OK, True],
-            [status.HTTP_204_NO_CONTENT, True],
-            [status.HTTP_400_BAD_REQUEST, False],
+            [status.HTTP_200_OK, True],  # noqa: PT007
+            [status.HTTP_204_NO_CONTENT, True],  # noqa: PT007
+            [status.HTTP_400_BAD_REQUEST, False],  # noqa: PT007
         ],
     )
-    def test_password_change_session_update(
+    def test_password_change_session_update(  # noqa: PLR0913
         self, mocker, response_status, expected_session_update, client, user
     ):
         """

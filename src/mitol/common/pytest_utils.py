@@ -1,4 +1,5 @@
 """Pytest testing utils"""
+
 import abc
 import json
 import logging
@@ -17,9 +18,9 @@ def any_instance_of(*cls):
 
     Returns:
         AnyInstanceOf: dynamic class type with the desired equality
-    """
+    """  # noqa: D401
 
-    class AnyInstanceOf(metaclass=abc.ABCMeta):
+    class AnyInstanceOf(metaclass=abc.ABCMeta):  # noqa: B024
         """Dynamic class type for __eq__ in terms of isinstance"""
 
         def __eq__(self, other):
@@ -32,12 +33,12 @@ def any_instance_of(*cls):
 
 @contextmanager
 def assert_not_raises():
-    """Used to assert that the context does not raise an exception"""
+    """Used to assert that the context does not raise an exception"""  # noqa: D401
     try:
         yield
     except AssertionError:
         raise
-    except Exception:
+    except Exception:  # noqa: BLE001
         pytest.fail(f"An exception was not raised: {traceback.format_exc()}")
 
 
@@ -46,7 +47,7 @@ class MockResponse:
     Mock requests.Response
     """
 
-    def __init__(
+    def __init__(  # noqa: D107
         self, content, status_code=200, content_type="application/json", url=None
     ):
         if isinstance(content, (dict, list)):
@@ -76,17 +77,17 @@ def test_app_json_modified():
 
     envs.reload()
 
-    with open("app.json") as app_json_file:
+    with open("app.json") as app_json_file:  # noqa: PTH123
         app_json = json.load(app_json_file)
 
     generated_app_json = envs.generate_app_json()
 
     if app_json != generated_app_json:
         logging.error(
-            "Generated app.json does not match the app.json file. To fix this, run `./manage.py generate_app_json`"
+            "Generated app.json does not match the app.json file. To fix this, run `./manage.py generate_app_json`"  # noqa: E501
         )
 
     # pytest will print the difference
-    assert json.dumps(app_json, sort_keys=True, indent=2) == json.dumps(
+    assert json.dumps(app_json, sort_keys=True, indent=2) == json.dumps(  # noqa: S101
         generated_app_json, sort_keys=True, indent=2
     )

@@ -1,8 +1,8 @@
 """API tests"""
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
-
 from mitol.mail.api import (
     build_message,
     can_email_user,
@@ -19,9 +19,9 @@ pytestmark = [pytest.mark.django_db, pytest.mark.usefixtures("email_settings")]
 User = get_user_model()
 
 
-@pytest.fixture
-def email_settings(settings):
-    """Default settings for email tests"""
+@pytest.fixture()
+def email_settings(settings):  # noqa: PT004
+    """Default settings for email tests"""  # noqa: D401
     settings.MITOL_MAIL_RECIPIENT_OVERRIDE = None
 
 
@@ -218,7 +218,7 @@ def test_get_connection(settings, mocker, use_default):
 
 
 @pytest.mark.parametrize(
-    "shared_context, expected_context",
+    "shared_context, expected_context",  # noqa: PT006
     [({"a": 1}, {"a": 1, "b": 2}), ({}, {"b": 2}), (None, {"b": 2})],
 )
 def test_get_message_sender(mocker, shared_context, expected_context):

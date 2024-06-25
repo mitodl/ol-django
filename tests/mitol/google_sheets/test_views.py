@@ -1,14 +1,14 @@
 """Tests for sheets app views"""
+
 import pytest
 from django.test.client import RequestFactory
 from django.urls import reverse
-from pytest_lazyfixture import lazy_fixture
-from rest_framework import status
-from testapp.utils import set_request_session
-
 from mitol.google_sheets.factories import GoogleApiAuthFactory
 from mitol.google_sheets.models import GoogleApiAuth
 from mitol.google_sheets.views import complete_google_auth
+from pytest_lazyfixture import lazy_fixture
+from rest_framework import status
+from testapp.utils import set_request_session
 
 lazy = lazy_fixture
 
@@ -53,7 +53,7 @@ def test_request_auth(mocker, settings, staff_client):
 
 
 @pytest.mark.parametrize("existing_auth", [lazy("google_api_auth"), None])
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_complete_auth(mocker, settings, learner, existing_auth):
     """
     View that handles Google auth completion should fetch a token and save/update a

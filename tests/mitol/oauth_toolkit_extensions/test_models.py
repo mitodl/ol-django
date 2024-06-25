@@ -1,6 +1,6 @@
 """Admin interfaces"""
-import pytest
 
+import pytest
 from mitol.oauth_toolkit_extensions.factories import ApplicationAccessFactory
 
 pytestmark = pytest.mark.django_db

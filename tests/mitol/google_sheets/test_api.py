@@ -1,14 +1,14 @@
 """Sheets API tests"""
+
 import pytest
 from django.core.exceptions import ImproperlyConfigured
 from google.oauth2.credentials import Credentials
-
 from mitol.google_sheets.api import get_credentials
 from mitol.google_sheets.constants import REQUIRED_GOOGLE_API_SCOPES
 from mitol.google_sheets.factories import GoogleApiAuthFactory
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_get_credentials_service_account(mocker, settings):
     """
     get_credentials should construct a valid Credentials object from app settings using Service Account auth
@@ -25,9 +25,7 @@ def test_get_credentials_service_account(mocker, settings):
         get_credentials()
 
     settings.MITOL_GOOGLE_SHEETS_ADMIN_EMAILS.append(
-        "service-account@mitol.{}".format(
-            settings.MITOL_GOOGLE_SHEETS_GOOGLE_ACCOUNT_EMAIL_DOMAIN
-        )
+        f"service-account@mitol.{settings.MITOL_GOOGLE_SHEETS_GOOGLE_ACCOUNT_EMAIL_DOMAIN}"
     )
     creds = get_credentials()
 
@@ -37,7 +35,7 @@ def test_get_credentials_service_account(mocker, settings):
     assert creds == patched_svc_account_creds.from_service_account_info.return_value
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_get_credentials_personal_auth(settings):
     """
     get_credentials should construct a valid Credentials object from data and app settings using personal

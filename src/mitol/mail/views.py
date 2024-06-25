@@ -1,4 +1,5 @@
 """Mail views"""
+
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -16,12 +17,12 @@ class EmailDebuggerView(View):
     template_name = "mail/email_debugger.html"
 
     def get(self, request):
-        """Displays the debugger UI"""
+        """Displays the debugger UI"""  # noqa: D401
         form = self.form_cls(initial={})
         return render(request, self.template_name, {"form": form})
 
     def post(self, request):  # pragma: no cover
-        """Renders a test email"""
+        """Renders a test email"""  # noqa: D401
         form = self.form_cls(request.POST)
 
         if not form.is_valid():

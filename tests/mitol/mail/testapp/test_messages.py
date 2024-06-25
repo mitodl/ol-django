@@ -1,4 +1,5 @@
 """Messages tests"""
+
 from testapp.messages import SampleMessage
 
 

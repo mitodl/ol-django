@@ -1,4 +1,5 @@
 """Requests utilities"""
+
 import logging
 from http import HTTPStatus
 
@@ -17,8 +18,8 @@ def get_error_response_summary(response: Response) -> str:
 
     Returns:
         str: A summary of the error response
-    """
-    # If the response is an HTML document, include the URL in the summary but not the raw HTML
+    """  # noqa: E501, D401
+    # If the response is an HTML document, include the URL in the summary but not the raw HTML  # noqa: E501
     if "text/html" in response.headers.get("Content-Type", ""):
         summary_dict = {"url": response.url, "content": "(HTML body ignored)"}
     else:
@@ -36,7 +37,7 @@ def is_json_response(response: Response) -> bool:
 
     Returns:
         bool: True if this response is JSON-parseable
-    """
+    """  # noqa: D401
     return response.headers.get("Content-Type") == "application/json"
 
 
@@ -53,8 +54,8 @@ def request_get_with_timeout_retry(url: str, retries: int) -> Response:
 
     Raises:
         requests.exceptions.HTTPError: Raised if the response has a status code indicating an error
-    """
-    resp = requests.get(url)
+    """  # noqa: E501, D401
+    resp = requests.get(url)  # noqa: S113
     # If there was a timeout (504), retry before giving up
     tries = 1
     while resp.status_code == HTTPStatus.GATEWAY_TIMEOUT and tries <= retries:
@@ -62,6 +63,6 @@ def request_get_with_timeout_retry(url: str, retries: int) -> Response:
         log.warning(
             "GET request timed out (%s). Retrying for attempt %d...", url, tries
         )
-        resp = requests.get(url)
+        resp = requests.get(url)  # noqa: S113
     resp.raise_for_status()
     return resp

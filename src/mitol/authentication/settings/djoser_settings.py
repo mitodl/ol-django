@@ -1,8 +1,8 @@
-from mitol.common.envs import get_string
+from mitol.common.envs import get_string  # noqa: D100
 
 # Relative URL to be used by Djoser for the link in the password reset email
 # (see: http://djoser.readthedocs.io/en/stable/settings.html#password-reset-confirm-url)
-PASSWORD_RESET_CONFIRM_URL = "password_reset/confirm/{uid}/{token}/"
+PASSWORD_RESET_CONFIRM_URL = "password_reset/confirm/{uid}/{token}/"  # noqa: S105
 
 # Djoser library settings (see: http://djoser.readthedocs.io/en/stable/settings.html)
 MITOL_AUTHENTICATION_FROM_EMAIL = get_string(
@@ -24,9 +24,9 @@ DJOSER = {
     "PASSWORD_RESET_CONFIRM_RETYPE": True,
     "PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND": False,
     "EMAIL": {
-        "password_reset": "mitol.authentication.views.djoser_views.CustomPasswordResetEmail"
+        "password_reset": "mitol.authentication.views.djoser_views.CustomPasswordResetEmail"  # noqa: E501
     },
     "SERIALIZERS": {
-        "password_reset": "mitol.authentication.serializers.djoser_serializers.CustomSendEmailResetSerializer"
+        "password_reset": "mitol.authentication.serializers.djoser_serializers.CustomSendEmailResetSerializer"  # noqa: E501
     },
 }

@@ -1,4 +1,5 @@
 """Common settings"""
+
 from mitol.common.envs import app_namespaced, get_string
 
 SITE_BASE_URL = get_string(

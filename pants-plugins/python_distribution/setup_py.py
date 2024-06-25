@@ -1,45 +1,47 @@
 """Plugin for releases"""
-from os.path import join
-import re
 
-from pants.backend.python.goals.setup_py import SetupKwargs, SetupKwargsRequest
+import re
+from os.path import join
+
+import toml
+from pants.backend.python.util_rules.package_dists import (
+    SetupKwargs,
+    SetupKwargsRequest,
+)
+from pants.engine.fs import DigestContents, GlobMatchErrorBehavior, PathGlobs
 from pants.engine.rules import Get, collect_rules, rule
 from pants.engine.target import Target
 from pants.engine.unions import UnionRule
-from pants.util.frozendict import FrozenDict
-from pants.engine.fs import DigestContents, GlobMatchErrorBehavior, PathGlobs
-import toml
-
 
 VAR_RE = re.compile(r"""(.+)\s=\s[\"'](.+)[\"']""")
 STANDARD_CLASSIFIERS = [
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8"
-
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
-DEFAULT_SETUP_KWARGS = dict(
+DEFAULT_SETUP_KWARGS = dict(  # noqa: C408
     authors=["MIT Office of Open Learning <mitx-devops@mit.edu>"],
     license="BSD 3-Clause License",
     long_description_content_type="text/markdown",
     zip_safe=True,
 )
 
-class PantsSetupKwargsRequest(SetupKwargsRequest):
+
+class PantsSetupKwargsRequest(SetupKwargsRequest):  # noqa: D101
     @classmethod
-    def is_applicable(cls, _: Target) -> bool:
-        # We always use our custom `setup()` kwargs generator for `python_distribution` targets in
+    def is_applicable(cls, _: Target) -> bool:  # noqa: D102
+        # We always use our custom `setup()` kwargs generator for `python_distribution` targets in  # noqa: E501
         # this repo.
         return True
 
 
 @rule
-async def pants_setup_kwargs(
-    request: PantsSetupKwargsRequest
-) -> SetupKwargs:
+async def pants_setup_kwargs(request: PantsSetupKwargsRequest) -> SetupKwargs:  # noqa: D103
     kwargs = request.explicit_kwargs.copy()
     path = request.target.address.spec_path
 
@@ -47,7 +49,7 @@ async def pants_setup_kwargs(
     pyproject_contents = await Get(
         DigestContents,
         PathGlobs(
-            [join(path, "pyproject.toml")],
+            [join(path, "pyproject.toml")],  # noqa: PTH118
             description_of_origin="`setup_py()` plugin",
             glob_match_error_behavior=GlobMatchErrorBehavior.error,
         ),
@@ -58,7 +60,7 @@ async def pants_setup_kwargs(
     readme_contents = await Get(
         DigestContents,
         PathGlobs(
-            [join(path, "README.md")],
+            [join(path, "README.md")],  # noqa: PTH118
             description_of_origin="`setup_py()` plugin",
             glob_match_error_behavior=GlobMatchErrorBehavior.error,
         ),
@@ -73,5 +75,5 @@ async def pants_setup_kwargs(
     return SetupKwargs(kwargs, address=request.target.address)
 
 
-def rules():
+def rules():  # noqa: D103
     return (*collect_rules(), UnionRule(SetupKwargsRequest, PantsSetupKwargsRequest))

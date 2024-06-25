@@ -1,4 +1,4 @@
-from click import echo, pass_context
+from click import echo, pass_context  # noqa: D100
 from cloup import Context, group, option
 
 from mitol.build_support.apps import App
@@ -14,7 +14,7 @@ from mitol.build_support.project import Project
 
 
 @group()
-def release():
+def release():  # noqa: D103
     pass
 
 
@@ -31,7 +31,7 @@ def release():
 @pass_app
 @pass_project
 @pass_context
-def create(ctx: Context, project: Project, app: App, push: bool):
+def create(ctx: Context, project: Project, app: App, push: bool):  # noqa: FBT001, ARG001
     """Create a new release"""
 
     ctx.invoke(changelog.check)

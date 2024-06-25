@@ -14,7 +14,7 @@ def set_request_session(request, session_dict):
 
     Returns:
         RequestFactory: The same request object with session variables set
-    """
+    """  # noqa: D401
     middleware = SessionMiddleware("")
     middleware.process_request(request)
     for key, value in session_dict.items():

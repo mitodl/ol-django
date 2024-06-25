@@ -1,9 +1,10 @@
 """URL utilities"""
+
 from urllib.parse import ParseResult, urlparse, urlunparse
 
 
 def ensure_trailing_slash(url: str) -> str:
-    """ensure a url has a trailing slash"""
+    """Ensure a url has a trailing slash"""
     return url if url.endswith("/") else url + "/"
 
 

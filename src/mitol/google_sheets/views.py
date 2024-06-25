@@ -1,4 +1,5 @@
 """HTTP views for sheets app"""
+
 import logging
 from urllib.parse import urljoin
 
@@ -55,8 +56,8 @@ def complete_google_auth(request):
     """Admin view that handles the redirect from Google after completing Google auth"""
     state = request.session.get("state")
     if not state:
-        raise GoogleAuthError(
-            "Could not complete Google auth - 'state' was not found in the session"
+        raise GoogleAuthError(  # noqa: TRY003
+            "Could not complete Google auth - 'state' was not found in the session"  # noqa: EM101
         )
     flow = Flow.from_client_config(
         generate_google_client_config(), scopes=REQUIRED_GOOGLE_API_SCOPES, state=state

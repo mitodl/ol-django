@@ -2,8 +2,8 @@
 
 
 # To delete None values in Input Request Json body
-def clean_request_data(request_data):
-    # Cybersource would not accept None values in payload that get generated through CyberSource's Data models
+def clean_request_data(request_data):  # noqa: D103
+    # Cybersource would not accept None values in payload that get generated through CyberSource's Data models  # noqa: E501
     # This functions cleans the request of any None values
 
     if isinstance(request_data, dict):
@@ -12,7 +12,7 @@ def clean_request_data(request_data):
 
 
 def strip_nones(datasource):
-    """Strips None values from the supplied iterable. Does not recurse."""
+    """Strips None values from the supplied iterable. Does not recurse."""  # noqa: D401
 
     retval = {}
 

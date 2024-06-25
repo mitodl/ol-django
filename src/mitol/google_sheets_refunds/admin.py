@@ -1,4 +1,5 @@
 """Admin for RefundRequest"""
+
 from django.contrib import admin
 
 from mitol.google_sheets_refunds.models import RefundRequest
