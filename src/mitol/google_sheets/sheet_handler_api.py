@@ -98,10 +98,9 @@ class SheetHandler:
         # By default, the first worksheet of the spreadsheet should be used
         return self.spreadsheet.sheet1
 
-    def get_enumerated_rows(self, from_row=None):
+    def get_enumerated_rows(self):
         """
-        Yields enumerated data rows of a spreadsheet (excluding header row(s)) or
-        from a specified row.
+        Yields enumerated data rows of a spreadsheet (excluding header row(s)).
 
         Yields:
             Tuple[int, List[str]]: Row index (according to the Google Sheet, NOT zero-indexed) paired with the list
@@ -109,7 +108,7 @@ class SheetHandler:
         """
         yield from enumerate(
             get_data_rows(self.worksheet, include_trailing_empty=False),
-            start=from_row if from_row is not None else (GOOGLE_SHEET_FIRST_ROW + 1),
+            start=GOOGLE_SHEET_FIRST_ROW + 1,
         )
 
     def update_completed_rows(self, success_row_results):
@@ -258,6 +257,7 @@ class SheetHandler:
         for row_index, row_data in valid_enumerated_rows:
             row_result = None
             try:
+                log.warning("Process row %s, %s", row_index, row_data)
                 row_result = self.process_row(row_index, row_data)
             except Exception as exc:
                 log.exception("Error processing row from google sheets")
@@ -315,14 +315,26 @@ class GoogleSheetsChangeRequestHandler(SheetHandler):
     def get_enumerated_rows(self):
         # Only yield rows in the spreadsheet that come after the legacy rows
         # (i.e.: the rows of data that were manually entered before we started automating this process)
+        row_count = len(self.worksheet.get_all_values(include_tailing_empty_rows=False))
+        logging.warning("Worksheet has %d rows", row_count)
+        first_row_to_process = self.start_row
+        if int(settings.MITOL_GOOGLE_SHEETS_PROCESS_ONLY_LAST_ROWS_NUM) > 0:
+            # allow to choose to process only last few rows
+            new_first_row = (
+                row_count - int(settings.MITOL_GOOGLE_SHEETS_PROCESS_ONLY_LAST_ROWS_NUM)
+            )
+            first_row_to_process = (
+                new_first_row if new_first_row > self.start_row else self.start_row
+            )
+        logging.warning("Calculated first row: %s", first_row_to_process)
         return enumerate(
             get_data_rows_after_start(
                 self.worksheet,
-                start_row=self.start_row,
+                start_row=first_row_to_process,
                 start_col=1,
                 end_col=self.sheet_metadata.num_columns,
             ),
-            start=self.start_row,
+            start=first_row_to_process,
         )
 
     def update_completed_rows(self, success_row_results):

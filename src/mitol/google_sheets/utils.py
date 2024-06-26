@@ -1,6 +1,7 @@
 """Sheets app util functions"""
 import datetime
 import email.utils
+import logging
 from collections import namedtuple
 from enum import Enum
 from urllib.parse import quote_plus, urljoin
@@ -202,18 +203,8 @@ def get_data_rows_after_start(
     values = []
     while request_count == 0 or (values and len(values) == page_size):
         end_row = start_row + page_size - 1
-        if settings.MITOL_GOOGLE_SHEETS_PROCESS_ONLY_LAST_ROWS_NUM == 0:
-            first_row_to_process = start_row
-        else:
-            # allow to choose to process only last few rows
-            new_first_row = (
-                end_row - settings.MITOL_GOOGLE_SHEETS_PROCESS_ONLY_LAST_ROWS_NUM
-            )
-            first_row_to_process = (
-                new_first_row if new_first_row > start_row else start_row
-            )
         values = worksheet.get_values(
-            start=(first_row_to_process, start_col),
+            start=(start_row, start_col),
             end=(end_row, end_col),
             include_tailing_empty=True,
             include_tailing_empty_rows=False,
