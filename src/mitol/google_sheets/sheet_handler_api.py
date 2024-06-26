@@ -330,13 +330,15 @@ class GoogleSheetsChangeRequestHandler(SheetHandler):
         first_row_to_process = self.start_row
         if int(settings.MITOL_GOOGLE_SHEETS_PROCESS_ONLY_LAST_ROWS_NUM) > 0:
             # allow to choose to process only last few rows
-            new_first_row = (
-                row_count - int(settings.MITOL_GOOGLE_SHEETS_PROCESS_ONLY_LAST_ROWS_NUM)
+            new_first_row = row_count - int(
+                settings.MITOL_GOOGLE_SHEETS_PROCESS_ONLY_LAST_ROWS_NUM
             )
             first_row_to_process = (
                 new_first_row if new_first_row > self.start_row else self.start_row
             )
-        logging.warning("Going to process the sheet starting with row %s", first_row_to_process)
+        logging.warning(
+            "Going to process the sheet starting with row %s", first_row_to_process
+        )
         return enumerate(
             get_data_rows_after_start(
                 self.worksheet,

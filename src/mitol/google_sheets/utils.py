@@ -1,7 +1,6 @@
 """Sheets app util functions"""
 import datetime
 import email.utils
-import logging
 from collections import namedtuple
 from enum import Enum
 from urllib.parse import quote_plus, urljoin
