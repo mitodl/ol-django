@@ -332,7 +332,7 @@ class GoogleSheetsChangeRequestHandler(SheetHandler):
             # allow to choose to process only last few rows
             new_first_row = row_count - int(
                 settings.MITOL_GOOGLE_SHEETS_PROCESS_ONLY_LAST_ROWS_NUM
-            )
+            ) + 1
             first_row_to_process = (
                 new_first_row if new_first_row > self.start_row else self.start_row
             )
