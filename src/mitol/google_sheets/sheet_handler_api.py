@@ -100,7 +100,7 @@ class SheetHandler:
 
     def get_enumerated_rows(self):
         """
-        Yields enumerated data rows of a spreadsheet (excluding header row(s))
+        Yields enumerated data rows of a spreadsheet (excluding header row(s)).
 
         Yields:
             Tuple[int, List[str]]: Row index (according to the Google Sheet, NOT zero-indexed) paired with the list
@@ -146,9 +146,21 @@ class SheetHandler:
         processed_row_results = grouped_row_results.get(ResultType.PROCESSED, [])
         if processed_row_results:
             self.update_completed_rows(processed_row_results)
+            log.warning(
+                "Successfully processed rows in %s (%s): %s",
+                self.sheet_metadata.sheet_name,
+                self.sheet_metadata.worksheet_name,
+                [row_result.row_index for row_result in processed_row_results],
+            )
         failed_row_results = grouped_row_results.get(ResultType.FAILED, [])
         if failed_row_results:
             self.update_row_errors(failed_row_results)
+            log.warning(
+                "Processed rows with errors in %s (%s): %s",
+                self.sheet_metadata.sheet_name,
+                self.sheet_metadata.worksheet_name,
+                [row_result.row_index for row_result in failed_row_results],
+            )
         out_of_sync_row_results = grouped_row_results.get(ResultType.OUT_OF_SYNC, [])
         if out_of_sync_row_results:
             log.warning(
@@ -259,7 +271,7 @@ class SheetHandler:
             try:
                 row_result = self.process_row(row_index, row_data)
             except Exception as exc:
-                log.exception("Error processing row from google sheets")
+                log.exception("Error processing row %s from google sheets", row_index)
                 row_result = RowResult(
                     row_index=row_index,
                     row_db_record=None,
@@ -314,14 +326,29 @@ class GoogleSheetsChangeRequestHandler(SheetHandler):
     def get_enumerated_rows(self):
         # Only yield rows in the spreadsheet that come after the legacy rows
         # (i.e.: the rows of data that were manually entered before we started automating this process)
+        row_count = len(self.worksheet.get_all_values(include_tailing_empty_rows=False))
+        first_row_to_process = self.start_row
+        if int(settings.MITOL_GOOGLE_SHEETS_PROCESS_ONLY_LAST_ROWS_NUM) > 0:
+            # allow to choose to process only last few rows
+            new_first_row = (
+                row_count
+                - int(settings.MITOL_GOOGLE_SHEETS_PROCESS_ONLY_LAST_ROWS_NUM)
+                + 1
+            )
+            first_row_to_process = (
+                new_first_row if new_first_row > self.start_row else self.start_row
+            )
+        logging.warning(
+            "Going to process the sheet starting with row %s", first_row_to_process
+        )
         return enumerate(
             get_data_rows_after_start(
                 self.worksheet,
-                start_row=self.start_row,
+                start_row=first_row_to_process,
                 start_col=1,
                 end_col=self.sheet_metadata.num_columns,
             ),
-            start=self.start_row,
+            start=first_row_to_process,
         )
 
     def update_completed_rows(self, success_row_results):

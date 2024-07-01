@@ -184,6 +184,8 @@ def get_data_rows_after_start(
     """
     Yields the data rows of a spreadsheet starting with a given row and spanning a given column range
     until empty rows are encountered.
+    If MITOL_GOOGLE_SHEETS_PROCESS_ONLY_LAST_ROWS_NUM == 0 it will process all rows. Otherwise, it will process
+    only the last few rows.
 
     Args:
         worksheet (pygsheets.worksheet.Worksheet): Worksheet object
