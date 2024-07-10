@@ -12,6 +12,9 @@ dependencies = [
 "premailer>=3.7.0",
 "toolz>=0.10.0",
 ]
+readme = "README.md"
+license = "BSD-3-Clause"
+requires-python = ">=3.8"
 
 [tool.bumpver]
 current_version = "2023.12.19"

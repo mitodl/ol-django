@@ -1,6 +1,7 @@
 [project]
 name = "mitol-django-google-sheets"
 version = "2023.12.19.1"
+description = "Core library to handle Google Sheets integrations in Django"
 dependencies = [
 "django-stubs>=1.13.1",
 "django>=3.0",
@@ -12,6 +13,9 @@ dependencies = [
 "pygsheets==2.0.2",
 "pytz>=2020.4",
 ]
+readme = "README.md"
+license = "BSD-3-Clause"
+requires-python = ">=3.8"
 
 [tool.bumpver]
 current_version = "2023.12.19.1"

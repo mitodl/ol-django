@@ -1,12 +1,16 @@
 [project]
 name = "mitol-django-olposthog"
 version = "2024.5.14"
+description = "MIT Open Learning django app extensions for Posthog."
 dependencies = [
 "django-stubs>=1.13.1",
 "django>=3.0",
 "mitol-django-common",
 "posthog>=3.5.0",
 ]
+readme = "README.md"
+license = "BSD-3-Clause"
+requires-python = ">=3.8"
 
 [tool.bumpver]
 current_version = "2024.5.14"

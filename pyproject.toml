@@ -17,6 +17,7 @@ build-backend = "hatchling.build"
 [tool.rye]
 managed = true
 virtual = true
+generate-hashes = true
 dev-dependencies = [
   "GitPython",
   "bumpver",

@@ -1,6 +1,7 @@
 [project]
 name = "mitol-django-digitalcredentials"
 version = "2023.12.19"
+description = "Django application to support digital credentials"
 dependencies = [
 "django-oauth-toolkit>=1.3.3",
 "django-stubs>=1.13.1",
@@ -10,6 +11,9 @@ dependencies = [
 "mitol-django-common",
 "requests>=2.20.0",
 ]
+readme = "README.md"
+license = "BSD-3-Clause"
+requires-python = ">=3.8"
 
 [tool.bumpver]
 current_version = "2023.12.19"

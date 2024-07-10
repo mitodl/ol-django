@@ -13,6 +13,9 @@ dependencies = [
 "requests>=2.20.0",
 "typing-extensions",
 ]
+readme = "README.md"
+license = "BSD-3-Clause"
+requires-python = ">=3.8"
 
 [tool.bumpver]
 current_version = "2023.12.19"

@@ -1,6 +1,7 @@
 [project]
 name = "mitol-django-hubspot-api"
 version = "2023.12.19"
+description = "Django application for Hubspot API integration"
 dependencies = [
 "django-stubs>=1.13.1",
 "django>=3.0",
@@ -11,6 +12,9 @@ dependencies = [
 "requests>=2.20.0",
 "urllib3>=1.26.5",
 ]
+readme = "README.md"
+license = "BSD-3-Clause"
+requires-python = ">=3.8"
 
 [tool.bumpver]
 current_version = "2023.12.19"

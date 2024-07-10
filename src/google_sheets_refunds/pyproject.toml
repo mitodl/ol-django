@@ -1,6 +1,7 @@
 [project]
 name = "mitol-django-google-sheets-refunds"
 version = "2023.12.19"
+description="Library to handle Refund requests using Google Sheets integrations in Django"
 dependencies = [
 "django-stubs>=1.13.1",
 "django>=3.0",
@@ -8,6 +9,9 @@ dependencies = [
 "mitol-django-google-sheets",
 "pluggy==0.13.1",
 ]
+readme = "README.md"
+license = "BSD-3-Clause"
+requires-python = ">=3.8"
 
 [tool.bumpver]
 current_version = "2023.12.19"
