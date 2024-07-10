@@ -2,6 +2,17 @@
 name = "mitol-django-common"
 description = "MIT Open Learning django app extensions for common utilities"
 version = "2023.12.19"
+dependencies = [
+"django-redis~=5.0.0",
+"django-stubs>=1.13.1",
+"django-webpack-loader>=0.7.0",
+"django>=3.0",
+"factory-boy~=3.2",
+"pytest>=7.0.0",
+"pytz>=2020.4",
+"requests>=2.20.0",
+"typing-extensions",
+]
 
 [tool.bumpver]
 current_version = "2023.12.19"

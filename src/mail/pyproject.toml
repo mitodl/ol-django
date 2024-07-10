@@ -3,7 +3,14 @@ name = "mitol-django-mail"
 version = "2023.12.19"
 description = "MIT Open Learning django app extensions for mail"
 dependencies = [
-  "mitol-django-common"
+"beautifulsoup4>=4.6.0",
+"django-anymail>=6.0",
+"django-stubs>=1.13.1",
+"django>=3.0",
+"html5lib>=1.1",
+"mitol-django-common",
+"premailer>=3.7.0",
+"toolz>=0.10.0",
 ]
 
 [tool.bumpver]

@@ -2,7 +2,10 @@
 name = "mitol-django-payment-gateway"
 version = "2023.12.19"
 dependencies = [
-  "mitol-django-common"
+"cybersource-rest-client-python>=0.0.36",
+"django-stubs>=1.13.1",
+"django>=3.0",
+"mitol-django-common"
 ]
 
 [tool.bumpver]

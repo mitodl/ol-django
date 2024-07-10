@@ -20,26 +20,30 @@
     # via mitol-django-mail
     # via mitol-django-oauth-toolkit-extensions
     # via mitol-django-olposthog
-    # via mitol-django-openedx
     # via mitol-django-payment-gateway
 -e file:src/digitalcredentials
 -e file:src/geoip
 -e file:src/google_sheets
+    # via mitol-django-google-sheets-deferrals
+    # via mitol-django-google-sheets-refunds
 -e file:src/google_sheets_deferrals
 -e file:src/google_sheets_refunds
 -e file:src/hubspot_api
 -e file:src/mail
+    # via mitol-django-authentication
 -e file:src/oauth_toolkit_extensions
 -e file:src/olposthog
 -e file:src/openedx
 -e file:src/payment_gateway
 asgiref==3.8.1
     # via django
+    # via django-stubs
 async-timeout==4.0.3
     # via redis
 backoff==2.2.1
     # via posthog
 beautifulsoup4==4.12.3
+    # via mitol-django-mail
 cachetools==5.3.3
     # via google-auth
     # via premailer
@@ -61,61 +65,117 @@ cssselect==1.2.0
 cssutils==2.11.1
     # via premailer
 cybersource-rest-client-python==0.0.55
+    # via mitol-django-payment-gateway
 datetime==5.5
     # via cybersource-rest-client-python
 defusedxml==0.7.1
     # via python3-openid
     # via social-auth-core
-dj-database-url==2.2.0
 django==4.2.13
-    # via dj-database-url
     # via django-anymail
     # via django-oauth-toolkit
     # via django-redis
+    # via django-stubs
+    # via django-stubs-ext
     # via djangorestframework
     # via djangorestframework-simplejwt
     # via djoser
+    # via mitol-django-authentication
+    # via mitol-django-common
+    # via mitol-django-digitalcredentials
+    # via mitol-django-geoip
+    # via mitol-django-google-sheets
+    # via mitol-django-google-sheets-deferrals
+    # via mitol-django-google-sheets-refunds
+    # via mitol-django-hubspot-api
+    # via mitol-django-mail
+    # via mitol-django-oauth-toolkit-extensions
+    # via mitol-django-olposthog
+    # via mitol-django-openedx
+    # via mitol-django-payment-gateway
     # via social-auth-app-django
 django-anymail==10.3
+    # via mitol-django-authentication
+    # via mitol-django-mail
 django-oauth-toolkit==2.4.0
+    # via mitol-django-digitalcredentials
+    # via mitol-django-oauth-toolkit-extensions
 django-redis==5.0.0
+    # via mitol-django-common
+django-stubs==5.0.2
+    # via mitol-django-authentication
+    # via mitol-django-common
+    # via mitol-django-digitalcredentials
+    # via mitol-django-geoip
+    # via mitol-django-google-sheets
+    # via mitol-django-google-sheets-deferrals
+    # via mitol-django-google-sheets-refunds
+    # via mitol-django-hubspot-api
+    # via mitol-django-mail
+    # via mitol-django-oauth-toolkit-extensions
+    # via mitol-django-olposthog
+    # via mitol-django-openedx
+    # via mitol-django-payment-gateway
+django-stubs-ext==5.0.2
+    # via django-stubs
 django-templated-mail==1.1.1
     # via djoser
 django-webpack-loader==3.1.0
+    # via mitol-django-common
 djangorestframework==3.15.1
     # via djangorestframework-simplejwt
+    # via mitol-django-authentication
+    # via mitol-django-digitalcredentials
+    # via mitol-django-hubspot-api
 djangorestframework-simplejwt==5.3.1
     # via djoser
 djoser==2.2.2
+    # via mitol-django-authentication
 dnspython==2.6.1
     # via pymongo
 edx-opaque-keys==2.2.2
+    # via mitol-django-openedx
+exceptiongroup==1.2.1
+    # via pytest
+factory-boy==3.3.0
+    # via mitol-django-common
+    # via mitol-django-digitalcredentials
+    # via mitol-django-geoip
+    # via mitol-django-google-sheets
+    # via mitol-django-hubspot-api
+    # via mitol-django-oauth-toolkit-extensions
+faker==4.17.1
+    # via factory-boy
+    # via mitol-django-geoip
 google-api-python-client==1.7.11
+    # via mitol-django-google-sheets
     # via pygsheets
 google-auth==1.6.3
     # via google-api-python-client
     # via google-auth-httplib2
     # via google-auth-oauthlib
+    # via mitol-django-google-sheets
 google-auth-httplib2==0.2.0
     # via google-api-python-client
 google-auth-oauthlib==0.5.3
+    # via mitol-django-google-sheets
     # via pygsheets
 html5lib==1.1
+    # via mitol-django-mail
 httplib2==0.22.0
     # via google-api-python-client
     # via google-auth-httplib2
 hubspot-api-client==6.1.0
+    # via mitol-django-hubspot-api
 idna==3.7
     # via requests
-isodate==0.6.1
-    # via python3-saml
+iniconfig==2.0.0
+    # via pytest
 jwcrypto==1.5.6
     # via cybersource-rest-client-python
     # via django-oauth-toolkit
 lxml==5.2.2
     # via premailer
-    # via python3-saml
-    # via xmlsec
 monotonic==1.6
     # via posthog
 more-itertools==10.2.0
@@ -124,12 +184,18 @@ oauthlib==3.2.2
     # via django-oauth-toolkit
     # via requests-oauthlib
     # via social-auth-core
+packaging==24.1
+    # via pytest
 pbr==6.0.0
     # via stevedore
 pluggy==0.13.1
+    # via mitol-django-google-sheets-deferrals
+    # via mitol-django-google-sheets-refunds
+    # via pytest
 posthog==3.5.0
+    # via mitol-django-olposthog
 premailer==3.10.0
-psycopg2-binary==2.9.9
+    # via mitol-django-mail
 pyasn1==0.6.0
     # via pyasn1-modules
     # via rsa
@@ -140,6 +206,7 @@ pycparser==2.22
 pycryptodome==3.20.0
     # via cybersource-rest-client-python
 pygsheets==2.0.2
+    # via mitol-django-google-sheets
 pyjwt==2.8.0
     # via cybersource-rest-client-python
     # via djangorestframework-simplejwt
@@ -150,20 +217,29 @@ pyopenssl==23.2.0
     # via cybersource-rest-client-python
 pyparsing==3.1.2
     # via httplib2
+pytest==7.4.4
+    # via mitol-django-common
 python-dateutil==2.9.0.post0
+    # via faker
     # via hubspot-api-client
     # via posthog
 python3-openid==3.2.0
     # via social-auth-core
-python3-saml==1.16.0
 pytz==2024.1
     # via datetime
     # via django-oauth-toolkit
+    # via mitol-django-common
+    # via mitol-django-google-sheets
+    # via mitol-django-oauth-toolkit-extensions
 redis==5.0.4
     # via django-redis
 requests==2.32.3
     # via django-anymail
     # via django-oauth-toolkit
+    # via mitol-django-common
+    # via mitol-django-digitalcredentials
+    # via mitol-django-hubspot-api
+    # via mitol-django-oauth-toolkit-extensions
     # via posthog
     # via premailer
     # via requests-oauthlib
@@ -182,11 +258,11 @@ six==1.16.0
     # via google-auth
     # via html5lib
     # via hubspot-api-client
-    # via isodate
     # via posthog
     # via python-dateutil
 social-auth-app-django==5.4.1
     # via djoser
+    # via mitol-django-authentication
 social-auth-core==4.5.4
     # via social-auth-app-django
 soupsieve==2.5
@@ -195,21 +271,30 @@ sqlparse==0.5.0
     # via django
 stevedore==5.2.0
     # via edx-opaque-keys
+text-unidecode==1.3
+    # via faker
+tomli==2.0.1
+    # via django-stubs
+    # via pytest
 toolz==0.12.1
+    # via mitol-django-mail
+types-pyyaml==6.0.12.20240311
+    # via django-stubs
 typing-extensions==4.12.1
     # via asgiref
-    # via dj-database-url
+    # via django-stubs
+    # via django-stubs-ext
     # via jwcrypto
+    # via mitol-django-common
 uritemplate==3.0.1
     # via google-api-python-client
 urllib3==2.2.1
     # via cybersource-rest-client-python
     # via django-anymail
     # via hubspot-api-client
+    # via mitol-django-hubspot-api
     # via requests
 webencodings==0.5.1
     # via html5lib
-xmlsec==1.3.14
-    # via python3-saml
 zope-interface==6.4.post2
     # via datetime

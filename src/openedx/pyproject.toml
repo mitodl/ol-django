@@ -2,7 +2,9 @@
 name = "mitol-django-openedx"
 version = "2023.12.19"
 dependencies = [
-  "mitol-django-common"
+"django-stubs>=1.13.1",
+"django>=3.0",
+"edx-opaque-keys==2.2.2",
 ]
 
 [tool.bumpver]

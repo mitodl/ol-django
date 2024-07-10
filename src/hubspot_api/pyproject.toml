@@ -2,7 +2,14 @@
 name = "mitol-django-hubspot-api"
 version = "2023.12.19"
 dependencies = [
-  "mitol-django-common"
+"django-stubs>=1.13.1",
+"django>=3.0",
+"djangorestframework>=3.0.0",
+"factory-boy~=3.2",
+"hubspot-api-client==6.1.0",
+"mitol-django-common",
+"requests>=2.20.0",
+"urllib3>=1.26.5",
 ]
 
 [tool.bumpver]

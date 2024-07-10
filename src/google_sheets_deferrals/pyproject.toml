@@ -2,7 +2,11 @@
 name = "mitol-django-google-sheets-deferrals"
 version = "2023.12.19"
 dependencies = [
-  "mitol-django-common"
+"django-stubs>=1.13.1",
+"django>=3.0",
+"mitol-django-common",
+"mitol-django-google-sheets",
+"pluggy==0.13.1",
 ]
 
 [tool.bumpver]

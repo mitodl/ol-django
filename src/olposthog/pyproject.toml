@@ -2,7 +2,10 @@
 name = "mitol-django-olposthog"
 version = "2024.5.14"
 dependencies = [
-  "mitol-django-common"
+"django-stubs>=1.13.1",
+"django>=3.0",
+"mitol-django-common",
+"posthog>=3.5.0",
 ]
 
 [tool.bumpver]

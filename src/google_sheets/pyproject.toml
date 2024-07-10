@@ -2,7 +2,15 @@
 name = "mitol-django-google-sheets"
 version = "2023.12.19.1"
 dependencies = [
-  "mitol-django-common"
+"django-stubs>=1.13.1",
+"django>=3.0",
+"factory-boy~=3.2",
+"google-api-python-client==1.7.11",
+"google-auth-oauthlib>=0.5.2",
+"google-auth==1.6.3",
+"mitol-django-common",
+"pygsheets==2.0.2",
+"pytz>=2020.4",
 ]
 
 [tool.bumpver]
