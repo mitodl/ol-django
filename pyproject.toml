@@ -42,7 +42,6 @@ dev-dependencies = [
   "ruff",
   "scriv[toml]",
   "semver",
-  "setuptools",
   "toml",
   "typing-extensions"
 ]
@@ -50,8 +49,11 @@ dev-dependencies = [
 [tool.hatch.metadata]
 allow-direct-references = true
 
-# [tool.hatch.build.targets.wheel]
-# packages = ["src/ol_django"]
+[tool.rye.workspace]
+members = ["src/*"]
+
+[tool.rye.scripts]
+build = { call = "mitol.build_support.cli:cli", env = {PYTHONPATH = "build-support/bin/"}}
 
 [tool.hatch.build.targets.sdist]
 include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]
@@ -60,9 +62,6 @@ exclude = ["BUILD", "pyproject.toml"]
 [tool.hatch.build.targets.wheel]
 include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]
 exclude = ["BUILD", "pyproject.toml"]
-
-[tool.rye.workspace]
-members = ["src/*"]
 
 [tool.pytest.ini_options]
 addopts = "--cov . --cov-report term --cov-report html --cov-report xml --reuse-db"
