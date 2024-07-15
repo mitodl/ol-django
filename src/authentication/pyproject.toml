@@ -11,7 +11,8 @@ dependencies = [
   "djoser==2.2.2",
   "mitol-django-common",
   "mitol-django-mail",
-  "social-auth-app-django>=5.4.0"
+  "social-auth-app-django>=5.4.0",
+  "python3-saml>=1.10.1"
 ]
 readme = "README.md"
 license = "BSD-3-Clause"
