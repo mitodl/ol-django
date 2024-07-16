@@ -7,7 +7,7 @@ This repository is the home of MIT Open Learning's reusable django apps
 We maintain changelogs in `changelog.d/` directories with each app. To create a new changelog for your changes, run:
 
 - `mkdir ./src/mitol/{APPNAME}/changelog.d`
-- `pants ol-project changelog create --app APPNAME`
+- `rye run build changelog create --app APPNAME`
   - `APPNAME`: the name of an application directory
 
 Then fill out the new file that was generated with information about your changes. These changes will all be merged down into `CHANGELOG.md` when a release is generated.
@@ -18,7 +18,7 @@ Changelogs are maintained according to [Keep a Changelog](https://keepachangelog
 Versioning uses a date-based versioning scheme with incremental builds on the same day.
 Version tags follow `{package-name}/v{version}`
 To perform a release, run:
-- `pants ol-project release create --app APPNAME --push`:
+- `rye run build release create --app APPNAME --push`:
   - `APPNAME`: the name of an application directory
 
 ### Navigating this repository
@@ -38,38 +38,34 @@ To perform a release, run:
 #### Use on your host system
 
 - Install `xmlsec` native libraries for your OS: https://xmlsec.readthedocs.io/en/stable/install.html
-- Install `pants` (this is actually `scie-pants`, a context-aware wrapper script that bootstraps the correct `pants` version and its depenencies):
-  - Use their installer script: https://www.pantsbuild.org/docs/installation
-  - Alternatively, if you don't want to pipe a script from the internet directly into `bash`, you can download the latest release of `scie-pants` for your os/arch and put it somewhere on your `PATH` (the installer script puts it in `~/bin`): https://github.com/pantsbuild/scie-pants/releases
+- Install `rye` following the instructions at https://rye.astral.sh/
 
 
 ### Usage
 
-We use [`pants`](https://www.pantsbuild.org/) to manage apps and releases.
-
-**NOTE:** before running any pants commands, it's highly recommended to install and use [`pyenv`](https://github.com/pyenv/pyenv) to manage the python version as system python installs are often modified or broken versions. In particular, you'll probably end up seeing errors from C code from system pythons. If you have hit this issue but already run a pants command, install `pyenv` and then delete your `.pants.d/` directory to clear cached state.
+We use [`rye`](https://rye.astral.sh/) to manage apps and releases.
 
 Useful commands:
 ```shell
 # run all tests
-pants test ::
+rye test
 # run only common app tests
-pants test tests/mitol/common:
+rye test -p mitol-common
 
 # format code (isort + black)
-pants fmt ::
+rye fmt
 
 # run lints
-pants lint ::
+rye lint
 
 # run django management scripts
-pants run tests/manage.py -- ARGS
+rye run tests/manage.py -- ARGS
 # run a django shell
-pants run tests/manage.py -- shell  
+rye run tests/manage.py -- shell  
 # create migrations
-pants run tests/manage.py -- makemigrations  
+rye run tests/manage.py -- makemigrations  
 # run a django migrate
-pants run tests/manage.py -- migrate  
+rye run tests/manage.py -- migrate  
 ```
 
 ### Migrations
@@ -77,7 +73,7 @@ pants run tests/manage.py -- migrate
 To generate migrations for a reusable app, run the standard:
 
 ```
-pants run tests/manage.py -- makemigrations APP_NAME --name MIGRATION_NAME
+rye run tests/manage.py -- makemigrations APP_NAME --name MIGRATION_NAME
 ```
 
 where `APP_NAME` matches the `name` attribute from your `apps.py` app.
