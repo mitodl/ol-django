@@ -37,7 +37,6 @@ jobs:
 
       - uses: eifinger/setup-rye@v4
         id: setup-rye
-        with:
 
       - name: Pin python-version ${{ matrix.python-version }}
         run: rye pin ${{ matrix.python-version }}
