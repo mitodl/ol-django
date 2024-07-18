@@ -1,4 +1,4 @@
-import typing  # noqa: D100
+import typing
 
 import pluggy
 from django.conf import settings
@@ -7,7 +7,7 @@ from django.utils.module_loading import import_string
 from mitol.google_sheets_deferrals.utils import DeferralRequestRow
 
 
-class DeferralResult(typing.NamedTuple):  # noqa: D101
+class DeferralResult(typing.NamedTuple):
     result_type: str
     message: str = None
 
@@ -18,7 +18,7 @@ hookimpl = pluggy.HookimplMarker(APP_NAME)
 hookspec = pluggy.HookspecMarker(APP_NAME)
 
 
-def get_plugin_manager():  # noqa: D103
+def get_plugin_manager():
     pm = pluggy.PluginManager(APP_NAME)
 
     for module_path in settings.MITOL_GOOGLE_SHEETS_DEFERRALS_PLUGINS:
@@ -28,7 +28,7 @@ def get_plugin_manager():  # noqa: D103
     return pm
 
 
-class DeferralHooks:  # noqa: D101
+class DeferralHooks:
     @hookspec
     def deferrals_process_request(
         self, refund_request: DeferralRequestRow

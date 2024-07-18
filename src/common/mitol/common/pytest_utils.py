@@ -47,7 +47,7 @@ class MockResponse:
     Mock requests.Response
     """
 
-    def __init__(  # noqa: D107
+    def __init__(
         self, content, status_code=200, content_type="application/json", url=None
     ):
         if isinstance(content, (dict, list)):

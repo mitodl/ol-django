@@ -55,7 +55,7 @@ class AuditableTestModel(AuditableModel):
     """Test-only model"""
 
     @classmethod
-    def get_audit_class(cls):  # noqa: D102
+    def get_audit_class(cls):
         return AuditableTestModelAudit
 
     def to_dict(self):
@@ -74,7 +74,7 @@ class AuditableTestModelAudit(AuditModel):
     )
 
     @classmethod
-    def get_related_field_name(cls):  # noqa: D102
+    def get_related_field_name(cls):
         return "auditable_test_model"
 
 

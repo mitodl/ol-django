@@ -24,7 +24,7 @@ User = get_user_model()
 class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
     """Manages the processing of refund requests from a spreadsheet"""
 
-    def __init__(self):  # noqa: D107
+    def __init__(self):
         self.pm = get_plugin_manager()
         self.hook = self.pm.hook
         super().__init__(

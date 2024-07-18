@@ -15,7 +15,7 @@ class HubspotObject(models.Model):
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey("content_type", "object_id")
 
-    class Meta:  # noqa: D106
+    class Meta:
         indexes = [  # noqa: RUF012
             models.Index(
                 fields=["content_type", "object_id"],

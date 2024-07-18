@@ -17,5 +17,5 @@ class UserFactory(DjangoModelFactory):
     first_name = Faker("first_name")
     last_name = Faker("first_name")
 
-    class Meta:  # noqa: D106
+    class Meta:
         model = get_user_model()

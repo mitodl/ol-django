@@ -39,31 +39,31 @@ def list_app_names() -> List[str]:  # noqa: FA100
     return [name.stem for name in list_apps()]
 
 
-class App:  # noqa: D101
+class App:
     module_name: str
 
     @property
-    def pyproject(self):  # noqa: D102
+    def pyproject(self):
         with open(self.app_dir / "pyproject.toml") as f:  # noqa: PTH123
             return toml.loads(f.read())
 
     @property
-    def name(self):  # noqa: D102
+    def name(self):
         return self.pyproject["project"]["name"]
 
     @property
-    def version(self):  # noqa: D102
+    def version(self):
         return self.pyproject["project"]["version"]
 
     @property
-    def version_git_tag(self):  # noqa: D102
+    def version_git_tag(self):
         return f"{self.name}/v{self.version}"
 
     @cached_property
-    def app_dir(self) -> Path:  # noqa: D102
+    def app_dir(self) -> Path:
         return get_app_dir(self.module_name).absolute()
 
     @contextmanager
-    def with_app_dir(self):  # noqa: D102
+    def with_app_dir(self):
         with chdir(self.app_dir):
             yield

@@ -1,4 +1,4 @@
-from functools import wraps  # noqa: D100
+from functools import wraps
 
 from click import Choice, Command, make_pass_decorator, option
 from cloup import Context, pass_context
@@ -72,7 +72,7 @@ no_require_main = option(
 )
 
 
-def require_no_changes(func):  # noqa: D103
+def require_no_changes(func):
     @wraps(func)
     @pass_project
     @pass_context

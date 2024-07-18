@@ -2,7 +2,7 @@
 
 
 # To delete None values in Input Request Json body
-def clean_request_data(request_data):  # noqa: D103
+def clean_request_data(request_data):
     # Cybersource would not accept None values in payload that get generated through CyberSource's Data models  # noqa: E501
     # This functions cleans the request of any None values
 

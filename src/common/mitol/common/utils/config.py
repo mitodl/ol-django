@@ -1,4 +1,4 @@
-from typing import List  # noqa: D100
+from typing import List
 
 from django.conf import settings
 

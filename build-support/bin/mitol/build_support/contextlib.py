@@ -1,10 +1,10 @@
-from contextlib import contextmanager  # noqa: D100
+from contextlib import contextmanager
 from os import chdir as _chdir
 from pathlib import Path
 
 
 @contextmanager
-def chdir(path):  # noqa: D103
+def chdir(path):
     original = Path.cwd()
 
     try:

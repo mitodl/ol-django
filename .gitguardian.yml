@@ -1,2 +1,3 @@
+---
 matches-ignore:
-  - TESTAPP_SECRET
+- TESTAPP_SECRET

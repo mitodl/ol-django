@@ -24,7 +24,7 @@ class SheetOutOfSyncException(Exception):  # noqa: N818
     General exception for situations where the data in a spreadsheet does not reflect the state of the database
     """  # noqa: E501
 
-    def __init__(self, coupon_gen_request, coupon_req_row, msg=None):  # noqa: D107
+    def __init__(self, coupon_gen_request, coupon_req_row, msg=None):
         self.coupon_gen_request = coupon_gen_request
         self.coupon_req_row = coupon_req_row
         super().__init__(msg)

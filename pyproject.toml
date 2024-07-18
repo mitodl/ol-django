@@ -26,6 +26,7 @@ dev-dependencies = [
   "cloup",
   "coverage==5.3",
   "dj-database-url",
+  "django-stubs[compatible-mypy]",
   "factory-boy~=3.2",
   "faker==4.17.1",
   "freezegun==1.0.0",
@@ -71,16 +72,15 @@ DJANGO_SETTINGS_MODULE = "testapp.settings.test"
 python_files = ["tests/mitol/**/test_*.py"]
 pythonpath = ["tests", "src"]
 
+[tool.django-stubs]
+django_settings_module = "testapp.settings.test"
+
 [tool.mypy]
 namespace_packages = true
 plugins = [
   "mypy_django_plugin.main",
   "mypy_drf_plugin.main"
 ]
-
-[[tool.mypy.overrides]]
-module = "django-stubs"
-django_settings_module = "testapp.settings.test"
 
 [[tool.mypy.overrides]]
 module = [

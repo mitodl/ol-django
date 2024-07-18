@@ -44,7 +44,7 @@ class TimestampedModel(Model):
     created_on = DateTimeField(auto_now_add=True)  # UTC
     updated_on = DateTimeField(auto_now=True)  # UTC
 
-    class Meta:  # noqa: D106
+    class Meta:
         abstract = True
 
 
@@ -55,7 +55,7 @@ class AuditModel(TimestampedModel):
     data_before = JSONField(blank=True, null=True)
     data_after = JSONField(blank=True, null=True)
 
-    class Meta:  # noqa: D106
+    class Meta:
         abstract = True
 
     @classmethod
@@ -70,7 +70,7 @@ class AuditModel(TimestampedModel):
 class AuditableModel(Model):
     """An abstract base class for auditable models"""
 
-    class Meta:  # noqa: D106
+    class Meta:
         abstract = True
 
     def to_dict(self):
@@ -129,8 +129,12 @@ class AuditableModel(Model):
 class SingletonModel(Model):
     """Model class for models representing tables that should only have a single record"""  # noqa: E501
 
-    def save(  # noqa: D102
-        self, force_insert=False, force_update=False, using=None, update_fields=None  # noqa: FBT002
+    def save(
+        self,
+        force_insert=False,  # noqa: FBT002
+        force_update=False,  # noqa: FBT002
+        using=None,
+        update_fields=None,
     ):
         if force_insert and self._meta.model.objects.count() > 0:
             raise ValidationError(  # noqa: TRY003
@@ -144,7 +148,7 @@ class SingletonModel(Model):
             update_fields=update_fields,
         )
 
-    class Meta:  # noqa: D106
+    class Meta:
         abstract = True
 
 
@@ -155,7 +159,9 @@ _PrefetchGenericQuerySet = TypeVar(
 
 
 def _items_for_class(
-    content_type_field: str, items: Iterable[_ModelClass], model_cls: Type[_ModelClass]  # noqa: FA100
+    content_type_field: str,
+    items: Iterable[_ModelClass],
+    model_cls: Type[_ModelClass],  # noqa: FA100
 ) -> Iterable[_ModelClass]:
     """Returns a list of items that matches a class by content_type"""  # noqa: D401
     return [
@@ -168,7 +174,7 @@ def _items_for_class(
 class PrefetchGenericQuerySet(QuerySet):
     """QuerySet supporting for prefetching over generic relationships"""
 
-    def __init__(self, *args, **kwargs):  # noqa: D107
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._prefetch_generic_related_lookups = {}
         self._prefetch_generic_done = False

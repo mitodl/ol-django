@@ -1,4 +1,4 @@
-import hashlib  # noqa: INP001, D100
+import hashlib  # noqa: INP001
 import json
 import os
 import random
@@ -30,17 +30,17 @@ ISO_8601_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
 @pytest.fixture()
-def order():  # noqa: D103
+def order():
     return OrderFactory()
 
 
 @pytest.fixture()
-def refund():  # noqa: D103
+def refund():
     return RefundFactory()
 
 
 @pytest.fixture()
-def cartitems():  # noqa: D103
+def cartitems():
     return CartItemFactory.create_batch(5)
 
 
@@ -50,7 +50,9 @@ def response_payload(request):
 
     with open(  # noqa: PTH123
         os.path.join(  # noqa: PTH118
-            os.getcwd(), "tests/data/payment_gateway/api", f"{request.param}.json"  # noqa: PTH109
+            os.getcwd(),  # noqa: PTH109
+            "tests/data/payment_gateway/api",
+            f"{request.param}.json",
         ),
     ) as f:
         response_txt = f.read()
@@ -222,7 +224,10 @@ def test_cybersource_response_auth(order, cartitems):
     indirect=["response_payload"],
 )
 def test_cybersource_payment_response(
-    response_payload, expected_response_code, order, cartitems  # noqa: ARG001
+    response_payload,
+    expected_response_code,
+    order,  # noqa: ARG001
+    cartitems,  # noqa: ARG001
 ):
     """
     Testing this really requires a payload from CyberSource, which also means
@@ -437,7 +442,7 @@ def create_transaction_search_results():
 
 
 @pytest.mark.parametrize("test_failure", [True, False])
-def test_find_transactions(test_failure, mocker):  # noqa: D103
+def test_find_transactions(test_failure, mocker):
     fake_ids = ["mitxonline-test-12345", "mitxonline-test-54321"]
 
     faked_responses = create_transaction_search_results()

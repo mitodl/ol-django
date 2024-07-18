@@ -1,4 +1,4 @@
-from datetime import timedelta  # noqa: INP001, D100
+from datetime import timedelta  # noqa: INP001
 from os import environ
 from types import SimpleNamespace
 
@@ -10,7 +10,7 @@ from pytest_django.lazy_django import skip_if_no_django
 
 
 @pytest.fixture(scope="session")
-def django_db_modify_db_settings_pants_suffix() -> None:  # noqa: PT004, D103
+def django_db_modify_db_settings_pants_suffix() -> None:  # noqa: PT004
     skip_if_no_django()
 
     slot_id = environ.get("PANTS_EXECUTION_SLOT", None)
@@ -20,7 +20,7 @@ def django_db_modify_db_settings_pants_suffix() -> None:  # noqa: PT004, D103
 
 
 @pytest.fixture(scope="session")
-def django_db_modify_db_settings_parallel_suffix(  # noqa: PT004, D103
+def django_db_modify_db_settings_parallel_suffix(  # noqa: PT004
     django_db_modify_db_settings_pants_suffix,  # noqa: ARG001
 ) -> None:
     skip_if_no_django()

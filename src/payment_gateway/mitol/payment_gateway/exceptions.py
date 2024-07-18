@@ -4,7 +4,7 @@
 class RefundDuplicateException(Exception):  # noqa: N818
     """Exception class for Duplicate Refund requests"""
 
-    def __init__(  # noqa: D107, PLR0913
+    def __init__(
         self,
         refund_reason_code,
         refund_transaction_id,
@@ -25,7 +25,7 @@ class RefundDuplicateException(Exception):  # noqa: N818
 class InvalidTransactionException(Exception):  # noqa: N818
     """Exception class for Invalid transaction data"""
 
-    def __init__(  # noqa: D107
+    def __init__(
         self,
         message=None,
     ):

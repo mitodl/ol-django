@@ -129,7 +129,7 @@ class ResultType(Enum):
     OUT_OF_SYNC = "out_of_sync"
     PROCESSED = "processed"
 
-    def __lt__(self, other):  # noqa: D105
+    def __lt__(self, other):
         return self.value < other.value
 
 

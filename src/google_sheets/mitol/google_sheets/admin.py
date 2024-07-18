@@ -30,7 +30,7 @@ class GoogleFileWatchAdmin(admin.ModelAdmin):
     )
     ordering = ["-expiration_date"]  # noqa: RUF012
 
-    def save_form(self, request, form, change):  # noqa: D102
+    def save_form(self, request, form, change):
         if not change:
             file_id = form.cleaned_data["file_id"]
             if self.model.objects.filter(file_id=file_id).exists():

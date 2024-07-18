@@ -19,7 +19,7 @@ from mitol.google_sheets_deferrals.constants import (
 class DeferralRequestRow:  # pylint: disable=too-many-instance-attributes
     """Represents a row of the deferral request sheet"""
 
-    def __init__(  # noqa: D107, PLR0913
+    def __init__(  # noqa: PLR0913
         self,
         row_index,
         response_id,
@@ -98,7 +98,7 @@ class DeferralRequestSheetConfig(
     ERROR_COL = settings.MITOL_GOOGLE_SHEETS_DEFERRALS_ERROR_COL
     SKIP_ROW_COL = settings.MITOL_GOOGLE_SHEETS_DEFERRALS_SKIP_ROW_COL
 
-    def __init__(self):  # noqa: D107
+    def __init__(self):
         self.sheet_type = SHEET_TYPE_ENROLL_CHANGE
         self.sheet_name = "Enrollment Change Request sheet"
         self.worksheet_type = WORKSHEET_TYPE_DEFERRAL

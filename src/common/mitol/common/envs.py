@@ -271,7 +271,7 @@ class EnvParser:
     _configured_vars: Dict[str, EnvVariable]  # noqa: FA100
     _imported_modules: List[str]  # noqa: FA100
 
-    def __init__(self):  # noqa: D107
+    def __init__(self):
         self.reset()
 
     def reset(self):

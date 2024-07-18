@@ -26,10 +26,10 @@ First, gather a few of ID-type values from Drive:
     Example: `my-api-project-1234567890123`
 1. Drive file ID for the request spreadsheets. These can be found by opening a spreadsheet from
     Drive and inspecting the URL. Copy the id for the change of enrollment sheet.
-    
-    Example: 
+
+    Example:
     > `https://docs.google.com/spreadsheets/d/THIS_IS_THE_ID_VALUE/edit#gid=0`
-    
+
 
 *If it's not obvious, remove the angle brackets (`<>`) for the actual values.*
 
@@ -119,7 +119,7 @@ These are steps that only need to be completed once before you start hacking on 
 1. Enable the Drive API for your project
     1. Visit the API console: https://console.developers.google.com/apis/library
     1. Select your Google Cloud Platform project from the dropdown at the top of the page.
-    1. Find the Drive API, click on it, and enable it. 
+    1. Find the Drive API, click on it, and enable it.
 
 ### 3) Copy an xPRO Drive project folder
 
@@ -131,9 +131,9 @@ An xPRO Drive folder should have the following artifacts:
   an enrollment code request form, a refund request form, and a deferral request form.
 1. A **folder** which is the target for enrollment code assignment sheets that we generate.
 
-**The contents of this folder should be copied from a "template" folder to a folder in your local Drive.** 
-There is a template folder on the MIT shared drive, or you can ask a fellow developer to share one. 
-**Just chat or email someone on the team to point you to one of these template folders.** 
+**The contents of this folder should be copied from a "template" folder to a folder in your local Drive.**
+There is a template folder on the MIT shared drive, or you can ask a fellow developer to share one.
+**Just chat or email someone on the team to point you to one of these template folders.**
 Once you can access a template folder, do the following to make your own copy:
 
 1. Create a folder on your local Drive. Call it something like "Local xPRO Enrollments".
@@ -147,7 +147,7 @@ Your Drive folder should look something like this when you're done:
 
 ![Enrollment Code Request form](images/sheets-drive-folder.png)
 
-### 4) Add initial settings 
+### 4) Add initial settings
 Update your .env file with the settings listed above, that begin with `MITOL_GOOGLE_SHEETS...`.
 
 ### Authenticating
@@ -175,7 +175,7 @@ GOOGLE_DOMAIN_VERIFICATION_TAG_VALUE=ETRM2VjAZ3BF52L_ait6r...
 4. (Re)start containers
 5. Click Verify in Domain verify page once containers are fully running. This should succeed.
 6. Add Google API console configs ([API console link](https://console.cloud.google.com/apis/dashboard))
-    1. Domain verification ([link](https://console.cloud.google.com/apis/credentials/domainverification)): 
+    1. Domain verification ([link](https://console.cloud.google.com/apis/credentials/domainverification)):
         Add the ngrok domain (e.g.: `12345abc6789.ngrok.io`)
     2. OAuth consent screen ([link](https://console.cloud.google.com/apis/credentials/consent))
        1. Under "Test users" click "add users", add your email address
@@ -191,10 +191,10 @@ GOOGLE_DOMAIN_VERIFICATION_TAG_VALUE=ETRM2VjAZ3BF52L_ait6r...
     1. Navigate to the sheets admin page (`/sheets/admin/`) with the ngrok HTTP URL (e.g.: `http://12345abc6789.ngrok.io/sheets/admin/`)
     1. Click the Authorize button and go through Google OAuth flow
         - *NOTE: You will hit a warning page after selecting your user. To continue, click "Advanced", then click the "Go to \<url\>" link at bottom*
-    
+
 ### On setting up the google spreadsheets and request form
 
-You need to link the refund form responses form to output to the spreadsheet. You can do that by opening the form 
+You need to link the refund form responses form to output to the spreadsheet. You can do that by opening the form
 and Responses->Settings->Select response destination-> Select existing spreadsheet.
 When you fill out the form it will create a new worksheet, called something like "Form Response 1". You can
 rename this tab to "Refund Form Response".

@@ -22,7 +22,7 @@ class Command(BaseCommand):
     help = "Creates MaxMind assignments for the private IPv4 netblocks."
     MAX_BIGINTEGERFIELD = 9223372036854775807
 
-    def add_arguments(self, parser) -> None:  # noqa: D102
+    def add_arguments(self, parser) -> None:
         parser.add_argument(
             "iso",
             type=str,
@@ -35,7 +35,7 @@ class Command(BaseCommand):
             help="Remove the local address netblocks rather than create them.",
         )
 
-    def handle(self, *args, **kwargs):  # noqa: ARG002, D102
+    def handle(self, *args, **kwargs):  # noqa: ARG002
         try:
             geoname = Geoname.objects.filter(country_iso_code=kwargs["iso"]).first()
         except Geoname.DoesNotExist:

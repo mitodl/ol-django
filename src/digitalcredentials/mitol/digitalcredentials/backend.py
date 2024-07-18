@@ -43,7 +43,8 @@ def _extract_verification_method(presentation: Dict) -> str:  # noqa: FA100
 
 
 def verify_presentations(
-    credential_request: DigitalCredentialRequest, presentation: Dict  # noqa: FA100
+    credential_request: DigitalCredentialRequest,
+    presentation: Dict,  # noqa: FA100
 ) -> requests.Response:
     """Verifies the learner's presentation against the backend service"""  # noqa: D401
     return requests.post(  # noqa: S113

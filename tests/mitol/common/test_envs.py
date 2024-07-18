@@ -146,7 +146,9 @@ def test_get_crontab_kwargs_invalid(env_var, default):  # noqa: ARG001
     # invalid
     with pytest.raises(ImproperlyConfigured):
         envs.get_crontab_kwargs(
-            name="MISSING", default=dict(invalid_key="*"), description="desc"  # noqa: C408
+            name="MISSING",
+            default=dict(invalid_key="*"),  # noqa: C408
+            description="desc",
         )
 
     with pytest.raises(ImproperlyConfigured):
@@ -167,7 +169,7 @@ def test_get_crontab_kwargs_invalid(env_var, default):  # noqa: ARG001
         ("CRONTAB_VALID", dict(zip(envs.CRONTAB_KEYS, map(str, range(5))))),
     ],
 )
-def test_get_crontab_kwargs_valid(env_var, default):  # noqa: D103
+def test_get_crontab_kwargs_valid(env_var, default):
     assert envs.get_crontab_kwargs(
         name=env_var, default=default, description="desc"
     ) == {key: "*" for key in envs.CRONTAB_KEYS}
@@ -185,7 +187,7 @@ def test_get_crontab_kwargs_valid(env_var, default):  # noqa: D103
         * 2,  # turns to (dict, dict) to get same value for both args
     ],
 )
-def test_get_crontab_kwargs_valid_default(default, expected):  # noqa: D103
+def test_get_crontab_kwargs_valid_default(default, expected):
     assert (
         envs.get_crontab_kwargs(name="MISSING", default=default, description="desc")
         == expected

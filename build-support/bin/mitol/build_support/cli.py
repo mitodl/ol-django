@@ -1,4 +1,4 @@
-from cloup import Context, group, pass_context  # noqa: D100
+from cloup import Context, group, pass_context
 
 from mitol.build_support.commands.changelog import changelog
 from mitol.build_support.commands.release import release

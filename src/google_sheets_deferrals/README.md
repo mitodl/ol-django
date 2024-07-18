@@ -57,12 +57,12 @@ Description of settings (in addition to the ones described in `mitol-django-goog
   > The IDs of the refund and deferral sheets in the change of enrollment spreadsheet. These can
     be found by opening the spreadsheet, selecting the "Refunds" or "Deferrals" worksheets, and
     copying down the `gid` value in the URL.
-    
+
     Example:
     `https://docs.google.com/spreadsheets/d/<MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID>/edit#gid=<MITOL_GOOGLE_SHEETS_DEFERRALS_REQUEST_WORKSHEET_ID>`
 
 
-- `MITOL_GOOGLE_SHEETS_DEFERRALS_PROCESSOR_COL` 
+- `MITOL_GOOGLE_SHEETS_DEFERRALS_PROCESSOR_COL`
   > The zero-based index of the deferral change sheet column that contains the user that processed the row
 
 - `MITOL_GOOGLE_SHEETS_DEFERRALS_COMPLETED_DATE_COL`

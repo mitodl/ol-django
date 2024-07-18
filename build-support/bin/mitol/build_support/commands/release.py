@@ -1,4 +1,4 @@
-from click import echo, pass_context  # noqa: D100
+from click import echo, pass_context
 from cloup import Context, group, option
 
 from mitol.build_support.apps import App
@@ -14,7 +14,7 @@ from mitol.build_support.project import Project
 
 
 @group()
-def release():  # noqa: D103
+def release():
     pass
 
 

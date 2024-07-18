@@ -22,7 +22,7 @@ class DemoCoursewareFactory(DjangoModelFactory):
 
     learner = SubFactory(UserFactory)
 
-    class Meta:  # noqa: D106
+    class Meta:
         model = DemoCourseware
 
 
@@ -38,8 +38,8 @@ class DemoCoursewareDigitalCredentialRequestFactory(DigitalCredentialRequestFact
     credentialed_object = SubFactory(DemoCoursewareFactory)
 
 
-class CartItemFactory(Factory):  # noqa: D101
-    class Meta:  # noqa: D106
+class CartItemFactory(Factory):
+    class Meta:
         model = CartItem
 
     sku = fuzzy.FuzzyText()
@@ -50,8 +50,8 @@ class CartItemFactory(Factory):  # noqa: D101
     unitprice = fuzzy.FuzzyDecimal(1, 300, precision=2)
 
 
-class OrderFactory(Factory):  # noqa: D101
-    class Meta:  # noqa: D106
+class OrderFactory(Factory):
+    class Meta:
         model = Order
 
     ip_address = FAKE.ipv4()
@@ -63,7 +63,7 @@ class OrderFactory(Factory):  # noqa: D101
 class RefundFactory(Factory):
     """Factory for creating Refund data object for CyberSource API calls"""
 
-    class Meta:  # noqa: D106
+    class Meta:
         model = Refund
 
     transaction_id = fuzzy.FuzzyText(length=22, chars=string.digits)

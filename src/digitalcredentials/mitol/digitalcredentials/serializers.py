@@ -97,7 +97,7 @@ class DigitalCredentialRequestSerializer(ModelSerializer):
         """Get the deep link url for the wallet app"""
         return create_deep_link_url(instance)
 
-    class Meta:  # noqa: D106
+    class Meta:
         model = DigitalCredentialRequest
         fields = (
             "credentialed_object_id",

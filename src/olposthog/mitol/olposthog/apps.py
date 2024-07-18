@@ -1,9 +1,9 @@
-import os  # noqa: D100
+import os
 
 from mitol.common.apps import BaseApp
 
 
-class OlPosthog(BaseApp):  # noqa: D101
+class OlPosthog(BaseApp):
     default_auto_field = "django.db.models.BigAutoField"
     name = "mitol.olposthog"
     label = "olposthog"

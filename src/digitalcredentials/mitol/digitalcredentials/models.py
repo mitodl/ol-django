@@ -29,7 +29,7 @@ class DigitalCredentialRequest(TimestampedModel):
 
     consumed = models.BooleanField(default=False)
 
-    def __str__(self):  # noqa: D105
+    def __str__(self):
         return f"Credential request uuid={self.uuid} learner={self.learner} courseware={self.credentialed_object}"  # noqa: E501
 
 
@@ -66,5 +66,5 @@ class DigitalCredential(TimestampedModel):
 
     credential_json = models.TextField()  # for now, just store the JSON as plaintext
 
-    def __str__(self):  # noqa: D105
+    def __str__(self):
         return f"Digital credential learner={self.learner} did={self.learner_did.did} courseware={self.credentialed_object}"  # noqa: E501

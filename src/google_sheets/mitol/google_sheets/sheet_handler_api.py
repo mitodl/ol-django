@@ -299,7 +299,7 @@ class GoogleSheetsChangeRequestHandler(SheetHandler):
     Base class for managing the processing of enrollment change requests from a spreadsheet
     """  # noqa: E501
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self, spreadsheet_id, worksheet_id, start_row, sheet_metadata, request_model_cls
     ):
         """
@@ -319,10 +319,10 @@ class GoogleSheetsChangeRequestHandler(SheetHandler):
         self.request_model_cls = request_model_cls
 
     @cached_property
-    def worksheet(self):  # noqa: D102
+    def worksheet(self):
         return self.spreadsheet.worksheet("id", value=self.worksheet_id)
 
-    def get_enumerated_rows(self):  # noqa: D102
+    def get_enumerated_rows(self):
         # Only yield rows in the spreadsheet that come after the legacy rows
         # (i.e.: the rows of data that were manually entered before we started automating this process)  # noqa: E501
         row_count = len(self.worksheet.get_all_values(include_tailing_empty_rows=False))
@@ -350,7 +350,7 @@ class GoogleSheetsChangeRequestHandler(SheetHandler):
             start=first_row_to_process,
         )
 
-    def update_completed_rows(self, success_row_results):  # noqa: D102
+    def update_completed_rows(self, success_row_results):
         for row_result in success_row_results:
             self.worksheet.update_values(
                 crange=f"{self.sheet_metadata.PROCESSOR_COL_LETTER}{row_result.row_index}:{self.sheet_metadata.ERROR_COL_LETTER}{row_result.row_index}",
@@ -367,7 +367,7 @@ class GoogleSheetsChangeRequestHandler(SheetHandler):
                 ],
             )
 
-    def get_or_create_request(self, row_data):  # noqa: D102
+    def get_or_create_request(self, row_data):
         form_response_id = int(
             row_data[self.sheet_metadata.FORM_RESPONSE_ID_COL].strip()
         )
@@ -388,5 +388,5 @@ class GoogleSheetsChangeRequestHandler(SheetHandler):
                 enroll_change_request.save()
         return enroll_change_request, created, raw_data_changed
 
-    def process_row(self, row_index, row_data):  # noqa: D102
+    def process_row(self, row_index, row_data):
         raise NotImplementedError

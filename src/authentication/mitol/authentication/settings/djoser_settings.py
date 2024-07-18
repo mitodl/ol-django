@@ -1,4 +1,4 @@
-from mitol.common.envs import get_string  # noqa: D100
+from mitol.common.envs import get_string
 
 # Relative URL to be used by Djoser for the link in the password reset email
 # (see: http://djoser.readthedocs.io/en/stable/settings.html#password-reset-confirm-url)

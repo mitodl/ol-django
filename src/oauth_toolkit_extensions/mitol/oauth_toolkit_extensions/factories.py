@@ -29,7 +29,7 @@ class GrantFactory(DjangoModelFactory):
     redirect_uri = "http://localhost:9999/redirect_complete"
     scope = DEFAULT_SCOPE
 
-    class Meta:  # noqa: D106
+    class Meta:
         model = Grant
 
 
@@ -50,7 +50,7 @@ class AccessTokenFactory(DjangoModelFactory):
     expires = Faker("future_datetime")
     scope = SelfAttribute("source_refresh_token.scope")
 
-    class Meta:  # noqa: D106
+    class Meta:
         model = get_access_token_model()
 
 
@@ -72,7 +72,7 @@ class RefreshTokenFactory(DjangoModelFactory):
     scope = DEFAULT_SCOPE
     expires = Faker("future_datetime")
 
-    class Meta:  # noqa: D106
+    class Meta:
         model = RefreshToken
 
 
@@ -93,7 +93,7 @@ class ApplicationFactory(DjangoModelFactory):
 
     name = Sequence(lambda i: f"application_{i}")
 
-    class Meta:  # noqa: D106
+    class Meta:
         model = Application
 
 
@@ -106,5 +106,5 @@ class ApplicationAccessFactory(DjangoModelFactory):
 
     scopes = ["custom_scope_1", "custom_scope_2"]  # noqa: RUF012
 
-    class Meta:  # noqa: D106
+    class Meta:
         model = ApplicationAccess

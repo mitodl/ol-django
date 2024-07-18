@@ -604,7 +604,9 @@ def find_object(
 
 
 def find_product(
-    name: str, price: str = None, raise_count_error: bool = True  # noqa: FBT001, FBT002, RUF013
+    name: str,
+    price: str = None,  # noqa: RUF013
+    raise_count_error: bool = True,  # noqa: FBT001, FBT002
 ) -> SimplePublicObject:
     """
     Find the hubspot_api id for a product by name and optionally price
@@ -625,7 +627,9 @@ def find_product(
 
 
 def find_deal(
-    name, amount: str = None, raise_count_error: bool = True  # noqa: FBT001, FBT002, RUF013
+    name,
+    amount: str = None,  # noqa: RUF013
+    raise_count_error: bool = True,  # noqa: FBT001, FBT002
 ) -> SimplePublicObject:
     """
     Find the hubspot_api id for a deal by name and optionally price

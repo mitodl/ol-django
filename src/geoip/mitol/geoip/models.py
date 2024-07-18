@@ -31,14 +31,14 @@ class Geoname(models.Model):
     time_zone = models.TextField(blank=True, null=True)
     is_in_european_union = models.BooleanField(blank=True, null=True, default=False)
 
-    class Meta:  # noqa: D106
+    class Meta:
         constraints = [  # noqa: RUF012
             models.UniqueConstraint(
                 fields=["geoname_id", "locale_code"], name="unique_geoname_id_locale"
             )
         ]
 
-    def __str__(self):  # noqa: D105
+    def __str__(self):
         return f"{self.geoname_id} {self.locale_code}: {self.subdivision_2_iso_code} {self.subdivision_1_iso_code} {self.country_iso_code} {self.continent_code}"  # noqa: E501
 
 
@@ -88,7 +88,7 @@ class NetBlock(models.Model):
     )
     accuracy_radius = models.IntegerField(blank=True, null=True)
 
-    class Meta:  # noqa: D106
+    class Meta:
         constraints = [  # noqa: RUF012
             models.CheckConstraint(
                 check=models.Q(geoname_id__isnull=False)
@@ -103,5 +103,5 @@ class NetBlock(models.Model):
             models.Index(fields=["decimal_ip_start", "decimal_ip_end"]),
         ]
 
-    def __str__(self):  # noqa: D105
+    def __str__(self):
         return f"{self.geoname_id}: {self.network} (IPv6 {self.is_ipv6}) start {self.ip_start} end {self.ip_end}"  # noqa: E501

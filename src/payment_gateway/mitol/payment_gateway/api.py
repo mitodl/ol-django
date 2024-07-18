@@ -140,7 +140,7 @@ class PaymentGateway(abc.ABC):
 
     _GATEWAYS = {}  # noqa: RUF012
 
-    def __init_subclass__(cls, *, gateway_class, **kwargs):  # noqa: D105
+    def __init_subclass__(cls, *, gateway_class, **kwargs):
         super().__init_subclass__()
 
         if gateway_class in cls._GATEWAYS:
@@ -148,7 +148,7 @@ class PaymentGateway(abc.ABC):
 
         cls._GATEWAYS[gateway_class] = cls
 
-    def find_gateway_class(func):  # noqa: N805, D102
+    def find_gateway_class(func):  # noqa: N805
         @wraps(func)
         def _find_gateway_class(cls, payment_type, *args, **kwargs):
             if payment_type not in cls._GATEWAYS:
@@ -159,7 +159,7 @@ class PaymentGateway(abc.ABC):
         return _find_gateway_class
 
     @abc.abstractmethod
-    def prepare_checkout(  # noqa: PLR0913
+    def prepare_checkout(
         self, order, cart, receipt_url, cancel_url, backoffice_post_url, **kwargs
     ):
         """
@@ -248,7 +248,7 @@ class PaymentGateway(abc.ABC):
 
     @classmethod
     @find_gateway_class
-    def start_payment(  # noqa: PLR0913
+    def start_payment(
         cls,
         payment_type,
         order: Order,

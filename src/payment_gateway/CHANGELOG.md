@@ -48,7 +48,7 @@ and this project uses date-based versioning.
 ## [1.2.1] - 2022-02-11
 
 ### Added
-- Bug fix for CyberSource processor validation 
+- Bug fix for CyberSource processor validation
 
 ## [1.2.0] - 2022-02-02
 

@@ -61,7 +61,7 @@ def pygsheets_fixtures(mocker, db, request_csv_rows):  # noqa: ARG001
 
 
 @pytest.fixture()
-def google_sheets_deferral_settings(settings):  # noqa: D103
+def google_sheets_deferral_settings(settings):
     settings.MITOL_GOOGLE_SHEETS_DEFERRALS_REQUEST_WORKSHEET_ID = "1"
     settings.MITOL_GOOGLE_SHEETS_DEFERRALS_PLUGINS = "app.plugins.DeferralPlugin"
     return settings

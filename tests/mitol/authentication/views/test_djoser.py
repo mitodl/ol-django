@@ -10,7 +10,7 @@ EMAIL = "email@example.com"
 
 
 @pytest.fixture()
-def user():  # noqa: D103
+def user():
     from mitol.common.factories import UserFactory
 
     return UserFactory.create(email=EMAIL)
@@ -27,7 +27,7 @@ class TestDjoserView:
             [status.HTTP_400_BAD_REQUEST, False],  # noqa: PT007
         ],
     )
-    def test_password_change_session_update(  # noqa: PLR0913
+    def test_password_change_session_update(
         self, mocker, response_status, expected_session_update, client, user
     ):
         """

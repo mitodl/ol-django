@@ -64,11 +64,11 @@ rye lint
 # run django management scripts
 rye run tests/manage.py -- ARGS
 # run a django shell
-rye run tests/manage.py -- shell  
+rye run tests/manage.py -- shell
 # create migrations
-rye run tests/manage.py -- makemigrations  
+rye run tests/manage.py -- makemigrations
 # run a django migrate
-rye run tests/manage.py -- migrate  
+rye run tests/manage.py -- migrate
 ```
 
 ### Migrations

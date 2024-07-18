@@ -1,4 +1,4 @@
-from fnmatch import fnmatch  # noqa: D100
+from fnmatch import fnmatch
 from os import makedirs
 from textwrap import indent
 

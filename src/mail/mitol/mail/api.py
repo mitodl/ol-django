@@ -119,7 +119,8 @@ def render_email_templates(template_name: str, context: dict) -> Tuple[str, str,
         (str, str, str): tuple of the templates for subject, text_body, html_body
     """  # noqa: E501, D401
     subject_text = render_to_string(
-        path.join(template_name, "subject.txt"), context  # noqa: PTH118
+        path.join(template_name, "subject.txt"),  # noqa: PTH118
+        context,
     ).rstrip()
 
     context.update({"subject": subject_text})
@@ -222,7 +223,9 @@ def send_message(message: TemplatedMessage):
 
 @contextlib.contextmanager
 def get_message_sender(
-    message_cls: Type[TemplatedMessage], *, shared_context: Optional[dict] = None  # noqa: FA100
+    message_cls: Type[TemplatedMessage],  # noqa: FA100
+    *,
+    shared_context: Optional[dict] = None,  # noqa: FA100
 ) -> Generator:
     """
     Context manager to provide a unified interface to the mail APIs, also providing some extra functionality around shared contexts

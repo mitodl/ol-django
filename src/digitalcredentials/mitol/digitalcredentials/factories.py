@@ -21,7 +21,7 @@ class DigitalCredentialRequestFactory(DjangoModelFactory):
         lambda o: ContentType.objects.get_for_model(o.credentialed_object)
     )
 
-    class Meta:  # noqa: D106
+    class Meta:
         model = DigitalCredentialRequest
 
 
@@ -31,7 +31,7 @@ class LearnerDIDFactory(DjangoModelFactory):
     learner = SubFactory("mitol.common.factories.UserFactory")
     did = Sequence(lambda n: f"did:example:{n}")
 
-    class Meta:  # noqa: D106
+    class Meta:
         model = LearnerDID
 
 
@@ -48,5 +48,5 @@ class DigitalCredentialFactory(DjangoModelFactory):
 
     credential_json = "{}"
 
-    class Meta:  # noqa: D106
+    class Meta:
         model = DigitalCredential

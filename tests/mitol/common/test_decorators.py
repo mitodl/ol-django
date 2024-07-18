@@ -7,7 +7,9 @@ from mitol.common.decorators import single_task
 
 
 def task_obj_lock(
-    func_name: str, args: List[object], kwargs: dict  # noqa: FA100, ARG001
+    func_name: str,
+    args: List[object],  # noqa: FA100
+    kwargs: dict,  # noqa: ARG001
 ) -> str:  # @pylint:unused-argument
     """
     Determine a task lock name for a specific task function and object id

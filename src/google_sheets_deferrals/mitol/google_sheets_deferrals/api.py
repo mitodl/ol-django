@@ -29,7 +29,7 @@ User = get_user_model()
 class DeferralRequestHandler(GoogleSheetsChangeRequestHandler):
     """Manages the processing of enrollment deferral requests from a spreadsheet"""
 
-    def __init__(self):  # noqa: D107
+    def __init__(self):
         self.pm = get_plugin_manager()
         self.hook = self.pm.hook
         super().__init__(

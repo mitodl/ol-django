@@ -19,10 +19,13 @@ class ApplicationAccessOrSettingsScopes(SettingsScopes):
         if application is not None and getattr(application, "access", None) is not None:
             return application.access.scopes_list
         return super().get_available_scopes(
-            application=application, request=request, *args, **kwargs  # noqa: B026
+            application=application,
+            request=request,
+            *args,  # noqa: B026
+            **kwargs,
         )
 
-    def get_default_scopes(  # noqa: D102
+    def get_default_scopes(
         self,
         application: AbstractApplication = None,
         request: HttpRequest = None,
@@ -32,5 +35,8 @@ class ApplicationAccessOrSettingsScopes(SettingsScopes):
         if application is not None and getattr(application, "access", None) is not None:
             return application.access.scopes_list
         return super().get_default_scopes(
-            application=application, request=request, *args, **kwargs  # noqa: B026
+            application=application,
+            request=request,
+            *args,  # noqa: B026
+            **kwargs,
         )

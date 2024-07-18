@@ -31,11 +31,15 @@ class GoogleFileWatch(TimestampedModel):
     expiration_date = models.DateTimeField(null=False)
     last_request_received = models.DateTimeField(null=True, blank=True)
 
-    class Meta:  # noqa: D106
+    class Meta:
         unique_together = ("file_id", "version")
 
-    def save(  # noqa: D102
-        self, force_insert=False, force_update=False, using=None, update_fields=None  # noqa: FBT002
+    def save(
+        self,
+        force_insert=False,  # noqa: FBT002
+        force_update=False,  # noqa: FBT002
+        using=None,
+        update_fields=None,
     ):
         if (
             force_insert
@@ -52,7 +56,7 @@ class GoogleFileWatch(TimestampedModel):
             update_fields=update_fields,
         )
 
-    def __str__(self):  # noqa: D105
+    def __str__(self):
         return f"GoogleFileWatch: id={self.id}, channel_id={self.channel_id}, file_id={self.file_id}, expires={self.expiration_date.isoformat()}"  # noqa: E501
 
 
@@ -75,5 +79,5 @@ class GoogleSheetsRequestModel(TimestampedModel):
     date_completed = models.DateTimeField(null=True, blank=True)
     raw_data = models.CharField(max_length=300, null=True, blank=True)
 
-    class Meta:  # noqa: D106
+    class Meta:
         abstract = True

@@ -9,8 +9,8 @@ from djoser.serializers import SendEmailResetSerializer
 User = get_user_model()
 
 
-class CustomSendEmailResetSerializer(SendEmailResetSerializer):  # noqa: D101
-    def get_user(self, is_active=True):  # noqa: FBT002, D102
+class CustomSendEmailResetSerializer(SendEmailResetSerializer):
+    def get_user(self, is_active=True):  # noqa: FBT002
         # NOTE: This directly copies the implementation of djoser.serializers.UserFunctionsMixin.get_user  # noqa: E501
         # and only changes the User query. If this method is changed in an updated Djoser  # noqa: E501
         # release, this method may need to be updated as well.

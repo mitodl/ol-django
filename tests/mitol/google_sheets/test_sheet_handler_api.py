@@ -1,4 +1,4 @@
-import pytest  # noqa: D100
+import pytest
 from mitol.google_sheets.sheet_handler_api import SheetHandler
 from pytest_lazyfixture import lazy_fixture
 

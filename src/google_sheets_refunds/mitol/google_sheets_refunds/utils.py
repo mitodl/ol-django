@@ -19,7 +19,7 @@ from mitol.google_sheets_refunds.constants import (
 class RefundRequestRow:
     """Represents a row of the refund request sheet"""
 
-    def __init__(  # noqa: D107, PLR0913
+    def __init__(  # noqa: PLR0913
         self,
         row_index,
         response_id,
@@ -108,7 +108,7 @@ class RefundRequestSheetConfig(
     ERROR_COL = settings.MITOL_GOOGLE_SHEETS_REFUNDS_ERROR_COL
     SKIP_ROW_COL = settings.MITOL_GOOGLE_SHEETS_REFUNDS_SKIP_ROW_COL
 
-    def __init__(self):  # noqa: D107
+    def __init__(self):
         self.sheet_type = SHEET_TYPE_ENROLL_CHANGE
         self.sheet_name = "Enrollment Change Request sheet"
         self.worksheet_type = WORKSHEET_TYPE_REFUND

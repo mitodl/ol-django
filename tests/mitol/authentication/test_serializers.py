@@ -1,4 +1,4 @@
-import pytest  # noqa: D100
+import pytest
 from mitol.authentication.serializers.djoser_serializers import (
     CustomSendEmailResetSerializer,
 )

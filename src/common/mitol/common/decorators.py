@@ -1,4 +1,4 @@
-import functools  # noqa: D100
+import functools
 import random
 from functools import wraps
 from typing import Callable, Optional
@@ -10,7 +10,7 @@ from typing_extensions import ParamSpec
 P = ParamSpec("P")
 
 
-def cache_control_max_age_jitter(*args, **kwargs):  # noqa: ARG001, D103
+def cache_control_max_age_jitter(*args, **kwargs):  # noqa: ARG001
     def _cache_controller(viewfunc):
         @wraps(viewfunc)
         def _cache_controlled(request, *args, **kw):
