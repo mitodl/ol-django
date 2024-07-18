@@ -24,11 +24,11 @@ WORKDIR /home/dev
 # ===================================================================
 FROM base as rye
 ARG PYTHON_VERSION=3.11
+ENV PATH="${PATH}:/home/dev/.rye/shims"
 RUN curl -sSf https://rye.astral.sh/get | RYE_INSTALL_OPTION="--yes" bash &&\
     rye pin ${PYTHON_VERSION}
 
 # ===================================================================
-ENV PATH="${PATH}:/home/dev/bin"
 
 # the pants installer puts things in ~/cache/nce and it needs to be persistent
 RUN mkdir -p .cache && chown dev:dev .cache

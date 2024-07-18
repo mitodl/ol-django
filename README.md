@@ -50,7 +50,10 @@ Useful commands:
 # run all tests
 rye test
 # run only common app tests
-rye test -p mitol-common
+rye test -p mitol-django-common
+
+# build a package
+rye build -p mitol-django-common
 
 # format code (isort + black)
 rye fmt
