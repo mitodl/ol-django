@@ -1,4 +1,5 @@
 """Boilerplate settings parsing"""
+
 # pragma: no cover
 from mitol.common.envs import get_string
 
@@ -15,7 +16,7 @@ MITOL_DIGITAL_CREDENTIALS_HMAC_SECRET = get_string(
 MITOL_DIGITAL_CREDENTIALS_DEEP_LINK_URL = get_string(
     name="MITOL_DIGITAL_CREDENTIALS_DEEP_LINK_URL",
     default=None,
-    description="URL at which to deep link the learner to for the digital credentials wallet",
+    description="URL at which to deep link the learner to for the digital credentials wallet",  # noqa: E501
     required=False,
 )
 MITOL_DIGITAL_CREDENTIALS_AUTH_TYPE = get_string(

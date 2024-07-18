@@ -1,10 +1,11 @@
-"""google sheets deferrals settings """
+"""google sheets deferrals settings"""  # noqa: INP001
+
 from mitol.common.envs import get_int, get_string
 
 MITOL_GOOGLE_SHEETS_DEFERRALS_REQUEST_WORKSHEET_ID = get_string(
     name="MITOL_GOOGLE_SHEETS_DEFERRALS_REQUEST_WORKSHEET_ID",
     description=(
-        "ID of the worksheet within the enrollment change request spreadsheet that contains "
+        "ID of the worksheet within the enrollment change request spreadsheet that contains "  # noqa: E501
         "enrollment deferral requests"
     ),
 )
@@ -12,7 +13,7 @@ MITOL_GOOGLE_SHEETS_DEFERRALS_FIRST_ROW = get_int(
     name="MITOL_GOOGLE_SHEETS_DEFERRALS_FIRST_ROW",
     default=5,
     description=(
-        "The first row (as it appears in the spreadsheet) of data that our scripts should consider "
+        "The first row (as it appears in the spreadsheet) of data that our scripts should consider "  # noqa: E501
         "processing in the deferral request spreadsheet"
     ),
 )
@@ -25,27 +26,27 @@ MITOL_GOOGLE_SHEETS_DEFERRALS_PROCESSOR_COL = get_int(
     name="MITOL_GOOGLE_SHEETS_DEFERRALS_PROCESSOR_COL",
     default=7,
     description=(
-        "The zero-based index of the enrollment change sheet column that contains the user that processed the row"
+        "The zero-based index of the enrollment change sheet column that contains the user that processed the row"  # noqa: E501
     ),
 )
 MITOL_GOOGLE_SHEETS_DEFERRALS_COMPLETED_DATE_COL = get_int(
     name="MITOL_GOOGLE_SHEETS_DEFERRALS_COMPLETED_DATE_COL",
     default=8,
     description=(
-        "The zero-based index of the enrollment change sheet column that contains the row completion date"
+        "The zero-based index of the enrollment change sheet column that contains the row completion date"  # noqa: E501
     ),
 )
 MITOL_GOOGLE_SHEETS_DEFERRALS_ERROR_COL = get_int(
     name="MITOL_GOOGLE_SHEETS_DEFERRALS_ERROR_COL",
     default=9,
     description=(
-        "The zero-based index of the enrollment change sheet column that contains row processing error messages"
+        "The zero-based index of the enrollment change sheet column that contains row processing error messages"  # noqa: E501
     ),
 )
 MITOL_GOOGLE_SHEETS_DEFERRALS_SKIP_ROW_COL = get_int(
     name="MITOL_GOOGLE_SHEETS_DEFERRALS_SKIP_ROW_COL",
     default=10,
     description=(
-        "The zero-based index of the enrollment change sheet column that indicates whether the row should be skipped"
+        "The zero-based index of the enrollment change sheet column that indicates whether the row should be skipped"  # noqa: E501
     ),
 )

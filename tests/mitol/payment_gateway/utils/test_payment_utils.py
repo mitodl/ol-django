@@ -1,12 +1,11 @@
-"""Tests for payment_gateway application utils"""
+"""Tests for payment_gateway application utils"""  # noqa: INP001
 
 import pytest
-
 from mitol.payment_gateway.payment_utils import clean_request_data, strip_nones
 
 
 @pytest.mark.parametrize(
-    "request_data_dict, expected_data_dict",
+    "request_data_dict, expected_data_dict",  # noqa: PT006
     [
         ({"key1": 1, "key2": 2, "key3": None}, {"key1": 1, "key2": 2}),
         ({"key1": "val1", "key2": None, "key3": 1}, {"key1": "val1", "key3": 1}),
@@ -15,7 +14,7 @@ from mitol.payment_gateway.payment_utils import clean_request_data, strip_nones
     ],
 )
 def test_clean_data(request_data_dict, expected_data_dict):
-    """Test that clean_request_data cleans the requests data payload dictionary and returns it without None Values"""
+    """Test that clean_request_data cleans the requests data payload dictionary and returns it without None Values"""  # noqa: E501
 
     cleaned_data_dict = clean_request_data(request_data_dict)
     # Just sanity check
@@ -24,7 +23,7 @@ def test_clean_data(request_data_dict, expected_data_dict):
 
 
 def test_strip_nones():
-    """Tests strip_nones to make sure items that are None are stripped, and that colllections with no blank spaces are left alone."""
+    """Tests strip_nones to make sure items that are None are stripped, and that colllections with no blank spaces are left alone."""  # noqa: E501
 
     ds1 = {
         "keyA": "test",

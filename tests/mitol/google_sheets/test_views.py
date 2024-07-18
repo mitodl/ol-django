@@ -1,14 +1,14 @@
 """Tests for sheets app views"""
+
 import pytest
 from django.test.client import RequestFactory
 from django.urls import reverse
-from pytest_lazyfixture import lazy_fixture
-from rest_framework import status
-from testapp.utils import set_request_session
-
 from mitol.google_sheets.factories import GoogleApiAuthFactory
 from mitol.google_sheets.models import GoogleApiAuth
 from mitol.google_sheets.views import complete_google_auth
+from pytest_lazyfixture import lazy_fixture
+from rest_framework import status
+from testapp.utils import set_request_session
 
 lazy = lazy_fixture
 
@@ -26,7 +26,7 @@ def test_request_auth(mocker, settings, staff_client):
     """
     settings.SITE_BASE_URL = "http://example.com"
     settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_ID = "client_id"
-    settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_SECRET = "some-secret"
+    settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_SECRET = "some-secret"  # noqa: S105
     settings.MITOL_GOOGLE_SHEETS_DRIVE_API_PROJECT_ID = "some-project-id"
     settings.SITE_BASE_URL = "http://example.com"
     fake_redirect_url = "/"
@@ -53,19 +53,19 @@ def test_request_auth(mocker, settings, staff_client):
 
 
 @pytest.mark.parametrize("existing_auth", [lazy("google_api_auth"), None])
-@pytest.mark.django_db
-def test_complete_auth(mocker, settings, learner, existing_auth):
+@pytest.mark.django_db()
+def test_complete_auth(mocker, settings, learner, existing_auth):  # noqa: ARG001
     """
     View that handles Google auth completion should fetch a token and save/update a
     GoogleApiAuth object
     """
     settings.SITE_BASE_URL = "http://example.com"
     settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_ID = "client_id"
-    settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_SECRET = "some-secret"
+    settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_SECRET = "some-secret"  # noqa: S105
     settings.MITOL_GOOGLE_SHEETS_DRIVE_API_PROJECT_ID = "some-project-id"
     settings.SITE_BASE_URL = "http://example.com"
-    access_token = "access-token-123"
-    refresh_token = "refresh-token-123"
+    access_token = "access-token-123"  # noqa: S105
+    refresh_token = "refresh-token-123"  # noqa: S105
     code = "auth-code"
     flow_mock = mocker.Mock(
         credentials=mocker.Mock(token=access_token, refresh_token=refresh_token)

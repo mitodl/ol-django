@@ -1,4 +1,5 @@
-"""Templatetags for rendering webpack bundle script tags"""
+"""Templatetags for rendering webpack bundle script tags"""  # noqa: INP001
+
 from os import path
 from typing import Any, Dict, Iterator
 
@@ -6,9 +7,8 @@ from django import template
 from django.conf import settings
 from django.http import HttpRequest
 from django.utils.safestring import SafeText, mark_safe
-from webpack_loader.utils import get_loader
-
 from mitol.common.utils.webpack import webpack_public_path
+from webpack_loader.utils import get_loader
 
 register = template.Library()
 
@@ -25,17 +25,17 @@ def _get_bundle(request: HttpRequest, bundle_name: str) -> Iterator[dict]:
         iterable of dict:
             The chunks of the bundle. Usually there's only one but I suppose you could have
             CSS and JS chunks for one bundle for example
-    """
+    """  # noqa: E501
     if not settings.WEBPACK_DISABLE_LOADER_STATS:
         for chunk in get_loader("DEFAULT").get_bundle(bundle_name):
             chunk_copy = dict(chunk)
-            chunk_copy["url"] = path.join(webpack_public_path(request), chunk["name"])
+            chunk_copy["url"] = path.join(webpack_public_path(request), chunk["name"])  # noqa: PTH118
             yield chunk_copy
 
 
 @register.simple_tag(takes_context=True)
 def render_bundle(
-    context: Dict[str, Any], bundle_name: str, added_attrs: str = ""
+    context: Dict[str, Any], bundle_name: str, added_attrs: str = ""  # noqa: FA100
 ) -> SafeText:
     """
     Render the script tags for a Webpack bundle
@@ -51,13 +51,13 @@ def render_bundle(
 
     Returns:
         django.utils.safestring.SafeText:
-    """
+    """  # noqa: E501
     try:
         bundle = _get_bundle(context["request"], bundle_name)
         return _render_tags(bundle, added_attrs)
     except OSError:
         # webpack-stats.json doesn't exist
-        return mark_safe("")
+        return mark_safe("")  # noqa: S308
 
 
 def _render_tags(bundle: Iterator[dict], added_attrs: str = "") -> SafeText:
@@ -71,7 +71,7 @@ def _render_tags(bundle: Iterator[dict], added_attrs: str = "") -> SafeText:
 
     Returns:
         django.utils.safestring.SafeText: HTML for rendering bundles
-    """
+    """  # noqa: E501, D401
 
     tags = []
     for chunk in bundle:
@@ -87,4 +87,4 @@ def _render_tags(bundle: Iterator[dict], added_attrs: str = "") -> SafeText:
                     chunk["url"], added_attrs
                 )
             )
-    return mark_safe("\n".join(tags))
+    return mark_safe("\n".join(tags))  # noqa: S308

@@ -1,4 +1,5 @@
 """GeoIP app AppConfigs"""
+
 import os
 
 from mitol.common.apps import BaseApp
@@ -11,7 +12,7 @@ class GeoIPApp(BaseApp):
     label = "geoip"
     verbose_name = "GeoIP"
 
-    required_settings = []
+    required_settings = []  # noqa: RUF012
 
     # necessary because this is a namespaced app
-    path = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.dirname(os.path.abspath(__file__))  # noqa: PTH100, PTH120

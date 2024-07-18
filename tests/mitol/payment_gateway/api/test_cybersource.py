@@ -1,4 +1,4 @@
-import hashlib
+import hashlib  # noqa: INP001, D100
 import json
 import os
 import random
@@ -12,9 +12,6 @@ from CyberSource import models as cs_models
 from CyberSource.rest import ApiException
 from django.conf import settings
 from factory import fuzzy
-from testapp.factories import CartItemFactory, OrderFactory, RefundFactory
-from urllib3.response import HTTPResponse
-
 from mitol.common.utils.datetime import now_in_utc
 from mitol.payment_gateway.api import (
     CyberSourcePaymentGateway,
@@ -26,34 +23,35 @@ from mitol.payment_gateway.exceptions import (
     InvalidTransactionException,
     RefundDuplicateException,
 )
+from testapp.factories import CartItemFactory, OrderFactory, RefundFactory
+from urllib3.response import HTTPResponse
 
 ISO_8601_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
 @pytest.fixture()
-def order():
+def order():  # noqa: D103
     return OrderFactory()
 
 
 @pytest.fixture()
-def refund():
+def refund():  # noqa: D103
     return RefundFactory()
 
 
 @pytest.fixture()
-def cartitems():
+def cartitems():  # noqa: D103
     return CartItemFactory.create_batch(5)
 
 
-@pytest.fixture
+@pytest.fixture()
 def response_payload(request):
-    """Fixture to return dictionary of a specific JSON file with provided name in request param"""
+    """Fixture to return dictionary of a specific JSON file with provided name in request param"""  # noqa: E501
 
-    with open(
-        os.path.join(
-            os.getcwd(), "tests/data/payment_gateway/api", f"{request.param}.json"
+    with open(  # noqa: PTH123
+        os.path.join(  # noqa: PTH118
+            os.getcwd(), "tests/data/payment_gateway/api", f"{request.param}.json"  # noqa: PTH109
         ),
-        mode="r",
     ) as f:
         response_txt = f.read()
         response_json = json.loads(response_txt)
@@ -67,7 +65,7 @@ class FakeRequest:
     the response.
     """
 
-    data: Dict
+    data: Dict  # noqa: FA100
     method: str
 
 
@@ -75,7 +73,7 @@ def generate_test_cybersource_payload(order, cartitems, transaction_uuid):
     """
     Generates a test payload based on the order and cart items passed in, ready
     for signing.
-    """
+    """  # noqa: D401
     backoffice_post_url = "https://www.google.com"
     receipt_url = "https://www.google.com"
     cancel_url = "https://duckduckgo.com"
@@ -167,7 +165,7 @@ def test_cybersource_payload_generation(order, cartitems):
 
     gateway = CyberSourcePaymentGateway()
 
-    signed_test_payload = gateway._sign_cybersource_payload(test_payload)
+    signed_test_payload = gateway._sign_cybersource_payload(test_payload)  # noqa: SLF001
 
     assert signed_test_payload == checkout_data["payload"]
 
@@ -206,7 +204,7 @@ def test_cybersource_response_auth(order, cartitems):
 
     gateway = CyberSourcePaymentGateway()
 
-    signed_test_payload = gateway._sign_cybersource_payload(test_payload)
+    signed_test_payload = gateway._sign_cybersource_payload(test_payload)  # noqa: SLF001
 
     fake_request = FakeRequest(signed_test_payload, "POST")
 
@@ -216,7 +214,7 @@ def test_cybersource_response_auth(order, cartitems):
 
 
 @pytest.mark.parametrize(
-    "response_payload, expected_response_code",
+    "response_payload, expected_response_code",  # noqa: PT006
     [
         ("test_success_payload", ProcessorResponse.STATE_ACCEPTED),
         ("test_cancel_payload", ProcessorResponse.STATE_CANCELLED),
@@ -224,7 +222,7 @@ def test_cybersource_response_auth(order, cartitems):
     indirect=["response_payload"],
 )
 def test_cybersource_payment_response(
-    response_payload, expected_response_code, order, cartitems
+    response_payload, expected_response_code, order, cartitems  # noqa: ARG001
 ):
     """
     Testing this really requires a payload from CyberSource, which also means
@@ -249,7 +247,7 @@ def test_cybersource_payment_response(
 def test_cybersource_client_configuration_url(settings):
     """
     Tests that get_client_configuration generates the right configuration url for CyberSource Payment processor
-    """
+    """  # noqa: E501
     settings.CYBERSOURCE_REST_API_ENVIRONMENT = "apitest.cybersource.com"
     gateway = CyberSourcePaymentGateway()
     configuration = gateway.get_client_configuration()
@@ -263,7 +261,7 @@ def test_generate_refund_payload(refund):
     """
     Tests that generate_refund_payload function generates correct readable formatted JSON for the request to
     CyberSource refund API calls.
-    """
+    """  # noqa: E501
 
     cybersource_gateway = CyberSourcePaymentGateway()
     refund_payload = json.loads(cybersource_gateway.generate_refund_payload(refund))
@@ -272,7 +270,7 @@ def test_generate_refund_payload(refund):
 
     client_reference_information = refund_payload["_client_reference_information"]
 
-    # Passing transaction_id in reference information is important because the refund API won't send a duplicate
+    # Passing transaction_id in reference information is important because the refund API won't send a duplicate  # noqa: E501
     # request response if there is no transaction_id in the request payload
     assert client_reference_information["_transaction_id"] == refund.transaction_id
 
@@ -290,7 +288,7 @@ def test_cybersource_refund_response_success(response_payload, refund, mocker):
     Tests that the perform_refund method returns the expected response to the calling application.
     This test uses a sample request JSON to as API response from CyberSource since we won't be hitting the
     real API in tests. Instead, We will mock it for this case
-    """
+    """  # noqa: E501
 
     success_response_json = response_payload
 
@@ -316,7 +314,7 @@ def test_cybersource_refund_response_failure_duplicate(
     """
     Tests that the perform_refund method raises RefundDuplicateException when the API errors out with a
     "DUPLICATE_REQUEST" reason.
-    """
+    """  # noqa: E501
 
     duplicate_response_json = response_payload
 
@@ -333,7 +331,7 @@ def test_cybersource_refund_response_failure_duplicate(
 
     cybersource_gateway = CyberSourcePaymentGateway()
 
-    # A RefundDuplicateException should be raised if request fails with DUPLICATE_REQUEST reason
+    # A RefundDuplicateException should be raised if request fails with DUPLICATE_REQUEST reason  # noqa: E501
     with pytest.raises(RefundDuplicateException) as ex:
         cybersource_gateway.perform_refund(refund)
 
@@ -349,7 +347,7 @@ def test_cybersource_refund_response_failure_general(response_payload, refund, m
     """
     Tests that the perform_refund method passes on the incoming exception as it is when there is API error reason is
     other then DUPLICATE_REQUEST.
-    """
+    """  # noqa: E501
     duplicate_response_json = response_payload
 
     duplicate_response_json["reason"] = "dummy"
@@ -377,7 +375,8 @@ def test_cybersource_refund_response_failure_general(response_payload, refund, m
 )
 def test_create_refund_request(response_payload):
     """Tests that create_refund_request creates the correct Refund Request object out of provided
-    payment transaction dictionary"""
+    payment transaction dictionary
+    """  # noqa: E501
 
     payment_response_json = response_payload
     refund_request = PaymentGateway.create_refund_request(
@@ -405,10 +404,10 @@ def test_create_refund_request(response_payload):
 def test_create_refund_request_invalid_data_exception(transaction_data):
     """
     Test that create_refund_request throws InvalidTransactionException if the payment transaction dictionary is invalid
-    """
+    """  # noqa: E501
     cybersource_gateway = CyberSourcePaymentGateway()
 
-    # A RefundDuplicateException should be raised if request fails with DUPLICATE_REQUEST reason
+    # A RefundDuplicateException should be raised if request fails with DUPLICATE_REQUEST reason  # noqa: E501
     with pytest.raises(InvalidTransactionException):
         cybersource_gateway.create_refund_request(
             MITOL_PAYMENT_GATEWAY_CYBERSOURCE, transaction_data
@@ -416,21 +415,21 @@ def test_create_refund_request_invalid_data_exception(transaction_data):
 
 
 def create_transaction_search_results():
-    """Mocks a transaction search result. This only mocks up the things the find_transactions call actually uses."""
+    """Mocks a transaction search result. This only mocks up the things the find_transactions call actually uses."""  # noqa: E501, D401
 
-    class fake_reference:
+    class fake_reference:  # noqa: N801
         code = "mitxonline-test-12345"
 
-    class fake_summary:
+    class fake_summary:  # noqa: N801
         def __init__(self):
             self.id = 123456789
             self.client_reference_information = fake_reference
-            self.submit_time_utc = datetime.today()
+            self.submit_time_utc = datetime.today()  # noqa: DTZ002
 
-    class fake_response:
+    class fake_response:  # noqa: N801
         def __init__(self):
             self.total_count = 1
-            self._embedded = namedtuple("embedded", "transaction_summaries")(
+            self._embedded = namedtuple("embedded", "transaction_summaries")(  # noqa: PYI024
                 **{"transaction_summaries": [fake_summary()]}
             )
 
@@ -438,7 +437,7 @@ def create_transaction_search_results():
 
 
 @pytest.mark.parametrize("test_failure", [True, False])
-def test_find_transactions(test_failure, mocker):
+def test_find_transactions(test_failure, mocker):  # noqa: D103
     fake_ids = ["mitxonline-test-12345", "mitxonline-test-54321"]
 
     faked_responses = create_transaction_search_results()
@@ -459,7 +458,7 @@ def test_find_transactions(test_failure, mocker):
     cybersource_gateway = CyberSourcePaymentGateway()
 
     if test_failure:
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017, PT011
             response = cybersource_gateway.find_transactions(fake_ids)
     else:
         response = cybersource_gateway.find_transactions(fake_ids)
@@ -468,13 +467,13 @@ def test_find_transactions(test_failure, mocker):
 
 
 def create_transaction_detail_record():
-    """Returns a faked out detail record in the same format you'd get from CyberSource for a TransactionDetailApi request."""
+    """Returns a faked out detail record in the same format you'd get from CyberSource for a TransactionDetailApi request."""  # noqa: E501, D401
 
-    fake_id = random.randrange(1000000000000000000000, 9999999999999999999999)
+    fake_id = random.randrange(1000000000000000000000, 9999999999999999999999)  # noqa: S311
     fake_recon_id = fuzzy.FuzzyText(length=16)
 
     data_dict = {
-        "application_information": cs_models.TssV2TransactionsGet200ResponseApplicationInformation(
+        "application_information": cs_models.TssV2TransactionsGet200ResponseApplicationInformation(  # noqa: E501
             **{
                 "applications": [
                     cs_models.TssV2TransactionsGet200ResponseApplicationInformationApplications(
@@ -514,23 +513,23 @@ def create_transaction_detail_record():
                 "merchant_customer_id": "1a2bd577a252342290dae0459b0c92ac",
             }
         ),
-        "client_reference_information": cs_models.TssV2TransactionsGet200ResponseClientReferenceInformation(
+        "client_reference_information": cs_models.TssV2TransactionsGet200ResponseClientReferenceInformation(  # noqa: E501
             **{
                 "application_name": "Secure Acceptance " "Web/Mobile",
                 "application_user": None,
                 "application_version": None,
                 "code": "mitxonline-dev-4",
                 "comments": None,
-                "partner": cs_models.TssV2TransactionsGet200ResponseClientReferenceInformationPartner(
+                "partner": cs_models.TssV2TransactionsGet200ResponseClientReferenceInformationPartner(  # noqa: E501
                     **{"solution_id": None}
                 ),
             }
         ),
-        "consumer_authentication_information": cs_models.TssV2TransactionsGet200ResponseConsumerAuthenticationInformation(
+        "consumer_authentication_information": cs_models.TssV2TransactionsGet200ResponseConsumerAuthenticationInformation(  # noqa: E501
             **{
                 "cavv": None,
                 "eci_raw": None,
-                "strong_authentication": cs_models.TssV2TransactionsGet200ResponseConsumerAuthenticationInformationStrongAuthentication(
+                "strong_authentication": cs_models.TssV2TransactionsGet200ResponseConsumerAuthenticationInformationStrongAuthentication(  # noqa: E501
                     **{
                         "delegated_authentication_exemption_indicator": None,
                         "low_value_exemption_indicator": None,
@@ -543,7 +542,7 @@ def create_transaction_detail_record():
                 "xid": None,
             }
         ),
-        "device_information": cs_models.TssV2TransactionsGet200ResponseDeviceInformation(
+        "device_information": cs_models.TssV2TransactionsGet200ResponseDeviceInformation(  # noqa: E501
             **{"cookies_accepted": None, "host_name": None, "ip_address": "172.20.0.9"}
         ),
         "error_information": None,
@@ -568,16 +567,16 @@ def create_transaction_detail_record():
             )
         ],
         "merchant_id": "fake_test_merchant",
-        "merchant_information": cs_models.TssV2TransactionsGet200ResponseMerchantInformation(
+        "merchant_information": cs_models.TssV2TransactionsGet200ResponseMerchantInformation(  # noqa: E501
             **{
-                "merchant_descriptor": cs_models.TssV2TransactionsGet200ResponseMerchantInformationMerchantDescriptor(
+                "merchant_descriptor": cs_models.TssV2TransactionsGet200ResponseMerchantInformationMerchantDescriptor(  # noqa: E501
                     **{"name": "fake_test_merchant"}
                 )
             }
         ),
         "order_information": cs_models.TssV2TransactionsGet200ResponseOrderInformation(
             **{
-                "amount_details": cs_models.TssV2TransactionsGet200ResponseOrderInformationAmountDetails(
+                "amount_details": cs_models.TssV2TransactionsGet200ResponseOrderInformationAmountDetails(  # noqa: E501
                     **{
                         "authorized_amount": "750",
                         "currency": "USD",
@@ -588,7 +587,7 @@ def create_transaction_detail_record():
                         "total_amount": "750",
                     }
                 ),
-                "bill_to": cs_models.TssV2TransactionsGet200ResponseOrderInformationBillTo(
+                "bill_to": cs_models.TssV2TransactionsGet200ResponseOrderInformationBillTo(  # noqa: E501
                     **{
                         "address1": "123 The Place to Be",
                         "address2": None,
@@ -606,7 +605,7 @@ def create_transaction_detail_record():
                         "title": None,
                     }
                 ),
-                "invoice_details": cs_models.TssV2TransactionsGet200ResponseOrderInformationInvoiceDetails(
+                "invoice_details": cs_models.TssV2TransactionsGet200ResponseOrderInformationInvoiceDetails(  # noqa: E501
                     **{"sales_slip_number": None}
                 ),
                 "line_items": [
@@ -622,7 +621,7 @@ def create_transaction_detail_record():
                         }
                     )
                 ],
-                "ship_to": cs_models.TssV2TransactionsGet200ResponseOrderInformationShipTo(
+                "ship_to": cs_models.TssV2TransactionsGet200ResponseOrderInformationShipTo(  # noqa: E501
                     **{
                         "address1": None,
                         "address2": None,
@@ -636,14 +635,14 @@ def create_transaction_detail_record():
                         "postal_code": None,
                     }
                 ),
-                "shipping_details": cs_models.TssV2TransactionsGet200ResponseOrderInformationShippingDetails(
+                "shipping_details": cs_models.TssV2TransactionsGet200ResponseOrderInformationShippingDetails(  # noqa: E501
                     **{"gift_wrap": None, "shipping_method": None}
                 ),
             }
         ),
-        "payment_information": cs_models.TssV2TransactionsGet200ResponsePaymentInformation(
+        "payment_information": cs_models.TssV2TransactionsGet200ResponsePaymentInformation(  # noqa: E501
             **{
-                "account_features": cs_models.TssV2TransactionsGet200ResponsePaymentInformationAccountFeatures(
+                "account_features": cs_models.TssV2TransactionsGet200ResponsePaymentInformationAccountFeatures(  # noqa: E501
                     **{
                         "balance_amount": None,
                         "currency": None,
@@ -665,34 +664,34 @@ def create_transaction_detail_record():
                         "use_as": None,
                     }
                 ),
-                "customer": cs_models.TssV2TransactionsGet200ResponsePaymentInformationCustomer(
+                "customer": cs_models.TssV2TransactionsGet200ResponsePaymentInformationCustomer(  # noqa: E501
                     **{"customer_id": None, "id": None}
                 ),
-                "instrument_identifier": cs_models.TssV2TransactionsGet200ResponsePaymentInformationInstrumentIdentifier(
+                "instrument_identifier": cs_models.TssV2TransactionsGet200ResponsePaymentInformationInstrumentIdentifier(  # noqa: E501
                     **{"id": None}
                 ),
-                "invoice": cs_models.TssV2TransactionsGet200ResponsePaymentInformationInvoice(
+                "invoice": cs_models.TssV2TransactionsGet200ResponsePaymentInformationInvoice(  # noqa: E501
                     **{"barcode_number": None, "expiration_date": None, "number": None}
                 ),
-                "payment_instrument": cs_models.PtsV2PaymentsPost201ResponseTokenInformationPaymentInstrument(
+                "payment_instrument": cs_models.PtsV2PaymentsPost201ResponseTokenInformationPaymentInstrument(  # noqa: E501
                     **{"id": None}
                 ),
-                "payment_type": cs_models.TssV2TransactionsGet200ResponsePaymentInformationPaymentType(
+                "payment_type": cs_models.TssV2TransactionsGet200ResponsePaymentInformationPaymentType(  # noqa: E501
                     **{"method": "VI", "name": "smartpay", "type": "credit card"}
                 ),
-                "shipping_address": cs_models.PtsV2PaymentsPost201ResponseTokenInformationShippingAddress(
+                "shipping_address": cs_models.PtsV2PaymentsPost201ResponseTokenInformationShippingAddress(  # noqa: E501
                     **{"id": None}
                 ),
             }
         ),
-        "payment_insights_information": cs_models.PtsV2PaymentsPost201ResponsePaymentInsightsInformation(
+        "payment_insights_information": cs_models.PtsV2PaymentsPost201ResponsePaymentInsightsInformation(  # noqa: E501
             **{
-                "response_insights": cs_models.PtsV2PaymentsPost201ResponsePaymentInsightsInformationResponseInsights(
+                "response_insights": cs_models.PtsV2PaymentsPost201ResponsePaymentInsightsInformationResponseInsights(  # noqa: E501
                     **{"category": None, "category_code": None}
                 )
             }
         ),
-        "point_of_sale_information": cs_models.TssV2TransactionsGet200ResponsePointOfSaleInformation(
+        "point_of_sale_information": cs_models.TssV2TransactionsGet200ResponsePointOfSaleInformation(  # noqa: E501
             **{
                 "emv": None,
                 "entry_mode": None,
@@ -700,15 +699,15 @@ def create_transaction_detail_record():
                 "terminal_id": "111111",
             }
         ),
-        "processing_information": cs_models.TssV2TransactionsGet200ResponseProcessingInformation(
+        "processing_information": cs_models.TssV2TransactionsGet200ResponseProcessingInformation(  # noqa: E501
             **{
-                "authorization_options": cs_models.TssV2TransactionsGet200ResponseProcessingInformationAuthorizationOptions(
+                "authorization_options": cs_models.TssV2TransactionsGet200ResponseProcessingInformationAuthorizationOptions(  # noqa: E501
                     **{
                         "auth_type": "O",
-                        "initiator": cs_models.TssV2TransactionsGet200ResponseProcessingInformationAuthorizationOptionsInitiator(
+                        "initiator": cs_models.TssV2TransactionsGet200ResponseProcessingInformationAuthorizationOptionsInitiator(  # noqa: E501
                             **{
                                 "credential_stored_on_file": None,
-                                "merchant_initiated_transaction": cs_models.Ptsv2paymentsProcessingInformationAuthorizationOptionsInitiatorMerchantInitiatedTransaction(
+                                "merchant_initiated_transaction": cs_models.Ptsv2paymentsProcessingInformationAuthorizationOptionsInitiatorMerchantInitiatedTransaction(  # noqa: E501
                                     **{
                                         "original_authorized_amount": None,
                                         "previous_transaction_id": None,
@@ -721,13 +720,13 @@ def create_transaction_detail_record():
                         ),
                     }
                 ),
-                "bank_transfer_options": cs_models.TssV2TransactionsGet200ResponseProcessingInformationBankTransferOptions(
+                "bank_transfer_options": cs_models.TssV2TransactionsGet200ResponseProcessingInformationBankTransferOptions(  # noqa: E501
                     **{"sec_code": None}
                 ),
                 "business_application_id": None,
                 "commerce_indicator": "7",
                 "industry_data_type": None,
-                "japan_payment_options": cs_models.TssV2TransactionsGet200ResponseProcessingInformationJapanPaymentOptions(
+                "japan_payment_options": cs_models.TssV2TransactionsGet200ResponseProcessingInformationJapanPaymentOptions(  # noqa: E501
                     **{
                         "business_name": None,
                         "business_name_katakana": None,
@@ -738,19 +737,19 @@ def create_transaction_detail_record():
                 "payment_solution": "Visa",
             }
         ),
-        "processor_information": cs_models.TssV2TransactionsGet200ResponseProcessorInformation(
+        "processor_information": cs_models.TssV2TransactionsGet200ResponseProcessorInformation(  # noqa: E501
             **{
-                "ach_verification": cs_models.PtsV2PaymentsPost201ResponseProcessorInformationAchVerification(
+                "ach_verification": cs_models.PtsV2PaymentsPost201ResponseProcessorInformationAchVerification(  # noqa: E501
                     **{"result_code": None, "result_code_raw": "100"}
                 ),
                 "approval_code": "888888",
                 "avs": cs_models.PtsV2PaymentsPost201ResponseProcessorInformationAvs(
                     **{"code": "X", "code_raw": "I1"}
                 ),
-                "card_verification": cs_models.Riskv1decisionsProcessorInformationCardVerification(
+                "card_verification": cs_models.Riskv1decisionsProcessorInformationCardVerification(  # noqa: E501
                     **{"result_code": None}
                 ),
-                "electronic_verification_results": cs_models.TssV2TransactionsGet200ResponseProcessorInformationElectronicVerificationResults(
+                "electronic_verification_results": cs_models.TssV2TransactionsGet200ResponseProcessorInformationElectronicVerificationResults(  # noqa: E501
                     **{
                         "email": None,
                         "email_raw": None,
@@ -767,7 +766,7 @@ def create_transaction_detail_record():
                 "multi_processor_routing": None,
                 "network_transaction_id": "123456789619999",
                 "payment_account_reference_number": None,
-                "processor": cs_models.TssV2TransactionsGet200ResponseProcessorInformationProcessor(
+                "processor": cs_models.TssV2TransactionsGet200ResponseProcessorInformationProcessor(  # noqa: E501
                     **{"name": "smartpay"}
                 ),
                 "response_code": "100",
@@ -792,7 +791,7 @@ def create_transaction_detail_record():
             }
         ),
         "root_id": fake_id,
-        "sender_information": cs_models.TssV2TransactionsGet200ResponseSenderInformation(
+        "sender_information": cs_models.TssV2TransactionsGet200ResponseSenderInformation(  # noqa: E501
             **{"reference_number": None}
         ),
         "submit_time_utc": "2023-02-03T16:55:49Z",
@@ -823,7 +822,7 @@ def test_get_transaction_details(mocker, test_failure):
             side_effect=expected_exception,
         )
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017, PT011
             cybersource_gateway.get_transaction_details(fake_id)
     else:
         mocker.patch(
@@ -867,7 +866,7 @@ def test_find_and_get_transactions(mocker, test_failure):
                 side_effect=expected_exception,
             )
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017, PT011
             cybersource_gateway.find_and_get_transactions(fake_ids)
     else:
         mocker.patch(

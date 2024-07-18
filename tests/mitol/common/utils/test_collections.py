@@ -1,10 +1,10 @@
 """Utils tests"""
+
 import operator as op
 from math import ceil
 from types import SimpleNamespace
 
 import pytest
-
 from mitol.common.utils.collections import (
     all_equal,
     all_unique,
@@ -52,20 +52,20 @@ def test_filter_dict_by_key_set():
 def test_has_equal_properties():
     """
     Assert that has_equal_properties returns True if an object has equivalent properties to a given dict
-    """
+    """  # noqa: E501
     obj = SimpleNamespace(a=1, b=2, c=3)
     assert has_equal_properties(obj, {}) is True
-    assert has_equal_properties(obj, dict(a=1, b=2)) is True
-    assert has_equal_properties(obj, dict(a=1, b=2, c=3)) is True
-    assert has_equal_properties(obj, dict(a=2)) is False
-    assert has_equal_properties(obj, dict(d=4)) is False
+    assert has_equal_properties(obj, dict(a=1, b=2)) is True  # noqa: C408
+    assert has_equal_properties(obj, dict(a=1, b=2, c=3)) is True  # noqa: C408
+    assert has_equal_properties(obj, dict(a=2)) is False  # noqa: C408
+    assert has_equal_properties(obj, dict(d=4)) is False  # noqa: C408
 
 
 def test_find_object_with_matching_attr():
     """
     Assert that find_object_with_matching_attr returns the first object in an iterable that has the given
     attribute value (or None if there is no match)
-    """
+    """  # noqa: E501
     objects = [
         SimpleNamespace(a=0),
         SimpleNamespace(a=1),
@@ -96,7 +96,7 @@ def test_partition():
 def test_partition_to_lists():
     """
     Assert that partition_to_lists splits an iterable into two lists according to a condition
-    """
+    """  # noqa: E501
     nums = [1, 2, 1, 3, 1, 4, 0, None, None]
     not_ones, ones = partition_to_lists(nums, lambda n: n == 1)
     assert not_ones == [2, 3, 4, 0, None, None]
@@ -121,15 +121,15 @@ def test_first_matching_item():
     """
     Assert that first_matching_item returns the first item that matches the predicate
     """
-    assert first_matching_item(range(10), lambda i: i > 5) == 6
+    assert first_matching_item(range(10), lambda i: i > 5) == 6  # noqa: PLR2004
 
 
 def test_max_or_none():
     """
     Assert that max_or_none returns the max of some iterable, or None if the iterable has no items
-    """
-    assert max_or_none(i for i in [5, 4, 3, 2, 1]) == 5
-    assert max_or_none([1, 3, 5, 4, 2]) == 5
+    """  # noqa: E501
+    assert max_or_none(i for i in [5, 4, 3, 2, 1]) == 5  # noqa: PLR2004
+    assert max_or_none([1, 3, 5, 4, 2]) == 5  # noqa: PLR2004
     assert max_or_none([]) is None
 
 
@@ -145,7 +145,7 @@ def test_unique_ignore_case():
     """
     Assert that unique_ignore_case() returns a generator of unique lowercase strings from a
     provided iterable
-    """
+    """  # noqa: E501
     assert list(unique_ignore_case(["ABC", "def", "AbC", "DEf"])) == ["abc", "def"]
 
 
@@ -153,9 +153,9 @@ def test_item_at_index_or_none():
     """
     Assert that item_at_index_or_none returns an item at a given index, or None if that index
     doesn't exist
-    """
+    """  # noqa: E501
     arr = [1, 2, 3]
-    assert item_at_index_or_none(arr, 1) == 2
+    assert item_at_index_or_none(arr, 1) == 2  # noqa: PLR2004
     assert item_at_index_or_none(arr, 10) is None
 
 
@@ -163,7 +163,7 @@ def test_item_at_index_or_blank():
     """
     Assert that item_at_index_or_blank returns an item at a given index, or a blank string if that index
     doesn't exist
-    """
+    """  # noqa: E501
     arr = ["string 1", "string 2"]
     assert item_at_index_or_blank(arr, 0) == "string 1"
     assert item_at_index_or_blank(arr, 1) == "string 2"
@@ -173,7 +173,7 @@ def test_item_at_index_or_blank():
 def test_all_equal():
     """
     Assert that all_equal returns True if all of the provided args are equal to each other
-    """
+    """  # noqa: E501
     assert all_equal(1, 1, 1) is True
     assert all_equal(1, 2, 1) is False
     assert all_equal() is True
@@ -182,7 +182,7 @@ def test_all_equal():
 def test_all_unique():
     """
     Assert that all_unique returns True if all of the items in the iterable argument are unique
-    """
+    """  # noqa: E501
     assert all_unique([1, 2, 3, 4]) is True
     assert all_unique((1, 2, 3, 4)) is True
     assert all_unique([1, 2, 3, 1]) is False
@@ -191,7 +191,7 @@ def test_all_unique():
 def test_has_all_keys():
     """
     Assert that has_all_keys returns True if the given dict has all of the specified keys
-    """
+    """  # noqa: E501
     d = {"a": 1, "b": 2, "c": 3}
     assert has_all_keys(d, ["a", "c"]) is True
     assert has_all_keys(d, ["a", "z"]) is False
@@ -201,7 +201,7 @@ def test_group_into_dict():
     """
     Assert that group_into_dict takes an iterable of items and returns a dictionary of those items
     grouped by generated keys
-    """
+    """  # noqa: E501
 
     class Car:
         def __init__(self, make, model):
@@ -257,7 +257,7 @@ def test_chunks_iterable():
     input_range = range(count)
     chunk_output = []
     for chunk in chunks(input_range, chunk_size=10):
-        chunk_output.append(chunk)
+        chunk_output.append(chunk)  # noqa: PERF402
     assert len(chunk_output) == ceil(113 / 10)
 
     range_list = []
@@ -267,12 +267,12 @@ def test_chunks_iterable():
 
 
 def test_matching_item_index():
-    """matching_item_index should return the index of an item equal to the given value, or raises an exception"""
+    """matching_item_index should return the index of an item equal to the given value, or raises an exception"""  # noqa: E501
     assert matching_item_index(["a", "b", "c", "d"], "b") == 1
     with pytest.raises(StopIteration):
         matching_item_index(["a", "b", "c", "d"], "e")
     number_iter = (i for i in [0, 1, 2, 3, 4])
-    assert matching_item_index(number_iter, 2) == 2
+    assert matching_item_index(number_iter, 2) == 2  # noqa: PLR2004
 
 
 def test_replace_null_values():

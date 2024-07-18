@@ -1,9 +1,9 @@
 """Tests for environment variable parsing functions"""
+
 import json
 
 import pytest
 from django.core.exceptions import ImproperlyConfigured
-
 from mitol.common import envs
 
 FAKE_ENVIRONS = {
@@ -31,7 +31,7 @@ FAKE_ENVIRONS = {
 
 
 @pytest.fixture(autouse=True)
-def clean_env(mocker):
+def clean_env(mocker):  # noqa: PT004
     """Clean the configured environment variables before a test"""
     mocker.patch.dict("os.environ", FAKE_ENVIRONS, clear=True)
     envs.env.reload()
@@ -51,10 +51,10 @@ def test_get_string():
 
 
 def test_get_int():
-    """get_int should get the int from the environment variable, or raise an exception if it's not parseable as an int"""
-    assert envs.get_int(name="POSITIVE", default=1234, description="description") == 123
+    """get_int should get the int from the environment variable, or raise an exception if it's not parseable as an int"""  # noqa: E501
+    assert envs.get_int(name="POSITIVE", default=1234, description="description") == 123  # noqa: PLR2004
     assert (
-        envs.get_int(name="NEGATIVE", default=1234, description="description") == -456
+        envs.get_int(name="NEGATIVE", default=1234, description="description") == -456  # noqa: PLR2004
     )
     assert envs.get_int(name="ZERO", default=1234, description="description") == 0
 
@@ -62,20 +62,16 @@ def test_get_int():
         if key not in ("POSITIVE", "NEGATIVE", "ZERO"):
             with pytest.raises(envs.EnvironmentVariableParseException) as ex:
                 envs.get_int(name=key, default=1234, description="description")
-            assert ex.value.args[
-                0
-            ] == "Expected value in {key}={value} to be an int".format(
-                key=key, value=value
-            )
+            assert ex.value.args[0] == f"Expected value in {key}={value} to be an int"
 
     assert (
         envs.get_int(name="missing", default=1_234_567_890, description="description")
-        == 1_234_567_890
+        == 1_234_567_890  # noqa: PLR2004
     )
 
 
 def test_get_bool():
-    """get_bool should get the bool from the environment variable, or raise an exception if it's not parseable as a bool"""
+    """get_bool should get the bool from the environment variable, or raise an exception if it's not parseable as a bool"""  # noqa: E501
     assert envs.get_bool(name="TRUE", default=1234, description="description") is True
     assert envs.get_bool(name="FALSE", default=1234, description="description") is False
 
@@ -87,10 +83,8 @@ def test_get_bool():
         ):
             with pytest.raises(envs.EnvironmentVariableParseException) as ex:
                 envs.get_bool(name=key, default=1234, description="description")
-            assert ex.value.args[
-                0
-            ] == "Expected value in {key}={value} to be a boolean".format(
-                key=key, value=value
+            assert (
+                ex.value.args[0] == f"Expected value in {key}={value} to be a boolean"
             )
 
     assert (
@@ -128,10 +122,9 @@ def test_get_list_literal():
                 envs.get_list_literal(
                     name=key, default=["noth", "ing"], description="description"
                 )
-            assert ex.value.args[
-                0
-            ] == "Expected value in {key}={value} to be a list literal".format(
-                key=key, value=value
+            assert (
+                ex.value.args[0]
+                == f"Expected value in {key}={value} to be a list literal"
             )
 
     assert envs.get_list_literal(
@@ -140,20 +133,20 @@ def test_get_list_literal():
 
 
 @pytest.mark.parametrize(
-    "env_var, default",
+    "env_var, default",  # noqa: PT006
     [
-        ("MISSING", dict(invalid_key="*")),
+        ("MISSING", dict(invalid_key="*")),  # noqa: C408
         ("MISSING", 2345),
         ("CRONTAB_BLANK", None),
         ("CRONTAB_EMPTY", None),
     ],
 )
-def test_get_crontab_kwargs_invalid(env_var, default):
+def test_get_crontab_kwargs_invalid(env_var, default):  # noqa: ARG001
     """get_crontab_kwargs should parse a crontab string"""
     # invalid
     with pytest.raises(ImproperlyConfigured):
         envs.get_crontab_kwargs(
-            name="MISSING", default=dict(invalid_key="*"), description="desc"
+            name="MISSING", default=dict(invalid_key="*"), description="desc"  # noqa: C408
         )
 
     with pytest.raises(ImproperlyConfigured):
@@ -167,21 +160,21 @@ def test_get_crontab_kwargs_invalid(env_var, default):
 
 
 @pytest.mark.parametrize(
-    "env_var, default",
+    "env_var, default",  # noqa: PT006
     [
         ("CRONTAB_VALID", None),
         ("CRONTAB_VALID", "1 2 3 4 5"),
         ("CRONTAB_VALID", dict(zip(envs.CRONTAB_KEYS, map(str, range(5))))),
     ],
 )
-def test_get_crontab_kwargs_valid(env_var, default):
+def test_get_crontab_kwargs_valid(env_var, default):  # noqa: D103
     assert envs.get_crontab_kwargs(
         name=env_var, default=default, description="desc"
     ) == {key: "*" for key in envs.CRONTAB_KEYS}
 
 
 @pytest.mark.parametrize(
-    "default, expected",
+    "default, expected",  # noqa: PT006
     [
         (None, {}),
         (
@@ -192,7 +185,7 @@ def test_get_crontab_kwargs_valid(env_var, default):
         * 2,  # turns to (dict, dict) to get same value for both args
     ],
 )
-def test_get_crontab_kwargs_valid_default(default, expected):
+def test_get_crontab_kwargs_valid_default(default, expected):  # noqa: D103
     assert (
         envs.get_crontab_kwargs(name="MISSING", default=default, description="desc")
         == expected
@@ -229,7 +222,7 @@ def test_validate():
 def test_duplicate_vars():
     """Verify that trying to parse an environment variable more than once fails"""
     envs.get_bool(name="TRUE", default=True, description="description")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         assert envs.get_bool(name="TRUE", default=True, description="description")
 
 
@@ -264,7 +257,7 @@ def test_generate_app_json(mocker):
     }
 
 
-def test_get_features(mocker):
+def test_get_features(mocker):  # noqa: ARG001
     """Verify that get_features() parses dict of feature flags"""
     assert envs.get_features() == {"ABC": True, "DEF": False}
     assert envs.get_features("FLAG_") == {"GHI": False}

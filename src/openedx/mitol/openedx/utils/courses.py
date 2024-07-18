@@ -16,9 +16,9 @@ def get_course_number(courseware_id):
         courseware_id: Courseware Id from course run: course_run.courseware_id
     Returns:
         str: course number or Courseware Id
-    """
+    """  # noqa: D401
     try:
         course_key = CourseKey.from_string(courseware_id)
-        return course_key.course
+        return course_key.course  # noqa: TRY300
     except InvalidKeyError:
         return courseware_id

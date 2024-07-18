@@ -1,4 +1,5 @@
 """Common app AppConfigs"""
+
 import os
 
 from mitol.common.apps import AppConfig
@@ -12,4 +13,4 @@ class OAuthToolkitExtensionsApp(AppConfig):
     verbose_name = "oauth_toolkit_extensions"
 
     # necessary because this is a namespaced app
-    path = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.dirname(os.path.abspath(__file__))  # noqa: PTH100, PTH120

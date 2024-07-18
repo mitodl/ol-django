@@ -1,4 +1,5 @@
 """Sheets app models"""
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -8,7 +9,7 @@ from mitol.common.models import SingletonModel, TimestampedModel
 
 
 class GoogleApiAuth(TimestampedModel, SingletonModel):
-    """Model that stores OAuth credentials to be used to authenticate with the Google API"""
+    """Model that stores OAuth credentials to be used to authenticate with the Google API"""  # noqa: E501
 
     requesting_user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True
@@ -21,7 +22,7 @@ class GoogleFileWatch(TimestampedModel):
     """
     Model that represents a file watch/push notification/webhook that was set up via the Google API for
     some Google Drive file
-    """
+    """  # noqa: E501
 
     file_id = models.CharField(max_length=100, db_index=True, null=False)
     channel_id = models.CharField(max_length=100, db_index=True, null=False)
@@ -30,21 +31,19 @@ class GoogleFileWatch(TimestampedModel):
     expiration_date = models.DateTimeField(null=False)
     last_request_received = models.DateTimeField(null=True, blank=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         unique_together = ("file_id", "version")
 
-    def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
+    def save(  # noqa: D102
+        self, force_insert=False, force_update=False, using=None, update_fields=None  # noqa: FBT002
     ):
         if (
             force_insert
             and self._meta.model.objects.filter(file_id=self.file_id).count() > 0
         ):
-            raise ValidationError(
-                "Only one {} object should exist for each unique file_id (file_id provided: {}). "
-                "Update the existing object instead of creating a new one.".format(
-                    self.__class__.__name__, self.file_id
-                )
+            raise ValidationError(  # noqa: TRY003
+                f"Only one {self.__class__.__name__} object should exist for each unique file_id (file_id provided: {self.file_id}). "  # noqa: EM102, E501
+                "Update the existing object instead of creating a new one."
             )
         return super().save(
             force_insert=force_insert,
@@ -53,10 +52,8 @@ class GoogleFileWatch(TimestampedModel):
             update_fields=update_fields,
         )
 
-    def __str__(self):
-        return "GoogleFileWatch: id={}, channel_id={}, file_id={}, expires={}".format(
-            self.id, self.channel_id, self.file_id, self.expiration_date.isoformat()
-        )
+    def __str__(self):  # noqa: D105
+        return f"GoogleFileWatch: id={self.id}, channel_id={self.channel_id}, file_id={self.file_id}, expires={self.expiration_date.isoformat()}"  # noqa: E501
 
 
 class FileWatchRenewalAttempt(Model):
@@ -78,5 +75,5 @@ class GoogleSheetsRequestModel(TimestampedModel):
     date_completed = models.DateTimeField(null=True, blank=True)
     raw_data = models.CharField(max_length=300, null=True, blank=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         abstract = True

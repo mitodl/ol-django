@@ -1,14 +1,10 @@
 """Digital Credentials serializers"""
+
 import json
 
 import pytest
 import responses
 from django.contrib.contenttypes.models import ContentType
-from testapp.factories import (
-    DemoCoursewareDigitalCredentialFactory,
-    DemoCoursewareDigitalCredentialRequestFactory,
-)
-
 from mitol.digitalcredentials.factories import LearnerDIDFactory
 from mitol.digitalcredentials.models import (
     DigitalCredential,
@@ -18,6 +14,10 @@ from mitol.digitalcredentials.models import (
 from mitol.digitalcredentials.serializers import (
     DigitalCredentialIssueSerializer,
     DigitalCredentialRequestSerializer,
+)
+from testapp.factories import (
+    DemoCoursewareDigitalCredentialFactory,
+    DemoCoursewareDigitalCredentialRequestFactory,
 )
 
 pytestmark = pytest.mark.django_db
@@ -71,7 +71,7 @@ def test_digital_credential_issue_serializer(learner, learner_did_exists):
 
 @responses.activate
 def test_digital_credential_issue_serializer_other_user_did(learner):
-    """Verify DigitalCredentialIssueSerializer errors if the DID is already associated with another user"""
+    """Verify DigitalCredentialIssueSerializer errors if the DID is already associated with another user"""  # noqa: E501
     learner_did = LearnerDIDFactory.create()
     request = DemoCoursewareDigitalCredentialRequestFactory.create(learner=learner)
 
@@ -93,7 +93,7 @@ def test_digital_credential_issue_serializer_other_user_did(learner):
 
 @responses.activate
 def test_digital_credential_issue_serializer_presentation_verify_failed():
-    """Verify DigitalCredentialIssueSerializer errors if the presentation fails to validate"""
+    """Verify DigitalCredentialIssueSerializer errors if the presentation fails to validate"""  # noqa: E501
     learner_did = LearnerDIDFactory.create()
     request = DemoCoursewareDigitalCredentialRequestFactory.create(
         learner=learner_did.learner
@@ -144,7 +144,7 @@ def test_digital_credential_issue_serializer_error(learner):
     )
     serializer.is_valid(raise_exception=True)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017, PT011
         serializer.save()
 
     request.refresh_from_db()

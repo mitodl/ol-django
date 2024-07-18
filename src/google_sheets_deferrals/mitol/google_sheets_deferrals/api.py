@@ -1,4 +1,5 @@
 """Enrollment deferral API"""
+
 import logging
 
 from django.conf import settings
@@ -28,7 +29,7 @@ User = get_user_model()
 class DeferralRequestHandler(GoogleSheetsChangeRequestHandler):
     """Manages the processing of enrollment deferral requests from a spreadsheet"""
 
-    def __init__(self):
+    def __init__(self):  # noqa: D107
         self.pm = get_plugin_manager()
         self.hook = self.pm.hook
         super().__init__(
@@ -45,15 +46,13 @@ class DeferralRequestHandler(GoogleSheetsChangeRequestHandler):
 
         Returns:
             bool: false if required settings are missing
-        """
+        """  # noqa: D401
 
         return super().is_configured() and not get_missing_settings(
             REQUIRED_GOOGLE_SHEETS_DEFERRALS_SETTINGS
         )
 
-    def process_row(
-        self, row_index, row_data
-    ):  # pylint: disable=too-many-return-statements
+    def process_row(self, row_index, row_data):  # pylint: disable=too-many-return-statements
         """
         Ensures that the given spreadsheet row is correctly represented in the database,
         attempts to parse it, defers the given enrollment if appropriate, and returns the
@@ -66,7 +65,7 @@ class DeferralRequestHandler(GoogleSheetsChangeRequestHandler):
         Returns:
             RowResult or None: An object representing the results of processing the row, or None if
                 nothing needs to be done with this row.
-        """
+        """  # noqa: E501, D401
         deferral_request, request_created, request_updated = self.get_or_create_request(
             row_data
         )
@@ -78,7 +77,7 @@ class DeferralRequestHandler(GoogleSheetsChangeRequestHandler):
                 row_db_record=deferral_request,
                 row_object=None,
                 result_type=ResultType.FAILED,
-                message="Parsing failure: {}".format(str(exc)),
+                message=f"Parsing failure: {exc!s}",
             )
         is_unchanged_error_row = (
             deferral_req_row.errors and not request_created and not request_updated
@@ -119,8 +118,8 @@ class DeferralRequestHandler(GoogleSheetsChangeRequestHandler):
         result_type = None
         message = None
 
-        # walk all the results, if any did not succeed bail and we will return that result
-        for result_type, message in results:
+        # walk all the results, if any did not succeed bail and we will return that result  # noqa: E501
+        for result_type, message in results:  # noqa: B007
             if result_type != ResultType.PROCESSED:
                 failed = True
                 break
@@ -148,7 +147,7 @@ class DeferralRequestHandler(GoogleSheetsChangeRequestHandler):
 
         Returns:
             Iterable[Tuple[int, List[str]]]: Iterable of data rows without the ones that should be ignored.
-        """
+        """  # noqa: E501, D401
         for row_index, row_data in enumerated_rows:
             if item_at_index_or_none(
                 row_data, self.sheet_metadata.SKIP_ROW_COL

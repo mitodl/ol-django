@@ -1,4 +1,4 @@
-from bumpver import cli
+from bumpver import cli  # noqa: D100
 
 from mitol.build_support.decorators import app_option
 

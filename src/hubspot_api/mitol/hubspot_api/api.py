@@ -3,6 +3,7 @@ Hubspot CRM API utilities
 
 https://developers.hubspot.com/docs/api/overview
 """
+
 import json
 import logging
 import re
@@ -106,9 +107,9 @@ def delete_secondary_email(email: str, hubspot_id: str):
     Args:
         email(str): The email address to delete
         hubspot_id: The id of the hubspot contact
-    """
+    """  # noqa: E501, D401
     headers = {"Authorization": f"Bearer {settings.MITOL_HUBSPOT_API_PRIVATE_TOKEN}"}
-    response = requests.delete(
+    response = requests.delete(  # noqa: S113
         f"https://api.hubapi.com/contacts/v1/secondary-email/{hubspot_id}/email/{quote(email)}?",
         headers=headers,
     )
@@ -132,7 +133,7 @@ def get_all_objects(
     basic_api = HubspotApi().crm.objects.basic_api
     while True:
         page = basic_api.get_page(object_type, after=after, limit=limit, **kwargs)
-        for result in page.results:
+        for result in page.results:  # noqa: UP028
             yield result
         if page.paging is None:
             break
@@ -153,7 +154,7 @@ def get_hubspot_id(object_id: int, content_type: ContentType) -> str:
     hubspot_obj = HubspotObject.objects.filter(
         object_id=object_id, content_type=content_type
     ).first()
-    if hubspot_obj:
+    if hubspot_obj:  # noqa: RET503
         return hubspot_obj.hubspot_id
 
 
@@ -166,7 +167,7 @@ def format_app_id(object_id: int) -> str:
     Returns:
         str: The hubspot_api id
     """
-    return "{}-{}".format(settings.MITOL_HUBSPOT_API_ID_PREFIX, object_id)
+    return f"{settings.MITOL_HUBSPOT_API_ID_PREFIX}-{object_id}"
 
 
 def handle_secondary_email_error(content_type: str, hubspot_id: str, email: str) -> str:
@@ -200,13 +201,13 @@ def handle_secondary_email_error(content_type: str, hubspot_id: str, email: str)
     return None
 
 
-def handle_create_api_error(
+def handle_create_api_error(  # noqa: C901, PLR0913
     error: ApiException,
     content_type: str,
     hubspot_type: str,
-    object_id: int = None,
+    object_id: int = None,  # noqa: RUF013
     body: SimplePublicObjectInput = None,
-    ignore_conflict=False,
+    ignore_conflict=False,  # noqa: FBT002
 ) -> SimplePublicObject:
     """
     Handle cases where an object already exists but hubspot_id is not in db
@@ -222,7 +223,7 @@ def handle_create_api_error(
     Returns:
         SimplePublicObject: The Hubspot object returned from the API - if an update is doable and succeeds
 
-    """
+    """  # noqa: E501
     if error.status in (400, 409):
         details = json.loads(error.body)
         message = details.get("message", "")
@@ -269,9 +270,9 @@ def handle_create_api_error(
 def upsert_object_request(
     content_type: ContentType,
     hubspot_type: str,
-    object_id: int = None,
+    object_id: int = None,  # noqa: RUF013
     body: SimplePublicObjectInput = None,
-    ignore_conflict=False,
+    ignore_conflict=False,  # noqa: FBT002
 ) -> SimplePublicObject:
     """
     Update or create an object in Hubspot via the CRM API
@@ -285,7 +286,7 @@ def upsert_object_request(
 
     Returns:
         SimplePublicObject: The Hubspot object returned from the API
-    """
+    """  # noqa: E501
     hubspot_id = get_hubspot_id(object_id, content_type)
     api = HubspotApi().crm.objects.basic_api
     if hubspot_id:
@@ -362,9 +363,9 @@ def transform_object_properties(object_data: dict, mapping: dict) -> dict:
         dict:  object data with hubspot_api keys
 
 
-    """
+    """  # noqa: E501
     hubspot_dict = {}
-    for key in object_data.keys():
+    for key in object_data:
         value = object_data.get(key)
         hubspot_key = mapping.get(key)
         if hubspot_key:
@@ -389,12 +390,12 @@ def sync_object_property(object_type: str, property_dict: str) -> SimplePublicOb
     missing_fields = required_fields.difference(property_dict.keys())
     if missing_fields:
         raise KeyError(
-            "The following property attributes are required: {}".format(
+            "The following property attributes are required: {}".format(  # noqa: EM103
                 ",".join(missing_fields)
             )
         )
 
-    for key in property_dict.keys():
+    for key in property_dict.keys():  # noqa: SIM118
         if property_dict[key] is None:
             property_dict[key] = ""
 
@@ -435,7 +436,7 @@ def object_property_exists(object_type: str, property_name: str) -> bool:
     """
     try:
         get_object_property(object_type, property_name)
-        return True
+        return True  # noqa: TRY300
     except PropertiesApiException:
         return False
 
@@ -481,7 +482,7 @@ def property_group_exists(object_type: str, group_name: str) -> bool:
     """
     try:
         get_property_group(object_type, group_name)
-        return True
+        return True  # noqa: TRY300
     except PropertiesApiException:
         return False
 
@@ -539,11 +540,11 @@ def find_contact(email: str) -> SimplePublicObject:
 
 def find_objects(
     object_type: str,
-    query: str = None,
-    filters: List[Dict] = None,
-    properties: List[Dict] = None,
-    sorts: List[Dict] = None,
-) -> List[SimplePublicObject]:
+    query: str = None,  # noqa: RUF013
+    filters: List[Dict] = None,  # noqa: FA100, RUF013
+    properties: List[Dict] = None,  # noqa: FA100, RUF013
+    sorts: List[Dict] = None,  # noqa: FA100, RUF013
+) -> List[SimplePublicObject]:  # noqa: FA100
     """
     Given an object_type and optional params, return search results from Hubspot.
 
@@ -574,10 +575,10 @@ def find_objects(
 
 def find_object(
     object_type: str,
-    filters: List[Dict],
-    query: str = None,
-    properties: List[str] = None,
-    raise_count_error=True,
+    filters: List[Dict],  # noqa: FA100
+    query: str = None,  # noqa: RUF013
+    properties: List[str] = None,  # noqa: FA100, RUF013
+    raise_count_error=True,  # noqa: FBT002
 ) -> SimplePublicObject:
     """
     Find and retrieve a single object from Hubspot.
@@ -596,14 +597,14 @@ def find_object(
     )
     count = len(results)
     if count != 1 and raise_count_error:
-        raise ValueError(
-            f"Expected 1 result but found {count} for {object_type} search w/filter {filters}",
+        raise ValueError(  # noqa: TRY003
+            f"Expected 1 result but found {count} for {object_type} search w/filter {filters}",  # noqa: EM102, E501
         )
     return None if count == 0 else results[0]
 
 
 def find_product(
-    name: str, price: str = None, raise_count_error: bool = True
+    name: str, price: str = None, raise_count_error: bool = True  # noqa: FBT001, FBT002, RUF013
 ) -> SimplePublicObject:
     """
     Find the hubspot_api id for a product by name and optionally price
@@ -624,7 +625,7 @@ def find_product(
 
 
 def find_deal(
-    name, amount: str = None, raise_count_error: bool = True
+    name, amount: str = None, raise_count_error: bool = True  # noqa: FBT001, FBT002, RUF013
 ) -> SimplePublicObject:
     """
     Find the hubspot_api id for a deal by name and optionally price
@@ -644,7 +645,7 @@ def find_deal(
     )
 
 
-def get_line_items_for_deal(hubspot_id: str) -> List[SimplePublicObject]:
+def get_line_items_for_deal(hubspot_id: str) -> List[SimplePublicObject]:  # noqa: FA100
     """
     Given the hubspot_api id for a deal, return all its line items
 
@@ -660,15 +661,15 @@ def get_line_items_for_deal(hubspot_id: str) -> List[SimplePublicObject]:
         hubspot_id, HubspotObjectType.LINES.value
     ).results
     for association in associations:
-        line_items.append(client.crm.line_items.basic_api.get_by_id(association.id))
+        line_items.append(client.crm.line_items.basic_api.get_by_id(association.id))  # noqa: PERF401
     return line_items
 
 
 def find_line_item(
     deal_id: str,
-    hs_product_id: str = None,
-    quantity: int = None,
-    raise_count_error=True,
+    hs_product_id: str = None,  # noqa: RUF013
+    quantity: int = None,  # noqa: RUF013
+    raise_count_error=True,  # noqa: FBT002
 ) -> SimplePublicObject:
     """
     Find a specific line item for a deal, optionally with product and quantity filters
@@ -693,7 +694,7 @@ def find_line_item(
             item for item in line_items if item.properties["quantity"] == str(quantity)
         ]
     if len(line_items) != 1 and raise_count_error:
-        raise ValueError(
-            f"Expected 1 line_item match for deal {deal_id}, hs_prod_id {hs_product_id} but found {len(line_items)}"
+        raise ValueError(  # noqa: TRY003
+            f"Expected 1 line_item match for deal {deal_id}, hs_prod_id {hs_product_id} but found {len(line_items)}"  # noqa: EM102, E501
         )
     return next(iter(line_items), None)

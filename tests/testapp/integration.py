@@ -1,7 +1,7 @@
 """Integration test code"""
 
 
-def build_credential(credentialed_object, learner_did):
+def build_credential(credentialed_object, learner_did):  # noqa: ARG001
     """Test func for building credentials"""
     return {
         "credential": {
@@ -16,7 +16,7 @@ def build_credential(credentialed_object, learner_did):
             "credentialSubject": {
                 "type": "Person",
                 "id": learner_did.did,
-                "name": f"{learner_did.learner.first_name} {learner_did.learner.last_name}",
+                "name": f"{learner_did.learner.first_name} {learner_did.learner.last_name}",  # noqa: E501
                 "degree": {
                     "type": "BachelorDegree",
                     "name": "Bachelor of Science and Arts",
@@ -24,6 +24,6 @@ def build_credential(credentialed_object, learner_did):
             },
         },
         "options": {
-            "verificationMethod": "did:web:digitalcredentials.github.io#96K4BSIWAkhcclKssb8yTWMQSz4QzPWBy-JsAFlwoIs"
+            "verificationMethod": "did:web:digitalcredentials.github.io#96K4BSIWAkhcclKssb8yTWMQSz4QzPWBy-JsAFlwoIs"  # noqa: E501
         },
     }

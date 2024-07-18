@@ -1,4 +1,4 @@
-import functools
+import functools  # noqa: D100
 import random
 from functools import wraps
 from typing import Callable, Optional
@@ -10,14 +10,14 @@ from typing_extensions import ParamSpec
 P = ParamSpec("P")
 
 
-def cache_control_max_age_jitter(*args, **kwargs):
+def cache_control_max_age_jitter(*args, **kwargs):  # noqa: ARG001, D103
     def _cache_controller(viewfunc):
         @wraps(viewfunc)
         def _cache_controlled(request, *args, **kw):
             # Ensure argument looks like a request.
             if not hasattr(request, "META"):
-                raise TypeError(
-                    "cache_control_max_age_jitter didn't receive an HttpRequest. If you are "
+                raise TypeError(  # noqa: TRY003
+                    "cache_control_max_age_jitter didn't receive an HttpRequest. If you are "  # noqa: EM101, E501
                     "decorating a classmethod, be sure to use "
                     "@method_decorator."
                 )
@@ -26,7 +26,7 @@ def cache_control_max_age_jitter(*args, **kwargs):
             if not max_age:
                 max_age = kwargs["max_age"]
             # add random delay upto 5 minutes
-            kwargs["max_age"] = max_age + random.randint(1, 600)
+            kwargs["max_age"] = max_age + random.randint(1, 600)  # noqa: S311
             patch_cache_control(response, **kwargs)
             return response
 
@@ -37,9 +37,9 @@ def cache_control_max_age_jitter(*args, **kwargs):
 
 def single_task(
     timeout: int,
-    raise_block: Optional[bool] = True,
-    key: Optional[str or Callable[[str, P.args, P.kwargs], str]] = None,
-    cache_name: Optional[str] = "redis",
+    raise_block: Optional[bool] = True,  # noqa: FBT002, FA100
+    key: Optional[str or Callable[[str, P.args, P.kwargs], str]] = None,  # noqa: FA100
+    cache_name: Optional[str] = "redis",  # noqa: FA100
 ) -> Callable:
     """
     Only allow one instance of a celery task to run concurrently
@@ -73,7 +73,7 @@ def single_task(
                     return_value = func(*args, **kwargs)
                 else:
                     if raise_block:
-                        raise BlockingIOError()
+                        raise BlockingIOError
                     return_value = None
             finally:
                 if has_lock and lock.locked():

@@ -9,6 +9,7 @@ recipients = User.objects.all()[:10]
 with get_message_sender(TestMessage) as sender:
     sender.build_and_send_message(user=user)
 """
+
 import contextlib
 import logging
 import re
@@ -33,7 +34,7 @@ from mitol.mail.messages import TemplatedMessage
 log = logging.getLogger(__name__)
 
 
-MessageSenderAPI = namedtuple(
+MessageSenderAPI = namedtuple(  # noqa: PYI024
     "MessageSenderAPI",
     [
         "connection",
@@ -45,22 +46,22 @@ MessageSenderAPI = namedtuple(
 )
 
 
-def get_message_classes() -> Iterable[Type[TemplatedMessage]]:
+def get_message_classes() -> Iterable[Type[TemplatedMessage]]:  # noqa: FA100
     """Get the message classes that are configured"""
     classes = []
     for message_cls in getattr(settings, "MITOL_MAIL_MESSAGE_CLASSES", []):
         try:
             classes.append(import_string(message_cls))
-        except ImportError as exc:
-            raise ImproperlyConfigured(
-                f"MITOL_MAIL_MESSAGE_CLASSES is invalid, could not import: {message_cls}"
+        except ImportError as exc:  # noqa: PERF203
+            raise ImproperlyConfigured(  # noqa: TRY003
+                f"MITOL_MAIL_MESSAGE_CLASSES is invalid, could not import: {message_cls}"  # noqa: EM102, E501
             ) from exc
     return classes
 
 
 def safe_format_recipient(
-    recipient_or_user: Union[AbstractBaseUser, str]
-) -> Optional[str]:
+    recipient_or_user: Union[AbstractBaseUser, str],  # noqa: FA100
+) -> Optional[str]:  # noqa: FA100
     """
     Returns a "safe"formatted recipient
     This means if MAILGUN_RECIPIENT_OVERRIDE is set, we only use that
@@ -70,7 +71,7 @@ def safe_format_recipient(
 
     Returns:
         str or None: the formatted email str
-    """
+    """  # noqa: D401
     override_recipient = getattr(settings, "MITOL_MAIL_RECIPIENT_OVERRIDE", None)
     format_func_name = getattr(
         settings,
@@ -98,7 +99,7 @@ def can_email_user(user: AbstractBaseUser) -> bool:
 
     Returns:
         bool: True if we can email this user
-    """
+    """  # noqa: E501
     can_email_user_func_name = getattr(
         settings, "MITOL_MAIL_CAN_EMAIL_USER_FUNC", "mitol.mail.defaults.can_email_user"
     )
@@ -106,7 +107,7 @@ def can_email_user(user: AbstractBaseUser) -> bool:
     return can_email_user_func(user)
 
 
-def render_email_templates(template_name: str, context: dict) -> Tuple[str, str, str]:
+def render_email_templates(template_name: str, context: dict) -> Tuple[str, str, str]:  # noqa: FA100
     """
     Renders the email templates for the email
 
@@ -116,18 +117,18 @@ def render_email_templates(template_name: str, context: dict) -> Tuple[str, str,
 
     Returns:
         (str, str, str): tuple of the templates for subject, text_body, html_body
-    """
+    """  # noqa: E501, D401
     subject_text = render_to_string(
-        path.join(template_name, "subject.txt"), context
+        path.join(template_name, "subject.txt"), context  # noqa: PTH118
     ).rstrip()
 
     context.update({"subject": subject_text})
-    html_text = render_to_string(path.join(template_name, "body.html"), context)
+    html_text = render_to_string(path.join(template_name, "body.html"), context)  # noqa: PTH118
 
     # inline css styles
     html_text = premailer.transform(html_text)
 
-    # pynliner internally uses bs4, which we can now modify the inlined version into a plaintext version
+    # pynliner internally uses bs4, which we can now modify the inlined version into a plaintext version  # noqa: E501
     # this avoids parsing the body twice in bs4
     soup = BeautifulSoup(html_text, "html5lib")
 
@@ -172,8 +173,8 @@ def get_connection() -> Generator:
 
 def build_message(
     connection: BaseEmailBackend,
-    message_cls: Type[TemplatedMessage],
-    recipient_or_user: Union[str, AbstractBaseUser],
+    message_cls: Type[TemplatedMessage],  # noqa: FA100
+    recipient_or_user: Union[str, AbstractBaseUser],  # noqa: FA100
     template_context: dict,
     **kwargs,
 ) -> TemplatedMessage:
@@ -189,7 +190,7 @@ def build_message(
 
     Returns:
         mitol.mail.messages.TemplatedMessage: email message with rendered content
-    """
+    """  # noqa: E501, D401
     user = (
         recipient_or_user if isinstance(recipient_or_user, AbstractBaseUser) else None
     )
@@ -209,7 +210,7 @@ def send_message(message: TemplatedMessage):
 
     Args:
         message (mitol.mail.messages.TemplatedMessage): message to send
-    """
+    """  # noqa: D401
     if message is None:
         return
 
@@ -221,7 +222,7 @@ def send_message(message: TemplatedMessage):
 
 @contextlib.contextmanager
 def get_message_sender(
-    message_cls: Type[TemplatedMessage], *, shared_context: Optional[dict] = None
+    message_cls: Type[TemplatedMessage], *, shared_context: Optional[dict] = None  # noqa: FA100
 ) -> Generator:
     """
     Context manager to provide a unified interface to the mail APIs, also providing some extra functionality around shared contexts
@@ -233,14 +234,14 @@ def get_message_sender(
     Yields:
         MessageSenderAPI:
             API context object
-    """
+    """  # noqa: E501
     shared_context = shared_context or {}
 
     with get_connection() as connection:
         build_message_for_sender = partial(build_message, connection, message_cls)
 
         def _build_message(
-            recipient_or_user: Union[str, AbstractBaseUser],
+            recipient_or_user: Union[str, AbstractBaseUser],  # noqa: FA100
             template_context: dict,
             **kwargs,
         ):

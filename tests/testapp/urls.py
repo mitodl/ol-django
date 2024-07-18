@@ -1,8 +1,10 @@
 """testapp URL Configuration"""
+
 from django.contrib import admin
 from django.urls import include, path
 from oauth2_provider.urls import base_urlpatterns
 from rest_framework import routers
+
 from testapp.views import DemoCoursewareViewSet
 
 router = routers.SimpleRouter()

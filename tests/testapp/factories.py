@@ -5,14 +5,14 @@ import string
 import faker
 from factory import Factory, SubFactory, fuzzy
 from factory.django import DjangoModelFactory
-from testapp.models import DemoCourseware
-
 from mitol.common.factories import UserFactory
 from mitol.digitalcredentials.factories import (
     DigitalCredentialFactory,
     DigitalCredentialRequestFactory,
 )
 from mitol.payment_gateway.api import CartItem, Order, Refund
+
+from testapp.models import DemoCourseware
 
 FAKE = faker.Factory.create()
 
@@ -22,7 +22,7 @@ class DemoCoursewareFactory(DjangoModelFactory):
 
     learner = SubFactory(UserFactory)
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = DemoCourseware
 
 
@@ -38,8 +38,8 @@ class DemoCoursewareDigitalCredentialRequestFactory(DigitalCredentialRequestFact
     credentialed_object = SubFactory(DemoCoursewareFactory)
 
 
-class CartItemFactory(Factory):
-    class Meta:
+class CartItemFactory(Factory):  # noqa: D101
+    class Meta:  # noqa: D106
         model = CartItem
 
     sku = fuzzy.FuzzyText()
@@ -50,20 +50,20 @@ class CartItemFactory(Factory):
     unitprice = fuzzy.FuzzyDecimal(1, 300, precision=2)
 
 
-class OrderFactory(Factory):
-    class Meta:
+class OrderFactory(Factory):  # noqa: D101
+    class Meta:  # noqa: D106
         model = Order
 
     ip_address = FAKE.ipv4()
     reference = fuzzy.FuzzyText(length=6)
     username = FAKE.safe_email()
-    items = []
+    items = []  # noqa: RUF012
 
 
 class RefundFactory(Factory):
     """Factory for creating Refund data object for CyberSource API calls"""
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Refund
 
     transaction_id = fuzzy.FuzzyText(length=22, chars=string.digits)

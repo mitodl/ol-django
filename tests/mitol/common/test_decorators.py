@@ -1,13 +1,13 @@
 """Tests for decorators"""
+
 from typing import List
 
 import pytest
-
 from mitol.common.decorators import single_task
 
 
 def task_obj_lock(
-    func_name: str, args: List[object], kwargs: dict
+    func_name: str, args: List[object], kwargs: dict  # noqa: FA100, ARG001
 ) -> str:  # @pylint:unused-argument
     """
     Determine a task lock name for a specific task function and object id
@@ -20,7 +20,7 @@ def task_obj_lock(
 @pytest.mark.parametrize("input_arg", [None, "foo"])
 @pytest.mark.parametrize("cache_name", [None, "foo"])
 @pytest.mark.parametrize("key", [None, "foo", task_obj_lock])
-def test_single_task(mocker, has_lock, raise_block, input_arg, cache_name, key):
+def test_single_task(mocker, has_lock, raise_block, input_arg, cache_name, key):  # noqa: PLR0913
     """single_task should only allow 1 instance of inner task to run at same time"""
     mock_app = mocker.patch("mitol.common.decorators.get_redis_connection")
     mock_app.return_value.lock.return_value.acquire.side_effect = [True, has_lock]
