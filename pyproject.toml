@@ -1,0 +1,97 @@
+[project]
+name = "ol-django"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "MIT Open Learning Engineering", email = "odl-devops@mit.edu" }
+]
+dependencies = [
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+virtual = true
+generate-hashes = true
+dev-dependencies = [
+  "GitPython",
+  "bumpver",
+  "click",
+  "click-log",
+  "cloup",
+  "coverage==5.3",
+  "dj-database-url",
+  "factory-boy~=3.2",
+  "faker==4.17.1",
+  "freezegun==1.0.0",
+  "ipdb",
+  "mypy",
+  "mypy-extensions",
+  "psycopg2-binary",
+  "pytest",
+  "pytest-cov==2.10.1",
+  "pytest-django==3.10.0",
+  "pytest-lazy-fixture==0.6.3",
+  "pytest-mock==1.10.1",
+  "responses==0.12.1",
+  "ruff",
+  "scriv[toml]",
+  "semver",
+  "toml",
+  "typing-extensions"
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.rye.workspace]
+members = ["src/*"]
+
+[tool.rye.scripts]
+build = { call = "mitol.build_support.cli:cli", env = {PYTHONPATH = "build-support/bin/"}}
+
+[tool.hatch.build.targets.sdist]
+include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]
+exclude = ["BUILD", "pyproject.toml"]
+
+[tool.hatch.build.targets.wheel]
+include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]
+exclude = ["BUILD", "pyproject.toml"]
+
+[tool.pytest.ini_options]
+addopts = "--cov . --cov-report term --cov-report html --cov-report xml --reuse-db"
+norecursedirs = ".git .tox .* CVS _darcs {arch} *.egg dist"
+DJANGO_SETTINGS_MODULE = "testapp.settings.test"
+# -- recommended but optional:
+python_files = ["tests/mitol/**/test_*.py"]
+pythonpath = ["tests", "src"]
+
+[tool.mypy]
+namespace_packages = true
+plugins = [
+  "mypy_django_plugin.main",
+  "mypy_drf_plugin.main"
+]
+
+[[tool.mypy.overrides]]
+module = "django-stubs"
+django_settings_module = "testapp.settings.test"
+
+[[tool.mypy.overrides]]
+module = [
+  "mypy-factory.*",
+  "mypy-freezegun.*",
+  "mypy-pytest.*",
+  "mypy-oauth2_provider.*",
+  "mypy-responses.*",
+  "mypy-anymail.*",
+  "mypy-bs4.*",
+  "mypy-premailer.*",
+  "mypy-toolz.*",
+  "mypy-dj_database_url.*",
+]

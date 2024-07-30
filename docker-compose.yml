@@ -12,7 +12,7 @@ services:
 
   shell:
     build:
-      target: shell
+      target: rye
     volumes:
       - .:/home/dev/src
       - cache:/home/dev/.cache/

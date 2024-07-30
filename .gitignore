@@ -18,6 +18,7 @@ Icon*
 # Testing and coverage results
 .coverage
 .coverage.*
+coverage.*
 htmlcov/
 
 # Build and release directories

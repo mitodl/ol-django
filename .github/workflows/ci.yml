@@ -1,15 +1,17 @@
 name: CI
 on: [push]
 
-env:
-  CACHE_BUST_ITER: 0
-
 jobs:
   tests:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: 
+        - "3.8"
+        - "3.9"
+        - "3.10"
+        - "3.11"
+        #- "3.12"
 
     # Service containers to run
     services:
@@ -32,38 +34,32 @@ jobs:
         with:
           fetch-depth: 0 # fetch all history
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
       - name: Apt update
         run: sudo apt-get update
 
       - name: Apt install
         run: sudo apt-get install -y libxmlsec1-dev
 
-      - name: Initialize Pants
-        uses: pantsbuild/actions/init-pants@7151afe1e66338457f7f65a894bc12a2d8f9cab7
-        with:
-          # cache0 makes it easy to bust the cache if needed
-          gha-cache-key: cache-${{ env.CACHE_BUST_ITER }}-py${{ matrix.python_version }}
-          named-caches-hash: ${{ hashFiles('build-support/lockfiles/*.lockfile') }}
+      - uses: eifinger/setup-rye@v4
+        id: setup-rye
 
-      - name: Prune pants cache
-        run: bash ./.github/workflows/scripts/prune_pants_cache.sh
+      - name: Pin python-version ${{ matrix.python-version }}
+        run: rye pin ${{ matrix.python-version }}
 
-      - name: Lints
-        run: 'pants lint ::'
+      - name: Install dependencies
+        run: rye sync
+
+      # - name: Lints
+      #   run: 'pants lint ::'
 
       # - name: Typecheck
       #   run: 'pants typecheck ::'
 
       - name: Tests
-        run: 'pants test ::'
-      
+        run: rye test
+
       - name: Changelog
-        run: 'pants ol-project changelog check'
+        run: rye run build changelog check
 
       # - name: Upload coverage to CodeCov
       #   uses: codecov/codecov-action@v1
@@ -78,16 +74,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v5
+    - uses: eifinger/setup-rye@v4
+      id: setup-rye
       with:
-        python-version: 3.8
+        enable-cache: true
+        cache-prefix: ${{ matrix.python-version }}
 
-    - name: Initialize Pants
-      uses: pantsbuild/actions/init-pants@7151afe1e66338457f7f65a894bc12a2d8f9cab7
-      with:
-        # cache0 makes it easy to bust the cache if needed
-        gha-cache-key: cache-${{ env.CACHE_BUST_ITER }}-py${{ matrix.python_version }}
-        named-caches-hash: ${{ hashFiles('build-support/lockfiles/*.lockfile') }}
+    - name: Pin python-version ${{ matrix.python-version }}
+      if: steps.setup-rye.outputs.cache-hit != 'true'
+      run: rye pin ${{ matrix.python-version }}
 
     # extract the app name out of the tag's ref value
     - id: get-app-name
@@ -99,7 +94,7 @@ jobs:
           core.setOutput('app-package', appName.replace("mitol-django-", "").replace(/-/g, "_"))
 
     - name: Build
-      run: pants package "src/mitol/${{steps.get-app-name.outputs.app-package}}:"
+      run: rye build "src/${{steps.get-app-name.outputs.app-package}}:"
 
     - uses: pypa/gh-action-pypi-publish@release/v1
       with:

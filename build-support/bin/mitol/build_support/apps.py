@@ -8,7 +8,7 @@ import toml
 
 from mitol.build_support.contextlib import chdir
 
-SOURCE_PATH = "src/mitol/"
+SOURCE_PATH = "src/"
 
 
 def get_source_dir() -> Path:
@@ -29,7 +29,7 @@ def list_apps() -> List[Path]:
     return sorted(
         dir_path
         for dir_path in get_source_dir().iterdir()
-        if dir_path.is_dir() and (dir_path / "__init__.py").exists()
+        if dir_path.is_dir() and (dir_path / "pyproject.toml").exists()
     )
 
 
