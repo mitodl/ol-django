@@ -10,4 +10,4 @@ class OlPosthog(BaseApp):
     verbose_name = "OlPosthog"
 
     # necessary because this is a namespaced app
-    path = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.dirname(os.path.abspath(__file__))  # noqa: PTH100, PTH120

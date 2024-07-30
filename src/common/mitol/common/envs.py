@@ -1,4 +1,5 @@
 """Functions reading and parsing environment variables"""
+
 import importlib
 import inspect
 import json
@@ -34,10 +35,10 @@ def var_parser(parser_func: Callable):
         parser_func (callable):
             a function that takes one argument which will be the raw value and
             returns a parsed value or raises an error
-    """
+    """  # noqa: D401
 
     @wraps(parser_func)
-    def wrapper(
+    def wrapper(  # noqa: PLR0913
         self,
         *,
         name: str,
@@ -65,16 +66,16 @@ def var_parser(parser_func: Callable):
         Returns:
             any:
                 The raw environment variable value
-        """
+        """  # noqa: E501
         configured_envs = self._configured_vars
         environ = self._env
 
         if name in configured_envs:
-            raise ValueError(f"Environment variable '{name}' was used more than once")
+            raise ValueError(f"Environment variable '{name}' was used more than once")  # noqa: EM102, TRY003
 
         value = environ.get(name, default)
         # attempt to parse the value before we store it in configured_envs
-        # this ensures that get_any works since we don't store the various parse attempts until one succeeds
+        # this ensures that get_any works since we don't store the various parse attempts until one succeeds  # noqa: E501
         value = parser_func(name, value, default)
 
         configured_envs[name] = EnvVariable(
@@ -86,7 +87,7 @@ def var_parser(parser_func: Callable):
     return wrapper
 
 
-def parse_bool(name: str, value: str, default: bool) -> bool:
+def parse_bool(name: str, value: str, default: bool) -> bool:  # noqa: FBT001, ARG001
     """
     Attempts to parse a bool
 
@@ -101,7 +102,7 @@ def parse_bool(name: str, value: str, default: bool) -> bool:
     Returns:
         bool:
             parsed value
-    """
+    """  # noqa: D401
 
     if isinstance(value, bool):
         return value
@@ -112,10 +113,8 @@ def parse_bool(name: str, value: str, default: bool) -> bool:
     elif parsed_value == "false":
         return False
 
-    raise EnvironmentVariableParseException(
-        "Expected value in {name}={value} to be a boolean".format(
-            name=name, value=value
-        )
+    raise EnvironmentVariableParseException(  # noqa: TRY003
+        f"Expected value in {name}={value} to be a boolean"  # noqa: EM102
     )
 
 
@@ -134,7 +133,7 @@ def parse_int(name: str, value: str, default: int) -> int:
     Returns:
         int:
             parsed value
-    """
+    """  # noqa: D401
 
     if isinstance(value, int) or (value is None and default is None):
         return value
@@ -142,16 +141,14 @@ def parse_int(name: str, value: str, default: int) -> int:
     try:
         parsed_value = int(value)
     except ValueError as ex:
-        raise EnvironmentVariableParseException(
-            "Expected value in {name}={value} to be an int".format(
-                name=name, value=value
-            )
+        raise EnvironmentVariableParseException(  # noqa: TRY003
+            f"Expected value in {name}={value} to be an int"  # noqa: EM102
         ) from ex
 
     return parsed_value
 
 
-def parse_str(name: str, value: str, default: str):
+def parse_str(name: str, value: str, default: str):  # noqa: ARG001
     """
     Parses a str (identity function)
 
@@ -162,15 +159,15 @@ def parse_str(name: str, value: str, default: str):
     Returns:
         str:
             parsed value
-    """
+    """  # noqa: D401
     return value
 
 
 def parse_list_literal(
     name: str,
-    value: Union[str, List[Any]],
-    default: List[Any],
-) -> List[str]:
+    value: Union[str, List[Any]],  # noqa: FA100
+    default: List[Any],  # noqa: FA100, ARG001
+) -> List[str]:  # noqa: FA100
     """
     Parses a comma separated string into a list
 
@@ -181,14 +178,12 @@ def parse_list_literal(
     Returns:
         list[str]:
             the parsed value
-    """
+    """  # noqa: D401
     if isinstance(value, list):
         return value
 
     parse_exception = EnvironmentVariableParseException(
-        "Expected value in {name}={value} to be a list literal".format(
-            name=name, value=value
-        )
+        f"Expected value in {name}={value} to be a list literal"
     )
 
     try:
@@ -202,7 +197,7 @@ def parse_list_literal(
     return parsed_value
 
 
-def parse_delimited_list(name, value, default):
+def parse_delimited_list(name, value, default):  # noqa: ARG001
     """
     Parses a comma separated string into a list
 
@@ -213,7 +208,7 @@ def parse_delimited_list(name, value, default):
     Returns:
         list[str]:
             the parsed value
-    """
+    """  # noqa: D401
     parsed_value = value
     if isinstance(value, str):
         parsed_value = value.split(",")
@@ -224,7 +219,7 @@ def parse_delimited_list(name, value, default):
 CRONTAB_KEYS = ["minute", "hour", "day_of_week", "day_of_month", "month_of_year"]
 
 
-def parse_crontab_kwargs(name, value, default):
+def parse_crontab_kwargs(name, value, default):  # noqa: ARG001
     """
     Parses a crontab string into structured kwargs
 
@@ -237,44 +232,44 @@ def parse_crontab_kwargs(name, value, default):
     Returns:
         dict:
             the parsed crontab kwargs
-    """
+    """  # noqa: D401
 
     if isinstance(value, str):
         units = value.split(" ")
 
         if len(units) != len(CRONTAB_KEYS):
-            raise ImproperlyConfigured(
-                f"Crontab value '{value}' is required to have {len(CRONTAB_KEYS)} units"
+            raise ImproperlyConfigured(  # noqa: TRY003
+                f"Crontab value '{value}' is required to have {len(CRONTAB_KEYS)} units"  # noqa: EM102
             )
 
         if not all(units):
-            raise ImproperlyConfigured(
-                f"Crontab value '{value}' does not have values for all units"
+            raise ImproperlyConfigured(  # noqa: TRY003
+                f"Crontab value '{value}' does not have values for all units"  # noqa: EM102
             )
 
         return dict(zip(CRONTAB_KEYS, units))
 
-    # an empty string would be falsy and we want to catch that above so default the value here
+    # an empty string would be falsy and we want to catch that above so default the value here  # noqa: E501
     value = value or {}
 
     if isinstance(value, dict):
         invalid_keys = set(value.keys()) - set(CRONTAB_KEYS)
         if invalid_keys:
-            raise ImproperlyConfigured(
-                f"Crontab value has invalid keys: {invalid_keys}"
+            raise ImproperlyConfigured(  # noqa: TRY003
+                f"Crontab value has invalid keys: {invalid_keys}"  # noqa: EM102
             )
 
         return value
     else:
-        raise ImproperlyConfigured(f"Crontab value is an invalid type: {type(value)}")
+        raise ImproperlyConfigured(f"Crontab value is an invalid type: {type(value)}")  # noqa: EM102, TRY003
 
 
 class EnvParser:
     """Stateful tracker for environment variable parsing"""
 
-    _env: Dict[str, str]
-    _configured_vars: Dict[str, EnvVariable]
-    _imported_modules: List[str]
+    _env: Dict[str, str]  # noqa: FA100
+    _configured_vars: Dict[str, EnvVariable]  # noqa: FA100
+    _imported_modules: List[str]  # noqa: FA100
 
     def __init__(self):
         self.reset()
@@ -286,13 +281,13 @@ class EnvParser:
         self._imported_modules = []
 
     def reload(self):
-        """Reloads the environment"""
+        """Reloads the environment"""  # noqa: D401
         # reset the internal state since we're reloading everything that created it
         self.reset()
 
         # reload the modules we've imported
         for mod in [
-            # this needs to be dynamic and inlined because settings.py will import this module
+            # this needs to be dynamic and inlined because settings.py will import this module  # noqa: E501
             importlib.import_module(os.environ.get("DJANGO_SETTINGS_MODULE")),
             *self._imported_modules,
         ]:
@@ -305,21 +300,21 @@ class EnvParser:
         Raises:
             ImproperlyConfigured:
                 If any settings are missing
-        """
+        """  # noqa: D401
         missing_settings = []
 
         for env_var in self._configured_vars.values():
             if env_var.required and env_var.value in (None, ""):
-                missing_settings.append(env_var.name)
+                missing_settings.append(env_var.name)  # noqa: PERF401
 
         if missing_settings:
             raise ImproperlyConfigured(
-                "The following settings are missing: {}. You need to add these environment variables in .env file.".format(
+                "The following settings are missing: {}. You need to add these environment variables in .env file.".format(  # noqa: EM103, E501
                     ", ".join(missing_settings)
                 )
             )
 
-    def list_environment_vars(self) -> List[EnvVariable]:
+    def list_environment_vars(self) -> List[EnvVariable]:  # noqa: FA100
         """
         Get the list of EnvVariables
 
@@ -329,7 +324,7 @@ class EnvParser:
         """
         return self._configured_vars.values()
 
-    def get_features(self, prefix: str = "FEATURE_") -> Dict[str, bool]:
+    def get_features(self, prefix: str = "FEATURE_") -> Dict[str, bool]:  # noqa: FA100
         """
         Get the list of features enabled for this app
 
@@ -363,7 +358,7 @@ class EnvParser:
                 The name of the site
         """
 
-        # an optional scope can be passed, or this will default to the calling scope's globals
+        # an optional scope can be passed, or this will default to the calling scope's globals  # noqa: E501
         scope = kwargs.pop("scope", inspect.currentframe().f_back.f_globals)
 
         scope["APP_SETTINGS_NAMESPACE"] = self.get_string(
@@ -380,8 +375,8 @@ class EnvParser:
         """Return the site name"""
         site_name = self._configured_vars.get("SITE_NAME")
         if not site_name:
-            raise ImproperlyConfigured(
-                "Site name isn't set, add a call to init_app_settings()"
+            raise ImproperlyConfigured(  # noqa: TRY003
+                "Site name isn't set, add a call to init_app_settings()"  # noqa: EM101
             )
         return site_name.value
 
@@ -393,8 +388,8 @@ class EnvParser:
         """
         namespace = self._configured_vars.get("APP_SETTINGS_NAMESPACE")
         if not namespace:
-            raise ImproperlyConfigured(
-                "App settings namespace isn't set, add a call to init_app_settings()"
+            raise ImproperlyConfigured(  # noqa: TRY003
+                "App settings namespace isn't set, add a call to init_app_settings()"  # noqa: EM101
             )
         return f"{namespace.value}_{setting_key}"
 
@@ -405,9 +400,9 @@ class EnvParser:
         Usage:
             import_settings_modules("module1.settings", "module2.settings")
             import_settings_modules("module1.settings", "module2.settings", scope=globals())
-        """
+        """  # noqa: E501
 
-        # an optional scope can be passed, or this will default to the calling scope's globals
+        # an optional scope can be passed, or this will default to the calling scope's globals  # noqa: E501
         scope = kwargs.pop("scope", inspect.currentframe().f_back.f_globals)
 
         # this function imports modules and then walks each, adding uppercased vars
@@ -460,7 +455,7 @@ def generate_app_json():
         dict:
             object that can be serialized to JSON for app.json
     """
-    with open("app.base.json") as app_template_json:
+    with open("app.base.json") as app_template_json:  # noqa: PTH123
         config = json.load(app_template_json)
 
     for env_var in list_environment_vars():

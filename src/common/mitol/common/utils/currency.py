@@ -1,4 +1,5 @@
 """Currency utilities"""
+
 from decimal import Decimal
 
 

@@ -31,7 +31,7 @@ def release():
 @pass_app
 @pass_project
 @pass_context
-def create(ctx: Context, project: Project, app: App, push: bool):
+def create(ctx: Context, project: Project, app: App, push: bool):  # noqa: FBT001, ARG001
     """Create a new release"""
 
     ctx.invoke(changelog.check)

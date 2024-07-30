@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import os
 
 import dj_database_url
-
 from mitol.common.envs import get_string, import_settings_modules, init_app_settings
 
 init_app_settings(namespace="MITOL", site_name="MIT Open Learning Common Library")
@@ -31,13 +30,13 @@ import_settings_modules(
 )
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # noqa: PTH100, PTH120
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "TESTAPP_SECRET"
+SECRET_KEY = "TESTAPP_SECRET"  # noqa: S105
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -135,7 +134,7 @@ AUTHENTICATION_BACKENDS = (
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",  # noqa: E501
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
@@ -172,9 +171,9 @@ SITE_BASE_URL = "http://127.0.0.1:8000/"
 
 
 # required for migrations
-OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = "oauth2_provider.AccessToken"
+OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = "oauth2_provider.AccessToken"  # noqa: S105
 OAUTH2_PROVIDER_APPLICATION_MODEL = "oauth2_provider.Application"
-OAUTH2_PROVIDER_REFRESH_TOKEN_MODEL = "oauth2_provider.RefreshToken"
+OAUTH2_PROVIDER_REFRESH_TOKEN_MODEL = "oauth2_provider.RefreshToken"  # noqa: S105
 
 OAUTH2_PROVIDER = {
     "SCOPES": {
@@ -183,7 +182,7 @@ OAUTH2_PROVIDER = {
         "only_logout": "Only access to logout",
     },
     "DEFAULT_SCOPES": ["read", "write"],
-    "SCOPES_BACKEND_CLASS": "mitol.oauth_toolkit_extensions.backends.ApplicationAccessOrSettingsScopes",
+    "SCOPES_BACKEND_CLASS": "mitol.oauth_toolkit_extensions.backends.ApplicationAccessOrSettingsScopes",  # noqa: E501
 }
 
 REST_FRAMEWORK = {"TEST_REQUEST_DEFAULT_FORMAT": "json"}
@@ -196,8 +195,8 @@ MITOL_PAYMENT_GATEWAY_CYBERSOURCE_PROFILE_ID = "abc123"
 MITOL_PAYMENT_GATEWAY_CYBERSOURCE_SECURITY_KEY = "Test1234"
 MITOL_PAYMENT_GATEWAY_CYBERSOURCE_SECURE_ACCEPTANCE_URL = "https://google.com"
 MITOL_PAYMENT_GATEWAY_CYBERSOURCE_MERCHANT_ID = "test"
-MITOL_PAYMENT_GATEWAY_CYBERSOURCE_MERCHANT_SECRET = "test1234"
-MITOL_PAYMENT_GATEWAY_CYBERSOURCE_MERCHANT_SECRET_KEY_ID = "test1234"
+MITOL_PAYMENT_GATEWAY_CYBERSOURCE_MERCHANT_SECRET = "test1234"  # noqa: S105
+MITOL_PAYMENT_GATEWAY_CYBERSOURCE_MERCHANT_SECRET_KEY_ID = "test1234"  # noqa: S105
 
 MITOL_HUBSPOT_API_ID_PREFIX = "app"
-MITOL_HUBSPOT_API_PRIVATE_TOKEN = "testtoken"
+MITOL_HUBSPOT_API_PRIVATE_TOKEN = "testtoken"  # noqa: S105

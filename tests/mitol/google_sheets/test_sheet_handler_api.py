@@ -1,7 +1,6 @@
 import pytest
-from pytest_lazyfixture import lazy_fixture
-
 from mitol.google_sheets.sheet_handler_api import SheetHandler
+from pytest_lazyfixture import lazy_fixture
 
 
 @pytest.mark.usefixtures("google_sheets_base_settings")
@@ -12,7 +11,7 @@ from mitol.google_sheets.sheet_handler_api import SheetHandler
         lazy_fixture("google_sheets_client_creds_settings"),
     ],
 )
-def test_is_configured_missing(_creds):
+def test_is_configured_missing(_creds):  # noqa: PT019
     """Test that is_configured returns correctly"""
     handler = SheetHandler()
     assert handler.is_configured() is True

@@ -1,9 +1,9 @@
 """Testapp models"""
+
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-
 from mitol.common.models import (
     AuditableModel,
     AuditModel,
@@ -63,7 +63,7 @@ class AuditableTestModel(AuditableModel):
         Get a serialized representation of the AuditableTestModel
         """
         data = serialize_model_object(self)
-        return data
+        return data  # noqa: RET504
 
 
 class AuditableTestModelAudit(AuditModel):

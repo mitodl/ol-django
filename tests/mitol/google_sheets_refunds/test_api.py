@@ -4,30 +4,29 @@ import os
 from types import SimpleNamespace
 
 import pytest
+from mitol.google_sheets.factories import GoogleApiAuthFactory
+from mitol.google_sheets.utils import ResultType
+from mitol.google_sheets_refunds.api import RefundRequestHandler
 from pygsheets import Spreadsheet, Worksheet
 from pygsheets.client import Client as PygsheetsClient
 from pygsheets.drive import DriveAPIWrapper
 from pygsheets.sheet import SheetAPIWrapper
 from pytest_lazyfixture import lazy_fixture
 
-from mitol.google_sheets.factories import GoogleApiAuthFactory
-from mitol.google_sheets.utils import ResultType
-from mitol.google_sheets_refunds.api import RefundRequestHandler
 
-
-@pytest.fixture
+@pytest.fixture()
 def request_csv_rows(settings):
     """Fake refund request spreadsheet data rows (loaded from CSV)"""
-    fake_request_csv_filepath = os.path.join(
+    fake_request_csv_filepath = os.path.join(  # noqa: PTH118
         settings.BASE_DIR, "data/google_sheets_refunds/refund_requests.csv"
     )
-    with open(fake_request_csv_filepath) as f:
+    with open(fake_request_csv_filepath) as f:  # noqa: PTH123
         # Return all rows except for the header
         return [line.split(",") for i, line in enumerate(f.readlines()) if i > 0]
 
 
-@pytest.fixture
-def pygsheets_fixtures(mocker, db, request_csv_rows):
+@pytest.fixture()
+def pygsheets_fixtures(mocker, db, request_csv_rows):  # noqa: ARG001
     """Patched functions for pygsheets client functionality"""
     Mock = mocker.Mock
     MagicMock = mocker.MagicMock
@@ -61,7 +60,7 @@ def pygsheets_fixtures(mocker, db, request_csv_rows):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def google_sheets_refunds_settings(settings):
     settings.MITOL_GOOGLE_SHEETS_REFUNDS_REQUEST_WORKSHEET_ID = "1"
     settings.MITOL_GOOGLE_SHEETS_REFUNDS_PLUGINS = "app.plugins.RefundPlugin"
@@ -82,11 +81,11 @@ def google_sheets_refunds_settings(settings):
 @pytest.mark.parametrize(
     "has_refunds_settings, ", [lazy_fixture("google_sheets_refunds_settings"), False]
 )
-def test_is_configured(
-    db,
-    settings,
+def test_is_configured(  # noqa: PLR0913
+    db,  # noqa: ARG001
+    settings,  # noqa: ARG001
     mocker,
-    pygsheets_fixtures,
+    pygsheets_fixtures,  # noqa: ARG001
     has_sheets_settings,
     has_service_creds_settings,
     has_client_creds_settings,
@@ -124,11 +123,11 @@ def test_is_configured(
     )
 
 
-def test_full_sheet_process(db, settings, mocker, pygsheets_fixtures, request_csv_rows):
+def test_full_sheet_process(db, settings, mocker, pygsheets_fixtures, request_csv_rows):  # noqa: ARG001
     """
     RefundRequestHandler.process_sheet should parse rows, create relevant objects in the database, and report
     on results
-    """
+    """  # noqa: E501
     settings.MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID = "1"
     mocked_plugin_manager = mocker.Mock(
         hook=mocker.Mock(
@@ -152,20 +151,17 @@ def test_full_sheet_process(db, settings, mocker, pygsheets_fixtures, request_cs
     expected_failed_rows = {6}
     expected_oos_rows = {7}
     assert ResultType.PROCESSED.value in result
-    assert (
-        set(result[ResultType.PROCESSED.value]) == expected_processed_rows
-    ), "Rows %s as defined in refund_requests.csv should be processed" % str(
-        expected_processed_rows
+    assert set(result[ResultType.PROCESSED.value]) == expected_processed_rows, (
+        "Rows %s as defined in refund_requests.csv should be processed"  # noqa: UP031
+        % str(expected_processed_rows)
     )
     assert ResultType.OUT_OF_SYNC.value in result
-    assert (
-        set(result[ResultType.OUT_OF_SYNC.value]) == expected_oos_rows
-    ), "Rows %s as defined in refund_requests.csv should be out of sync" % str(
-        expected_oos_rows
+    assert set(result[ResultType.OUT_OF_SYNC.value]) == expected_oos_rows, (
+        "Rows %s as defined in refund_requests.csv should be out of sync"  # noqa: UP031
+        % str(expected_oos_rows)
     )
     assert ResultType.FAILED.value in result
-    assert (
-        set(result[ResultType.FAILED.value]) == expected_failed_rows
-    ), "Rows %s as defined in refund_requests.csv should fail" % str(
-        expected_failed_rows
+    assert set(result[ResultType.FAILED.value]) == expected_failed_rows, (
+        "Rows %s as defined in refund_requests.csv should fail"  # noqa: UP031
+        % str(expected_failed_rows)
     )

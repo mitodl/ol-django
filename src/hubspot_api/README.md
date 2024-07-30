@@ -3,7 +3,7 @@ mitol-django-hubspot-api
 
 This is the Open Learning Hubspot API integration app. It provides helper functions for Hubspot CRM API calls:
 
-- CRUD functions for custom properties and property groups 
+- CRUD functions for custom properties and property groups
 - CRUD functions for deals, line items, products, and contacts
 - Search/retrieve specific objects or lists of objects of a certain type
 

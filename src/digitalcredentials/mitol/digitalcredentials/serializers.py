@@ -1,4 +1,5 @@
 """Serializers for digital credentials"""
+
 import json
 import logging
 from typing import Dict, cast
@@ -35,15 +36,15 @@ class DigitalCredentialIssueSerializer(Serializer):
 
     def validate_holder(self, value: str):
         """Validate the holder (DID)"""
-        assert self.instance is not None
+        assert self.instance is not None  # noqa: S101
         learner = self.instance.learner
         learner_did, _ = LearnerDID.objects.get_or_create(
             did_sha256=LearnerDID.sha256_hash_did(value),
-            defaults=dict(did=value, learner=learner),
+            defaults=dict(did=value, learner=learner),  # noqa: C408
         )
 
         if learner_did.learner_id != learner.id:
-            raise ValidationError("DID is associated with someone else")
+            raise ValidationError("DID is associated with someone else")  # noqa: EM101, TRY003
 
         return value
 
@@ -57,11 +58,11 @@ class DigitalCredentialIssueSerializer(Serializer):
 
         if not result.ok:
             log.debug("Failed to verify presentation: %s", result.json())
-            raise ValidationError("Unable to verify digital credential presentation")
+            raise ValidationError("Unable to verify digital credential presentation")  # noqa: EM101, TRY003
 
         return attrs
 
-    def update(self, instance, validated_data: Dict):
+    def update(self, instance, validated_data: Dict):  # noqa: FA100
         """Perform an update by consuming the credentials request"""
 
         # we associate the learner DID with the request's learner

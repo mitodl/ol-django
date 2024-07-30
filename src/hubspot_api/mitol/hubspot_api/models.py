@@ -1,4 +1,5 @@
-""" Hubspot models """
+"""Hubspot models"""
+
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -15,13 +16,13 @@ class HubspotObject(models.Model):
     content_object = GenericForeignKey("content_type", "object_id")
 
     class Meta:
-        indexes = [
+        indexes = [  # noqa: RUF012
             models.Index(
                 fields=["content_type", "object_id"],
                 name="hubspot_api_content_object_idx",
             ),
         ]
-        constraints = [
+        constraints = [  # noqa: RUF012
             models.UniqueConstraint(
                 fields=["object_id", "content_type"],
                 name="hubspot_api_unique_object_id_type",

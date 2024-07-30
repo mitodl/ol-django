@@ -1,4 +1,5 @@
 """Oauth toolkit and extensions factories"""
+
 from factory import Faker, SelfAttribute, Sequence, SubFactory
 from factory.django import DjangoModelFactory
 from factory.fuzzy import FuzzyChoice
@@ -103,7 +104,7 @@ class ApplicationAccessFactory(DjangoModelFactory):
         "mitol.oauth_toolkit_extensions.factories.ApplicationFactory"
     )
 
-    scopes = ["custom_scope_1", "custom_scope_2"]
+    scopes = ["custom_scope_1", "custom_scope_2"]  # noqa: RUF012
 
     class Meta:
         model = ApplicationAccess

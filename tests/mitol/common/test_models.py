@@ -1,10 +1,13 @@
 """Tests for common models"""
+
 from datetime import datetime, timedelta
 from random import choice, randint, sample
 
 import pytest
 import pytz
 from freezegun import freeze_time
+from mitol.common.factories import UserFactory
+from mitol.common.utils.serializers import serialize_model_object
 from testapp.models import (
     AuditableTestModel,
     AuditableTestModelAudit,
@@ -16,9 +19,6 @@ from testapp.models import (
     Updateable,
 )
 
-from mitol.common.factories import UserFactory
-from mitol.common.utils.serializers import serialize_model_object
-
 pytestmark = pytest.mark.django_db
 
 
@@ -26,7 +26,7 @@ def test_prefetch_generic_related(django_assert_num_queries):
     """Test prefetch over a many-to-one relation"""
     second_levels1 = [SecondLevel1.objects.create() for _ in range(5)]
     first_levels1 = [
-        FirstLevel1.objects.create(second_level=choice(second_levels1))
+        FirstLevel1.objects.create(second_level=choice(second_levels1))  # noqa: S311
         for _ in range(10)
     ]
 
@@ -34,12 +34,13 @@ def test_prefetch_generic_related(django_assert_num_queries):
     first_levels2 = []
     for _ in range(10):
         first_level = FirstLevel2.objects.create()
-        first_level.second_levels.set(sample(second_levels2, randint(1, 3)))
+        first_level.second_levels.set(sample(second_levels2, randint(1, 3)))  # noqa: S311
         first_levels2.append(first_level)
 
     roots = [
-        Root.objects.create(content_object=choice(first_levels1)) for _ in range(5)
-    ] + [Root.objects.create(content_object=choice(first_levels2)) for _ in range(5)]
+        Root.objects.create(content_object=choice(first_levels1))  # noqa: S311
+        for _ in range(5)
+    ] + [Root.objects.create(content_object=choice(first_levels2)) for _ in range(5)]  # noqa: S311
 
     with django_assert_num_queries(0):
         # verify the prefetch is lazy
@@ -53,7 +54,7 @@ def test_prefetch_generic_related(django_assert_num_queries):
             },
         )
 
-    # 1 query each for Root, ContentType, FirstLevel1, FirstLevel2, FirstLevel1, and SecondLevel2
+    # 1 query each for Root, ContentType, FirstLevel1, FirstLevel2, FirstLevel1, and SecondLevel2  # noqa: E501
     with django_assert_num_queries(6):
         assert len(query) == len(roots)
         for item in query:
@@ -81,7 +82,7 @@ def test_timestamped_model(pass_updated_on):
 
     with freeze_time(second_frozen_datetime):
         Updateable.objects.update(
-            **(dict(updated_on=passed_updated_on) if pass_updated_on else {})
+            **(dict(updated_on=passed_updated_on) if pass_updated_on else {})  # noqa: C408
         )
 
     obj.refresh_from_db()
@@ -99,6 +100,6 @@ def test_auditable_model():
 
     # Make sure audit object is created
     assert AuditableTestModelAudit.objects.count() == 0
-    # auditable_instance.status = FinancialAidStatus.AUTO_APPROVED
+    # auditable_instance.status = FinancialAidStatus.AUTO_APPROVED  # noqa: ERA001
     auditable_instance.save_and_log(user)
     assert AuditableTestModelAudit.objects.count() == 1

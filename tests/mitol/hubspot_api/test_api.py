@@ -1,6 +1,7 @@
 """
 Hubspot API tests
 """
+
 import json
 from collections.abc import Iterable
 
@@ -14,7 +15,6 @@ from hubspot.crm.objects import (
     SimplePublicObject,
     SimplePublicObjectInput,
 )
-
 from mitol.common.factories import UserFactory
 from mitol.hubspot_api import api
 from mitol.hubspot_api.factories import HubspotObjectFactory, SimplePublicObjectFactory
@@ -27,25 +27,25 @@ fake = Faker()
 test_object_type = "deals"
 
 
-@pytest.fixture
+@pytest.fixture()
 def property_group():
     """Return sample group JSON"""
     return {"name": "group_name", "label": "Group Label"}
 
 
-@pytest.fixture
+@pytest.fixture()
 def content_type_obj():
     """Return a sample ContentType"""
     return ContentType.objects.get_for_model(Group)
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_hubspot_api(mocker):
     """Mock the send hubspot request method"""
     return mocker.patch("mitol.hubspot_api.api.HubspotApi")
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_search_object(mocker):
     """Return a mocked PublicObjectSearchRequest"""
     return mocker.patch("mitol.hubspot_api.api.PublicObjectSearchRequest")
@@ -76,14 +76,14 @@ def test_api_get_all_objects(mocker, mock_hubspot_api):
 
 
 @pytest.mark.parametrize(
-    "response, exists",
+    "response, exists",  # noqa: PT006
     [
-        [api.PropertiesApiException(), False],
-        [SimplePublicObject(id=1), True],
+        [api.PropertiesApiException(), False],  # noqa: PT007
+        [SimplePublicObject(id=1), True],  # noqa: PT007
     ],
 )
 def test_object_property_exists(mocker, response, exists):
-    """Test that object_property_exists returns True if the property exists and False otherwise"""
+    """Test that object_property_exists returns True if the property exists and False otherwise"""  # noqa: E501
     mock_get_object_property = mocker.patch(
         "mitol.hubspot_api.api.get_object_property", side_effect=[response]
     )
@@ -92,14 +92,14 @@ def test_object_property_exists(mocker, response, exists):
 
 
 @pytest.mark.parametrize(
-    "response, exists",
+    "response, exists",  # noqa: PT006
     [
-        [api.PropertiesApiException(), False],
-        [SimplePublicObject(id=1), True],
+        [api.PropertiesApiException(), False],  # noqa: PT007
+        [SimplePublicObject(id=1), True],  # noqa: PT007
     ],
 )
 def test_property_group_exists(mocker, response, exists):
-    """Test that property_group_exists returns True if the group exists and False otherwise"""
+    """Test that property_group_exists returns True if the group exists and False otherwise"""  # noqa: E501
     mock_get_property_group = mocker.patch(
         "mitol.hubspot_api.api.get_property_group", side_effect=[response]
     )
@@ -111,16 +111,16 @@ def test_get_property_group(mock_hubspot_api, property_group):
     """get_property_group should call send_hubspot_request with the correct arguments"""
     group_name = property_group["name"]
     api.get_property_group(test_object_type, group_name)
-    assert mock_hubspot_api.called_with(
+    assert mock_hubspot_api.called_with(  # noqa: PGH005
         group_name, f"/properties/v1/{test_object_type}/groups/named", "GET"
     )
 
 
 def test_get_object_property(mock_hubspot_api):
-    """get_object_property should call send_hubspot_request with the correct arguments"""
+    """get_object_property should call send_hubspot_request with the correct arguments"""  # noqa: E501
     property_name = "y"
     api.get_object_property(test_object_type, property_name)
-    assert mock_hubspot_api.called_with(
+    assert mock_hubspot_api.called_with(  # noqa: PGH005
         f"named/{property_name}", f"/properties/v1/{test_object_type}/properties", "GET"
     )
 
@@ -128,7 +128,7 @@ def test_get_object_property(mock_hubspot_api):
 @pytest.mark.parametrize("is_valid", [True, False])
 @pytest.mark.parametrize("object_exists", [True, False])
 def test_sync_object_property(mocker, mock_hubspot_api, object_exists, is_valid):
-    """sync_object_property should call send_hubspot_request with the correct arguments"""
+    """sync_object_property should call send_hubspot_request with the correct arguments"""  # noqa: E501
     mocker.patch(
         "mitol.hubspot_api.api.object_property_exists", return_value=object_exists
     )
@@ -159,7 +159,7 @@ def test_sync_object_property(mocker, mock_hubspot_api, object_exists, is_valid)
 
 @pytest.mark.parametrize("object_exists", [True, False])
 def test_sync_property_group(mocker, mock_hubspot_api, object_exists, property_group):
-    """sync_object_property should call send_hubspot_request with the correct arguments"""
+    """sync_object_property should call send_hubspot_request with the correct arguments"""  # noqa: E501
     mock_create = mock_hubspot_api.return_value.crm.properties.groups_api.create
     mock_update = mock_hubspot_api.return_value.crm.properties.groups_api.update
     mocker.patch(
@@ -179,24 +179,24 @@ def test_sync_property_group(mocker, mock_hubspot_api, object_exists, property_g
 
 
 def test_delete_property_group(mock_hubspot_api, property_group):
-    """delete_property_group should call send_hubspot_request with the correct arguments"""
+    """delete_property_group should call send_hubspot_request with the correct arguments"""  # noqa: E501
     mock_archive = mock_hubspot_api.return_value.crm.properties.groups_api.archive
     mock_archive.return_value = 204
     result = api.delete_property_group(test_object_type, property_group["name"])
     mock_archive.assert_called_once()
-    assert result == 204
+    assert result == 204  # noqa: PLR2004
 
 
 def test_delete_object_property(mock_hubspot_api, property_group):
-    """delete_object_property should call send_hubspot_request with the correct arguments"""
+    """delete_object_property should call send_hubspot_request with the correct arguments"""  # noqa: E501
     mock_archive = mock_hubspot_api.return_value.crm.properties.core_api.archive
     mock_archive.return_value = 204
     result = api.delete_object_property(test_object_type, property_group["name"])
     mock_archive.assert_called_once()
-    assert result == 204
+    assert result == 204  # noqa: PLR2004
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_get_hubspot_id():
     """Return the hubspot id if any for the specified content type and object ID"""
     hubspot_obj = HubspotObjectFactory.create()
@@ -214,7 +214,7 @@ def test_format_app_id(settings, prefix):
     assert api.format_app_id(object_id) == f"{prefix}-{object_id}"
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_upsert_object_request_new(mock_hubspot_api, content_type_obj):
     """A HubspotObject should be created after an object is synced for the first time"""
     hubspot_id = "123456789"
@@ -234,9 +234,9 @@ def test_upsert_object_request_new(mock_hubspot_api, content_type_obj):
     )
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_upsert_object_request_exists(mock_hubspot_api):
-    """upsert_object_request should try a patch hubspot API call if there's an existing Hubspot object"""
+    """upsert_object_request should try a patch hubspot API call if there's an existing Hubspot object"""  # noqa: E501
     hs_obj = HubspotObjectFactory.create()
     mock_update = mock_hubspot_api.return_value.crm.objects.basic_api.update
     mock_update.return_value = SimplePublicObject(id=hs_obj.hubspot_id)
@@ -251,10 +251,10 @@ def test_upsert_object_request_exists(mock_hubspot_api):
 
 
 @pytest.mark.parametrize(
-    "status, message",
+    "status, message",  # noqa: PT006
     [
-        [409, "Dupe error. Existing ID: {}"],
-        [400, "Dupe error. {} already has that value."],
+        [409, "Dupe error. Existing ID: {}"],  # noqa: PT007
+        [400, "Dupe error. {} already has that value."],  # noqa: PT007
     ],
 )
 @pytest.mark.parametrize(
@@ -264,11 +264,11 @@ def test_upsert_object_request_exists(mock_hubspot_api):
         api.HubspotObjectType.CONTACTS.value,
     ],
 )
-@pytest.mark.django_db
-def test_upsert_object_request_missing_id(
+@pytest.mark.django_db()
+def test_upsert_object_request_missing_id(  # noqa: PLR0913
     mocker, mock_hubspot_api, content_type_obj, status, message, hs_type
 ):
-    """If an object exists in Hubspot but missing a HubspotObject in Django, retry upsert w/patch instead of post"""
+    """If an object exists in Hubspot but missing a HubspotObject in Django, retry upsert w/patch instead of post"""  # noqa: E501
     hubspot_id = "123456789"
     object_id = 123
     new_email = "test@test.edu"
@@ -303,7 +303,7 @@ def test_upsert_object_request_missing_id(
     )
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_upsert_object_request_other_error(mocker, mock_hubspot_api, content_type_obj):
     """If a non-dupe ApIException happens, raise it"""
     object_id = 123
@@ -320,7 +320,7 @@ def test_upsert_object_request_other_error(mocker, mock_hubspot_api, content_typ
         )
     )
     body = {"properties": {"foo": "bar"}}
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017, PT011
         api.upsert_object_request(
             content_type_obj,
             api.HubspotObjectType.CONTACTS.value,
@@ -330,9 +330,9 @@ def test_upsert_object_request_other_error(mocker, mock_hubspot_api, content_typ
 
 
 @pytest.mark.parametrize("is_primary_email", [True, False])
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_upsert_object_contact_dupe_email(mocker, mock_hubspot_api, is_primary_email):
-    """If single hubspot contact has multiple emails matching 2+ django users, delete the other email"""
+    """If single hubspot contact has multiple emails matching 2+ django users, delete the other email"""  # noqa: E501
     dupe_hubspot_id = "123456789"
     new_hubspot_id = "222222222"
     old_user = UserFactory.create(email="old@test.edu")
@@ -468,19 +468,19 @@ def test_find_contact(mock_hubspot_api):
 
 
 @pytest.mark.parametrize(
-    "query,filters,sorts,properties",
+    "query,filters,sorts,properties",  # noqa: PT006
     [
-        [
+        [  # noqa: PT007
             None,
             [{"propertyName": "name", "operator": "EQ", "value": "XPRO-ORDER-1"}],
             None,
             None,
         ],
-        ["", [], [{"propertyName": "name", "direction": "DESCENDING"}], []],
-        ["XPRO-ORDER-1", None, [], ["name", "amount"]],
+        ["", [], [{"propertyName": "name", "direction": "DESCENDING"}], []],  # noqa: PT007
+        ["XPRO-ORDER-1", None, [], ["name", "amount"]],  # noqa: PT007
     ],
 )
-def test_find_objects(
+def test_find_objects(  # noqa: PLR0913
     mocker, mock_hubspot_api, mock_search_object, query, filters, sorts, properties
 ):
     """The search API call should be made with correct parameters"""
@@ -542,16 +542,16 @@ def test_find_object_raise_errors(mocker, mock_hubspot_api, count):
         mocker.Mock(results=mock_results)
     )
     filters = [{"propertyName": "amount", "operator": "EQ", "value": "0.00"}]
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(ValueError) as err:  # noqa: PT011
         api.find_object(api.HubspotObjectType.PRODUCTS.value, filters)
     assert err.value.args == (
-        f"Expected 1 result but found {count} for {api.HubspotObjectType.PRODUCTS.value} search w/filter {filters}",
+        f"Expected 1 result but found {count} for {api.HubspotObjectType.PRODUCTS.value} search w/filter {filters}",  # noqa: E501
     )
 
 
 @pytest.mark.parametrize("count", [0, 2])
 def test_find_object_no_raise(mocker, mock_hubspot_api, count):
-    """An error should not be raised if results count is not 1 but raise_count_error=False"""
+    """An error should not be raised if results count is not 1 but raise_count_error=False"""  # noqa: E501
     mock_results = [SimplePublicObjectFactory.create() for _ in range(count)]
     mock_hubspot_api.return_value.crm.objects.search_api.do_search.return_value = (
         mocker.Mock(results=mock_results)
@@ -610,12 +610,12 @@ def test_find_deal(mocker, amount, raise_error):
 
 
 @pytest.mark.parametrize(
-    "product_id,quantity,raise_error",
+    "product_id,quantity,raise_error",  # noqa: PT006
     [
-        [None, 3, True],
-        ["123456", None, False],
-        ["nomatch", 10, True],
-        ["nomatch", 23, False],
+        [None, 3, True],  # noqa: PT007
+        ["123456", None, False],  # noqa: PT007
+        ["nomatch", 10, True],  # noqa: PT007
+        ["nomatch", 23, False],  # noqa: PT007
     ],
 )
 def test_find_line_item(mocker, product_id, quantity, raise_error):
@@ -632,7 +632,7 @@ def test_find_line_item(mocker, product_id, quantity, raise_error):
         mock_lines[0]
         if product_id == "123456"
         else mock_lines[1]
-        if quantity == 3
+        if quantity == 3  # noqa: PLR2004
         else None
     )
     mock_get_lines_for_deal = mocker.patch(
@@ -640,7 +640,7 @@ def test_find_line_item(mocker, product_id, quantity, raise_error):
     )
     deal_id = "1111222"
     if product_id == "nomatch" and raise_error:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             api.find_line_item(
                 deal_id,
                 hs_product_id=product_id,
@@ -659,7 +659,7 @@ def test_find_line_item(mocker, product_id, quantity, raise_error):
 
 
 def test_get_line_items_for_deal(mocker, mock_hubspot_api):
-    """get_line_items_for_deal should make expected api calls and return expected results"""
+    """get_line_items_for_deal should make expected api calls and return expected results"""  # noqa: E501
     mock_lines = SimplePublicObjectFactory.create_batch(2)
     mock_hubspot_api.return_value.crm.deals.associations_api.get_all.return_value = (
         mocker.Mock(
@@ -679,7 +679,7 @@ def test_get_line_items_for_deal(mocker, mock_hubspot_api):
         deal_id, api.HubspotObjectType.LINES.value
     )
     assert (
-        mock_hubspot_api.return_value.crm.line_items.basic_api.get_by_id.call_count == 2
+        mock_hubspot_api.return_value.crm.line_items.basic_api.get_by_id.call_count == 2  # noqa: PLR2004
     )
     for line in mock_lines:
         mock_hubspot_api.return_value.crm.line_items.basic_api.get_by_id.assert_any_call(

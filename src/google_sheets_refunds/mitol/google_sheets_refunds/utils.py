@@ -1,4 +1,5 @@
 """Google Sheets Refunds app util functions"""
+
 from django.conf import settings
 
 from mitol.google_sheets.constants import GOOGLE_API_TRUE_VAL
@@ -18,7 +19,7 @@ from mitol.google_sheets_refunds.constants import (
 class RefundRequestRow:
     """Represents a row of the refund request sheet"""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         row_index,
         response_id,
@@ -65,7 +66,7 @@ class RefundRequestRow:
 
         Raises:
             SheetRowParsingException: Raised if the row could not be parsed
-        """
+        """  # noqa: D401
         raw_row_data = list(map(clean_sheet_value, raw_row_data))
         try:
             return cls(
@@ -116,7 +117,7 @@ class RefundRequestSheetConfig(
         self.num_columns = self.SKIP_ROW_COL + 1
         self.non_input_column_indices = set(
             # Response ID column
-            [self.FORM_RESPONSE_ID_COL]
+            [self.FORM_RESPONSE_ID_COL]  # noqa: RUF005
             + list(  # Every column from the finance columns to the end of the row
                 range(8, self.num_columns)
             )

@@ -1,3 +1,4 @@
+---
 version: '3.1'
 
 services:
@@ -8,18 +9,18 @@ services:
       POSTGRES_DB: ol_django
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+    - "5432:5432"
 
   shell:
     build:
       target: rye
     volumes:
-      - .:/home/dev/src
-      - cache:/home/dev/.cache/
+    - .:/home/dev/src
+    - cache:/home/dev/.cache/
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
     depends_on:
-      - db
+    - db
 
 volumes:
   cache:

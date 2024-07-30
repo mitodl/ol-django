@@ -5,14 +5,13 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
+    dependencies = [  # noqa: RUF012
         ("contenttypes", "0002_remove_content_type_name"),
     ]
 
-    operations = [
+    operations = [  # noqa: RUF012
         migrations.CreateModel(
             name="HubspotObject",
             fields=[

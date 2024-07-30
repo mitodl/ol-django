@@ -5,13 +5,12 @@ MaxMind dataset.
 The ISO code must match one that we've imported from MaxMind, so if you haven't
 imported the geonames data yet, this will not work (since we have to map the
 created netblock to a geoname anyway).
-"""
+"""  # noqa: INP001
 
 import ipaddress
 from decimal import Decimal
 
 from django.core.management import BaseCommand, CommandError
-
 from mitol.geoip.models import Geoname, NetBlock
 
 
@@ -36,17 +35,17 @@ class Command(BaseCommand):
             help="Remove the local address netblocks rather than create them.",
         )
 
-    def handle(self, *args, **kwargs):
+    def handle(self, *args, **kwargs):  # noqa: ARG002
         try:
             geoname = Geoname.objects.filter(country_iso_code=kwargs["iso"]).first()
         except Geoname.DoesNotExist:
-            raise CommandError(
-                f"Could not find a Geoname record for {kwargs['iso']} - have you imported the MaxMind databases?"
+            raise CommandError(  # noqa: B904, TRY003
+                f"Could not find a Geoname record for {kwargs['iso']} - have you imported the MaxMind databases?"  # noqa: EM102, E501
             )
 
         netblocks = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
 
-        if "remove" in kwargs and kwargs["remove"]:
+        if kwargs.get("remove"):
             removed_count = NetBlock.objects.filter(network__in=netblocks).delete()
 
             self.stdout.write(
@@ -70,6 +69,6 @@ class Command(BaseCommand):
 
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f"{'Created' if created else 'Updated'} record for {netblock} for ISO {kwargs['iso']}"
+                        f"{'Created' if created else 'Updated'} record for {netblock} for ISO {kwargs['iso']}"  # noqa: E501
                     )
                 )

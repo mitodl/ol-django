@@ -1,4 +1,5 @@
-""" mitol.google_sheets """
+"""mitol.google_sheets"""
+
 default_app_config = "mitol.google_sheets.apps.GoogleSheetsApp"
 
 __version__ = "2024.7.3"

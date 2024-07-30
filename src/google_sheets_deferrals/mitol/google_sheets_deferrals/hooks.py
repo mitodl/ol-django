@@ -33,4 +33,4 @@ class DeferralHooks:
     def deferrals_process_request(
         self, refund_request: DeferralRequestRow
     ) -> DeferralResult:
-        """Hook for processing deferral requests"""
+        """Hook for processing deferral requests"""  # noqa: D401

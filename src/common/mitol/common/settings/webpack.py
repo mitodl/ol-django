@@ -1,4 +1,5 @@
 """Boilerplate webpack settings parsing"""
+
 # pragma: no cover
 from mitol.common.envs import get_bool, get_int, get_string
 

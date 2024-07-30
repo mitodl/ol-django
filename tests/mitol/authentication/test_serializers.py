@@ -1,5 +1,4 @@
 import pytest
-
 from mitol.authentication.serializers.djoser_serializers import (
     CustomSendEmailResetSerializer,
 )
@@ -10,8 +9,8 @@ EMAIL = "email@example.com"
 
 
 @pytest.mark.parametrize(
-    "email,exists",
-    (
+    "email,exists",  # noqa: PT006
+    (  # noqa: PT007
         ("email@example.com", True),
         ("EmaIl@example.com", True),
         ("falseemail@example.com", False),

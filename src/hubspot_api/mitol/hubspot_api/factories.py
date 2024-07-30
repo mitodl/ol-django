@@ -1,4 +1,5 @@
 """Factory for Hubspot API models"""
+
 import string
 
 import pytest
@@ -40,7 +41,7 @@ class HubspotObjectFactory(DjangoModelFactory):
 class SimplePublicObjectFactory(Factory):
     """Factory for SimplePublicObject"""
 
-    id = Sequence(lambda number: "111000{}".format(number))
+    id = Sequence(lambda number: f"111000{number}")
     properties = Faker("pydict")
 
     class Meta:

@@ -1,14 +1,14 @@
 """Requests utils tests"""
+
 import base64
 import hashlib
 
 import pytest
-from requests.models import PreparedRequest
-
 from mitol.digitalcredentials.requests_utils import (
     prepare_request_digest,
     prepare_request_hmac_signature,
 )
+from requests.models import PreparedRequest
 
 REQUEST_BODY = '{"content": 1}'
 REQUEST_DIGEST = base64.b64encode(
@@ -17,10 +17,10 @@ REQUEST_DIGEST = base64.b64encode(
 
 
 @pytest.mark.parametrize(
-    "body, expected",
+    "body, expected",  # noqa: PT006
     [
-        [REQUEST_BODY, REQUEST_DIGEST],
-        [REQUEST_BODY.encode("utf-8"), REQUEST_DIGEST],
+        [REQUEST_BODY, REQUEST_DIGEST],  # noqa: PT007
+        [REQUEST_BODY.encode("utf-8"), REQUEST_DIGEST],  # noqa: PT007
     ],
 )
 def test_prepare_request_digest(mocker, body, expected):
@@ -35,10 +35,10 @@ def test_prepare_request_digest(mocker, body, expected):
 
 
 def test_prepare_request_digest_invalid_body(mocker):
-    """Verify prepare_request_digest raises an exception if the body isn't a str oy btes"""
+    """Verify prepare_request_digest raises an exception if the body isn't a str oy btes"""  # noqa: E501
     mock_request = mocker.Mock(spec=PreparedRequest, body=None)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prepare_request_digest(mock_request)
 
 
@@ -57,7 +57,7 @@ def test_prepare_request_hmac_signature(mocker):
     request = prepare_request_hmac_signature(mock_request, "secret")
     assert request == mock_request.copy.return_value
     assert request.headers["Signature"] == (
-        'keyId="abc",algorithm="hmac-sha512",headers="(request-target) digest user-agent date",signature="vcHuErUmrcHbaVZ4Ob85XyFNX0fGshZlQh+qorXW497WBuV4inMQLfwWHqAugaXWccL1LvZfZdcH964nuzasmw=="'
+        'keyId="abc",algorithm="hmac-sha512",headers="(request-target) digest user-agent date",signature="vcHuErUmrcHbaVZ4Ob85XyFNX0fGshZlQh+qorXW497WBuV4inMQLfwWHqAugaXWccL1LvZfZdcH964nuzasmw=="'  # noqa: E501
     )
 
 
@@ -66,5 +66,5 @@ def test_prepare_request_hmac_signature_invalid_method(mocker):
     mock_request = mocker.Mock(spec=PreparedRequest)
     copied_request = mock_request.copy.return_value
     copied_request.method = None
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prepare_request_hmac_signature(mock_request, "secret")

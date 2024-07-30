@@ -35,11 +35,9 @@ def configure():
         sync_mode=False,
         poll_interval=30,
         disable_geoip=True,
-        feature_flags_request_timeout_seconds=getattr(
-            settings, "POSTHOG_FEATURE_FLAG_REQUEST_TIMEOUT_MS"
-        )
+        feature_flags_request_timeout_seconds=settings.POSTHOG_FEATURE_FLAG_REQUEST_TIMEOUT_MS
         / 1000,
-        max_retries=getattr(settings, "POSTHOG_MAX_RETRIES"),
+        max_retries=settings.POSTHOG_MAX_RETRIES,
     )
 
 
@@ -77,7 +75,7 @@ def _generate_cache_key(key: str, unique_id: str, person_properties: dict) -> st
     )
 
 
-def get_all_feature_flags(opt_unique_id: Optional[str] = None):
+def get_all_feature_flags(opt_unique_id: Optional[str] = None):  # noqa: FA100
     """
     Get the set of all feature flags
     """
@@ -99,8 +97,8 @@ def get_all_feature_flags(opt_unique_id: Optional[str] = None):
 
 def is_enabled(
     name: str,
-    default: Optional[bool] = None,
-    opt_unique_id: Optional[str] = None,
+    default: Optional[bool] = None,  # noqa: FA100
+    opt_unique_id: Optional[str] = None,  # noqa: FA100
 ) -> bool:
     """
     Return True if the feature flag is enabled

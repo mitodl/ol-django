@@ -5,14 +5,14 @@ import string
 import faker
 from factory import Factory, SubFactory, fuzzy
 from factory.django import DjangoModelFactory
-from testapp.models import DemoCourseware
-
 from mitol.common.factories import UserFactory
 from mitol.digitalcredentials.factories import (
     DigitalCredentialFactory,
     DigitalCredentialRequestFactory,
 )
 from mitol.payment_gateway.api import CartItem, Order, Refund
+
+from testapp.models import DemoCourseware
 
 FAKE = faker.Factory.create()
 
@@ -57,7 +57,7 @@ class OrderFactory(Factory):
     ip_address = FAKE.ipv4()
     reference = fuzzy.FuzzyText(length=6)
     username = FAKE.safe_email()
-    items = []
+    items = []  # noqa: RUF012
 
 
 class RefundFactory(Factory):

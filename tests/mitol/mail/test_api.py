@@ -1,8 +1,8 @@
 """API tests"""
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
-
 from mitol.mail.api import (
     build_message,
     can_email_user,
@@ -19,9 +19,9 @@ pytestmark = [pytest.mark.django_db, pytest.mark.usefixtures("email_settings")]
 User = get_user_model()
 
 
-@pytest.fixture
-def email_settings(settings):
-    """Default settings for email tests"""
+@pytest.fixture()
+def email_settings(settings):  # noqa: PT004
+    """Default settings for email tests"""  # noqa: D401
     settings.MITOL_MAIL_RECIPIENT_OVERRIDE = None
 
 
@@ -40,7 +40,7 @@ def test_get_message_classes(mocker, settings):
 
 
 def test_get_message_classes_invalid(mocker, settings):
-    """Verify get_message_classes maps an import error into a ImproperlyConfigured error"""
+    """Verify get_message_classes maps an import error into a ImproperlyConfigured error"""  # noqa: E501
     mocker.patch(
         "mitol.mail.api.import_string",
         side_effect=[mocker.Mock(), ImportError],
@@ -59,7 +59,7 @@ def test_safe_format_email_recipient():
 
 @pytest.mark.parametrize("use_default", [True, False])
 def test_safe_format_user_recipient(mocker, settings, use_default):
-    """Test that safe_format_recipient calls the configured function if the recipient is a User instance"""
+    """Test that safe_format_recipient calls the configured function if the recipient is a User instance"""  # noqa: E501
     if not use_default:
         settings.MITOL_MAIL_FORMAT_RECIPIENT_FUNC = "my.custom.function"
 
@@ -218,7 +218,7 @@ def test_get_connection(settings, mocker, use_default):
 
 
 @pytest.mark.parametrize(
-    "shared_context, expected_context",
+    "shared_context, expected_context",  # noqa: PT006
     [({"a": 1}, {"a": 1, "b": 2}), ({}, {"b": 2}), (None, {"b": 2})],
 )
 def test_get_message_sender(mocker, shared_context, expected_context):

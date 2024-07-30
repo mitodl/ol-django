@@ -3,7 +3,7 @@ from typing import List
 from django.conf import settings
 
 
-def get_missing_settings(required_settings: List[str]) -> List[str]:
+def get_missing_settings(required_settings: List[str]) -> List[str]:  # noqa: FA100
     """Return a list of settings that are missing"""
     return [
         variable

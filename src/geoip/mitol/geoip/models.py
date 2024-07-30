@@ -32,14 +32,14 @@ class Geoname(models.Model):
     is_in_european_union = models.BooleanField(blank=True, null=True, default=False)
 
     class Meta:
-        constraints = [
+        constraints = [  # noqa: RUF012
             models.UniqueConstraint(
                 fields=["geoname_id", "locale_code"], name="unique_geoname_id_locale"
             )
         ]
 
     def __str__(self):
-        return f"{self.geoname_id} {self.locale_code}: {self.subdivision_2_iso_code} {self.subdivision_1_iso_code} {self.country_iso_code} {self.continent_code}"
+        return f"{self.geoname_id} {self.locale_code}: {self.subdivision_2_iso_code} {self.subdivision_1_iso_code} {self.country_iso_code} {self.continent_code}"  # noqa: E501
 
 
 class NetBlock(models.Model):
@@ -89,7 +89,7 @@ class NetBlock(models.Model):
     accuracy_radius = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        constraints = [
+        constraints = [  # noqa: RUF012
             models.CheckConstraint(
                 check=models.Q(geoname_id__isnull=False)
                 | models.Q(registered_country_geoname_id__isnull=False)
@@ -97,11 +97,11 @@ class NetBlock(models.Model):
                 name="at_least_one_geoname_id",
             )
         ]
-        indexes = [
+        indexes = [  # noqa: RUF012
             models.Index(fields=["decimal_ip_start"]),
             models.Index(fields=["decimal_ip_end"]),
             models.Index(fields=["decimal_ip_start", "decimal_ip_end"]),
         ]
 
     def __str__(self):
-        return f"{self.geoname_id}: {self.network} (IPv6 {self.is_ipv6}) start {self.ip_start} end {self.ip_end}"
+        return f"{self.geoname_id}: {self.network} (IPv6 {self.is_ipv6}) start {self.ip_start} end {self.ip_end}"  # noqa: E501

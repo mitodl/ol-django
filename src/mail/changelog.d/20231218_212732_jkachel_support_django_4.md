@@ -19,7 +19,7 @@ Uncomment the section that is right (remove the HTML comment wrapper).
 
 ### Changed
 
-- Updated requirements and lockfiles to support Django 4. 
+- Updated requirements and lockfiles to support Django 4.
 - Removed support for Django 2.2.
 
 <!--

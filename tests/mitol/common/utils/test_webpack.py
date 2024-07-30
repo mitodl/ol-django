@@ -1,4 +1,5 @@
 """Webpack utils tests"""
+
 from mitol.common.utils.webpack import (
     webpack_dev_server_host,
     webpack_dev_server_url,

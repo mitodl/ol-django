@@ -1,15 +1,16 @@
 """Base utilities"""
+
 import abc
 
 
 def base_register_subclasses_factory(*mixin_classes):
     class BaseRegisterSubclasses(abc.ABC, *mixin_classes):
-        _SUBCLASSES = {}
+        _SUBCLASSES = {}  # noqa: RUF012
 
         def __init_subclass__(cls, *, subclass_type, **kwargs):
             super().__init_subclass__()
             if subclass_type in cls._SUBCLASSES:
-                raise TypeError(f"{subclass_type} has already been defined")
+                raise TypeError(f"{subclass_type} has already been defined")  # noqa: EM102, TRY003
             cls._SUBCLASSES[subclass_type] = cls
 
         @classmethod

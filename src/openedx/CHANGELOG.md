@@ -27,7 +27,7 @@ and this project uses date-based versioning.
 
 ## [1.0.0] - 2022-01-13
 
-- Inital/first version has only few utils related to edx which seems to be quite common. Hence this edx-specifc 
-module is being created which can be expanded later on according to the needs. 
+- Inital/first version has only few utils related to edx which seems to be quite common. Hence this edx-specifc
+module is being created which can be expanded later on according to the needs.
 
 ## [0.0.1] - 2021-12-16

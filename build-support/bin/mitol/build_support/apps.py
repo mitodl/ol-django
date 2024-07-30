@@ -1,4 +1,5 @@
 """Utilities around library django apps"""
+
 from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
@@ -24,7 +25,7 @@ def get_app_dir(path: str) -> Path:
     return get_source_dir() / path
 
 
-def list_apps() -> List[Path]:
+def list_apps() -> List[Path]:  # noqa: FA100
     """List the apps in the repo"""
     return sorted(
         dir_path
@@ -33,7 +34,7 @@ def list_apps() -> List[Path]:
     )
 
 
-def list_app_names() -> List[str]:
+def list_app_names() -> List[str]:  # noqa: FA100
     """List the app names"""
     return [name.stem for name in list_apps()]
 
@@ -43,7 +44,7 @@ class App:
 
     @property
     def pyproject(self):
-        with open(self.app_dir / "pyproject.toml", "r") as f:
+        with open(self.app_dir / "pyproject.toml") as f:  # noqa: PTH123
             return toml.loads(f.read())
 
     @property

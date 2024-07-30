@@ -1,4 +1,5 @@
 """Enrollment refund API"""
+
 import logging
 
 from django.conf import settings
@@ -40,7 +41,7 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
 
         Returns:
             bool: false if required settings are missing
-        """
+        """  # noqa: D401
 
         return super().is_configured() and not get_missing_settings(
             REQUIRED_GOOGLE_SHEETS_REFUNDS_SETTINGS
@@ -59,7 +60,7 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
         Returns:
             RowResult or None: An object representing the results of processing the row, or None if
                 nothing needs to be done with this row.
-        """
+        """  # noqa: E501, D401
         refund_request, request_created, request_updated = self.get_or_create_request(
             row_data
         )
@@ -72,7 +73,7 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
                 row_db_record=refund_request,
                 row_object=None,
                 result_type=ResultType.FAILED,
-                message="Parsing failure: {}".format(str(exc)),
+                message=f"Parsing failure: {exc!s}",
             )
         is_unchanged_error_row = (
             refund_req_row.errors and not request_created and not request_updated
@@ -102,8 +103,8 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
         result_type = None
         message = None
 
-        # walk all the results, if any did not suceed bail and we will return that result
-        for result_type, message in results:
+        # walk all the results, if any did not suceed bail and we will return that result  # noqa: E501
+        for result_type, message in results:  # noqa: B007
             if result_type != ResultType.PROCESSED:
                 failed = True
                 break
@@ -122,13 +123,13 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
         )
 
     def _int_filter_row(self, row_tuple):
-        """Performs row filtering according to the rules noted in filter_ignored_rows"""
+        """Performs row filtering according to the rules noted in filter_ignored_rows"""  # noqa: D401
         try:
             parsed_data = RefundRequestRow.parse_raw_data(*row_tuple)
-            return not (
+            return not (  # noqa: TRY300
                 parsed_data.skip_row or parsed_data.refund_complete_date is not None
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             return True
 
     def filter_ignored_rows(self, enumerated_rows):
@@ -142,5 +143,5 @@ class RefundRequestHandler(GoogleSheetsChangeRequestHandler):
 
         Returns:
             Iterable[Tuple[int, List[str]]]: Iterable of data rows without the ones that should be ignored.
-        """
+        """  # noqa: E501, D401
         return filter(self._int_filter_row, enumerated_rows)

@@ -6,7 +6,6 @@ from datetime import timedelta
 import pytest
 from django.core.cache import caches
 from freezegun import freeze_time
-
 from mitol.common.utils.datetime import now_in_utc
 from mitol.olposthog import features
 
@@ -33,7 +32,7 @@ def test_flags_from_cache(mocker, caplog, settings):
     settings.POSTHOG_ENABLED = True
     settings.ENVIRONMENT = "prod"
     settings.HOSTNAME = "fake_host_name"
-    cache_key = features._generate_cache_key(
+    cache_key = features._generate_cache_key(  # noqa: SLF001
         "testing_function",
         features.default_unique_id(),
         features._get_person_properties(features.default_unique_id()),  # noqa: SLF001
@@ -66,7 +65,7 @@ def test_flags_from_cache(mocker, caplog, settings):
 
 
 def test_cache_population(mocker, settings):
-    """Test that the cache is populated correctly when get_all_feature_flags is called."""
+    """Test that the cache is populated correctly when get_all_feature_flags is called."""  # noqa: E501
 
     get_feature_flag_mock = mocker.patch(
         "posthog.get_feature_flag", autospec=True, return_value=True

@@ -31,4 +31,4 @@ def get_plugin_manager():
 class RefundHooks:
     @hookspec
     def refunds_process_request(self, refund_request: RefundRequestRow) -> RefundResult:
-        """Hook for processing refund requests"""
+        """Hook for processing refund requests"""  # noqa: D401

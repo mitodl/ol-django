@@ -1,4 +1,5 @@
 """Tests for courses utils"""
+
 from mitol.openedx.utils.courses import get_course_number
 
 
