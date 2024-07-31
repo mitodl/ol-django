@@ -1,0 +1,27 @@
+---
+name: Renovate
+on:
+  workflow_dispatch:
+  schedule:
+  - cron: '0 0 * * *'
+permissions:
+  pull-requests: write
+  contents: write
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4.1.6
+
+    - name: Apt install
+      run: sudo apt-get update && sudo apt-get install -y libxmlsec1-dev
+
+    - uses: eifinger/setup-rye@v4
+      id: setup-rye
+
+    - name: Self-hosted Renovate
+      uses: renovatebot/github-action@v40.2.4
+      with:
+        configurationFile: renovate-config.json
+        token: ${{ secrets.GITHUB_TOKEN }}

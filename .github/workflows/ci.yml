@@ -50,16 +50,11 @@ jobs:
     - name: Install dependencies
       run: rye sync
 
-      # - name: Lints
-      #   run: 'pants lint ::'
-
-      # - name: Typecheck
-      #   run: 'pants typecheck ::'
-
     - name: Tests
       run: rye test
 
     - name: Changelog
+      if: ${{ !contains(github.event.head_commit.author, 'renovate') }}
       run: rye run build changelog check
 
       # - name: Upload coverage to CodeCov
