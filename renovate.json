@@ -2,5 +2,10 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>mitodl/.github:renovate-config"
-  ]
+  ],
+  "postUpgradeTasks": {
+    "commands": ["rye sync"],
+    "fileFilters": ["requirements*.lock"],
+    "executionMode": "update"
+  }
 }
