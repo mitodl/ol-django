@@ -8,7 +8,7 @@ dependencies = [
   "django-stubs>=1.13.1",
   "django>=3.0",
   "djangorestframework>=3.0.0",
-  "djoser==2.2.2",
+  "djoser==2.2.3",
   "mitol-django-common",
   "mitol-django-mail",
   "social-auth-app-django>=5.4.0",
