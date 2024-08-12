@@ -40,7 +40,7 @@ repos:
     - .secrets.baseline
 - repo: https://github.com/astral-sh/ruff-pre-commit
   # Ruff version.
-  rev: 'v0.5.3'
+  rev: 'v0.5.7'
   hooks:
   - id: ruff-format
   - id: ruff
