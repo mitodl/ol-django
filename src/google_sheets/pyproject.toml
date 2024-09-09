@@ -6,7 +6,7 @@ dependencies = [
 "django-stubs>=1.13.1",
 "django>=3.0",
 "factory-boy~=3.2",
-"google-api-python-client==1.7.11",
+"google-api-python-client==1.12.11",
 "google-auth-oauthlib>=0.5.2",
 "google-auth==1.6.3",
 "mitol-django-common",
