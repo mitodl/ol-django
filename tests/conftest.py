@@ -26,7 +26,7 @@ def django_db_modify_db_settings_parallel_suffix(  # noqa: PT004
     skip_if_no_django()
 
 
-@pytest.fixture()
+@pytest.fixture
 def learner_drf_client(learner):
     """DRF API test client that is authenticated with the user"""
     # import is here to avoid trying to load django before settings are initialized
@@ -37,7 +37,7 @@ def learner_drf_client(learner):
     return client
 
 
-@pytest.fixture()
+@pytest.fixture
 def learner(db):  # noqa: ARG001
     """Fixture for a default learner"""
     # import is here to avoid trying to load django before settings are initialized
@@ -46,7 +46,7 @@ def learner(db):  # noqa: ARG001
     return UserFactory.create()
 
 
-@pytest.fixture()
+@pytest.fixture
 def learner_and_oauth2(learner):
     """Fixture for a default learner and oauth2 records"""
     # import is here to avoid trying to load django before settings are initialized
@@ -72,7 +72,7 @@ def learner_and_oauth2(learner):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def staff_user(db):  # noqa: ARG001
     """Staff user fixture"""
     from mitol.common.factories import UserFactory
@@ -80,7 +80,7 @@ def staff_user(db):  # noqa: ARG001
     return UserFactory.create(is_staff=True)
 
 
-@pytest.fixture()
+@pytest.fixture
 def user_client(learner):
     """Django test client that is authenticated with the user"""
     client = Client()
@@ -88,7 +88,7 @@ def user_client(learner):
     return client
 
 
-@pytest.fixture()
+@pytest.fixture
 def staff_client(staff_user):
     """Django test client that is authenticated with the staff user"""
     client = Client()
@@ -96,7 +96,7 @@ def staff_client(staff_user):
     return client
 
 
-@pytest.fixture()
+@pytest.fixture
 def google_sheets_base_settings(settings):
     """Fixture for base google sheets settings"""
     settings.MITOL_GOOGLE_SHEETS_ENROLLMENT_CHANGE_SHEET_ID = "1"
@@ -106,14 +106,14 @@ def google_sheets_base_settings(settings):
     return settings
 
 
-@pytest.fixture()
+@pytest.fixture
 def google_sheets_service_creds_settings(settings):
     """Fixture for google sheets settings configured for a service account"""
     settings.MITOL_GOOGLE_SHEETS_DRIVE_SERVICE_ACCOUNT_CREDS = '{"credentials": "json"}'
     return settings
 
 
-@pytest.fixture()
+@pytest.fixture
 def google_sheets_client_creds_settings(settings):
     """Fixture gor google sheets settings configured with OAuth"""
     settings.MITOL_GOOGLE_SHEETS_DRIVE_CLIENT_ID = "nhijg1i.apps.googleusercontent.com"
