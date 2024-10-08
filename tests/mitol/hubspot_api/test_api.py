@@ -27,25 +27,25 @@ fake = Faker()
 test_object_type = "deals"
 
 
-@pytest.fixture()
+@pytest.fixture
 def property_group():
     """Return sample group JSON"""
     return {"name": "group_name", "label": "Group Label"}
 
 
-@pytest.fixture()
+@pytest.fixture
 def content_type_obj():
     """Return a sample ContentType"""
     return ContentType.objects.get_for_model(Group)
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_hubspot_api(mocker):
     """Mock the send hubspot request method"""
     return mocker.patch("mitol.hubspot_api.api.HubspotApi")
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_search_object(mocker):
     """Return a mocked PublicObjectSearchRequest"""
     return mocker.patch("mitol.hubspot_api.api.PublicObjectSearchRequest")
@@ -196,7 +196,7 @@ def test_delete_object_property(mock_hubspot_api, property_group):
     assert result == 204  # noqa: PLR2004
 
 
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_get_hubspot_id():
     """Return the hubspot id if any for the specified content type and object ID"""
     hubspot_obj = HubspotObjectFactory.create()
@@ -214,7 +214,7 @@ def test_format_app_id(settings, prefix):
     assert api.format_app_id(object_id) == f"{prefix}-{object_id}"
 
 
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_upsert_object_request_new(mock_hubspot_api, content_type_obj):
     """A HubspotObject should be created after an object is synced for the first time"""
     hubspot_id = "123456789"
@@ -234,7 +234,7 @@ def test_upsert_object_request_new(mock_hubspot_api, content_type_obj):
     )
 
 
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_upsert_object_request_exists(mock_hubspot_api):
     """upsert_object_request should try a patch hubspot API call if there's an existing Hubspot object"""  # noqa: E501
     hs_obj = HubspotObjectFactory.create()
@@ -264,7 +264,7 @@ def test_upsert_object_request_exists(mock_hubspot_api):
         api.HubspotObjectType.CONTACTS.value,
     ],
 )
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_upsert_object_request_missing_id(  # noqa: PLR0913
     mocker, mock_hubspot_api, content_type_obj, status, message, hs_type
 ):
@@ -303,7 +303,7 @@ def test_upsert_object_request_missing_id(  # noqa: PLR0913
     )
 
 
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_upsert_object_request_other_error(mocker, mock_hubspot_api, content_type_obj):
     """If a non-dupe ApIException happens, raise it"""
     object_id = 123
@@ -330,7 +330,7 @@ def test_upsert_object_request_other_error(mocker, mock_hubspot_api, content_typ
 
 
 @pytest.mark.parametrize("is_primary_email", [True, False])
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_upsert_object_contact_dupe_email(mocker, mock_hubspot_api, is_primary_email):
     """If single hubspot contact has multiple emails matching 2+ django users, delete the other email"""  # noqa: E501
     dupe_hubspot_id = "123456789"

@@ -19,7 +19,7 @@ pytestmark = [pytest.mark.django_db, pytest.mark.usefixtures("email_settings")]
 User = get_user_model()
 
 
-@pytest.fixture()
+@pytest.fixture
 def email_settings(settings):  # noqa: PT004
     """Default settings for email tests"""  # noqa: D401
     settings.MITOL_MAIL_RECIPIENT_OVERRIDE = None

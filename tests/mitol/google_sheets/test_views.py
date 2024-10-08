@@ -13,7 +13,7 @@ from testapp.utils import set_request_session
 lazy = lazy_fixture
 
 
-@pytest.fixture()
+@pytest.fixture
 def google_api_auth(learner):
     """Fixture that creates a google auth object"""
     return GoogleApiAuthFactory.create(requesting_user=learner)
@@ -53,7 +53,7 @@ def test_request_auth(mocker, settings, staff_client):
 
 
 @pytest.mark.parametrize("existing_auth", [lazy("google_api_auth"), None])
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_complete_auth(mocker, settings, learner, existing_auth):  # noqa: ARG001
     """
     View that handles Google auth completion should fetch a token and save/update a
