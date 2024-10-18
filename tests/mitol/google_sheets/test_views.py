@@ -6,7 +6,7 @@ from django.urls import reverse
 from mitol.google_sheets.factories import GoogleApiAuthFactory
 from mitol.google_sheets.models import GoogleApiAuth
 from mitol.google_sheets.views import complete_google_auth
-from pytest_lazyfixture import lazy_fixture
+from pytest_lazy_fixtures import lf as lazy_fixture
 from rest_framework import status
 from testapp.utils import set_request_session
 
