@@ -6,7 +6,7 @@ dependencies = [
 "django-stubs>=1.13.1",
 "django>=3.0",
 "factory-boy~=3.2",
-"faker==4.17.1",
+"faker>=4.17.1",
 "mitol-django-common"
 ]
 readme = "README.md"
