@@ -7,7 +7,7 @@ dependencies = [
 "django>=3.0",
 "mitol-django-common",
 "mitol-django-google-sheets",
-"pluggy==0.13.1",
+"pluggy>=0.13.1",
 ]
 readme = "README.md"
 license = "BSD-3-Clause"

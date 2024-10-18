@@ -24,6 +24,8 @@ WORKDIR /home/dev
 # ===================================================================
 FROM base as rye
 ARG PYTHON_VERSION=3.11
+
+USER dev
 ENV PATH="${PATH}:/home/dev/.rye/shims"
 RUN curl -sSf https://rye.astral.sh/get | RYE_INSTALL_OPTION="--yes" bash &&\
     rye pin ${PYTHON_VERSION}

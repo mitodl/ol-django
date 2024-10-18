@@ -1,6 +1,6 @@
 import pytest
 from mitol.google_sheets.sheet_handler_api import SheetHandler
-from pytest_lazyfixture import lazy_fixture
+from pytest_lazy_fixtures import lf as lazy_fixture
 
 
 @pytest.mark.usefixtures("google_sheets_base_settings")

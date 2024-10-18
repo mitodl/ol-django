@@ -11,7 +11,7 @@ from pygsheets import Spreadsheet, Worksheet
 from pygsheets.client import Client as PygsheetsClient
 from pygsheets.drive import DriveAPIWrapper
 from pygsheets.sheet import SheetAPIWrapper
-from pytest_lazyfixture import lazy_fixture
+from pytest_lazy_fixtures import lf as lazy_fixture
 
 
 @pytest.fixture()
