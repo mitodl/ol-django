@@ -8,7 +8,7 @@ dependencies = [
 "factory-boy~=3.2",
 "google-api-python-client==1.7.11",
 "google-auth-oauthlib>=0.5.2",
-"google-auth==1.6.3",
+"google-auth==2.35.0",
 "mitol-django-common",
 "pygsheets==2.0.2",
 "pytz>=2020.4",
