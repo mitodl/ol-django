@@ -10,7 +10,7 @@ dependencies = [
 "google-auth-oauthlib>=0.5.2",
 "google-auth==1.6.3",
 "mitol-django-common",
-"pygsheets==2.0.2",
+"pygsheets==2.0.6",
 "pytz>=2020.4",
 ]
 readme = "README.md"
