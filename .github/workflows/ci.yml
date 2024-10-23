@@ -31,7 +31,7 @@ jobs:
         - 5432:5432
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       with:
         fetch-depth: 0   # fetch all history
 
@@ -41,7 +41,7 @@ jobs:
     - name: Apt install
       run: sudo apt-get install -y libxmlsec1-dev
 
-    - uses: eifinger/setup-rye@v4
+    - uses: eifinger/setup-rye@ab2421b62c85e312df4929c9ffd3597ac2b49235 # v4
       id: setup-rye
 
     - name: Pin python-version ${{ matrix.python-version }}
@@ -68,14 +68,14 @@ jobs:
     runs-on: ubuntu-22.04
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-    - uses: eifinger/setup-rye@v4
+    - uses: eifinger/setup-rye@ab2421b62c85e312df4929c9ffd3597ac2b49235 # v4
       id: setup-rye
 
     # extract the app name out of the tag's ref value
     - id: get-app-name
-      uses: actions/github-script@v7
+      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
       with:
         script: |
           const appName = context.ref.match(/refs\/tags\/([a-z\-]+)\/v\S+$/)[1]

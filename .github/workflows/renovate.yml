@@ -12,16 +12,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v4.1.6
+      uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
 
     - name: Apt install
       run: sudo apt-get update && sudo apt-get install -y libxmlsec1-dev
 
-    - uses: eifinger/setup-rye@v4
+    - uses: eifinger/setup-rye@ab2421b62c85e312df4929c9ffd3597ac2b49235 # v4
       id: setup-rye
 
     - name: Self-hosted Renovate
-      uses: renovatebot/github-action@v40.2.4
+      uses: renovatebot/github-action@76d49712364696a06b60e8647df46b288fff0ddc # v40.2.4
       with:
         configurationFile: renovate-config.json
         token: ${{ secrets.GITHUB_TOKEN }}
