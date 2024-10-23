@@ -1337,7 +1337,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-geoip"
-version = "2024.10.23.1"
+version = "2023.12.19.1"
 source = { editable = "src/geoip" }
 dependencies = [
     { name = "django" },
