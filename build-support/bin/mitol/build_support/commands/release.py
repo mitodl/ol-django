@@ -59,7 +59,7 @@ def commit_and_tag(project: Project, app: App):
 
     repo.index.add(
         [
-            app.app_dir / "__init__.py",
+            app.app_dir / "**" / "__init__.py",
             app.app_dir / "pyproject.toml",
             app.app_dir / "CHANGELOG.md",
         ]

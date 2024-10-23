@@ -11,9 +11,19 @@ services:
 
   shell:
     build:
-      target: rye
+      target: uv
     volumes:
     - .:/home/dev/src
+    - cache:/home/dev/.cache/
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+    depends_on:
+    - db
+
+  release:
+    build:
+      target: release
+    volumes:
     - cache:/home/dev/.cache/
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/postgres

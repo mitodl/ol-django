@@ -25,7 +25,7 @@ version_pattern = "YYYY.MM.DD[.INC0]"
 "pyproject.toml" = [
     'version = "{version}"',
 ]
-"__init__.py" = [
+"mitol/google_sheets/__init__.py" = [
     '__version__ = "{version}"',
 ]
 

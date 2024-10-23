@@ -14,10 +14,8 @@ requires-python = ">= 3.8"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.rye]
+[tool.uv]
 managed = true
-virtual = true
-generate-hashes = true
 dev-dependencies = [
     "GitPython",
     "bumpver",
@@ -50,11 +48,23 @@ dev-dependencies = [
 [tool.hatch.metadata]
 allow-direct-references = true
 
-[tool.rye.workspace]
+[tool.uv.workspace]
 members = ["src/*"]
 
-[tool.rye.scripts]
-build = { call = "mitol.build_support.cli:cli", env = {PYTHONPATH = "build-support/bin/"}}
+[tool.uv.sources]
+mitol-django-common = { workspace = true }
+mitol-django-mail = { workspace = true }
+mitol-django-authentication = { workspace = true }
+mitol-django-digitalcredentials = { workspace = true }
+mitol-django-geoip = { workspace = true }
+mitol-django-google_sheets = { workspace = true }
+mitol-django-google_sheets_deferrals = { workspace = true }
+mitol-django-google_sheets_refunds = { workspace = true }
+mitol-django-hubspot_api = { workspace = true }
+mitol-django-oauth_toolkit_extensions = { workspace = true }
+mitol-django-olposthog = { workspace = true }
+mitol-django-openedx = { workspace = true }
+mitol-django-payment_gateway = { workspace = true }
 
 [tool.hatch.build.targets.sdist]
 include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]
