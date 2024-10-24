@@ -1,3 +1,6 @@
+from pathlib import Path
+import re
+
 from click import echo, pass_context
 from cloup import Context, group, option
 
@@ -19,7 +22,7 @@ def release():
 
 
 @release.command()
-@require_no_changes
+# @require_no_changes
 @no_require_main
 @app_option
 @option(
@@ -36,7 +39,8 @@ def create(ctx: Context, project: Project, app: App, push: bool):  # noqa: FBT00
 
     ctx.invoke(changelog.check)
     ctx.invoke(version.update)
-    ctx.invoke(changelog.collect, version=app.version)
+    # keep=True so we can remove these properly (i.e. in Git) later
+    ctx.invoke(changelog.collect, version=app.version, keep=True)
 
     # copy and remove irrelevant params
     params = ctx.params.copy()
@@ -59,11 +63,19 @@ def commit_and_tag(project: Project, app: App):
 
     repo.index.add(
         [
-            app.app_dir / "**" / "__init__.py",
+            app.app_dir / "mitol" / app.module_name / "__init__.py",
             app.app_dir / "pyproject.toml",
-            app.app_dir / "CHANGELOG.md",
+            app.app_dir / "CHANGELOG.rst",
         ]
     )
+
+    repo.index.remove(
+        [
+            app.app_dir / "changelog.d" / "*.rst",
+            app.app_dir / "changelog.d" / "*.md",
+        ]
+    )
+
     repo.index.commit(f"Release {tag_name}")
 
     echo(f"Tagging {tag_name}")

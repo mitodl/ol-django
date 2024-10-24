@@ -25,6 +25,7 @@ services:
       target: release
     volumes:
     - cache:/home/dev/.cache/
+    - ~/.ssh:/home/dev/.ssh:ro
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
     depends_on:

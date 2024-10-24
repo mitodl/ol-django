@@ -19,7 +19,7 @@ RUN xargs apt-get install -y <apt.txt
 
 COPY --from=ghcr.io/astral-sh/uv:0.4.25 /uv /uvx /bin/
 
-RUN useradd dev
+RUN useradd -G ubuntu dev
 USER dev
 WORKDIR /home/dev
 
@@ -43,6 +43,9 @@ FROM uv as release
 USER dev
 ENV PYTHONPATH="build-support/bin/"
 
+WORKDIR /home/dev
+RUN mkdir -m 0750 .ssh
 COPY --chown=dev:dev . /home/dev/src
+
 WORKDIR /home/dev/src
 RUN uv sync
