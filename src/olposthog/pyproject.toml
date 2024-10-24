@@ -20,7 +20,7 @@ version_pattern = "YYYY.MM.DD[.INC0]"
 "pyproject.toml" = [
     'version = "{version}"',
 ]
-"mitol/olposthot/__init__.py" = [
+"mitol/olposthog/__init__.py" = [
     '__version__ = "{version}"',
 ]
 
