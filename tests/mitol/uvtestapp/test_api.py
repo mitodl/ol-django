@@ -1,6 +1,5 @@
 """Tests for the uvtestapp app."""
 
-
 from mitol.uvtestapp.api import hello_world
 
 

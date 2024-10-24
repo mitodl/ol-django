@@ -1,4 +1,3 @@
-
 from click import echo, pass_context
 from cloup import Context, group, option
 
