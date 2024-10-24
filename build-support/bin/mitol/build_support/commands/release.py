@@ -65,13 +65,12 @@ def commit_and_tag(project: Project, app: App):
         [
             app.app_dir / "mitol" / app.module_name / "__init__.py",
             app.app_dir / "pyproject.toml",
-            app.app_dir / "CHANGELOG.rst",
+            app.app_dir / "CHANGELOG.md",
         ]
     )
 
     repo.index.remove(
         [
-            app.app_dir / "changelog.d" / "*.rst",
             app.app_dir / "changelog.d" / "*.md",
         ]
     )

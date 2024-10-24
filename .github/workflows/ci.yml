@@ -9,9 +9,9 @@ jobs:
       matrix:
         python-version:
         - "3.8"
-        - "3.9"
-        - "3.10"
-        - "3.11"
+        #- "3.9"
+        #- "3.10"
+        #- "3.11"
         #- "3.12"
 
     # Service containers to run
@@ -83,7 +83,7 @@ jobs:
           core.setOutput('app-package', appName.replace("mitol-django-", "").replace(/-/g, "_"))
 
     - name: Build
-      run: uv build "src/${{steps.get-app-name.outputs.app-package}}:"
+      run: PYTHONPATH=build-support/bin uv build "src/${{steps.get-app-name.outputs.app-package}}:"
 
     - uses: pypa/gh-action-pypi-publish@release/v1
       with:
