@@ -1,5 +1,3 @@
-from pathlib import Path
-import re
 
 from click import echo, pass_context
 from cloup import Context, group, option
@@ -11,7 +9,6 @@ from mitol.build_support.decorators import (
     no_require_main,
     pass_app,
     pass_project,
-    require_no_changes,
 )
 from mitol.build_support.project import Project
 

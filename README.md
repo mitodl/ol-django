@@ -20,7 +20,7 @@ This set of libraries is managed using [uv](https://docs.astral.sh/uv/).
 
 The Compose environment includes a container for general use called `shell` and one specifically for building releases called `release`. In either case, you'll get a shell with `uv` already set up, and with a PostgreSQL database available.
 
-- Ensure that 'other' users can write to the repo directory: `chmod -R o+w .` 
+- Ensure that 'other' users can write to the repo directory: `chmod -R o+w .`
 - Build the containers: `docker compose build`
 - Get a shell in the `shell` container: `docker compose run --rm -ti shell bash`
 
@@ -71,7 +71,7 @@ To add a new one, it's easiest to copy one of the existing apps. There's one cal
 
 You can now add your code and tests.
 
-If you need to run Django commands, 
+If you need to run Django commands,
 
 ### Running tests
 
@@ -99,6 +99,6 @@ To perform a release, run:
 
 `release` expects to be run on the `main` branch and it expects you to not have changes pending.
 
-You should probably avoid running this within the `shell` container - Git will be pretty unhappy about the permissions of the `.git` folder and you may run into other permissions issues. Either run this on your local machine or use the `release` container for this as described above. 
+You should probably avoid running this within the `shell` container - Git will be pretty unhappy about the permissions of the `.git` folder and you may run into other permissions issues. Either run this on your local machine or use the `release` container for this as described above.
 
 Supplying the `--push` flag will tag the release appropriately and push it, and a GitHub action should publish it to PyPI.
