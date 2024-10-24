@@ -20,6 +20,7 @@ members = [
     "mitol-django-olposthog",
     "mitol-django-openedx",
     "mitol-django-payment-gateway",
+    "mitol-django-uvtestapp",
     "ol-django",
 ]
 
@@ -1562,6 +1563,23 @@ requires-dist = [
 ]
 
 [[package]]
+name = "mitol-django-uvtestapp"
+version = "2023.12.19"
+source = { editable = "src/uvtestapp" }
+dependencies = [
+    { name = "django" },
+    { name = "django-stubs" },
+    { name = "edx-opaque-keys" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "django", specifier = ">=3.0" },
+    { name = "django-stubs", specifier = ">=1.13.1" },
+    { name = "edx-opaque-keys", specifier = "==2.2.2" },
+]
+
+[[package]]
 name = "monotonic"
 version = "1.6"
 source = { registry = "https://pypi.org/simple" }
@@ -1640,6 +1658,22 @@ wheels = [
 name = "ol-django"
 version = "0.1.0"
 source = { editable = "." }
+dependencies = [
+    { name = "mitol-django-authentication" },
+    { name = "mitol-django-common" },
+    { name = "mitol-django-digitalcredentials" },
+    { name = "mitol-django-geoip" },
+    { name = "mitol-django-google-sheets" },
+    { name = "mitol-django-google-sheets-deferrals" },
+    { name = "mitol-django-google-sheets-refunds" },
+    { name = "mitol-django-hubspot-api" },
+    { name = "mitol-django-mail" },
+    { name = "mitol-django-oauth-toolkit-extensions" },
+    { name = "mitol-django-olposthog" },
+    { name = "mitol-django-openedx" },
+    { name = "mitol-django-payment-gateway" },
+    { name = "mitol-django-uvtestapp" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -1672,6 +1706,22 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [
+    { name = "mitol-django-authentication", editable = "src/authentication" },
+    { name = "mitol-django-common", editable = "src/common" },
+    { name = "mitol-django-digitalcredentials", editable = "src/digitalcredentials" },
+    { name = "mitol-django-geoip", editable = "src/geoip" },
+    { name = "mitol-django-google-sheets", editable = "src/google_sheets" },
+    { name = "mitol-django-google-sheets-deferrals", editable = "src/google_sheets_deferrals" },
+    { name = "mitol-django-google-sheets-refunds", editable = "src/google_sheets_refunds" },
+    { name = "mitol-django-hubspot-api", editable = "src/hubspot_api" },
+    { name = "mitol-django-mail", editable = "src/mail" },
+    { name = "mitol-django-oauth-toolkit-extensions", editable = "src/oauth_toolkit_extensions" },
+    { name = "mitol-django-olposthog", editable = "src/olposthog" },
+    { name = "mitol-django-openedx", editable = "src/openedx" },
+    { name = "mitol-django-payment-gateway", editable = "src/payment_gateway" },
+    { name = "mitol-django-uvtestapp", editable = "src/uvtestapp" },
+]
 
 [package.metadata.requires-dev]
 dev = [
