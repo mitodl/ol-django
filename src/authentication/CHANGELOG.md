@@ -6,6 +6,62 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2024.10.24.6'></a>
+## [2024.10.24.6] - 2024-10-24
+
+### Changed
+
+- Updated changelog management and versioning scheme.
+
+- Updated requirements and lockfiles to support Django 4.
+- Removed support for Django 2.2.
+
+- Added posthog application.
+
+- Update paths in pyproject.toml to ensure versioning continues to work.
+
+<a id='changelog-2024.10.24.5'></a>
+## [2024.10.24.5] - 2024-10-24
+
+### Changed
+
+- Updated changelog management and versioning scheme.
+
+- Updated requirements and lockfiles to support Django 4.
+- Removed support for Django 2.2.
+
+- Added posthog application.
+
+- Update paths in pyproject.toml to ensure versioning continues to work.
+
+<a id='changelog-2024.10.24.4'></a>
+## [2024.10.24.4] - 2024-10-24
+
+### Changed
+
+- Updated changelog management and versioning scheme.
+
+- Updated requirements and lockfiles to support Django 4.
+- Removed support for Django 2.2.
+
+- Added posthog application.
+
+- Update paths in pyproject.toml to ensure versioning continues to work.
+
+<a id='changelog-2024.10.24.2'></a>
+## [2024.10.24.2] - 2024-10-24
+
+### Changed
+
+- Updated changelog management and versioning scheme.
+
+- Updated requirements and lockfiles to support Django 4.
+- Removed support for Django 2.2.
+
+- Added posthog application.
+
+- Update paths in pyproject.toml to ensure versioning continues to work.
+
 <a id='changelog-2023.12.19'></a>
 ## [2023.12.19] - 2023-12-19
 
