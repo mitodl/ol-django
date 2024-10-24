@@ -20,6 +20,7 @@ members = [
     "mitol-django-olposthog",
     "mitol-django-openedx",
     "mitol-django-payment-gateway",
+    "mitol-django-uvtestapp",
     "ol-django",
 ]
 
@@ -1337,7 +1338,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-geoip"
-version = "2024.10.24"
+version = "2023.12.19.1"
 source = { editable = "src/geoip" }
 dependencies = [
     { name = "django" },
@@ -1562,6 +1563,23 @@ requires-dist = [
 ]
 
 [[package]]
+name = "mitol-django-uvtestapp"
+version = "2023.12.19"
+source = { editable = "src/uvtestapp" }
+dependencies = [
+    { name = "django" },
+    { name = "django-stubs" },
+    { name = "edx-opaque-keys" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "django", specifier = ">=3.0" },
+    { name = "django-stubs", specifier = ">=1.13.1" },
+    { name = "edx-opaque-keys", specifier = "==2.2.2" },
+]
+
+[[package]]
 name = "monotonic"
 version = "1.6"
 source = { registry = "https://pypi.org/simple" }
@@ -1654,6 +1672,7 @@ dependencies = [
     { name = "mitol-django-olposthog" },
     { name = "mitol-django-openedx" },
     { name = "mitol-django-payment-gateway" },
+    { name = "mitol-django-uvtestapp" },
 ]
 
 [package.dev-dependencies]
@@ -1701,6 +1720,7 @@ requires-dist = [
     { name = "mitol-django-olposthog", editable = "src/olposthog" },
     { name = "mitol-django-openedx", editable = "src/openedx" },
     { name = "mitol-django-payment-gateway", editable = "src/payment_gateway" },
+    { name = "mitol-django-uvtestapp", editable = "src/uvtestapp" },
 ]
 
 [package.metadata.requires-dev]
