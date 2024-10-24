@@ -1564,7 +1564,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-uvtestapp"
-version = "2023.12.19"
+version = "2024.10.24"
 source = { editable = "src/uvtestapp" }
 dependencies = [
     { name = "django" },

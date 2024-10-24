@@ -2,6 +2,6 @@
 
 
 def hello_world():
-    """Returns Hello World!"""
+    """Return Hello World!"""
 
     return "Hello world!"

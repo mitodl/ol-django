@@ -17,7 +17,7 @@ class UvtestappApp(AppConfig):
 
 
 class TransitionalUvtestappApp(AppConfig):
-    """Uvtestapp AppConfig for transitioning a project with an existing 'uvtestapp' app"""
+    """AppConfig for transitioning a project with an existing 'uvtestapp' app"""
 
     name = "mitol.uvtestapp"
     label = "transitional_uvtestapp"
