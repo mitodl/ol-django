@@ -17,24 +17,35 @@ WORKDIR /tmp
 COPY apt.txt /tmp/apt.txt
 RUN xargs apt-get install -y <apt.txt
 
-RUN useradd dev
+COPY --from=ghcr.io/astral-sh/uv:0.4.25 /uv /uvx /bin/
+
+RUN useradd -G ubuntu dev
 USER dev
 WORKDIR /home/dev
 
 # ===================================================================
-FROM base as rye
+FROM base as uv
 ARG PYTHON_VERSION=3.11
 
 USER dev
-ENV PATH="${PATH}:/home/dev/.rye/shims"
-RUN curl -sSf https://rye.astral.sh/get | RYE_INSTALL_OPTION="--yes" bash &&\
-    rye pin ${PYTHON_VERSION}
 
-# ===================================================================
+RUN uv python install $PYTHON_VERSION
 
 # the pants installer puts things in ~/cache/nce and it needs to be persistent
 RUN mkdir -p .cache && chown dev:dev .cache
 
-
 VOLUME /home/dev/.cache
 WORKDIR /home/dev/src
+
+# ===================================================================
+FROM uv as release
+
+USER dev
+ENV PYTHONPATH="build-support/bin/"
+
+WORKDIR /home/dev
+RUN mkdir -m 0750 .ssh
+COPY --chown=dev:dev . /home/dev/src
+
+WORKDIR /home/dev/src
+RUN uv sync

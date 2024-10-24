@@ -1,6 +1,6 @@
 ---
 name: CI
-on: [push]
+on: [push, workflow_dispatch]
 
 jobs:
   tests:
@@ -12,7 +12,7 @@ jobs:
         - "3.9"
         - "3.10"
         - "3.11"
-        #- "3.12"
+        # - "3.12"
 
     # Service containers to run
     services:
@@ -41,21 +41,21 @@ jobs:
     - name: Apt install
       run: sudo apt-get install -y libxmlsec1-dev
 
-    - uses: eifinger/setup-rye@v4
-      id: setup-rye
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
 
     - name: Pin python-version ${{ matrix.python-version }}
-      run: rye pin ${{ matrix.python-version }}
+      run: uv python pin ${{ matrix.python-version }}
 
     - name: Install dependencies
-      run: rye sync
+      run: uv sync
 
     - name: Tests
-      run: rye test
+      run: uv run pytest
 
     - name: Changelog
       if: ${{ !contains(github.event.head_commit.author, 'renovate') }}
-      run: rye run build changelog check
+      run: PYTHONPATH=build-support/bin uv run build changelog check
 
       # - name: Upload coverage to CodeCov
       #   uses: codecov/codecov-action@v1
@@ -70,8 +70,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - uses: eifinger/setup-rye@v4
-      id: setup-rye
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
 
     # extract the app name out of the tag's ref value
     - id: get-app-name
@@ -83,7 +83,7 @@ jobs:
           core.setOutput('app-package', appName.replace("mitol-django-", "").replace(/-/g, "_"))
 
     - name: Build
-      run: rye build "src/${{steps.get-app-name.outputs.app-package}}:"
+      run: PYTHONPATH=build-support/bin uv build "src/${{steps.get-app-name.outputs.app-package}}"
 
     - uses: pypa/gh-action-pypi-publish@release/v1
       with:

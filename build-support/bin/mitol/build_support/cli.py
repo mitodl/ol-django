@@ -16,3 +16,6 @@ def cli(ctx: Context):
 cli.add_command(changelog)
 cli.add_command(release)
 cli.add_command(version)
+
+if __name__ == "__main__":
+    cli()

@@ -4,8 +4,8 @@
     "local>mitodl/.github:renovate-config"
   ],
   "postUpgradeTasks": {
-    "commands": ["rye sync"],
-    "fileFilters": ["requirements*.lock"],
+    "commands": ["uv sync"],
+    "fileFilters": ["uv*.lock"],
     "executionMode": "update"
   }
 }

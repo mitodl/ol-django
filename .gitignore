@@ -68,3 +68,6 @@ testapp/settings/dev.py
 /.pids
 /.pants.workdir.file_lock*
 *.pex
+
+# SSH keys/etc.
+ssh/*

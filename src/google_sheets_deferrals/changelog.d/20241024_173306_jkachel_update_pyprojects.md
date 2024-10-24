@@ -19,7 +19,7 @@ Uncomment the section that is right (remove the HTML comment wrapper).
 
 ### Changed
 
-- Updated changelog management and versioning scheme.
+- Update paths in pyproject.toml to ensure versioning continues to work.
 
 <!--
 ### Deprecated

@@ -17,8 +17,8 @@ jobs:
     - name: Apt install
       run: sudo apt-get update && sudo apt-get install -y libxmlsec1-dev
 
-    - uses: eifinger/setup-rye@v4
-      id: setup-rye
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
 
     - name: Self-hosted Renovate
       uses: renovatebot/github-action@v40.2.4
