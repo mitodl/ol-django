@@ -6,6 +6,19 @@ authors = [
     { name = "MIT Open Learning Engineering", email = "odl-devops@mit.edu" }
 ]
 dependencies = [
+  "mitol-django-common",
+  "mitol-django-mail",
+  "mitol-django-authentication",
+  "mitol-django-digitalcredentials",
+  "mitol-django-geoip",
+  "mitol-django-google_sheets",
+  "mitol-django-google_sheets_deferrals",
+  "mitol-django-google_sheets_refunds",
+  "mitol-django-hubspot_api",
+  "mitol-django-oauth_toolkit_extensions",
+  "mitol-django-olposthog",
+  "mitol-django-openedx",
+  "mitol-django-payment_gateway",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
@@ -83,7 +96,7 @@ norecursedirs = ".git .tox .* CVS _darcs {arch} *.egg dist"
 DJANGO_SETTINGS_MODULE = "testapp.settings.test"
 # -- recommended but optional:
 python_files = ["tests/mitol/**/test_*.py"]
-pythonpath = ["tests", "src"]
+pythonpath = ["src", "tests"]
 
 [tool.django-stubs]
 django_settings_module = "testapp.settings.test"
