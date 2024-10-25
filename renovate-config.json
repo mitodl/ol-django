@@ -1,6 +1,6 @@
 {
   "allowedPostUpgradeCommands": [
-      "^rye sync",
-      "^rye .+"
+      "^uv sync",
+      "^uv .+"
   ]
 }
