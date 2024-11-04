@@ -77,7 +77,7 @@ You can now add your code and tests.
 
 You can run Django commands by using the `testapp` that's included:
 
-`uv run tests/manage.py` 
+`uv run tests/manage.py`
 
 The management commands for each ol-django app should be available. If you need to run things that require a database, run it in the Docker Compose setup as it contains a PostgreSQL database.
 
