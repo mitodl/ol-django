@@ -16,13 +16,13 @@ class HubspotObject(models.Model):
     content_object = GenericForeignKey("content_type", "object_id")
 
     class Meta:
-        indexes = [  # noqa: RUF012
+        indexes = [
             models.Index(
                 fields=["content_type", "object_id"],
                 name="hubspot_api_content_object_idx",
             ),
         ]
-        constraints = [  # noqa: RUF012
+        constraints = [
             models.UniqueConstraint(
                 fields=["object_id", "content_type"],
                 name="hubspot_api_unique_object_id_type",

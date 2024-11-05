@@ -32,7 +32,7 @@ class Geoname(models.Model):
     is_in_european_union = models.BooleanField(blank=True, null=True, default=False)
 
     class Meta:
-        constraints = [  # noqa: RUF012
+        constraints = [
             models.UniqueConstraint(
                 fields=["geoname_id", "locale_code"], name="unique_geoname_id_locale"
             )
@@ -89,7 +89,7 @@ class NetBlock(models.Model):
     accuracy_radius = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        constraints = [  # noqa: RUF012
+        constraints = [
             models.CheckConstraint(
                 check=models.Q(geoname_id__isnull=False)
                 | models.Q(registered_country_geoname_id__isnull=False)
@@ -97,7 +97,7 @@ class NetBlock(models.Model):
                 name="at_least_one_geoname_id",
             )
         ]
-        indexes = [  # noqa: RUF012
+        indexes = [
             models.Index(fields=["decimal_ip_start"]),
             models.Index(fields=["decimal_ip_end"]),
             models.Index(fields=["decimal_ip_start", "decimal_ip_end"]),

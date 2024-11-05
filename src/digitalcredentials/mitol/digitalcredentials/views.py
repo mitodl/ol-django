@@ -15,9 +15,9 @@ from mitol.digitalcredentials.serializers import DigitalCredentialIssueSerialize
 class DigitalCredentialIssueView(GenericAPIView):
     """Digital credential API views"""
 
-    authentication_classes = [OAuth2Authentication]  # noqa: RUF012
-    permission_classes = [IsAuthenticated, TokenHasScope]  # noqa: RUF012
-    required_scopes = ["digitalcredentials"]  # noqa: RUF012
+    authentication_classes = [OAuth2Authentication]
+    permission_classes = [IsAuthenticated, TokenHasScope]
+    required_scopes = ["digitalcredentials"]
     serializer_class = DigitalCredentialIssueSerializer
     lookup_field = "uuid"
 

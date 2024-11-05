@@ -5,7 +5,7 @@ import abc
 
 def base_register_subclasses_factory(*mixin_classes):
     class BaseRegisterSubclasses(abc.ABC, *mixin_classes):
-        _SUBCLASSES = {}  # noqa: RUF012
+        _SUBCLASSES = {}
 
         def __init_subclass__(cls, *, subclass_type, **kwargs):
             super().__init_subclass__()

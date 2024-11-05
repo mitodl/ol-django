@@ -6,12 +6,12 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [  # noqa: RUF012
+    dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("testapp", "0002_auditabletestmodel"),
     ]
 
-    operations = [  # noqa: RUF012
+    operations = [
         migrations.CreateModel(
             name="AuditableTestModelAudit",
             fields=[

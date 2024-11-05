@@ -6,9 +6,9 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     initial = True
 
-    dependencies = []  # noqa: RUF012
+    dependencies = []
 
-    operations = [  # noqa: RUF012
+    operations = [
         migrations.CreateModel(
             name="Geoname",
             fields=[

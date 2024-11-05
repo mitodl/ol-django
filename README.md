@@ -24,6 +24,8 @@ The Compose environment includes a container for general use called `shell` and 
 - Build the containers: `docker compose build`
 - Get a shell in the `shell` container: `docker compose run --rm -ti shell bash`
 
+The database server is exposed on port 55432 locally - you can override this by setting `POSTGRES_PORT` in your environment.
+
 #### Using the `release` container
 
 The `release` container is special and is set up to run `build` commands, including generating releases. It's special because it _does not_ mount your local copy of the codebase (mainly because of file permission issues). So, it requires a bit more care before using.
@@ -71,7 +73,13 @@ To add a new one, it's easiest to copy one of the existing apps. There's one cal
 
 You can now add your code and tests.
 
-If you need to run Django commands,
+### Running Django commands
+
+You can run Django commands by using the `testapp` that's included:
+
+`uv run tests/manage.py`
+
+The management commands for each ol-django app should be available. If you need to run things that require a database, run it in the Docker Compose setup as it contains a PostgreSQL database.
 
 ### Running tests
 

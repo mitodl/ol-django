@@ -4,11 +4,11 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [  # noqa: RUF012
+    dependencies = [
         ("digitalcredentials", "0001_add_digital_credentials_models"),
     ]
 
-    operations = [  # noqa: RUF012
+    operations = [
         migrations.RenameField(
             model_name="digitalcredential",
             old_name="courseware_content_type",
