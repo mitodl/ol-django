@@ -138,7 +138,7 @@ class PaymentGateway(abc.ABC):
     the processor to capture card information).
     """
 
-    _GATEWAYS = {}  # noqa: RUF012
+    _GATEWAYS = {}
 
     def __init_subclass__(cls, *, gateway_class, **kwargs):
         super().__init_subclass__()

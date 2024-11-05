@@ -12,7 +12,7 @@ class GoogleSheetsApp(BaseApp):
     label = "google_sheets"
     verbose_name = "Google Sheets"
 
-    required_settings = []  # noqa: RUF012
+    required_settings = []
 
     # necessary because this is a namespaced app
     path = os.path.dirname(os.path.abspath(__file__))  # noqa: PTH100, PTH120

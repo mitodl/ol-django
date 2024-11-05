@@ -28,7 +28,7 @@ class GoogleFileWatchAdmin(admin.ModelAdmin):
         "expiration_date",
         "last_request_received",
     )
-    ordering = ["-expiration_date"]  # noqa: RUF012
+    ordering = ["-expiration_date"]
 
     def save_form(self, request, form, change):
         if not change:

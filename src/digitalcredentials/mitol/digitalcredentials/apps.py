@@ -12,7 +12,7 @@ class DigitalCredentialsApp(BaseApp):
     label = "digitalcredentials"
     verbose_name = "Digital Credentials"
 
-    required_settings = [  # noqa: RUF012
+    required_settings = [
         "MITOL_DIGITAL_CREDENTIALS_VERIFY_SERVICE_BASE_URL",
         "MITOL_DIGITAL_CREDENTIALS_BUILD_CREDENTIAL_FUNC",
         "MITOL_DIGITAL_CREDENTIALS_HMAC_SECRET",

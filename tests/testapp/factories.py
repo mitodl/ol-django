@@ -57,7 +57,7 @@ class OrderFactory(Factory):
     ip_address = FAKE.ipv4()
     reference = fuzzy.FuzzyText(length=6)
     username = FAKE.safe_email()
-    items = []  # noqa: RUF012
+    items = []
 
 
 class RefundFactory(Factory):

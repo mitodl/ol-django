@@ -63,7 +63,7 @@ class SheetConfigMixin:
     worksheet_type = None
     worksheet_name = None
     first_data_row = None
-    non_input_column_indices = set()  # noqa: RUF012
+    non_input_column_indices = set()
     num_columns = 0
 
     @property

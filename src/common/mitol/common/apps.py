@@ -11,7 +11,7 @@ from django.core.exceptions import ImproperlyConfigured
 class BaseApp(AppConfig):
     """Base application class"""
 
-    required_settings: List[str] = []  # noqa: FA100, RUF012
+    required_settings: List[str] = []  # noqa: FA100
 
     def validate_required_settings(self):
         """

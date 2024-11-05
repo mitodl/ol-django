@@ -23,7 +23,7 @@ def test_base_app_required_settings(settings):
     class RequiredSettingsApp(BaseApp):
         """Test app that requires settings"""
 
-        required_settings = ["TEST_SETTING"]  # noqa: RUF012
+        required_settings = ["TEST_SETTING"]
 
     settings.TEST_SETTING = True
 
@@ -38,7 +38,7 @@ def test_base_app_required_settings_missing(settings):
     class RequiredSettingsApp(BaseApp):
         """Test app that requires settings"""
 
-        required_settings = ["TEST_SETTING", "TEST_SETTING2"]  # noqa: RUF012
+        required_settings = ["TEST_SETTING", "TEST_SETTING2"]
 
     settings.TEST_SETTING = True
 

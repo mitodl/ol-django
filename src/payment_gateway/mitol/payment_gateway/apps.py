@@ -12,7 +12,7 @@ class PaymentGatewayApp(BaseApp):
     label = "payment_gateway"
     verbose_name = "Payment Gateway"
 
-    required_settings = [  # noqa: RUF012
+    required_settings = [
         "MITOL_PAYMENT_GATEWAY_CYBERSOURCE_ACCESS_KEY",
         "MITOL_PAYMENT_GATEWAY_CYBERSOURCE_PROFILE_ID",
         "MITOL_PAYMENT_GATEWAY_CYBERSOURCE_SECURITY_KEY",

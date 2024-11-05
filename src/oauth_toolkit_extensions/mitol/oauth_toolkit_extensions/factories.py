@@ -104,7 +104,7 @@ class ApplicationAccessFactory(DjangoModelFactory):
         "mitol.oauth_toolkit_extensions.factories.ApplicationFactory"
     )
 
-    scopes = ["custom_scope_1", "custom_scope_2"]  # noqa: RUF012
+    scopes = ["custom_scope_1", "custom_scope_2"]
 
     class Meta:
         model = ApplicationAccess
