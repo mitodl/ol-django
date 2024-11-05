@@ -6,6 +6,17 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2024.11.5'></a>
+## [2024.11.5] - 2024-11-05
+
+### Changed
+
+- Removes unnecessary noqa's.
+
+### Fixed
+
+- Adding migrations to rename the maxmind indexes to geoip.
+
 <a id='changelog-2024.10.25'></a>
 ## [2024.10.25] - 2024-10-25
 
