@@ -81,10 +81,11 @@ def generate_test_cybersource_payload(order, cartitems, transaction_uuid):
     cancel_url = "https://duckduckgo.com"
 
     test_line_items = {}
-    test_total = 0
+    test_total = tax_total = 0
 
     for idx, line in enumerate(cartitems):
         test_total += line.quantity * line.unitprice
+        tax_total += line.taxable
 
         test_line_items[f"item_{idx}_code"] = str(line.code)
         test_line_items[f"item_{idx}_name"] = str(line.name)[:254]
@@ -97,7 +98,8 @@ def generate_test_cybersource_payload(order, cartitems, transaction_uuid):
 
     test_payload = {
         "access_key": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_ACCESS_KEY,
-        "amount": str(test_total),
+        "amount": str(test_total + tax_total),
+        "tax_amount": str(tax_total),
         "consumer_id": consumer_id,
         "currency": "USD",
         "locale": "en-us",
@@ -140,7 +142,8 @@ def test_invalid_payload_generation(order, cartitems):
     assert isinstance(checkout_data, TypeError)
 
 
-def test_cybersource_payload_generation(order, cartitems):
+@pytest.mark.parametrize(("with_tax"), [(True), (False),])
+def test_cybersource_payload_generation(order, cartitems, with_tax):
     """
     Starts a payment through the payment gateway, and then checks to make sure
     there's stuff in the payload that it generates. The transaction is not sent
@@ -150,6 +153,11 @@ def test_cybersource_payload_generation(order, cartitems):
     backoffice_post_url = "https://www.google.com"
     cancel_url = "https://duckduckgo.com"
     order.items = cartitems
+
+    # By default, the cart items will have tax.
+    if not with_tax:
+        for idx in range(len(order.items)):
+            order.items[idx].taxable = 0
 
     checkout_data = PaymentGateway.start_payment(
         MITOL_PAYMENT_GATEWAY_CYBERSOURCE,

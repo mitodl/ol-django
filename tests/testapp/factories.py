@@ -3,7 +3,8 @@
 import string
 
 import faker
-from factory import Factory, SubFactory, fuzzy
+from decimal import Decimal
+from factory import Factory, SubFactory, fuzzy, LazyAttribute
 from factory.django import DjangoModelFactory
 from mitol.common.factories import UserFactory
 from mitol.digitalcredentials.factories import (
@@ -46,8 +47,8 @@ class CartItemFactory(Factory):
     code = fuzzy.FuzzyText(length=6)
     quantity = fuzzy.FuzzyInteger(1, 5, 1)
     name = FAKE.sentence(nb_words=3)
-    taxable = 0
     unitprice = fuzzy.FuzzyDecimal(1, 300, precision=2)
+    taxable = LazyAttribute(lambda o: Decimal(o.unitprice * Decimal(FAKE.random_number(2) * .01)).quantize(Decimal('0.01')))
 
 
 class OrderFactory(Factory):
