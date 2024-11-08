@@ -143,7 +143,13 @@ def test_invalid_payload_generation(order, cartitems):
     assert isinstance(checkout_data, TypeError)
 
 
-@pytest.mark.parametrize(("with_tax"), [(True), (False),])
+@pytest.mark.parametrize(
+    ("with_tax"),
+    [
+        (True),
+        (False),
+    ],
+)
 def test_cybersource_payload_generation(order, cartitems, with_tax):
     """
     Starts a payment through the payment gateway, and then checks to make sure
