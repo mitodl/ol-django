@@ -3,7 +3,11 @@
 from decimal import Decimal
 
 import pytest
-from mitol.payment_gateway.payment_utils import clean_request_data, strip_nones, quantize_decimal
+from mitol.payment_gateway.payment_utils import (
+    clean_request_data,
+    quantize_decimal,
+    strip_nones,
+)
 
 
 @pytest.mark.parametrize(
@@ -49,7 +53,10 @@ def test_strip_nones():
 
 
 def test_quantize_decimal():
-    """Tests quantize_decimal to make sure that the decimal is quantized to the correct precision"""
+    """
+    Tests quantize_decimal to make sure that the decimal is quantized to
+    the correct precision.
+    """
 
     test_decimal = 1.23456789
     test_precision = 2
