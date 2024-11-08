@@ -1,7 +1,9 @@
 """Tests for payment_gateway application utils"""  # noqa: INP001
 
+from decimal import Decimal
+
 import pytest
-from mitol.payment_gateway.payment_utils import clean_request_data, strip_nones
+from mitol.payment_gateway.payment_utils import clean_request_data, strip_nones, quantize_decimal
 
 
 @pytest.mark.parametrize(
@@ -44,3 +46,14 @@ def test_strip_nones():
     test_ds2 = strip_nones(ds2)
 
     assert test_ds2 == ds2
+
+
+def test_quantize_decimal():
+    """Tests quantize_decimal to make sure that the decimal is quantized to the correct precision"""
+
+    test_decimal = 1.23456789
+    test_precision = 2
+
+    quantized_decimal = quantize_decimal(test_decimal, test_precision)
+
+    assert quantized_decimal == Decimal("1.23")

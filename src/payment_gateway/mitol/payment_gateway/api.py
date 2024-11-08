@@ -34,7 +34,7 @@ from mitol.payment_gateway.exceptions import (
     InvalidTransactionException,
     RefundDuplicateException,
 )
-from mitol.payment_gateway.payment_utils import clean_request_data, strip_nones
+from mitol.payment_gateway.payment_utils import clean_request_data, strip_nones, quantize_decimal
 
 
 @dataclass
@@ -461,8 +461,8 @@ class CyberSourcePaymentGateway(
 
         payload = {
             "access_key": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_ACCESS_KEY,
-            "amount": str(total + tax_total),
-            "tax_amount": str(tax_total),
+            "amount": str(quantize_decimal((total + tax_total))),
+            "tax_amount": str(quantize_decimal((tax_total))),
             "consumer_id": consumer_id,
             "currency": "USD",
             "locale": "en-us",

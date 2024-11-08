@@ -5,6 +5,7 @@ import random
 from collections import namedtuple
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 from typing import Dict
 
 import pytest
@@ -98,8 +99,8 @@ def generate_test_cybersource_payload(order, cartitems, transaction_uuid):
 
     test_payload = {
         "access_key": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_ACCESS_KEY,
-        "amount": str(test_total + tax_total),
-        "tax_amount": str(tax_total),
+        "amount": str(Decimal(test_total + tax_total).quantize(Decimal("0.01"))),
+        "tax_amount": str(Decimal(tax_total).quantize(Decimal("0.01"))),
         "consumer_id": consumer_id,
         "currency": "USD",
         "locale": "en-us",

@@ -1,5 +1,7 @@
 """Utilities for the Payment Gateway"""
 
+from decimal import Decimal
+
 
 # To delete None values in Input Request Json body
 def clean_request_data(request_data):
@@ -21,3 +23,8 @@ def strip_nones(datasource):
             retval[key] = datasource[key]
 
     return retval
+
+
+def quantize_decimal(value, precision=2):
+    """Quantize a decimal value to the specified precision"""
+    return Decimal(value).quantize(Decimal("0.{}".format("0" * precision)))
