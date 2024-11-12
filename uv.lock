@@ -1338,7 +1338,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-geoip"
-version = "2024.10.25"
+version = "2024.11.5"
 source = { editable = "src/geoip" }
 dependencies = [
     { name = "django" },
@@ -1556,7 +1556,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cybersource-rest-client-python", specifier = ">=0.0.36" },
+    { name = "cybersource-rest-client-python", specifier = ">=0.0.59" },
     { name = "django", specifier = ">=3.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
     { name = "mitol-django-common", editable = "src/common" },

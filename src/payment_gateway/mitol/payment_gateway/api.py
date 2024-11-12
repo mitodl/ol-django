@@ -34,7 +34,11 @@ from mitol.payment_gateway.exceptions import (
     InvalidTransactionException,
     RefundDuplicateException,
 )
-from mitol.payment_gateway.payment_utils import clean_request_data, strip_nones
+from mitol.payment_gateway.payment_utils import (
+    clean_request_data,
+    quantize_decimal,
+    strip_nones,
+)
 
 
 @dataclass
@@ -362,6 +366,10 @@ class CyberSourcePaymentGateway(
     def _generate_line_items(self, cart):
         """
         Generates CyberSource-formatted line items based on what's in the cart.
+
+        The unit price being stored should be the unit price after any discounts
+        have been applied. The tax amount should be the _total_ for the line.
+
         Args:
             cart:   List of CartItems
 
@@ -370,9 +378,11 @@ class CyberSourcePaymentGateway(
         """  # noqa: D401
         lines = {}
         cart_total = 0
+        tax_total = 0
 
         for i, line in enumerate(cart):
             cart_total += line.quantity * line.unitprice
+            tax_total += line.taxable
 
             lines[f"item_{i}_code"] = str(line.code)
             lines[f"item_{i}_name"] = str(line.name)[:254]
@@ -381,7 +391,7 @@ class CyberSourcePaymentGateway(
             lines[f"item_{i}_tax_amount"] = str(line.taxable)
             lines[f"item_{i}_unit_price"] = str(line.unitprice)
 
-        return (lines, cart_total)
+        return (lines, cart_total, tax_total)
 
     def _generate_cybersource_sa_signature(self, payload):
         """
@@ -438,7 +448,7 @@ class CyberSourcePaymentGateway(
         stored anywhere.
         """  # noqa: D401
 
-        (line_items, total) = self._generate_line_items(order.items)
+        (line_items, total, tax_total) = self._generate_line_items(order.items)
 
         formatted_merchant_fields = {}
 
@@ -455,7 +465,8 @@ class CyberSourcePaymentGateway(
 
         payload = {
             "access_key": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_ACCESS_KEY,
-            "amount": str(total),
+            "amount": str(quantize_decimal(total + tax_total)),
+            "tax_amount": str(quantize_decimal(tax_total)),
             "consumer_id": consumer_id,
             "currency": "USD",
             "locale": "en-us",
