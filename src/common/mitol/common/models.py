@@ -31,7 +31,7 @@ class TimestampedModelQuerySet(QuerySet):
         Automatically update updated_on timestamp when .update(). This is because .update()
         does not go through .save(), thus will not auto_now, because it happens on the
         database level without loading objects into memory.
-        """  # noqa: E501, D402
+        """  # noqa: E501
         if "updated_on" not in kwargs:
             kwargs["updated_on"] = now_in_utc()
         return super().update(**kwargs)

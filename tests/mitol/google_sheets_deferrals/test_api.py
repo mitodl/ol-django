@@ -14,7 +14,7 @@ from pygsheets.sheet import SheetAPIWrapper
 from pytest_lazy_fixtures import lf as lazy_fixture
 
 
-@pytest.fixture()
+@pytest.fixture
 def request_csv_rows(settings):
     """Fake deferral request spreadsheet data rows (loaded from CSV)"""
     fake_request_csv_filepath = os.path.join(  # noqa: PTH118
@@ -25,7 +25,7 @@ def request_csv_rows(settings):
         return [line.split(",") for i, line in enumerate(f.readlines()) if i > 0]
 
 
-@pytest.fixture()
+@pytest.fixture
 def pygsheets_fixtures(mocker, db, request_csv_rows):  # noqa: ARG001
     """Patched functions for pygsheets client functionality"""
     Mock = mocker.Mock
@@ -60,7 +60,7 @@ def pygsheets_fixtures(mocker, db, request_csv_rows):  # noqa: ARG001
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def google_sheets_deferral_settings(settings):
     settings.MITOL_GOOGLE_SHEETS_DEFERRALS_REQUEST_WORKSHEET_ID = "1"
     settings.MITOL_GOOGLE_SHEETS_DEFERRALS_PLUGINS = "app.plugins.DeferralPlugin"
