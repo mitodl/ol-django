@@ -10,16 +10,17 @@ from scriv.collect import collect
 from scriv.create import create
 from scriv.scriv import Scriv
 
-from mitol.build_support.apps import App, list_apps
-from mitol.build_support.contextlib import chdir
-from mitol.build_support.decorators import app_option, pass_app, pass_project
-from mitol.build_support.project import Project
+from scripts.apps import App, list_apps
+from scripts.contextlibs import chdir
+from scripts.decorators import app_option, pass_app, pass_project
+from scripts.project import Project
 
 
 @group("changelog")
 @pass_context
-def changelog(ctx):  # noqa: ARG001
+def changelog(ctx):
     """Manage application changelogs"""
+    ctx.ensure_object(Project)
 
     makedirs("changelog.d", exist_ok=True)  # noqa: PTH103
 
@@ -98,21 +99,6 @@ def check(ctx: Context, project: Project, base: str, target: str):  # noqa: C901
         )
         has_changelogd_changes = len(changelogd_changes) > 0
 
-        # If there's changes to the base requirements.txt, then we need to allow for
-        # changelogs to exist without the app code changing. There won't necessarily be
-        # changes in the individual apps if we're just updating project-wide dependencies.  # noqa: E501
-        # So, if there's no source changes, check if there's been changes to the
-        # requirements, and treat that as source changes.
-
-        if not has_source_changes:
-            reqs_paths = [
-                "build-support/requirements/requirements-testing.txt",
-                "build-support/requirements/requirements.txt",
-            ]
-
-            reqs_changes = base_commit.diff(target_commit, paths=reqs_paths)
-            has_source_changes = len(reqs_changes) > 0
-
         if has_source_changes and not has_changelogd_changes:
             echo(f"Changelog(s) are missing in {app_rel_path} for these changes:")
             for change in source_changes:
@@ -146,3 +132,7 @@ def check(ctx: Context, project: Project, base: str, target: str):  # noqa: C901
 
     if is_error:
         ctx.exit(1)
+
+
+if __name__ == "__main__":
+    changelog()

@@ -1,20 +1,21 @@
 from click import echo, pass_context
 from cloup import Context, group, option
 
-from mitol.build_support.apps import App
-from mitol.build_support.commands import changelog, version
-from mitol.build_support.decorators import (
+from scripts import changelog, version
+from scripts.apps import App
+from scripts.decorators import (
     app_option,
     no_require_main,
     pass_app,
     pass_project,
 )
-from mitol.build_support.project import Project
+from scripts.project import Project
 
 
 @group()
-def release():
-    pass
+@pass_context
+def release(ctx: Context):
+    ctx.ensure_object(Project)
 
 
 @release.command()
@@ -88,3 +89,7 @@ def push_to_remote(project: Project, app: App):
         [app.version_git_tag, "HEAD"],
         follow_tags=True,
     )
+
+
+if __name__ == "__main__":
+    release()

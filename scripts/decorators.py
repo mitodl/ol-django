@@ -3,8 +3,8 @@ from functools import wraps
 from click import Choice, Command, make_pass_decorator, option
 from cloup import Context, pass_context
 
-from mitol.build_support.apps import App, list_app_names
-from mitol.build_support.project import Project
+from scripts.apps import App, list_app_names
+from scripts.project import Project
 
 pass_project = make_pass_decorator(Project)
 pass_app = make_pass_decorator(App)

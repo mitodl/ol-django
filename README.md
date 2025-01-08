@@ -12,10 +12,6 @@ This set of libraries is managed using [uv](https://docs.astral.sh/uv/).
 - Install `uv` as described in the manual: https://docs.astral.sh/uv/
 - Bootstrap the `uv` environment: `uv python install 3.11 ; uv sync`
 
-> [!WARNING]
-> If you're running `uv` locally, any calls to the `build` command will need help.
-> Prepend `PYTHONPATH=build-support/bin` to the command so uv will launch it properly.
-
 #### Use the Docker Compose environment (recommended)
 
 The Compose environment includes a container for general use called `shell` and one specifically for building releases called `release`. In either case, you'll get a shell with `uv` already set up, and with a PostgreSQL database available.
@@ -37,7 +33,7 @@ The `release` container is special and is set up to run `build` commands, includ
 **Using:**
 1. Build the images, so the source code in the image is up to date: `docker compose build`
 2. Get a shell: `docker compose run --rm -ti release bash`
-3. Run your command: `uv run build release create etc. etc. etc.`
+3. Run your command: `uv run scripts/release.py create` etc. etc. etc.
 4. If you've done things that involve Git, make sure you `git pull` when you leave the session.
 
 ### Navigating this repository
@@ -89,7 +85,7 @@ Run `uv run pytest`. This should run all the tests. If you want to run a specifi
 
 We maintain changelogs in `changelog.d/` directories with each app. To create a new changelog for your changes, run:
 
-- `uv run build changelog create --app APPNAME`
+- `uv run scripts/changelog.py create --app APPNAME`
   - `APPNAME`: the name of an application directory
 
 Note warning above about `PYTHONPATH`. You will need to adjust permissions/ownership on the new file if you're using the Compose setup.
@@ -102,7 +98,7 @@ Changelogs are maintained according to [Keep a Changelog](https://keepachangelog
 Versioning uses a date-based versioning scheme with incremental builds on the same day.
 Version tags follow `{package-name}/v{version}`
 To perform a release, run:
-- `uv run build release create --app APPNAME --push`:
+- `uv run scripts/release.py create --app APPNAME --push`:
   - `APPNAME`: the name of an application directory
 
 `release` expects to be run on the `main` branch and it expects you to not have changes pending.

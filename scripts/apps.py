@@ -7,7 +7,7 @@ from typing import List
 
 import toml
 
-from mitol.build_support.contextlib import chdir
+from scripts.contextlibs import chdir
 
 SOURCE_PATH = "src/"
 

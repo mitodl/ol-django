@@ -41,7 +41,6 @@ WORKDIR /home/dev/src
 FROM uv as release
 
 USER dev
-ENV PYTHONPATH="build-support/bin/"
 
 WORKDIR /home/dev
 RUN mkdir -m 0750 .ssh
