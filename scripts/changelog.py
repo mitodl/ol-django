@@ -56,6 +56,16 @@ def _echo_change(change: Diff):
     echo(indent(" ".join(line), "\t"))
 
 
+def _is_source_excluded(path) -> bool:
+    excluded_paths = ["*/changelog.d/*", "*/CHANGELOG.md"]
+    return any([fnmatch(path, exclude) for exclude in excluded_paths])  # noqa: C419
+
+
+def _is_changelog_excluded(path) -> bool:
+    excluded_paths = ["*/scriv.ini"]
+    return any([fnmatch(path, exclude) for exclude in excluded_paths])  # noqa: C419
+
+
 @changelog.command()
 @option(
     "-b",
@@ -72,7 +82,7 @@ def _echo_change(change: Diff):
 @simple_verbosity_option()
 @pass_project
 @pass_context
-def check(ctx: Context, project: Project, base: str, target: str):  # noqa: C901
+def check(ctx: Context, project: Project, base: str, target: str):
     """Check for missing changelogs"""
     base_commit = project.repo.commit(base)
     target_commit = project.repo.commit(target)
@@ -82,21 +92,22 @@ def check(ctx: Context, project: Project, base: str, target: str):  # noqa: C901
     for app_abs_path in list_apps():
         app_rel_path = app_abs_path.relative_to(project.path)
 
-        excluded_paths = [app_rel_path / "changelog.d/*", app_rel_path / "CHANGELOG.md"]
-
-        def _is_excluded(path):
-            return any([fnmatch(path, exclude) for exclude in excluded_paths])  # noqa: B023, C419
-
         source_changes = [
             change
             for change in base_commit.diff(target_commit, paths=[app_rel_path])
-            if not _is_excluded(change.a_path) and not _is_excluded(change.b_path)
+            if not _is_source_excluded(change.a_path)
+            and not _is_source_excluded(change.b_path)
         ]
         has_source_changes = len(source_changes) > 0
 
-        changelogd_changes = base_commit.diff(
-            target_commit, paths=[app_rel_path / "changelog.d"]
-        )
+        changelogd_changes = [
+            change
+            for change in base_commit.diff(
+                target_commit, paths=[app_rel_path / "changelog.d"]
+            )
+            if not _is_changelog_excluded(change.a_path)
+            and not _is_changelog_excluded(change.b_path)
+        ]
         has_changelogd_changes = len(changelogd_changes) > 0
 
         if has_source_changes and not has_changelogd_changes:
