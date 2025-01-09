@@ -1,4 +1,4 @@
 """mitol.authentication"""
 
-__version__ = "2023.12.19"
+__version__ = "2025.1.9"
 __distributionname__ = "mitol-django-authentication"
