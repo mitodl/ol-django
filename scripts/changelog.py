@@ -50,7 +50,7 @@ def _echo_change(change: Diff):
     """Echo the change to stdout"""
     line = [change.change_type, change.a_path]
 
-    if change.renamed:
+    if change.renamed_file:
         line.extend(["->", changelog.b_path])
 
     echo(indent(" ".join(line), "\t"))
