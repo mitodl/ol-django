@@ -28,9 +28,6 @@ requires-python = ">= 3.8"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[project.scripts]
-build = "mitol.build_support.cli:cli"
-
 [tool.uv]
 managed = true
 dev-dependencies = [

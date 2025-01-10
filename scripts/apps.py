@@ -7,17 +7,12 @@ from typing import List
 
 import toml
 
-from mitol.build_support.contextlib import chdir
-
-SOURCE_PATH = "src/"
+from scripts.contextlibs import chdir
 
 
 def get_source_dir() -> Path:
     """Get the source directory"""
-    source_dir = Path.cwd()
-    if SOURCE_PATH not in str(source_dir):
-        source_dir = source_dir / SOURCE_PATH
-    return source_dir
+    return Path(__file__).parent.parent / "src"
 
 
 def get_app_dir(path: str) -> Path:

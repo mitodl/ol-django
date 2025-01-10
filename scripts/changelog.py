@@ -10,16 +10,17 @@ from scriv.collect import collect
 from scriv.create import create
 from scriv.scriv import Scriv
 
-from mitol.build_support.apps import App, list_apps
-from mitol.build_support.contextlib import chdir
-from mitol.build_support.decorators import app_option, pass_app, pass_project
-from mitol.build_support.project import Project
+from scripts.apps import App, list_apps
+from scripts.contextlibs import chdir
+from scripts.decorators import app_option, pass_app, pass_project
+from scripts.project import Project
 
 
 @group("changelog")
 @pass_context
-def changelog(ctx):  # noqa: ARG001
+def changelog(ctx):
     """Manage application changelogs"""
+    ctx.ensure_object(Project)
 
     makedirs("changelog.d", exist_ok=True)  # noqa: PTH103
 
@@ -49,10 +50,20 @@ def _echo_change(change: Diff):
     """Echo the change to stdout"""
     line = [change.change_type, change.a_path]
 
-    if change.renamed:
+    if change.renamed_file:
         line.extend(["->", changelog.b_path])
 
     echo(indent(" ".join(line), "\t"))
+
+
+def _is_source_excluded(path) -> bool:
+    excluded_paths = ["*/changelog.d/*", "*/CHANGELOG.md"]
+    return any([fnmatch(path, exclude) for exclude in excluded_paths])  # noqa: C419
+
+
+def _is_changelog_excluded(path) -> bool:
+    excluded_paths = ["*/scriv.ini"]
+    return any([fnmatch(path, exclude) for exclude in excluded_paths])  # noqa: C419
 
 
 @changelog.command()
@@ -71,7 +82,7 @@ def _echo_change(change: Diff):
 @simple_verbosity_option()
 @pass_project
 @pass_context
-def check(ctx: Context, project: Project, base: str, target: str):  # noqa: C901
+def check(ctx: Context, project: Project, base: str, target: str):
     """Check for missing changelogs"""
     base_commit = project.repo.commit(base)
     target_commit = project.repo.commit(target)
@@ -81,37 +92,23 @@ def check(ctx: Context, project: Project, base: str, target: str):  # noqa: C901
     for app_abs_path in list_apps():
         app_rel_path = app_abs_path.relative_to(project.path)
 
-        excluded_paths = [app_rel_path / "changelog.d/*", app_rel_path / "CHANGELOG.md"]
-
-        def _is_excluded(path):
-            return any([fnmatch(path, exclude) for exclude in excluded_paths])  # noqa: B023, C419
-
         source_changes = [
             change
             for change in base_commit.diff(target_commit, paths=[app_rel_path])
-            if not _is_excluded(change.a_path) and not _is_excluded(change.b_path)
+            if not _is_source_excluded(change.a_path)
+            and not _is_source_excluded(change.b_path)
         ]
         has_source_changes = len(source_changes) > 0
 
-        changelogd_changes = base_commit.diff(
-            target_commit, paths=[app_rel_path / "changelog.d"]
-        )
+        changelogd_changes = [
+            change
+            for change in base_commit.diff(
+                target_commit, paths=[app_rel_path / "changelog.d"]
+            )
+            if not _is_changelog_excluded(change.a_path)
+            and not _is_changelog_excluded(change.b_path)
+        ]
         has_changelogd_changes = len(changelogd_changes) > 0
-
-        # If there's changes to the base requirements.txt, then we need to allow for
-        # changelogs to exist without the app code changing. There won't necessarily be
-        # changes in the individual apps if we're just updating project-wide dependencies.  # noqa: E501
-        # So, if there's no source changes, check if there's been changes to the
-        # requirements, and treat that as source changes.
-
-        if not has_source_changes:
-            reqs_paths = [
-                "build-support/requirements/requirements-testing.txt",
-                "build-support/requirements/requirements.txt",
-            ]
-
-            reqs_changes = base_commit.diff(target_commit, paths=reqs_paths)
-            has_source_changes = len(reqs_changes) > 0
 
         if has_source_changes and not has_changelogd_changes:
             echo(f"Changelog(s) are missing in {app_rel_path} for these changes:")
@@ -146,3 +143,7 @@ def check(ctx: Context, project: Project, base: str, target: str):  # noqa: C901
 
     if is_error:
         ctx.exit(1)
+
+
+if __name__ == "__main__":
+    changelog()

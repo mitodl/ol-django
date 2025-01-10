@@ -55,7 +55,7 @@ jobs:
 
     - name: Changelog
       if: ${{ !contains(github.event.head_commit.author, 'renovate') }}
-      run: PYTHONPATH=build-support/bin uv run build changelog check
+      run: uv run scripts/changelog.py check
 
       # - name: Upload coverage to CodeCov
       #   uses: codecov/codecov-action@v1
