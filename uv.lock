@@ -1404,7 +1404,7 @@ requires-dist = [
     { name = "django-stubs", specifier = ">=1.13.1" },
     { name = "mitol-django-common", editable = "src/common" },
     { name = "mitol-django-google-sheets", editable = "src/google_sheets" },
-    { name = "pluggy", specifier = ">=0.13.1" },
+    { name = "pluggy", specifier = ">0.13.1" },
 ]
 
 [[package]]
@@ -1425,7 +1425,7 @@ requires-dist = [
     { name = "django-stubs", specifier = ">=1.13.1" },
     { name = "mitol-django-common", editable = "src/common" },
     { name = "mitol-django-google-sheets", editable = "src/google_sheets" },
-    { name = "pluggy", specifier = ">=0.13.1" },
+    { name = "pluggy", specifier = ">0.13.1" },
 ]
 
 [[package]]
