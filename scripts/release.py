@@ -35,7 +35,7 @@ def create(ctx: Context, project: Project, app: App, push: bool):  # noqa: FBT00
     """Create a new release"""
 
     ctx.invoke(changelog.check)
-    ctx.invoke(version.update)
+    ctx.invoke(version.version.get_command(ctx, "update"))
     # keep=True so we can remove these properly (i.e. in Git) later
     ctx.invoke(changelog.collect, version=app.version, keep=True)
 
