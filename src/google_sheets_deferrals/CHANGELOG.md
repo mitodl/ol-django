@@ -6,6 +6,33 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.2.3'></a>
+## [2025.2.3] - 2025-02-03
+
+### Added
+
+- Added the `mitol-django-google-sheets-deferrals` app
+
+- Added implementation of filter_ignored_rows to request handler
+
+- Added DeferralRequestAdmin
+
+### Changed
+
+- Updated release version format
+
+- Set default_auto_field in app config
+
+- Added posthog application.
+
+- Allow for newer pluggy versions than 0.13.1
+
+- Update paths in pyproject.toml to ensure versioning continues to work.
+
+- Removes unnecessary noqa's.
+
+- Updated pluggy dependency (from 0.13 to anything 0.13 up)
+
 <a id='changelog-2023.12.19'></a>
 ## [2023.12.19] - 2023-12-19
 
