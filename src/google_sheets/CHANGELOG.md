@@ -6,6 +6,17 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.2.4'></a>
+## [2025.2.4] - 2025-02-04
+
+### Changed
+
+- Update paths in pyproject.toml to ensure versioning continues to work.
+
+- Removes unnecessary noqa's.
+
+- Bumped Google Python API package versions
+
 <a id='changelog-2024.7.3'></a>
 ## [2024.7.3] - 2024-07-03
 
