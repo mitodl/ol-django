@@ -20,6 +20,7 @@ dependencies = [
   "mitol-django-openedx",
   "mitol-django-payment_gateway",
   "mitol-django-uvtestapp",
+  "mitol-django-transcoding",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
@@ -80,6 +81,7 @@ mitol-django-olposthog = { workspace = true }
 mitol-django-openedx = { workspace = true }
 mitol-django-payment_gateway = { workspace = true }
 mitol-django-uvtestapp = { workspace = true }
+mitol-django-transcoding = { workspace = true }
 
 [tool.hatch.build.targets.sdist]
 include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]
