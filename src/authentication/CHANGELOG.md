@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.2.12'></a>
+## [2025.2.12] - 2025-02-13
+
+### Security
+
+- Bump djoser to 2.3.1
+
 <a id='changelog-2024.10.24.6'></a>
 ## [2024.10.24.6] - 2024-10-24
 

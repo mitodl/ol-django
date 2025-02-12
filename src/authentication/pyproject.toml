@@ -1,7 +1,7 @@
 [project]
 name = "mitol-django-authentication"
 description = "MIT Open Learning django app extensions for oauth toolkit"
-version = "2025.1.9"
+version = "2025.2.12"
 dependencies = [
   "mitol-django-common",
   "django-anymail>=6.0",
@@ -19,7 +19,7 @@ license = "BSD-3-Clause"
 requires-python = ">=3.8"
 
 [tool.bumpver]
-current_version = "2025.1.9"
+current_version = "2025.2.12"
 version_pattern = "YYYY.MM.DD[.INC0]"
 
 [tool.bumpver.file_patterns]
