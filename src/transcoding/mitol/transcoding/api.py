@@ -1,4 +1,4 @@
-"""API for the uvtestapp app."""
+"""API for the transcoding app."""
 
 
 def hello_world():
