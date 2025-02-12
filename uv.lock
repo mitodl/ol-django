@@ -334,7 +334,7 @@ name = "click"
 version = "8.1.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "platform_system == 'Windows'" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/96/d3/f04c7bfcf5c1862a2a5b845c6b2b360488cf47af55dfa79c98f6a6bf98b5/click-8.1.7.tar.gz", hash = "sha256:ca9853ad459e787e2192211578cc907e7594e294c7ccc834310722b41b9ca6de", size = 336121 }
 wheels = [
@@ -671,15 +671,6 @@ wheels = [
 ]
 
 [[package]]
-name = "django-templated-mail"
-version = "1.1.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e7/d3/25f1d97a0117537fecef5bee212afca7265c5fdd7452f638bf9ff9183c1e/django-templated-mail-1.1.1.tar.gz", hash = "sha256:8db807effebb42a532622e2d142dfd453dafcd0d7794c4c3332acb90656315f9", size = 3624 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f3/ec/0f42b730e17ca087aa79a7aadecff7957a867709f04bd0354e72120e9f68/django_templated_mail-1.1.1-py3-none-any.whl", hash = "sha256:f7127e1e31d7cad4e6c4b4801d25814d4b8782627ead76f4a75b3b7650687556", size = 4688 },
-]
-
-[[package]]
 name = "django-webpack-loader"
 version = "3.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -717,17 +708,16 @@ wheels = [
 
 [[package]]
 name = "djoser"
-version = "2.2.2"
+version = "2.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
-    { name = "django-templated-mail" },
     { name = "djangorestframework-simplejwt" },
     { name = "social-auth-app-django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3b/47/19b0c1867d50cd5fd9a34f60e71071afd0c2ae802321246846326ae7a9f9/djoser-2.2.2.tar.gz", hash = "sha256:9deb831a1c8781ceff325699e1407b4e1be8b4588e87071621d88ba31c09349f", size = 27366 }
+sdist = { url = "https://files.pythonhosted.org/packages/01/4a/d5bb069b49199c9fd0dc33c25dd7a6c15152926c47d73a560b6fde3bd2fb/djoser-2.3.1.tar.gz", hash = "sha256:4e7e2716b5b961f1289b5e49b2216ba5c18eb2a3b4b597dd6430638716ff5107", size = 33806 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/82/12/f7351496223339be99cd70f79bd1641fe2ea47abfe42a3da168e8d9344ce/djoser-2.2.2-py3-none-any.whl", hash = "sha256:efb91ad61e4d5b8d664db029b5947df9d34078289ef2680a1ab665e047144b74", size = 42570 },
+    { url = "https://files.pythonhosted.org/packages/ea/77/eae6f6ae6b71d578d08f7eee7c0965cff59a270cf024ecdcbb8048fc7a4b/djoser-2.3.1-py3-none-any.whl", hash = "sha256:386f337b9e05cb82354525fe2b6fec19fb1743e93e53b5b4b9dfaffccc38789f", size = 64215 },
 ]
 
 [[package]]
@@ -1286,7 +1276,7 @@ wheels = [
 
 [[package]]
 name = "mitol-django-authentication"
-version = "2023.12.19"
+version = "2025.1.9"
 source = { editable = "src/authentication" }
 dependencies = [
     { name = "django" },
@@ -1306,7 +1296,7 @@ requires-dist = [
     { name = "django-anymail", specifier = ">=6.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
     { name = "djangorestframework", specifier = ">=3.0.0" },
-    { name = "djoser", specifier = "==2.2.2" },
+    { name = "djoser", specifier = "==2.3.1" },
     { name = "mitol-django-common", editable = "src/common" },
     { name = "mitol-django-mail", editable = "src/mail" },
     { name = "python3-saml", specifier = ">=1.10.1" },
@@ -1390,7 +1380,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-google-sheets"
-version = "2024.7.3"
+version = "2025.2.4"
 source = { editable = "src/google_sheets" }
 dependencies = [
     { name = "django" },
