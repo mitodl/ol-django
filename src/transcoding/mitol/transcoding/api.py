@@ -1,8 +1,10 @@
 """API for the transcoding app."""
-from django.conf import settings
-import boto3
+
 import json
 import os
+
+import boto3
+from django.conf import settings
 
 
 def create_media_convert_job(video_source_key):
@@ -15,7 +17,8 @@ def create_media_convert_job(video_source_key):
     )
     with open(  # noqa: PTH123
         os.path.join(  # noqa: PTH118
-           os.getcwd(), "config/mediaconvert.json"  # noqa: PTH109
+            os.getcwd(),
+            "config/mediaconvert.json",  # noqa: PTH109
         ),
         encoding="utf-8",
     ) as job_template:
