@@ -25,7 +25,8 @@ def create_media_convert_job(video_source_key):
         job_dict = json.loads(job_template.read())
         job_dict["UserMetadata"]["filter"] = settings.VIDEO_TRANSCODE_QUEUE
         job_dict["Queue"] = (
-            f"arn:aws:mediaconvert:{settings.AWS_REGION}:{settings.AWS_ACCOUNT_ID}:queues/{settings.VIDEO_TRANSCODE_QUEUE}"
+            f"arn:aws:mediaconvert:{settings.AWS_REGION}:"
+            f"{settings.AWS_ACCOUNT_ID}:queues/{settings.VIDEO_TRANSCODE_QUEUE}"
         )
         job_dict["Role"] = (
             f"arn:aws:iam::{settings.AWS_ACCOUNT_ID}:role/{settings.AWS_ROLE_NAME}"
