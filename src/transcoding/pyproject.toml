@@ -1,7 +1,7 @@
 [project]
 name = "mitol-django-transcoding"
 version = "2024.10.24"
-description = "MIT Open Learning Django app template"
+description = "MIT Open Learning Django app extension for Transcoding jobs"
 dependencies = [
 "django-stubs>=1.13.1",
 "django>=3.0",
