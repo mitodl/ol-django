@@ -17,8 +17,8 @@ def create_media_convert_job(video_source_key):
     )
     with open(  # noqa: PTH123
         os.path.join(  # noqa: PTH118
-            os.getcwd(),
-            "config/mediaconvert.json",  # noqa: PTH109
+            os.getcwd(),  # noqa: PTH109
+            "config/mediaconvert.json",
         ),
         encoding="utf-8",
     ) as job_template:
