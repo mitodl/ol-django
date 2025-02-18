@@ -44,3 +44,29 @@ def create_media_convert_job(video_source_key):
             f"s3://{settings.AWS_STORAGE_BUCKET_NAME}/{video_source_key}"
         )
         return client.create_job(**job_dict)
+
+
+def update_video_job(video_job: VideoJob, results: dict):
+    """Update a VideoJob and associated Video, VideoFiles based on MediaConvert results"""  # noqa: E501
+    video_job.job_output = results
+    status = results.get("status")
+    video = video_job.video
+    if status == "COMPLETE":
+        video_job.status = VideoJobStatus.COMPLETE
+        try:
+            process_video_outputs(video, results.get("outputGroupDetails"))
+        except:  # pylint:disable=bare-except  # noqa: E722
+            log.exception("Error processing video outputs for job %s", video_job.job_id)
+    elif status == "ERROR":
+        video.status = VideoStatus.FAILED
+        video_job.status = VideoJobStatus.FAILED
+        log.error(
+            "Transcode failure for %s, error code %s: %s",
+            video.source_key,
+            results.get("errorCode"),
+            results.get("errorMessage"),
+        )
+        video_job.error_code = str(results.get("errorCode"))
+        video_job.error_message = results.get("errorMessage")
+    video_job.save()
+    video.save()
