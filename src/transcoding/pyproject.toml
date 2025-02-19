@@ -3,10 +3,11 @@ name = "mitol-django-transcoding"
 version = "2024.10.24"
 description = "MIT Open Learning Django app extension for Transcoding jobs"
 dependencies = [
-"django-stubs>=1.13.1",
-"django>=3.0",
-"edx-opaque-keys==2.2.2",
-"boto3==1.36.13",
+  "mitol-django-common",
+  "django-stubs>=1.13.1",
+  "django>=3.0",
+  "edx-opaque-keys==2.2.2",
+  "boto3==1.36.13",
 ]
 readme = "README.md"
 license = "BSD-3-Clause"

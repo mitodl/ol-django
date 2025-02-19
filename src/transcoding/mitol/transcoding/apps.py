@@ -21,8 +21,9 @@ class Transcoding(AppConfig):
         "AWS_REGION",
         "AWS_ACCOUNT_ID",
         "AWS_ROLE_NAME",
+        "POST_TRANSCODE_ACTIONS",
+        "TRANSCODE_JOB_TEMPLATE",
     ]
 
     # necessary because this is a namespaced app
     path = os.path.dirname(os.path.abspath(__file__))  # noqa: PTH100, PTH120
-

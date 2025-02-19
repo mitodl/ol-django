@@ -1,4 +1,6 @@
-from mitol.common.envs import get_string
+"""Django settings for transcoding app."""
+
+from mitol.common.envs import get_string, get_delimited_list
 
 
 VIDEO_S3_TRANSCODE_PREFIX = get_string(
@@ -34,4 +36,14 @@ AWS_ROLE_NAME = get_string(
     name="AWS_ROLE_NAME",
     default=None,
     description="AWS role name to be used for MediaConvert jobs",
+)
+POST_TRANSCODE_ACTIONS = get_delimited_list(
+    name="POST_TRANSCODE_ACTIONS",
+    default=[],
+    description="Actions to perform before publish",
+)
+TRANSCODE_JOB_TEMPLATE = get_string(
+    name="TRANSCODE_JOB_TEMPLATE",
+    default="transcoding/job.json",
+    description="Path to the transcoding job template",
 )

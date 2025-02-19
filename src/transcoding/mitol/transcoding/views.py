@@ -1,20 +1,17 @@
 """Views for transcoding app"""
 
-
 import json
-from urllib.parse import urljoin
 
 import requests
 from django.conf import settings
+from django.utils.module_loading import import_string
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from mitol.transcoding.api import update_video_job
 from mitol.transcoding.constants import BAD_REQUEST_MSG
 from mitol.transcoding.exceptions import BadRequest
-from mitol.transcoding.models import TranscodingJob
 from mitol.transcoding.utils import get_subscribe_url
 
 
@@ -46,8 +43,8 @@ class TranscodeJobView(GenericAPIView):
             if message.get("account", "") != settings.AWS_ACCOUNT_ID:
                 raise PermissionDenied
             detail = message.get("detail", {})
-            video_job = TranscodingJob.objects.get(job_id=detail.get("jobId"))
-            update_video_job(video_job, detail)
+
+            for action in settings.POST_TRANSCODE_ACTIONS:
+                import_string(action)(detail)
+
         return Response(status=200, data={})
-
-
