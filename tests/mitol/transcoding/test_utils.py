@@ -12,9 +12,8 @@ def test_get_subscribe_url(mocker):
     mocker.patch("django.conf.settings.AWS_REGION", fake_region)
     mocker.patch("django.conf.settings.AWS_ACCOUNT_ID", fake_account_id)
 
-    assert (
-        get_subscribe_url("fake-token")
-        == (f"https://sns.{fake_region}.amazonaws.com/?Action=ConfirmSubscription&"
+    assert get_subscribe_url("fake-token") == (
+        f"https://sns.{fake_region}.amazonaws.com/?Action=ConfirmSubscription&"
         f"TopicArn=arn:aws:sns:{fake_region}:{fake_account_id}:"
-        "MediaConvertJobAlert&Token=fake-token")
+        "MediaConvertJobAlert&Token=fake-token"
     )

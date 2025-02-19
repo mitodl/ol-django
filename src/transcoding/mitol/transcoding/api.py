@@ -40,7 +40,7 @@ def media_convert_job(video_source_key):
         job_dict["Settings"]["OutputGroups"][0]["OutputGroupSettings"][
             "FileGroupSettings"
         ]["Destination"] = f"s3://{settings.AWS_STORAGE_BUCKET_NAME}/{destination}"
-        job_dict["Settings"]["Inputs"][0][
-            "FileInput"
-        ] = f"s3://{settings.AWS_STORAGE_BUCKET_NAME}/{video_source_key}"
+        job_dict["Settings"]["Inputs"][0]["FileInput"] = (
+            f"s3://{settings.AWS_STORAGE_BUCKET_NAME}/{video_source_key}"
+        )
         return client.create_job(**job_dict)
