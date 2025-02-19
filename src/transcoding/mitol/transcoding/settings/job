@@ -44,6 +44,6 @@ POST_TRANSCODE_ACTIONS = get_delimited_list(
 )
 TRANSCODE_JOB_TEMPLATE = get_string(
     name="TRANSCODE_JOB_TEMPLATE",
-    default="transcoding/job.json",
+    default="",
     description="Path to the transcoding job template",
 )
