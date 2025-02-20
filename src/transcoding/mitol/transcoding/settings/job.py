@@ -1,7 +1,6 @@
 """Django settings for transcoding app."""
 
-from mitol.common.envs import get_string, get_delimited_list
-
+from mitol.common.envs import get_delimited_list, get_string
 
 VIDEO_S3_TRANSCODE_ENDPOINT = get_string(
     name="VIDEO_S3_TRANSCODE_ENDPOINT",
