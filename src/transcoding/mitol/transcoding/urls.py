@@ -6,7 +6,7 @@ from mitol.transcoding.views import TranscodeJobView
 
 urlpatterns = [
     path(
-        "api/transcode-jobs/",
+        "transcode-jobs/",
         TranscodeJobView.as_view(),
         name="transcode_jobs",
     ),
