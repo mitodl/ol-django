@@ -1,6 +1,6 @@
 [project]
 name = "mitol-django-transcoding"
-version = "2024.02.21"
+version = "2025.02.21"
 description = "MIT Open Learning Django app extension for Transcoding jobs"
 dependencies = [
   "mitol-django-common",
