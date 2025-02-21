@@ -23,4 +23,5 @@ urlpatterns = [
         include((base_urlpatterns, "oauth2_provider"), namespace="oauth2_provider"),
     ),
     path("admin/", admin.site.urls),
+    path("api/", include("mitol.transcoding.urls")),
 ]

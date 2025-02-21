@@ -27,6 +27,7 @@ import_settings_modules(
     "mitol.google_sheets_refunds.settings.google_sheets_refunds",
     "mitol.google_sheets_deferrals.settings.google_sheets_deferrals",
     "mitol.hubspot_api.settings.hubspot_api",
+    "mitol.transcoding.settings.job",
 )
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -70,6 +71,7 @@ INSTALLED_APPS = [
     "mitol.payment_gateway.apps.PaymentGatewayApp",
     "mitol.geoip.apps.GeoIPApp",
     "mitol.olposthog.apps.OlPosthog",
+    "mitol.transcoding.apps.Transcoding",
     # test app, integrates the reusable apps
     "testapp",
 ]

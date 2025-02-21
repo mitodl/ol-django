@@ -27,3 +27,7 @@ CACHES = {
 }
 
 FEATURES = {}
+
+AWS_REGION = "us-east-1"
+AWS_ACCOUNT_ID = "1234567890"
+AWS_ROLE_NAME = "test-role"
