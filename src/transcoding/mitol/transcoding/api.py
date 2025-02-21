@@ -1,7 +1,7 @@
 """API for the transcoding app."""
 
 import json
-import os
+from pathlib import Path
 
 import boto3
 from django.conf import settings
@@ -23,11 +23,7 @@ def media_convert_job(video_source_key: str) -> dict:
         region_name=settings.AWS_REGION,
         endpoint_url=settings.VIDEO_S3_TRANSCODE_ENDPOINT,
     )
-    with open(  # noqa: PTH123
-        os.path.join(  # noqa: PTH118
-            os.getcwd(),  # noqa: PTH109
-            settings.TRANSCODE_JOB_TEMPLATE,
-        ),
+    with Path(Path.cwd() / settings.TRANSCODE_JOB_TEMPLATE).open(
         encoding="utf-8",
     ) as job_template:
         job_dict = json.loads(job_template.read())
@@ -39,16 +35,17 @@ def media_convert_job(video_source_key: str) -> dict:
         job_dict["Role"] = (
             f"arn:aws:iam::{settings.AWS_ACCOUNT_ID}:role/{settings.AWS_ROLE_NAME}"
         )
-        destination = os.path.splitext(  # noqa: PTH122
+        source_path = Path(
             video_source_key.replace(
                 source_prefix,
                 settings.VIDEO_S3_TRANSCODE_PREFIX,
             )
-        )[0]
+        )
+        destination = str(source_path.parent / source_path.stem)
         job_dict["Settings"]["OutputGroups"][0]["OutputGroupSettings"][
             "FileGroupSettings"
         ]["Destination"] = f"s3://{settings.AWS_STORAGE_BUCKET_NAME}/{destination}"
-        job_dict["Settings"]["Inputs"][0]["FileInput"] = (
-            f"s3://{settings.AWS_STORAGE_BUCKET_NAME}/{video_source_key}"
-        )
+        job_dict["Settings"]["Inputs"][0][
+            "FileInput"
+        ] = f"s3://{settings.AWS_STORAGE_BUCKET_NAME}/{video_source_key}"
         return client.create_job(**job_dict)
