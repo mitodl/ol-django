@@ -6,9 +6,9 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
-<a id='changelog-2024.10.24'></a>
-## [2024.10.24] - 2024-10-24
+<a id='changelog-2025.02.21'></a>
+## [2025.02.25] - 2025-02-21
 
 ### Added
 
-- Added this test/template app.
+- Added Transcoding App
