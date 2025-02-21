@@ -7,8 +7,16 @@ import boto3
 from django.conf import settings
 
 
-def media_convert_job(video_source_key):
-    """Create a MediaConvert job for a Video"""
+def media_convert_job(video_source_key: str) -> dict:
+    """
+    Create a MediaConvert job for a Video
+
+    Args:
+        video_source_key (str): S3 key for the video source.
+
+    Returns:
+        dict: MediaConvert job details.
+    """
     source_prefix = settings.DRIVE_S3_UPLOAD_PREFIX
     client = boto3.client(
         "mediaconvert",
