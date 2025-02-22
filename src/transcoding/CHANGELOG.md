@@ -6,8 +6,8 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
-<a id='changelog-2025.02.21'></a>
-## [2025.02.25] - 2025-02-21
+<a id='changelog-2025.2.21'></a>
+## [2025.2.21] - 2025-2-21
 
 ### Added
 
