@@ -1,7 +1,5 @@
 """OAuth toolkit extensions model classes"""
 
-from typing import List
-
 from django.db import models
 from oauth2_provider.settings import oauth2_settings
 
@@ -20,6 +18,6 @@ class ApplicationAccess(TimestampedModel):
     scopes = models.CharField(max_length=512)
 
     @property
-    def scopes_list(self) -> List[str]:  # noqa: FA100
+    def scopes_list(self) -> list[str]:
         """Return a list of scopes this application is permitted"""
         return [scope.strip() for scope in self.scopes.split(",")]

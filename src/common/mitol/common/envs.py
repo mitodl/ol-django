@@ -5,8 +5,9 @@ import inspect
 import json
 import os
 from ast import literal_eval
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Dict, List, NamedTuple, Union
+from typing import Any, NamedTuple, Union
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -165,9 +166,9 @@ def parse_str(name: str, value: str, default: str):  # noqa: ARG001
 
 def parse_list_literal(
     name: str,
-    value: Union[str, List[Any]],  # noqa: FA100
-    default: List[Any],  # noqa: FA100, ARG001
-) -> List[str]:  # noqa: FA100
+    value: Union[str, list[Any]],
+    default: list[Any],  # noqa: ARG001
+) -> list[str]:
     """
     Parses a comma separated string into a list
 
@@ -267,9 +268,9 @@ def parse_crontab_kwargs(name, value, default):  # noqa: ARG001
 class EnvParser:
     """Stateful tracker for environment variable parsing"""
 
-    _env: Dict[str, str]  # noqa: FA100
-    _configured_vars: Dict[str, EnvVariable]  # noqa: FA100
-    _imported_modules: List[str]  # noqa: FA100
+    _env: dict[str, str]
+    _configured_vars: dict[str, EnvVariable]
+    _imported_modules: list[str]
 
     def __init__(self):
         self.reset()
@@ -314,7 +315,7 @@ class EnvParser:
                 )
             )
 
-    def list_environment_vars(self) -> List[EnvVariable]:  # noqa: FA100
+    def list_environment_vars(self) -> list[EnvVariable]:
         """
         Get the list of EnvVariables
 
@@ -324,7 +325,7 @@ class EnvParser:
         """
         return self._configured_vars.values()
 
-    def get_features(self, prefix: str = "FEATURE_") -> Dict[str, bool]:  # noqa: FA100
+    def get_features(self, prefix: str = "FEATURE_") -> dict[str, bool]:
         """
         Get the list of features enabled for this app
 

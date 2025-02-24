@@ -75,7 +75,7 @@ def _generate_cache_key(key: str, unique_id: str, person_properties: dict) -> st
     )
 
 
-def get_all_feature_flags(opt_unique_id: Optional[str] = None):  # noqa: FA100
+def get_all_feature_flags(opt_unique_id: Optional[str] = None):
     """
     Get the set of all feature flags
     """
@@ -97,8 +97,8 @@ def get_all_feature_flags(opt_unique_id: Optional[str] = None):  # noqa: FA100
 
 def is_enabled(
     name: str,
-    default: Optional[bool] = None,  # noqa: FA100
-    opt_unique_id: Optional[str] = None,  # noqa: FA100
+    default: Optional[bool] = None,
+    opt_unique_id: Optional[str] = None,
 ) -> bool:
     """
     Return True if the feature flag is enabled

@@ -7,8 +7,8 @@ https://developers.hubspot.com/docs/api/overview
 import json
 import logging
 import re
+from collections.abc import Iterable
 from enum import Enum
-from typing import Dict, Iterable, List
 from urllib.parse import quote
 
 import requests
@@ -541,10 +541,10 @@ def find_contact(email: str) -> SimplePublicObject:
 def find_objects(
     object_type: str,
     query: str = None,  # noqa: RUF013
-    filters: List[Dict] = None,  # noqa: FA100, RUF013
-    properties: List[Dict] = None,  # noqa: FA100, RUF013
-    sorts: List[Dict] = None,  # noqa: FA100, RUF013
-) -> List[SimplePublicObject]:  # noqa: FA100
+    filters: list[dict] = None,  # noqa: RUF013
+    properties: list[dict] = None,  # noqa: RUF013
+    sorts: list[dict] = None,  # noqa: RUF013
+) -> list[SimplePublicObject]:
     """
     Given an object_type and optional params, return search results from Hubspot.
 
@@ -575,9 +575,9 @@ def find_objects(
 
 def find_object(
     object_type: str,
-    filters: List[Dict],  # noqa: FA100
+    filters: list[dict],
     query: str = None,  # noqa: RUF013
-    properties: List[str] = None,  # noqa: FA100, RUF013
+    properties: list[str] = None,  # noqa: RUF013
     raise_count_error=True,  # noqa: FBT002
 ) -> SimplePublicObject:
     """
@@ -649,7 +649,7 @@ def find_deal(
     )
 
 
-def get_line_items_for_deal(hubspot_id: str) -> List[SimplePublicObject]:  # noqa: FA100
+def get_line_items_for_deal(hubspot_id: str) -> list[SimplePublicObject]:
     """
     Given the hubspot_api id for a deal, return all its line items
 

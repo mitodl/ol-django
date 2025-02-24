@@ -4,15 +4,13 @@ on: [push, workflow_dispatch]
 
 jobs:
   tests:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         python-version:
-        - "3.8"
-        - "3.9"
         - "3.10"
         - "3.11"
-        # - "3.12"
+        - "3.12"
 
     # Service containers to run
     services:
@@ -65,7 +63,7 @@ jobs:
 
   release:
     needs: tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: startsWith(github.ref, 'refs/tags/')
     steps:
     - uses: actions/checkout@v4

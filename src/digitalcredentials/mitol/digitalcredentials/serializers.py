@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import Dict, cast
+from typing import cast
 
 from rest_framework.serializers import (
     CharField,
@@ -62,7 +62,7 @@ class DigitalCredentialIssueSerializer(Serializer):
 
         return attrs
 
-    def update(self, instance, validated_data: Dict):  # noqa: FA100
+    def update(self, instance, validated_data: dict):
         """Perform an update by consuming the credentials request"""
 
         # we associate the learner DID with the request's learner

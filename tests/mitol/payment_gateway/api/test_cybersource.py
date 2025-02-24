@@ -6,7 +6,6 @@ from collections import namedtuple
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict
 
 import pytest
 from CyberSource import models as cs_models
@@ -68,7 +67,7 @@ class FakeRequest:
     the response.
     """
 
-    data: Dict  # noqa: FA100
+    data: dict
     method: str
 
 

@@ -3,7 +3,7 @@
 import base64
 import hashlib
 import hmac
-from typing import List, NamedTuple
+from typing import NamedTuple
 from urllib.parse import urlparse
 
 from requests.models import PreparedRequest
@@ -28,14 +28,14 @@ class HttpSignatureData(NamedTuple):
     """HTTP signature and headers"""
 
     signature: str
-    headers: List[str]  # noqa: FA100
+    headers: list[str]
 
 
 def _generate_signature_data(request: PreparedRequest) -> HttpSignatureData:
     """Generate an http signature"""
     if not isinstance(request.method, str):
         raise ValueError("Request.method must be a string")  # noqa: EM101, TRY003, TRY004
-    header_names: List[str] = []  # noqa: FA100
+    header_names: list[str] = []
     path = urlparse(request.url).path
     signing_string_lines = [
         f"(request-target): {request.method.lower()} {path if isinstance(path, str) else path.decode('utf-8')}"  # noqa: E501

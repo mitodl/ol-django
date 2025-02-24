@@ -3,7 +3,6 @@
 from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
-from typing import List
 
 import toml
 
@@ -20,16 +19,18 @@ def get_app_dir(path: str) -> Path:
     return get_source_dir() / path
 
 
-def list_apps() -> List[Path]:  # noqa: FA100
+def list_apps() -> list[Path]:
     """List the apps in the repo"""
     return sorted(
         dir_path
         for dir_path in get_source_dir().iterdir()
-        if dir_path.is_dir() and (dir_path / "pyproject.toml").exists()
+        if dir_path.is_dir()
+        and (dir_path / "pyproject.toml").exists()
+        and dir_path.stem != "uvtestapp"
     )
 
 
-def list_app_names() -> List[str]:  # noqa: FA100
+def list_app_names() -> list[str]:
     """List the app names"""
     return [name.stem for name in list_apps()]
 

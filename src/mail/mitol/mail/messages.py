@@ -1,7 +1,5 @@
 """Mail messages"""
 
-from typing import Tuple
-
 from anymail.message import AnymailMessage
 from django.conf import settings
 
@@ -31,7 +29,7 @@ class TemplatedMessage(AnymailMessage):
         return {"Reply-To": settings.MITOL_MAIL_REPLY_TO_ADDRESS}
 
     @classmethod
-    def render_templates(cls, template_context: dict) -> Tuple[str, str, str]:  # noqa: FA100
+    def render_templates(cls, template_context: dict) -> tuple[str, str, str]:
         """
         Render the email's templates
         """

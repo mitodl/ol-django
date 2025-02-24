@@ -23,7 +23,7 @@ dependencies = [
   "mitol-django-transcoding",
 ]
 readme = "README.md"
-requires-python = ">= 3.8"
+requires-python = ">= 3.10"
 
 [build-system]
 requires = ["hatchling"]
@@ -42,7 +42,7 @@ dev-dependencies = [
     "django-stubs[compatible-mypy]",
     "factory-boy~=3.2",
     "faker>=4.17.1",
-    "freezegun==1.0.0",
+    "freezegun>=1.5.1",
     "ipdb",
     "mypy",
     "mypy-extensions",
@@ -65,6 +65,9 @@ allow-direct-references = true
 
 [tool.uv.workspace]
 members = ["src/*"]
+
+[tool.uv.pip]
+no-binary = ["lxml", "xmlsec"]
 
 [tool.uv.sources]
 mitol-django-common = { workspace = true }
@@ -125,7 +128,7 @@ module = [
 
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py310"
 line-length = 88
 lint.select = [
     "A",  # flake8-builtins

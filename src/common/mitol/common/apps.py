@@ -1,7 +1,6 @@
 """Common app AppConfigs"""
 
 import os
-from typing import List
 
 from django.apps import AppConfig
 from django.conf import settings
@@ -11,7 +10,7 @@ from django.core.exceptions import ImproperlyConfigured
 class BaseApp(AppConfig):
     """Base application class"""
 
-    required_settings: List[str] = []  # noqa: FA100
+    required_settings: list[str] = []
 
     def validate_required_settings(self):
         """

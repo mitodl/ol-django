@@ -14,9 +14,10 @@ import contextlib
 import logging
 import re
 from collections import namedtuple
+from collections.abc import Generator, Iterable
 from copy import deepcopy
 from os import path
-from typing import Generator, Iterable, Optional, Tuple, Type, Union
+from typing import Optional, Union
 
 import premailer
 from bs4 import BeautifulSoup
@@ -46,7 +47,7 @@ MessageSenderAPI = namedtuple(  # noqa: PYI024
 )
 
 
-def get_message_classes() -> Iterable[Type[TemplatedMessage]]:  # noqa: FA100
+def get_message_classes() -> Iterable[type[TemplatedMessage]]:
     """Get the message classes that are configured"""
     classes = []
     for message_cls in getattr(settings, "MITOL_MAIL_MESSAGE_CLASSES", []):
@@ -60,8 +61,8 @@ def get_message_classes() -> Iterable[Type[TemplatedMessage]]:  # noqa: FA100
 
 
 def safe_format_recipient(
-    recipient_or_user: Union[AbstractBaseUser, str],  # noqa: FA100
-) -> Optional[str]:  # noqa: FA100
+    recipient_or_user: Union[AbstractBaseUser, str],
+) -> Optional[str]:
     """
     Returns a "safe"formatted recipient
     This means if MAILGUN_RECIPIENT_OVERRIDE is set, we only use that
@@ -107,7 +108,7 @@ def can_email_user(user: AbstractBaseUser) -> bool:
     return can_email_user_func(user)
 
 
-def render_email_templates(template_name: str, context: dict) -> Tuple[str, str, str]:  # noqa: FA100
+def render_email_templates(template_name: str, context: dict) -> tuple[str, str, str]:
     """
     Renders the email templates for the email
 
@@ -174,8 +175,8 @@ def get_connection() -> Generator:
 
 def build_message(
     connection: BaseEmailBackend,
-    message_cls: Type[TemplatedMessage],  # noqa: FA100
-    recipient_or_user: Union[str, AbstractBaseUser],  # noqa: FA100
+    message_cls: type[TemplatedMessage],
+    recipient_or_user: Union[str, AbstractBaseUser],
     template_context: dict,
     **kwargs,
 ) -> TemplatedMessage:
@@ -223,9 +224,9 @@ def send_message(message: TemplatedMessage):
 
 @contextlib.contextmanager
 def get_message_sender(
-    message_cls: Type[TemplatedMessage],  # noqa: FA100
+    message_cls: type[TemplatedMessage],
     *,
-    shared_context: Optional[dict] = None,  # noqa: FA100
+    shared_context: Optional[dict] = None,
 ) -> Generator:
     """
     Context manager to provide a unified interface to the mail APIs, also providing some extra functionality around shared contexts
@@ -244,7 +245,7 @@ def get_message_sender(
         build_message_for_sender = partial(build_message, connection, message_cls)
 
         def _build_message(
-            recipient_or_user: Union[str, AbstractBaseUser],  # noqa: FA100
+            recipient_or_user: Union[str, AbstractBaseUser],
             template_context: dict,
             **kwargs,
         ):

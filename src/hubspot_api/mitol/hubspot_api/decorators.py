@@ -1,7 +1,7 @@
 """Decorators for hubspot_api"""
 
 import functools
-from typing import Callable
+from collections.abc import Callable
 
 from hubspot.crm.objects import ApiException
 from rest_framework.status import HTTP_429_TOO_MANY_REQUESTS

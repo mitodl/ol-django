@@ -109,20 +109,20 @@ def test_property_group_exists(mocker, response, exists):
 
 def test_get_property_group(mock_hubspot_api, property_group):
     """get_property_group should call send_hubspot_request with the correct arguments"""
+    mock_get_by_name = (
+        mock_hubspot_api.return_value.crm.properties.groups_api.get_by_name
+    )
     group_name = property_group["name"]
     api.get_property_group(test_object_type, group_name)
-    assert mock_hubspot_api.called_with(  # noqa: PGH005
-        group_name, f"/properties/v1/{test_object_type}/groups/named", "GET"
-    )
+    mock_get_by_name.assert_called_with(test_object_type, group_name)
 
 
 def test_get_object_property(mock_hubspot_api):
     """get_object_property should call send_hubspot_request with the correct arguments"""  # noqa: E501
+    mock_get_by_name = mock_hubspot_api.return_value.crm.properties.core_api.get_by_name
     property_name = "y"
     api.get_object_property(test_object_type, property_name)
-    assert mock_hubspot_api.called_with(  # noqa: PGH005
-        f"named/{property_name}", f"/properties/v1/{test_object_type}/properties", "GET"
-    )
+    mock_get_by_name.assert_called_with(test_object_type, property_name)
 
 
 @pytest.mark.parametrize("is_valid", [True, False])
