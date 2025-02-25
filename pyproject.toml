@@ -42,7 +42,7 @@ dev-dependencies = [
     "django-stubs[compatible-mypy]",
     "factory-boy~=3.2",
     "faker>=4.17.1",
-    "freezegun==1.0.0",
+    "freezegun==1.5.1",
     "ipdb",
     "mypy",
     "mypy-extensions",

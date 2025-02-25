@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.8"
 resolution-markers = [
     "python_full_version == '3.10.*'",
@@ -817,14 +818,14 @@ wheels = [
 
 [[package]]
 name = "freezegun"
-version = "1.0.0"
+version = "1.5.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-dateutil" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/38/65/0ad5d6f2d4357ba8aa1ab797bb3663dac8e94aa80bde17646decdb8c63ad/freezegun-1.0.0.tar.gz", hash = "sha256:1cf08e441f913ff5e59b19cc065a8faa9dd1ddc442eaf0375294f344581a0643", size = 27426 }
+sdist = { url = "https://files.pythonhosted.org/packages/2c/ef/722b8d71ddf4d48f25f6d78aa2533d505bf3eec000a7cacb8ccc8de61f2f/freezegun-1.5.1.tar.gz", hash = "sha256:b29dedfcda6d5e8e083ce71b2b542753ad48cfec44037b3fc79702e2980a89e9", size = 33697 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6c/56/607e515f40c23e5ec93d9119f8f876e7a6db6a77d52a687565d151257268/freezegun-1.0.0-py2.py3-none-any.whl", hash = "sha256:02b35de52f4699a78f6ac4518e4cd3390dddc43b0aeb978335a8f270a2d9668b", size = 14835 },
+    { url = "https://files.pythonhosted.org/packages/51/0b/0d7fee5919bccc1fdc1c2a7528b98f65c6f69b223a3fd8f809918c142c36/freezegun-1.5.1-py3-none-any.whl", hash = "sha256:bf111d7138a8abe55ab48a71755673dbaa4ab87f4cff5634a4442dfec34c15f1", size = 17569 },
 ]
 
 [[package]]
@@ -1629,7 +1630,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-transcoding"
-version = "2025.2.22"
+version = "2025.2.25"
 source = { editable = "src/transcoding" }
 dependencies = [
     { name = "boto3" },
@@ -1820,7 +1821,7 @@ dev = [
     { name = "django-stubs", extras = ["compatible-mypy"] },
     { name = "factory-boy", specifier = "~=3.2" },
     { name = "faker", specifier = ">=4.17.1" },
-    { name = "freezegun", specifier = "==1.0.0" },
+    { name = "freezegun", specifier = "==1.5.1" },
     { name = "gitpython" },
     { name = "ipdb" },
     { name = "mypy" },
