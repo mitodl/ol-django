@@ -6,6 +6,17 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.2.25'></a>
+## [2025.2.25] - 2025-02-26
+
+### Removed
+
+- Removed unnecessary package `edx-opaque-keys`
+
+### Changed
+
+- Locked `mitol-django-common` @ `2023.12.19`
+
 <a id='changelog-2025.2.22'></a>
 ## [2025.2.22] - 2025-02-22
 
