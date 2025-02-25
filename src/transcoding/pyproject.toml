@@ -3,10 +3,9 @@ name = "mitol-django-transcoding"
 version = "2025.2.22"
 description = "MIT Open Learning Django app extension for Transcoding jobs"
 dependencies = [
-  "mitol-django-common",
+  "mitol-django-common==2023.12.19",
   "django-stubs>=1.13.1",
   "django>=3.0",
-  "edx-opaque-keys==2.2.2",
   "boto3==1.36.22",
 ]
 readme = "README.md"

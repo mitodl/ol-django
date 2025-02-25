@@ -1319,7 +1319,7 @@ wheels = [
 
 [[package]]
 name = "mitol-django-authentication"
-version = "2025.1.9"
+version = "2025.2.12"
 source = { editable = "src/authentication" }
 dependencies = [
     { name = "django" },
@@ -1629,13 +1629,12 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-transcoding"
-version = "2025.2.21"
+version = "2025.2.22"
 source = { editable = "src/transcoding" }
 dependencies = [
     { name = "boto3" },
     { name = "django" },
     { name = "django-stubs" },
-    { name = "edx-opaque-keys" },
     { name = "mitol-django-common" },
 ]
 
@@ -1644,7 +1643,6 @@ requires-dist = [
     { name = "boto3", specifier = "==1.36.22" },
     { name = "django", specifier = ">=3.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
-    { name = "edx-opaque-keys", specifier = "==2.2.2" },
     { name = "mitol-django-common", editable = "src/common" },
 ]
 
