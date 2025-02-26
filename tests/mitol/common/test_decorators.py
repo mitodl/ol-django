@@ -1,14 +1,12 @@
 """Tests for decorators"""
 
-from typing import List
-
 import pytest
 from mitol.common.decorators import single_task
 
 
 def task_obj_lock(
     func_name: str,
-    args: List[object],  # noqa: FA100
+    args: list[object],
     kwargs: dict,  # noqa: ARG001
 ) -> str:  # @pylint:unused-argument
     """

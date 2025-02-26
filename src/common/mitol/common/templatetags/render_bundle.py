@@ -1,7 +1,8 @@
 """Templatetags for rendering webpack bundle script tags"""  # noqa: INP001
 
+from collections.abc import Iterator
 from os import path
-from typing import Any, Dict, Iterator
+from typing import Any
 
 from django import template
 from django.conf import settings
@@ -35,7 +36,7 @@ def _get_bundle(request: HttpRequest, bundle_name: str) -> Iterator[dict]:
 
 @register.simple_tag(takes_context=True)
 def render_bundle(
-    context: Dict[str, Any],  # noqa: FA100
+    context: dict[str, Any],
     bundle_name: str,
     added_attrs: str = "",
 ) -> SafeText:

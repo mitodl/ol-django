@@ -3,7 +3,8 @@ Common model classes
 """
 
 import copy
-from typing import Dict, Iterable, List, Type, TypeVar, Union
+from collections.abc import Iterable
+from typing import TypeVar, Union
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -161,7 +162,7 @@ _PrefetchGenericQuerySet = TypeVar(
 def _items_for_class(
     content_type_field: str,
     items: Iterable[_ModelClass],
-    model_cls: Type[_ModelClass],  # noqa: FA100
+    model_cls: type[_ModelClass],
 ) -> Iterable[_ModelClass]:
     """Returns a list of items that matches a class by content_type"""  # noqa: D401
     return [
@@ -182,8 +183,8 @@ class PrefetchGenericQuerySet(QuerySet):
     def prefetch_generic_related(
         self,
         content_type_field: str,
-        model_lookups: Dict[  # noqa: FA100
-            Union[List[Type[_ModelClass]], Type[_ModelClass]], List[str]  # noqa: FA100
+        model_lookups: dict[
+            Union[list[type[_ModelClass]], type[_ModelClass]], list[str]
         ],
     ) -> _PrefetchGenericQuerySet:
         """

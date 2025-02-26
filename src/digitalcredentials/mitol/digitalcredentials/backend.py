@@ -1,6 +1,5 @@
 """Digital credentials proxy to sign-and-verify service"""
 
-from typing import Dict
 from urllib.parse import urlencode, urljoin
 
 import requests
@@ -27,7 +26,7 @@ def build_api_url(path: str) -> str:
     return urljoin(base_url, path)
 
 
-def _extract_verification_method(presentation: Dict) -> str:  # noqa: FA100
+def _extract_verification_method(presentation: dict) -> str:
     """Extract the verification method from the presentation"""
     proof = presentation.get("proof", {})
 
@@ -44,7 +43,7 @@ def _extract_verification_method(presentation: Dict) -> str:  # noqa: FA100
 
 def verify_presentations(
     credential_request: DigitalCredentialRequest,
-    presentation: Dict,  # noqa: FA100
+    presentation: dict,
 ) -> requests.Response:
     """Verifies the learner's presentation against the backend service"""  # noqa: D401
     return requests.post(  # noqa: S113
@@ -59,7 +58,7 @@ def verify_presentations(
     )
 
 
-def build_credential(credentialed_object: Dict, learner_did: LearnerDID) -> Dict:  # noqa: FA100
+def build_credential(credentialed_object: dict, learner_did: LearnerDID) -> dict:
     """Build the credential"""
     build_credendial_func_name = (
         settings.MITOL_DIGITAL_CREDENTIALS_BUILD_CREDENTIAL_FUNC
@@ -74,7 +73,7 @@ def build_credential(credentialed_object: Dict, learner_did: LearnerDID) -> Dict
     return build_credendial_func(credentialed_object, learner_did)
 
 
-def issue_credential(credential: Dict) -> Dict:  # noqa: FA100
+def issue_credential(credential: dict) -> dict:
     """Request signed credential from the sign-and-verify service"""
     request = requests.Request(
         "POST",

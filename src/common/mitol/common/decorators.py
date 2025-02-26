@@ -1,7 +1,8 @@
 import functools
 import random
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, Optional
+from typing import Optional
 
 from django.utils.cache import get_max_age, patch_cache_control
 from django_redis import get_redis_connection
@@ -37,9 +38,9 @@ def cache_control_max_age_jitter(*args, **kwargs):  # noqa: ARG001
 
 def single_task(
     timeout: int,
-    raise_block: Optional[bool] = True,  # noqa: FBT002, FA100
-    key: Optional[str or Callable[[str, P.args, P.kwargs], str]] = None,  # noqa: FA100
-    cache_name: Optional[str] = "redis",  # noqa: FA100
+    raise_block: Optional[bool] = True,  # noqa: FBT002
+    key: Optional[str or Callable[[str, P.args, P.kwargs], str]] = None,
+    cache_name: Optional[str] = "redis",
 ) -> Callable:
     """
     Only allow one instance of a celery task to run concurrently

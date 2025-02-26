@@ -11,7 +11,6 @@ from base64 import b64encode
 from dataclasses import dataclass
 from decimal import Decimal
 from functools import wraps
-from typing import Dict, List
 
 from CyberSource import (
     CreateSearchRequest,
@@ -79,7 +78,7 @@ class Order:
     username: str
     ip_address: str
     reference: str
-    items: List[CartItem]  # noqa: FA100
+    items: list[CartItem]
 
 
 @dataclass
@@ -195,7 +194,7 @@ class PaymentGateway(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def get_refund_request(transaction_dict: Dict):  # noqa: FA100
+    def get_refund_request(transaction_dict: dict):
         """
         This is the entrypoint to the payment gateway for creating refund request objects.
         Args:
@@ -283,7 +282,7 @@ class PaymentGateway(abc.ABC):
 
     @classmethod
     @find_gateway_class
-    def create_refund_request(cls, payment_type, transaction_dict: Dict):  # noqa: FA100
+    def create_refund_request(cls, payment_type, transaction_dict: dict):
         """
         Iterate through the given payment transaction dictionary and returns a refund object to perform operations on.
         Args:
@@ -510,7 +509,7 @@ class CyberSourcePaymentGateway(
         return configuration_dictionary  # noqa: RET504
 
     @staticmethod
-    def get_refund_request(transaction_dict: Dict):  # noqa: FA100
+    def get_refund_request(transaction_dict: dict):
         """
         Create a refund request object to from the required attributes in the payment dictionary
         Args:
@@ -766,7 +765,7 @@ class CyberSourcePaymentGateway(
 
         return ProcessorResponse.STATE_ERROR
 
-    def find_transactions(self, reference_numbers: List[str], limit=20):  # noqa: FA100
+    def find_transactions(self, reference_numbers: list[str], limit=20):
         """
         Performs a search for the transactions specified. For simplicity, this
         assumes the data set specified is reference numbers. If your system doesn't
@@ -918,7 +917,7 @@ class CyberSourcePaymentGateway(
 
         return (response, payload)
 
-    def find_and_get_transactions(self, reference_numbers: List[str]):  # noqa: FA100
+    def find_and_get_transactions(self, reference_numbers: list[str]):
         """
         For the reference numbers specified, gets the transaction details and
         returns that. In the case that there are multiple results for the
