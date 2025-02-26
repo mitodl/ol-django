@@ -6,6 +6,11 @@ This repository is the home of MIT Open Learning's reusable django apps.
 
 This set of libraries is managed using [uv](https://docs.astral.sh/uv/).
 
+### Setup
+
+To run this app in local development mode, copy `testapp/main/settings/example.dev.py` to  `testapp/main/settings/dev.py`. This file has the same defaults as `testapp/main/settings/test.py`, but it is gitignored so you can safely add secrets to it. `manage.py` and `main/wsgi.py` both load `dev.py`.
+
+
 #### Use on your host system
 
 - Install `xmlsec` native libraries for your OS: https://xmlsec.readthedocs.io/en/stable/install.html
@@ -63,7 +68,7 @@ To add a new one, it's easiest to copy one of the existing apps. There's one cal
    * Under `[tool.uv.sources]`, add a new entry for the new app, using (again) the same format as the other entries.
 4. Test building: `uv build --package mitol-django-<appname>` . (This ensures that uv is OK with your changes.)
 5. Add space for the app in the `tests` app: `mkdir tests/mitol/<appname>` and add a blank `__init__.py` to it.
-6. Add the app to `testapp/settings/shared.py`
+6. Add the app to `testapp/main/settings/shared.py`
    * You must add it to `INSTALLED_APPS`.
    * If your app has configuration settings, add to the `import_settings_module` call at the top too.
 
