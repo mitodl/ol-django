@@ -1268,7 +1268,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-google-sheets"
-version = "2025.2.4"
+version = "2025.2.27"
 source = { editable = "src/google_sheets" }
 dependencies = [
     { name = "django" },
@@ -1318,7 +1318,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-google-sheets-refunds"
-version = "2025.2.3"
+version = "2025.2.27"
 source = { editable = "src/google_sheets_refunds" }
 dependencies = [
     { name = "django" },
