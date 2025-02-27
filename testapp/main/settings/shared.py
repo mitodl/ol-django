@@ -44,6 +44,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+AUTH_USER_MODEL = "users.User"
 
 # Application definition
 
@@ -74,6 +75,7 @@ INSTALLED_APPS = [
     "mitol.transcoding.apps.Transcoding",
     # test app, integrates the reusable apps
     "main",
+    "users",
 ]
 
 MIDDLEWARE = [
