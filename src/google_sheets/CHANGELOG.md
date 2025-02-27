@@ -6,6 +6,19 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.2.27'></a>
+## [2025.2.27] - 2025-02-27
+
+### Changed
+
+- Add a migration to swap in `BigAutoField` for the `filewatchrenewalattempt`, `googleapiauth`, and `googlefilewatch` models.
+
+### removed
+
+- support for python 3.8 and 3.9.
+
+### added
+
 <a id='changelog-2025.2.4'></a>
 ## [2025.2.4] - 2025-02-04
 
