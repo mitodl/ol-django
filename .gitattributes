@@ -1,1 +1,3 @@
 *.lockfile binary
+*.lock binary
+.secrets.baseline binary

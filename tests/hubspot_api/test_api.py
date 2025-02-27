@@ -25,6 +25,8 @@ from mitol.hubspot_api.models import HubspotObject
 
 fake = Faker()
 
+User = get_user_model()
+
 test_object_type = "deals"
 
 
