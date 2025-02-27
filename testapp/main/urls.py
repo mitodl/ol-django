@@ -24,4 +24,5 @@ urlpatterns = [
     ),
     path("admin/", admin.site.urls),
     path("api/", include("mitol.transcoding.urls")),
+    path("", include("mitol.scim.urls")),
 ]

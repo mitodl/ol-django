@@ -28,6 +28,7 @@ import_settings_modules(
     "mitol.google_sheets_deferrals.settings.google_sheets_deferrals",
     "mitol.hubspot_api.settings.hubspot_api",
     "mitol.transcoding.settings.job",
+    "mitol.scim.settings.scim",
 )
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -43,6 +44,7 @@ SECRET_KEY = "TESTAPP_SECRET"  # noqa: S105
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
+AUTH_USER_MODEL = "testapp.User"
 
 AUTH_USER_MODEL = "users.User"
 
@@ -73,6 +75,7 @@ INSTALLED_APPS = [
     "mitol.geoip.apps.GeoIPApp",
     "mitol.olposthog.apps.OlPosthog",
     "mitol.transcoding.apps.Transcoding",
+    "mitol.scim.apps.ScimApp",
     # test app, integrates the reusable apps
     "main",
     "users",
