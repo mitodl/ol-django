@@ -6,6 +6,19 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.2.27'></a>
+## [2025.2.27] - 2025-02-27
+
+### Changed
+
+- Add a migration to swap in `BigAutoField` for the `refundrequest` model.
+
+### added
+
+### removed
+
+- support for python 3.8 and 3.9.
+
 <a id='changelog-2025.2.3'></a>
 ## [2025.2.3] - 2025-02-03
 
