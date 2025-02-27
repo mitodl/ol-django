@@ -6,7 +6,8 @@ import json
 from collections.abc import Iterable
 
 import pytest
-from django.contrib.auth.models import Group, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from faker import Faker
 from hubspot.crm.objects import (
@@ -25,6 +26,9 @@ from mitol.hubspot_api.models import HubspotObject
 fake = Faker()
 
 test_object_type = "deals"
+
+
+User = get_user_model()
 
 
 @pytest.fixture()
