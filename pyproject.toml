@@ -97,13 +97,13 @@ exclude = ["BUILD", "pyproject.toml"]
 [tool.pytest.ini_options]
 addopts = "--cov . --cov-report term --cov-report html --cov-report xml --reuse-db"
 norecursedirs = ".git .tox .* CVS _darcs {arch} *.egg dist"
-DJANGO_SETTINGS_MODULE = "testapp.settings.test"
+DJANGO_SETTINGS_MODULE = "main.settings.test"
 # -- recommended but optional:
-python_files = ["tests/mitol/**/test_*.py"]
-pythonpath = ["src", "tests"]
+python_files = ["tests/**/test_*.py"]
+pythonpath = ["testapp", "src", "tests"]
 
 [tool.django-stubs]
-django_settings_module = "testapp.settings.test"
+django_settings_module = "main.settings.test"
 
 [tool.mypy]
 namespace_packages = true
