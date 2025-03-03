@@ -31,7 +31,7 @@ FAKE_ENVIRONS = {
 
 
 @pytest.fixture(autouse=True)
-def clean_env(mocker):  # noqa: PT004
+def clean_env(mocker):
     """Clean the configured environment variables before a test"""
     mocker.patch.dict("os.environ", FAKE_ENVIRONS, clear=True)
     envs.env.reload()
