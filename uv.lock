@@ -1666,7 +1666,7 @@ dev = [
     { name = "pytest-cov", specifier = ">=4.0.0" },
     { name = "pytest-django", specifier = "==3.10.0" },
     { name = "pytest-lazy-fixtures", specifier = ">=1" },
-    { name = "pytest-mock", specifier = "==1.10.1" },
+    { name = "pytest-mock", specifier = "==1.13.0" },
     { name = "responses", specifier = "==0.12.1" },
     { name = "ruff" },
     { name = "scriv", extras = ["toml"] },
@@ -2070,14 +2070,14 @@ wheels = [
 
 [[package]]
 name = "pytest-mock"
-version = "1.10.1"
+version = "1.13.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pytest" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ba/99/2c791be779865c2619e752f06459d18bf57c00f58c45e7281ee63f70d984/pytest-mock-1.10.1.tar.gz", hash = "sha256:4d0d06d173eecf172703219a71dbd4ade0e13904e6bbce1ce660e2e0dc78b5c4", size = 22121 }
+sdist = { url = "https://files.pythonhosted.org/packages/89/77/3e1a2353d67e29096eb0018d7c757dc138dd236ca57d38540848ce0f7738/pytest-mock-1.13.0.tar.gz", hash = "sha256:e24a911ec96773022ebcc7030059b57cd3480b56d4f5d19b7c370ec635e6aed5", size = 23823 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4d/3f/4ff4f184a1d4417572cb93ebb8289b88546d986c6fa1a9f367fce6214eeb/pytest_mock-1.10.1-py2.py3-none-any.whl", hash = "sha256:bfdf02789e3d197bd682a758cae0a4a18706566395fbe2803badcd1335e0173e", size = 9487 },
+    { url = "https://files.pythonhosted.org/packages/51/35/67019e708f2adaf2d9f125b4ddff49ff40e22d3181a368b1ef7ba3268546/pytest_mock-1.13.0-py2.py3-none-any.whl", hash = "sha256:67e414b3caef7bff6fc6bd83b22b5bc39147e4493f483c2679bc9d4dc485a94d", size = 10400 },
 ]
 
 [[package]]
