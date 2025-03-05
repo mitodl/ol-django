@@ -1,4 +1,3 @@
-
 SCIM_SERVICE_PROVIDER = {
     "SCHEME": "https",
     # use default value,

@@ -6,7 +6,6 @@ from factory.django import DjangoModelFactory
 from factory.fuzzy import FuzzyText
 
 
-
 class UserFactory(DjangoModelFactory):
     """
     User factory for default django model
@@ -21,7 +20,6 @@ class UserFactory(DjangoModelFactory):
 
     scim_external_id = Faker("uuid4")
     scim_username = SelfAttribute("email")
-
 
     class Meta:
         model = get_user_model()

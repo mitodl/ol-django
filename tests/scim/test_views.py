@@ -1,10 +1,10 @@
 import itertools
-from http import HTTPStatus
 import json
 import operator
 import random
 from collections.abc import Callable
 from functools import reduce
+from http import HTTPStatus
 from types import SimpleNamespace
 
 import pytest
@@ -14,14 +14,13 @@ from django.contrib.auth import get_user_model
 from django.test import Client
 from django.urls import reverse
 from django_scim import constants as djs_constants
-
 from main.factories import UserFactory
 from mitol.scim import constants
 
 User = get_user_model()
 
 
-@pytest.fixture
+@pytest.fixture()
 def scim_client(staff_user):
     """Test client for scim"""
     client = Client()
@@ -119,7 +118,7 @@ def test_scim_user_patch(scim_client):
                 "Operations": [
                     {
                         "op": "replace",
-                        # yes, the value we get from scim-for-keycloak is a JSON encoded 
+                        # yes, the value we get from scim-for-keycloak is a JSON encoded
                         # string...inside JSON...
                         "value": json.dumps(
                             {
@@ -285,7 +284,7 @@ def _delete_operation(user, bulk_id_gen):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def bulk_test_data():
     """Test data for the /Bulk API tests"""
     existing_users = UserFactory.create_batch(500)

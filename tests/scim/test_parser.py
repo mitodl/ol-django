@@ -1,6 +1,5 @@
 import pytest
 from faker import Faker
-
 from mitol.scim.parser import Filters
 
 faker = Faker()
@@ -43,7 +42,7 @@ def test_scim_filter_parser():
         userType eq "Employee" and emails[type eq "work" and value co "@example.com"]
 
         emails[type eq "work" and value co "@example.com"] or ims[type eq "xmpp" and value co "@foo.com"]
-        """ # noqa: E501
+        """  # noqa: E501
     )
 
     # run_tests will output error messages
