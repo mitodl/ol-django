@@ -7,21 +7,24 @@ import hashlib
 import hmac
 import json
 import uuid
+import warnings
 from base64 import b64encode
 from dataclasses import dataclass
 from decimal import Decimal
 from functools import wraps
 
-from CyberSource import (
-    CreateSearchRequest,
-    Ptsv2paymentsClientReferenceInformation,
-    Ptsv2paymentsidcapturesOrderInformationAmountDetails,
-    Ptsv2paymentsidrefundsOrderInformation,
-    RefundApi,
-    RefundPaymentRequest,
-    SearchTransactionsApi,
-    TransactionDetailsApi,
-)
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=SyntaxWarning)
+    from CyberSource import (
+        CreateSearchRequest,
+        Ptsv2paymentsClientReferenceInformation,
+        Ptsv2paymentsidcapturesOrderInformationAmountDetails,
+        Ptsv2paymentsidrefundsOrderInformation,
+        RefundApi,
+        RefundPaymentRequest,
+        SearchTransactionsApi,
+        TransactionDetailsApi,
+    )
 from django.conf import settings
 
 from mitol.common.utils.datetime import now_in_utc
