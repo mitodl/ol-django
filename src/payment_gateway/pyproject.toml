@@ -1,6 +1,6 @@
 [project]
 name = "mitol-django-payment-gateway"
-version = "2023.12.19"
+version = "2025.3.6"
 description = "Django application to handle payment processing"
 dependencies = [
 "cybersource-rest-client-python>=0.0.59",
@@ -13,7 +13,7 @@ license = "BSD-3-Clause"
 requires-python = ">=3.10"
 
 [tool.bumpver]
-current_version = "2023.12.19"
+current_version = "2025.3.6"
 version_pattern = "YYYY.MM.DD[.INC0]"
 
 [tool.bumpver.file_patterns]

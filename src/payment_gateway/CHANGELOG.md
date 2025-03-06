@@ -6,6 +6,34 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.3.6'></a>
+## [2025.3.6] - 2025-03-06
+
+### Added
+
+- Adds support for tax collection.
+- Bumps CyberSource REST Client package to at least 0.0.54.
+- Adds a helper for quantizing decimals for currency amounts.
+
+### Changed
+
+- Updated changelog management and versioning scheme.
+
+- Updated requirements and lockfiles to support Django 4.
+- Removed support for Django 2.2.
+
+- Added posthog application.
+
+- Update paths in pyproject.toml to ensure versioning continues to work.
+
+- Removes unnecessary noqa's.
+
+- Wrap the imports for CyberSource; they generate `SyntaxWarning`s, so this should quiet them down (and allow them to pass tests)
+
+### removed
+
+- support for python 3.8 and 3.9.
+
 <a id='changelog-2023.12.19'></a>
 ## [2023.12.19] - 2023-12-19
 
