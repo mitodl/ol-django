@@ -51,7 +51,7 @@ dev-dependencies = [
     "pytest-cov>=4.0.0",
     "pytest-django==3.10.0",
     "pytest-lazy-fixtures>=1",
-    "pytest-mock==1.13.0",
+    "pytest-mock==3.14.0",
     "responses==0.25.6",
     "ruff",
     "scriv[toml]",
