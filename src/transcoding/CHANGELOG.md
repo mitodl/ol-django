@@ -6,6 +6,19 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.3.12'></a>
+## [2025.3.12] - 2025-03-12
+
+### Changed
+
+- Updated boto3 version
+
+### removed
+
+- support for python 3.8 and 3.9.
+
+### added
+
 <a id='changelog-2025.2.25'></a>
 ## [2025.2.25] - 2025-02-26
 
