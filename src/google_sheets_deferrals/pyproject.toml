@@ -1,6 +1,6 @@
 [project]
 name = "mitol-django-google-sheets-deferrals"
-version = "2025.2.3"
+version = "2025.3.17"
 description = "Library to handle Deferral requests using Google Sheets integrations in Django"
 dependencies = [
 "django-stubs>=1.13.1",
@@ -14,7 +14,7 @@ license = "BSD-3-Clause"
 requires-python = ">=3.10"
 
 [tool.bumpver]
-current_version = "2025.2.3"
+current_version = "2025.3.17"
 version_pattern = "YYYY.MM.DD[.INC0]"
 
 [tool.bumpver.file_patterns]

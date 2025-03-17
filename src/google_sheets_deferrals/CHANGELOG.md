@@ -6,6 +6,21 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.3.17'></a>
+## [2025.3.17] - 2025-03-17
+
+- Support for Python 3.13
+
+### Added
+
+- Added the `mitol-django-google-sheets-deferrals` app
+
+### added
+
+### removed
+
+- support for python 3.8 and 3.9.
+
 <a id='changelog-2025.2.3'></a>
 ## [2025.2.3] - 2025-02-03
 
