@@ -8,7 +8,8 @@ authors = [
 dependencies = [
   "mitol-django-common",
   "mitol-django-mail",
-  "mitol-django-authentication",
+  'mitol-django-authentication[touchstone]; python_version < "3.13"',
+  'mitol-django-authentication; python_version >= "3.13"',
   "mitol-django-digitalcredentials",
   "mitol-django-geoip",
   "mitol-django-google_sheets",

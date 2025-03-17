@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+import sys
 
 import dj_database_url
 from mitol.common.envs import get_string, import_settings_modules, init_app_settings
@@ -127,10 +128,10 @@ DEFAULT_DATABASE_CONFIG = dj_database_url.parse(
 
 DATABASES = {"default": DEFAULT_DATABASE_CONFIG}
 
-AUTHENTICATION_BACKENDS = (
-    "django.contrib.auth.backends.ModelBackend",
-    "social_core.backends.saml.SAMLAuth",
-)
+AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
+
+if sys.version_info <= (3, 13):
+    AUTHENTICATION_BACKENDS += ("social_core.backends.saml.SAMLAuth",)
 
 
 # Password validation
