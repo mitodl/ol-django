@@ -6,6 +6,11 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.3.17'></a>
+## [2025.3.17] - 2025-03-17
+
+- Support for Python 3.13
+
 <a id='changelog-2025.3.6'></a>
 ## [2025.3.6] - 2025-03-06
 
