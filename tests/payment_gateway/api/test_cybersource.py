@@ -28,22 +28,22 @@ from urllib3.response import HTTPResponse
 ISO_8601_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
-@pytest.fixture()
+@pytest.fixture
 def order():
     return OrderFactory()
 
 
-@pytest.fixture()
+@pytest.fixture
 def refund():
     return RefundFactory()
 
 
-@pytest.fixture()
+@pytest.fixture
 def cartitems():
     return CartItemFactory.create_batch(5)
 
 
-@pytest.fixture()
+@pytest.fixture
 def response_payload(request, load_data_fixture_json):
     """Fixture to return dictionary of a specific JSON file with provided name in request param"""  # noqa: E501
     return load_data_fixture_json(f"payment_gateway/api/{request.param}.json")
@@ -489,7 +489,7 @@ def create_transaction_detail_record():
                             "name": "ics_auth",
                             "r_code": "1",
                             "r_flag": "SOK",
-                            "r_message": "Request was " "processed " "successfully.",
+                            "r_message": "Request was processed successfully.",
                             "reason_code": "100",
                             "reconciliation_id": fake_recon_id,
                             "return_code": 1010000,
@@ -501,7 +501,7 @@ def create_transaction_detail_record():
                             "name": "ics_bill",
                             "r_code": "1",
                             "r_flag": "SOK",
-                            "r_message": "Request was " "processed " "successfully.",
+                            "r_message": "Request was processed successfully.",
                             "reason_code": "100",
                             "reconciliation_id": fake_recon_id,
                             "return_code": 1260000,
@@ -523,7 +523,7 @@ def create_transaction_detail_record():
         ),
         "client_reference_information": cs_models.TssV2TransactionsGet200ResponseClientReferenceInformation(  # noqa: E501
             **{
-                "application_name": "Secure Acceptance " "Web/Mobile",
+                "application_name": "Secure Acceptance Web/Mobile",
                 "application_user": None,
                 "application_version": None,
                 "code": "mitxonline-dev-4",
