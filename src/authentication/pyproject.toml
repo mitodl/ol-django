@@ -12,11 +12,16 @@ dependencies = [
   "mitol-django-common",
   "mitol-django-mail",
   "social-auth-app-django>=5.4.0",
-  "python3-saml>=1.10.1"
 ]
 readme = "README.md"
 license = "BSD-3-Clause"
 requires-python = ">=3.10"
+
+[project.optional-dependencies]
+touchstone = [
+  'python3-saml>=1.10.1; python_version < "3.13"'
+]
+
 
 [tool.bumpver]
 current_version = "2025.2.12"

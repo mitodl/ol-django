@@ -1,8 +1,14 @@
 """SAML view tests"""
 
+import sys
 from xml.etree import ElementTree
 
+import pytest
 from django.urls import reverse
+
+pytestmark = pytest.mark.skipif(
+    sys.version_info >= (3, 13), reason="Not supported in python >= 3.13"
+)
 
 
 def test_saml_metadata(settings, client):

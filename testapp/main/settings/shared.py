@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+import sys
 
 import dj_database_url
 from mitol.common.envs import get_string, import_settings_modules, init_app_settings
@@ -28,6 +29,7 @@ import_settings_modules(
     "mitol.google_sheets_deferrals.settings.google_sheets_deferrals",
     "mitol.hubspot_api.settings.hubspot_api",
     "mitol.transcoding.settings.job",
+    "mitol.scim.settings.scim",
 )
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -43,6 +45,7 @@ SECRET_KEY = "TESTAPP_SECRET"  # noqa: S105
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
+AUTH_USER_MODEL = "testapp.User"
 
 AUTH_USER_MODEL = "users.User"
 
@@ -73,6 +76,7 @@ INSTALLED_APPS = [
     "mitol.geoip.apps.GeoIPApp",
     "mitol.olposthog.apps.OlPosthog",
     "mitol.transcoding.apps.Transcoding",
+    "mitol.scim.apps.ScimApp",
     # test app, integrates the reusable apps
     "main",
     "users",
@@ -127,10 +131,10 @@ DEFAULT_DATABASE_CONFIG = dj_database_url.parse(
 
 DATABASES = {"default": DEFAULT_DATABASE_CONFIG}
 
-AUTHENTICATION_BACKENDS = (
-    "django.contrib.auth.backends.ModelBackend",
-    "social_core.backends.saml.SAMLAuth",
-)
+AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
+
+if sys.version_info <= (3, 13):
+    AUTHENTICATION_BACKENDS += ("social_core.backends.saml.SAMLAuth",)
 
 
 # Password validation

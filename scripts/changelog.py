@@ -92,6 +92,16 @@ def check(ctx: Context, project: Project, base: str, target: str):
     for app_abs_path in list_apps():
         app_rel_path = app_abs_path.relative_to(project.path)
 
+        # we count these towards a changelog being present
+        # but not against the absence of one
+        top_level_dependency_changes = [
+            change
+            for change in base_commit.diff(target_commit, paths=["uv.lock"])
+            if not _is_source_excluded(change.a_path)
+            and not _is_source_excluded(change.b_path)
+        ]
+        has_top_level_dependency_changes = len(top_level_dependency_changes) > 0
+
         source_changes = [
             change
             for change in base_commit.diff(target_commit, paths=[app_rel_path])
@@ -116,7 +126,11 @@ def check(ctx: Context, project: Project, base: str, target: str):
                 _echo_change(change)
             is_error = True
             echo("")
-        elif not has_source_changes and has_changelogd_changes:
+        elif (
+            not has_source_changes
+            and not has_top_level_dependency_changes
+            and has_changelogd_changes
+        ):
             echo(
                 f"Changelog(s) are present in {app_rel_path} but there are no source changes:"  # noqa: E501
             )
