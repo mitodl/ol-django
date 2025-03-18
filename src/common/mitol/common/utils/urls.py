@@ -1,7 +1,11 @@
 """URL utilities"""
 
+from typing import Union, List, Tuple
 from urllib.parse import ParseResult, urlparse, urlunparse
 
+from django.conf import settings
+from django.urls import include, path
+from django.urls.conf import URLResolver, URLPattern
 
 def ensure_trailing_slash(url: str) -> str:
     """Ensure a url has a trailing slash"""
@@ -37,3 +41,10 @@ def remove_password_from_url(url: str) -> str:
             fragment=pieces.fragment,
         )
     )
+
+
+def prefix_url_patterns(urlpatterns: list[URLPattern]) -> Union[Tuple[URLResolver], List[URLPattern]]:
+    """Add a prefix to all current app urlpatterns"""
+    if settings.MITOL_APP_PATH_PREFIX:
+        return (path(f"{settings.MITOL_APP_PATH_PREFIX.rstrip('/')}/", include(urlpatterns)),)
+    return urlpatterns
