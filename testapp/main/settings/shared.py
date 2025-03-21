@@ -30,6 +30,7 @@ import_settings_modules(
     "mitol.hubspot_api.settings.hubspot_api",
     "mitol.transcoding.settings.job",
     "mitol.scim.settings.scim",
+    "mitol.apigateway.settings",
 )
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -77,6 +78,7 @@ INSTALLED_APPS = [
     "mitol.olposthog.apps.OlPosthog",
     "mitol.transcoding.apps.Transcoding",
     "mitol.scim.apps.ScimApp",
+    "mitol.apigateway.apps.ApigatewayApp",
     # test app, integrates the reusable apps
     "main",
     "users",
