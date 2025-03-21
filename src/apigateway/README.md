@@ -14,13 +14,11 @@ The backend and middleware build upon existing Django classes. They should also 
 
 Your app will need to sit behind an APISIX gateway, with routes configured for OIDC authentication. You can find examples of this in the Learn, Learn AI, and Unified Ecommerce apps.
 
-### Routes
+### APISIX Configuration/Routing
 
-APISIX needs at least _one_ route configured with `unauth_action: "auth"` or APISIX will never redirect the user through the OIDC workflow. This route doesn't necessarily need to do anything in the app; it can even be set up as a redirect in APISIX to a different route, and depending on your setup this route doesn't necessarily need to be _to_ your application.
+APISIX maintains its own routing configuration to determine what should service an incoming request. These routes can be configured to match various URI paths and hostnames, and can use any number of APISIX plugins to manipulate the request, including handling authentication.
 
-The remaining routes can be set to `unauth_action: "pass"` and you can control whether or not the user is allowed access within the Django app. For consistency and clarity, this is the preferred method of handling authorization.
-
-All routes that require any type of authentication will need the `openid-connect` plugin enabled and configured, and the realm configurations should match. If `openid-connect` is not configured, APISIX will not pass data to the app.
+Setting this up correctly is critical to making your app work properly using `apigateway`. Read through the `README-routing.md` for details and an example APISIX routing configuration.
 
 ### App Configuration
 
