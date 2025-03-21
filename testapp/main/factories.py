@@ -18,6 +18,12 @@ from main.models import DemoCourseware
 FAKE = faker.Factory.create()
 
 
+class SsoUserFactory(UserFactory):
+    """Factory for Users with a global ID."""
+
+    global_id = FAKE.uuid4()
+
+
 class DemoCoursewareFactory(DjangoModelFactory):
     """Factory for DemoCourseware"""
 
