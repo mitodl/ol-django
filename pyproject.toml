@@ -51,7 +51,7 @@ dev-dependencies = [
     "psycopg2-binary",
     "pytest>=8.3.3",
     "pytest-cov>=4.0.0",
-    "pytest-django==3.10.0",
+    "pytest-django==4.10.0",
     "pytest-lazy-fixtures>=1",
     "pytest-mock==1.13.0",
     "responses==0.25.7",
