@@ -8,7 +8,7 @@ from mitol.google_sheets.constants import REQUIRED_GOOGLE_API_SCOPES
 from mitol.google_sheets.factories import GoogleApiAuthFactory
 
 
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_get_credentials_service_account(mocker, settings):
     """
     get_credentials should construct a valid Credentials object from app settings using Service Account auth
@@ -35,7 +35,7 @@ def test_get_credentials_service_account(mocker, settings):
     assert creds == patched_svc_account_creds.from_service_account_info.return_value
 
 
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_get_credentials_personal_auth(settings):
     """
     get_credentials should construct a valid Credentials object from data and app settings using personal
