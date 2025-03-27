@@ -55,3 +55,36 @@ async def test_middleware(application, scope):
     ) = await middleware(scope, "", "")
     assert result_scope["user"] is not None
     assert result_scope["user"].is_authenticated
+
+
+@pytest.mark.asyncio()
+async def test_middleware_logout(application, scope):
+    """Make sure the user is dropped from the scope if the header is not present."""
+
+    middleware = ApisixUserMiddleware(application)
+
+    (
+        result_scope,
+        _,
+        _,
+    ) = await middleware(scope, "", "")
+    assert result_scope["user"] is not None
+    assert result_scope["user"].is_authenticated
+
+    no_user_scope = {
+        "user": AnonymousUser,
+        "session": {},
+        "headers": [
+            (b"host", b"localhost:8000"),
+            (b"connection", b"upgrade"),
+            (b"upgrade", b"websocket"),
+        ],
+    }
+
+    (
+        result_scope,
+        _,
+        _,
+    ) = await middleware(no_user_scope, "", "")
+    assert result_scope["user"] is not None
+    assert result_scope["user"].is_anonymous
