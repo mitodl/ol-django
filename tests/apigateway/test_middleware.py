@@ -44,3 +44,33 @@ def test_middleware(new_user):
     assert request.user == test_user
 
     settings.AUTHENTICATION_BACKENDS = backends
+
+
+@pytest.mark.parametrize("new_user", [False, True])
+def test_middleware_logs_out(new_user):
+    """
+    Test that the middleware logs out the user if the header is not present.
+    """
+    id_field = settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD
+    settings.AUTHENTICATION_BACKENDS = [
+        "mitol.apigateway.backends.ApisixRemoteUserBackend",
+    ]
+
+    test_user = None if new_user else SsoUserFactory.create()
+
+    payload, user_info = generate_fake_apisix_payload(user=test_user)
+    request = generate_apisix_request("request", payload)
+
+    middleware = ApisixUserMiddleware(lambda req: HttpResponse())  # noqa: ARG005
+    middleware.process_request(request)
+
+    assert request.META["REMOTE_USER"] == user_info.get(id_field)
+
+    test_user = User.objects.get(global_id=user_info.get(id_field))
+    assert request.user == test_user
+
+    no_header_request = generate_apisix_request("request", payload)
+    no_header_request.META["HTTP_X_USERINFO"] = None
+    middleware.process_request(no_header_request)
+    assert "REMOTE_USER" not in no_header_request
+    assert no_header_request.user.is_anonymous
