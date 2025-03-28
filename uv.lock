@@ -22,9 +22,19 @@ members = [
     "mitol-django-olposthog",
     "mitol-django-openedx",
     "mitol-django-payment-gateway",
+    "mitol-django-scim",
     "mitol-django-transcoding",
     "mitol-django-uvtestapp",
     "ol-django",
+]
+
+[[package]]
+name = "anys"
+version = "0.3.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a0/f2/bdeab37937c956b15ec2c5bdd297c5ebb70094d34e16b26c4ab368228895/anys-0.3.1.tar.gz", hash = "sha256:5bcda88fcc490eda840a247c8c18b7a350051f530c288ad530e94c8d139602de", size = 14712 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2f/0e/46dd264dabc38f7ac05944d4a359cb262bf09126e5e23e5d915b45639b44/anys-0.3.1-py3-none-any.whl", hash = "sha256:a7f5353eb061e97cdbbfc41249a397d13fc7e558310ec23cece891d6f10a0a6d", size = 8906 },
 ]
 
 [[package]]
@@ -484,6 +494,15 @@ wheels = [
 ]
 
 [[package]]
+name = "deepmerge"
+version = "2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a8/3a/b0ba594708f1ad0bc735884b3ad854d3ca3bdc1d741e56e40bbda6263499/deepmerge-2.0.tar.gz", hash = "sha256:5c3d86081fbebd04dd5de03626a0607b809a98fb6ccba5770b62466fe940ff20", size = 19890 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2d/82/e5d2c1c67d19841e9edc74954c827444ae826978499bde3dfc1d007c8c11/deepmerge-2.0-py3-none-any.whl", hash = "sha256:6de9ce507115cff0bed95ff0ce9ecc31088ef50cbdf09bc90a09349a318b3d00", size = 13475 },
+]
+
+[[package]]
 name = "defusedxml"
 version = "0.7.1"
 source = { registry = "https://pypi.org/simple" }
@@ -568,6 +587,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/07/23/c9f2ea5771196568d31e87ccc84a7859da9814171652abb4b2002410fe47/django-redis-5.0.0.tar.gz", hash = "sha256:048f665bbe27f8ff2edebae6aa9c534ab137f1e8fa7234147ef470df3f3aa9b8", size = 47508 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/44/b8/1d02e873ebca6ecb3d42fc55e4130daa7c839df79b9ad5c454f6e3361827/django_redis-5.0.0-py3-none-any.whl", hash = "sha256:97739ca9de3f964c51412d1d7d8aecdfd86737bb197fce6e1ff12620c63c97ee", size = 29882 },
+]
+
+[[package]]
+name = "django-scim2"
+version = "0.19.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "scim2-filter-parser" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/07/59/da3061607de7be41d7e5bf484acb13510d631f8fcfcecd9f5e02dc5bf4f1/django_scim2-0.19.1.tar.gz", hash = "sha256:8126111160e76a880f6699babc5259f0345c9316c8018ce5dcc3f7579ccb9e89", size = 26988 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a3/24/ca2cab008049239585434f7451a42757d7d258bf741316fd16587e564b74/django_scim2-0.19.1-py3-none-any.whl", hash = "sha256:845eaa64e72e4ddfe2aa54d21865721f8c1d59ecd9c06e72341eeb03ed6ba94e", size = 32072 },
 ]
 
 [[package]]
@@ -1226,6 +1258,7 @@ dependencies = [
 [package.optional-dependencies]
 touchstone = [
     { name = "python3-saml", marker = "python_full_version < '3.13'" },
+    { name = "xmlsec", marker = "python_full_version < '3.13'" },
 ]
 
 [package.metadata]
@@ -1239,6 +1272,7 @@ requires-dist = [
     { name = "mitol-django-mail", editable = "src/mail" },
     { name = "python3-saml", marker = "python_full_version < '3.13' and extra == 'touchstone'", specifier = ">=1.10.1" },
     { name = "social-auth-app-django", specifier = ">=5.4.0" },
+    { name = "xmlsec", marker = "python_full_version < '3.13' and extra == 'touchstone'", specifier = "<1.3.15" },
 ]
 provides-extras = ["touchstone"]
 
@@ -1261,11 +1295,11 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "django", specifier = ">=3.0" },
-    { name = "django-redis", specifier = "~=5.0.0" },
+    { name = "django-redis", specifier = "~=5.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
     { name = "django-webpack-loader", specifier = ">=0.7.0" },
     { name = "factory-boy", specifier = "~=3.2" },
-    { name = "pytest", specifier = ">=7.0.0" },
+    { name = "pytest", specifier = ">=7,<9" },
     { name = "pytz", specifier = ">=2020.4" },
     { name = "requests", specifier = ">=2.20.0" },
     { name = "typing-extensions" },
@@ -1523,6 +1557,28 @@ requires-dist = [
 ]
 
 [[package]]
+name = "mitol-django-scim"
+version = "0.0.0"
+source = { editable = "src/scim" }
+dependencies = [
+    { name = "django" },
+    { name = "django-scim2" },
+    { name = "django-stubs" },
+    { name = "mitol-django-common" },
+    { name = "strenum" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "django", specifier = ">=3.0" },
+    { name = "django-scim2", specifier = ">=0.19.1" },
+    { name = "django-stubs", specifier = ">=1.13.1" },
+    { name = "mitol-django-common", editable = "src/common" },
+    { name = "strenum", specifier = ">=0.4.15" },
+    { name = "strenum", marker = "python_full_version < '3.11'", specifier = ">=0.4.15" },
+]
+
+[[package]]
 name = "mitol-django-transcoding"
 version = "2025.3.17"
 source = { editable = "src/transcoding" }
@@ -1651,18 +1707,20 @@ dependencies = [
     { name = "mitol-django-olposthog" },
     { name = "mitol-django-openedx" },
     { name = "mitol-django-payment-gateway" },
+    { name = "mitol-django-scim" },
     { name = "mitol-django-transcoding" },
     { name = "mitol-django-uvtestapp" },
-    { name = "xmlsec" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "anys" },
     { name = "bumpver" },
     { name = "click" },
     { name = "click-log" },
     { name = "cloup" },
     { name = "coverage" },
+    { name = "deepmerge" },
     { name = "dj-database-url" },
     { name = "django-stubs", extra = ["compatible-mypy"] },
     { name = "factory-boy" },
@@ -1702,18 +1760,20 @@ requires-dist = [
     { name = "mitol-django-olposthog", editable = "src/olposthog" },
     { name = "mitol-django-openedx", editable = "src/openedx" },
     { name = "mitol-django-payment-gateway", editable = "src/payment_gateway" },
+    { name = "mitol-django-scim", editable = "src/scim" },
     { name = "mitol-django-transcoding", editable = "src/transcoding" },
     { name = "mitol-django-uvtestapp", editable = "src/uvtestapp" },
-    { name = "xmlsec", specifier = "<1.3.15" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "anys", specifier = ">=0.3.1" },
     { name = "bumpver" },
     { name = "click" },
     { name = "click-log" },
     { name = "cloup" },
     { name = "coverage", specifier = "<=7.7.1" },
+    { name = "deepmerge", specifier = ">=2.0" },
     { name = "dj-database-url" },
     { name = "django-stubs", extras = ["compatible-mypy"] },
     { name = "factory-boy", specifier = "~=3.2" },
@@ -1724,7 +1784,7 @@ dev = [
     { name = "mypy" },
     { name = "mypy-extensions" },
     { name = "psycopg2-binary" },
-    { name = "pytest", specifier = ">=8.3.3" },
+    { name = "pytest", specifier = "~=8.3" },
     { name = "pytest-cov", specifier = ">=4.0.0" },
     { name = "pytest-django", specifier = "==4.10.0" },
     { name = "pytest-lazy-fixtures", specifier = ">=1" },
@@ -2176,9 +2236,9 @@ name = "python3-saml"
 version = "1.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "isodate" },
-    { name = "lxml" },
-    { name = "xmlsec" },
+    { name = "isodate", marker = "python_full_version < '3.13'" },
+    { name = "lxml", marker = "python_full_version < '3.13'" },
+    { name = "xmlsec", marker = "python_full_version < '3.13'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5d/98/6e0268c3a9893af3d4c5cf670183e0314cd6b5cb034a612d6a7cc5060df8/python3-saml-1.16.0.tar.gz", hash = "sha256:97c9669aecabc283c6e5fb4eb264f446b6e006f5267d01c9734f9d8bffdac133", size = 83468 }
 wheels = [
@@ -2342,6 +2402,18 @@ wheels = [
 ]
 
 [[package]]
+name = "scim2-filter-parser"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sly" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/25/c0/2f4d5caee8faa8f0d0979584c4aab95fa69d626d6f9d211dd6bb7089bc2f/scim2_filter_parser-0.7.0.tar.gz", hash = "sha256:1e11dbe2e186fc1be6d93732b467a3bbaa9deff272dfeb3a0540394cfab7030c", size = 21358 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/57/54/b54961bfc5018fa593758c439fe0d4a22fbadfabff49a7559850af9a79e1/scim2_filter_parser-0.7.0-py3-none-any.whl", hash = "sha256:a74f90a2d52a77e0f1bc4d77e84b79f88749469f6f7192d64a4f92e4fe50ab69", size = 23409 },
+]
+
+[[package]]
 name = "scriv"
 version = "1.6.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2388,6 +2460,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050 },
+]
+
+[[package]]
+name = "sly"
+version = "0.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/41/8a/59e943f7b27904c7756a7b565ffbd55f3841f5cd3d2da2b2b0713c49e488/sly-0.5.tar.gz", hash = "sha256:251d42015e8507158aec2164f06035df4a82b0314ce6450f457d7125e7649024", size = 66702 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8e/4d/c96d807295183f2360329cd8d8bf5e8072c53d664125b3858c04153f026e/sly-0.5-py3-none-any.whl", hash = "sha256:20485483259eec7f6ba85ff4d2e96a4e50c6621902667fc2695cc8bc2a3e5133", size = 28864 },
 ]
 
 [[package]]
@@ -2472,6 +2553,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/28/3f/13cacea96900bbd31bb05c6b74135f85d15564fc583802be56976c940470/stevedore-5.4.1.tar.gz", hash = "sha256:3135b5ae50fe12816ef291baff420acb727fcd356106e3e9cbfa9e5985cd6f4b", size = 513858 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f7/45/8c4ebc0c460e6ec38e62ab245ad3c7fc10b210116cea7c16d61602aa9558/stevedore-5.4.1-py3-none-any.whl", hash = "sha256:d10a31c7b86cba16c1f6e8d15416955fc797052351a56af15e608ad20811fcfe", size = 49533 },
+]
+
+[[package]]
+name = "strenum"
+version = "0.4.15"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/85/ad/430fb60d90e1d112a62ff57bdd1f286ec73a2a0331272febfddd21f330e1/StrEnum-0.4.15.tar.gz", hash = "sha256:878fb5ab705442070e4dd1929bb5e2249511c0bcf2b0eeacf3bcd80875c82eff", size = 23384 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/81/69/297302c5f5f59c862faa31e6cb9a4cd74721cd1e052b38e464c5b402df8b/StrEnum-0.4.15-py3-none-any.whl", hash = "sha256:a30cda4af7cc6b5bf52c8055bc4bf4b2b6b14a93b574626da33df53cf7740659", size = 8851 },
 ]
 
 [[package]]
@@ -2608,7 +2698,7 @@ name = "xmlsec"
 version = "1.3.14"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "lxml" },
+    { name = "lxml", marker = "python_full_version < '3.13'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/25/5b/244459b51dfe91211c1d9ec68fb5307dfc51e014698f52de575d25f753e0/xmlsec-1.3.14.tar.gz", hash = "sha256:934f804f2f895bcdb86f1eaee236b661013560ee69ec108d29cdd6e5f292a2d9", size = 68854 }
 wheels = [
