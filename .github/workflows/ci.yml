@@ -3,8 +3,28 @@ name: CI
 on: [push, workflow_dispatch]
 
 jobs:
+  changelog:
+    runs-on: ubuntu-24.04
+    name: Check for required changelogs
+    if: ${{ !contains(github.event.head_commit.author, 'renovate') }}
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      with:
+        fetch-depth: 0   # fetch all history
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@22695119d769bdb6f7032ad67b9bca0ef8c4a174 # v5
+
+    - name: Install dependencies
+      run: uv sync
+
+    - name: Changelog
+      run: uv run scripts/changelog.py check
+
+
   tests:
     runs-on: ubuntu-24.04
+    name: Python tests
     strategy:
       matrix:
         python-version:
@@ -52,10 +72,6 @@ jobs:
     - name: Tests
       run: uv run pytest
 
-    - name: Changelog
-      if: ${{ !contains(github.event.head_commit.author, 'renovate') }}
-      run: uv run scripts/changelog.py check
-
       # - name: Upload coverage to CodeCov
       #   uses: codecov/codecov-action@v1
       #   with:
@@ -64,6 +80,7 @@ jobs:
 
   release:
     needs: tests
+    name: Publish to PyPI
     runs-on: ubuntu-24.04
     if: startsWith(github.ref, 'refs/tags/')
     steps:
