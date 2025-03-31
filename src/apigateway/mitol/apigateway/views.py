@@ -1,10 +1,10 @@
 """Custom logout view for the API Gateway."""
 
+from django.conf import settings
 from django.contrib.auth import logout
 from django.shortcuts import redirect
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
-from main import settings
 
 
 def get_redirect_url(request):
@@ -22,7 +22,7 @@ def get_redirect_url(request):
         next_url
         if next_url
         and url_has_allowed_host_and_scheme(
-            next_url, allowed_hosts=settings.ALLOWED_REDIRECT_HOSTS
+            next_url, allowed_hosts=settings.MITOL_APIGATEWAY_ALLOWED_REDIRECT_HOSTS
         )
         else settings.MITOL_APIGATEWAY_DEFAULT_POST_LOGOUT_DEST
     )
