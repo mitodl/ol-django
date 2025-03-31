@@ -7,6 +7,7 @@ dependencies = [
   "django>=3.0",
   "django_scim2>=0.19.1",
   "mitol-django-common",
+  "pyparsing>=3.2",
   # Remove this why py310 support is dropped
   "StrEnum>=0.4.15 ; python_version < '3.11'",
   "strenum>=0.4.15",
