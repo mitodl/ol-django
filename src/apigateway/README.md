@@ -79,6 +79,11 @@ If your app uses Django Channels, read the `README-channels.md` for additional c
 
 Your application configuration will need some settings added to it. Reasonable defaults are provided in the settings that are included with the app; you should include that and then just change the things you need.
 
+These settings are needed for your environment:
+
+- `MITOL_APIGATEWAY_LOGOUT_URL` - the URL that APISIX uses for logout. This needs to be set in your APISIX configuration; the corresponding setting is `logout_path`. Defaults to `/logout`.
+- `MITOL_APIGATEWAY_DEFAULT_POST_LOGOUT_DEST` - the URL that the logout view should send users when they log out by default. (You can programmatically set a destination but you should also have a default.) Defaults to `/app`.
+
 These settings are likely to need adjustment for your environment:
 
 - `MITOL_APIGATEWAY_CREATE_USER` - controls if the backend will create _new_ users or not. If set to False, users will have to be pre-created within the system before they can be authenticated.
@@ -114,3 +119,15 @@ The `MODEL_MAP` is a dict with two root keys:
 ## Using
 
 At its core, this is the `RemoteUserMiddleware` that comes with Django, so you can use any of the normal methods to control access to routes or retrieve user information. The authenticated user will be attached to the request as per usual.
+
+### Logging Out and User Sessions
+
+By default, if the user's APISIX session disappears, it will stop putting the userinfo header in the request. When this happens, the middleware will log the user out. Your application should handle this gracefully.
+
+If the user wishes to log out explictly, you'll need to set up a logout view that's within your application. It is important _not_ to send the user to the APISIX logout URL (configured with `logout_path`) directly. Instead, use `ApiGatewayLogoutView`. This view explicitly logs the user out of their Django session, and checks to see if the user has an active APISIX session as well. It will send the user through the APISIX logout if there's an APISIX session. At the end, it will send the user to a URL defined either in the query string, a cookie, or in the settings.
+
+The check for an APISIX session is important - APISIX will _always_ send the user through SSO to log them out in the identity provider, even if they don't have a session to log out. Keycloak will raise an error message if you try to log out with no active session.
+
+The view just needs to be added to your `urlconf` like any other view. It should not be set to the same URL that the APISIX logout URL is set to (but the APISIX logout URL can be a redirect to the Django logout URL).
+
+> If your app uses Django Channels, make sure to read through the `README-channels.md` too.

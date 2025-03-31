@@ -47,3 +47,12 @@ MITOL_APIGATEWAY_USERINFO_CREATE = True
 # sure there's a backchannel way to update the user data (SCIM, etc) or user
 # info will fall out of sync with the IdP pretty quickly.
 MITOL_APIGATEWAY_USERINFO_UPDATE = True
+
+# URL configuation
+
+# Set to the URL that APISIX uses for logout.
+MITOL_APIGATEWAY_LOGOUT_URL = "/logout"
+
+# Set to the default URL the user should be sent to when logging out.
+# If there's no redirect URL specified otherwise, the user gets sent here.
+MITOL_APIGATEWAY_DEFAULT_POST_LOGOUT_DEST = "/app"
