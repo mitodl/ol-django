@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
+from django.db import models
 from django_scim.models import AbstractSCIMUserMixin
 from mitol.common.models import TimestampedModel
-from django.db import models
 
 
 # Create your models here.
