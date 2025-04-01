@@ -57,6 +57,7 @@ class ApiGatewayLogoutView(View):
         user_redirect_url = get_redirect_url(request)
         if user and user.is_authenticated:
             logout(request)
+
         if request.META.get(settings.MITOL_APIGATEWAY_USERINFO_HEADER_NAME):
             # Still logged in via Apisix/Keycloak, so log out there as well
             return redirect(settings.MITOL_APIGATEWAY_LOGOUT_URL)
