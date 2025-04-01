@@ -52,6 +52,7 @@ def test_middleware_logs_out(new_user):
     Test that the middleware logs out the user if the header is not present.
     """
     id_field = settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD
+    backends = settings.AUTHENTICATION_BACKENDS
     settings.AUTHENTICATION_BACKENDS = [
         "mitol.apigateway.backends.ApisixRemoteUserBackend",
     ]
@@ -74,3 +75,5 @@ def test_middleware_logs_out(new_user):
     middleware.process_request(no_header_request)
     assert "REMOTE_USER" not in no_header_request
     assert no_header_request.user.is_anonymous
+
+    settings.AUTHENTICATION_BACKENDS = backends
