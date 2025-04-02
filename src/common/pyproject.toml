@@ -1,7 +1,7 @@
 [project]
 name = "mitol-django-common"
 description = "MIT Open Learning django app extensions for common utilities"
-version = "2025.3.17"
+version = "2025.4.2"
 dependencies = [
 "django-redis~=5.0",
 "django-stubs>=1.13.1",
@@ -18,7 +18,7 @@ license = "BSD-3-Clause"
 requires-python = ">=3.10"
 
 [tool.bumpver]
-current_version = "2025.3.17"
+current_version = "2025.4.2"
 version_pattern = "YYYY.MM.DD[.INC0]"
 
 [tool.bumpver.file_patterns]
