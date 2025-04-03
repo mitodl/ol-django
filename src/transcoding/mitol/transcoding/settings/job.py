@@ -12,6 +12,11 @@ VIDEO_TRANSCODE_QUEUE = get_string(
     default="Default",
     description=("Name of MediaConvert queue to use for transcoding"),
 )
+VIDEO_S3_UPLOAD_PREFIX = get_string(
+    name="VIDEO_S3_UPLOAD_PREFIX",
+    default="",
+    description=("Prefix for the source video"),
+)
 POST_TRANSCODE_ACTIONS = get_delimited_list(
     name="POST_TRANSCODE_ACTIONS",
     default=[],
