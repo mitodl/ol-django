@@ -23,11 +23,34 @@ class ApisixUserMiddleware(RemoteUserMiddleware):
         """
         Modify the header to contaiin username, pass off to RemoteUserMiddleware
         """
+
+        log.debug("ApisixUserMiddleware.process_request: started")
+
+        if settings.MITOL_APIGATEWAY_DISABLE_MIDDLEWARE:
+            return super().process_request(request)
+
         if request.META.get(settings.MITOL_APIGATEWAY_USERINFO_HEADER_NAME):
             new_header = get_user_id_from_userinfo_header(request)
             request.META["REMOTE_USER"] = new_header
 
-        return super().process_request(request)
+        super().process_request(request)
+
+        response = self.get_response(request)
+
+        next_param = request.GET.get("next", None) if request.GET else None
+        if next_param:
+            log.debug(
+                "ApisixUserMiddleware.process_request: Setting next cookie to %s",
+                next_param,
+            )
+            response.set_cookie("next", next_param, max_age=30, secure=False)
+
+        log.debug(
+            "ApisixUserMiddleware.process_request: Next cookie is %s",
+            response.cookies.get("next"),
+        )
+
+        return response
 
 
 class PersistentApisixUserMiddleware(

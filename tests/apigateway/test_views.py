@@ -18,6 +18,34 @@ def user():
     return UserFactory.create()
 
 
+@pytest.fixture(autouse=True)
+def _apigateway_reqs():
+    """
+    Make sure our backend and middleware are in place.
+
+    Replaces the backends with just the APISIX one, so we're not inadvertently
+    testing other backends. The middleware just gets tacked on the end, though,
+    because we do depend on some other middleware to be there. Resets things back
+    once the test is done.
+    """
+
+    before_middleware = settings.MIDDLEWARE
+    before_backends = settings.AUTHENTICATION_BACKENDS
+
+    if "mitol.apigateway.backends.ApisixRemoteUserBackend" not in before_backends:
+        settings.AUTHENTICATION_BACKENDS = (
+            "mitol.apigateway.backends.ApisixRemoteUserBackend",
+        )
+
+    if "mitol.apigateway.middleware.ApisixUserMiddleware" not in before_middleware:
+        settings.MIDDLEWARE.append("mitol.apigateway.middleware.ApisixUserMiddleware")
+
+    yield
+
+    settings.AUTHENTICATION_BACKENDS = before_backends
+    settings.MIDDLEWARE = before_middleware
+
+
 @pytest.mark.parametrize("has_apisix_header", [True, False])
 @pytest.mark.parametrize("next_url", ["/search", None])
 def test_logout(next_url, client, user, has_apisix_header):
@@ -39,6 +67,13 @@ def test_logout(next_url, client, user, has_apisix_header):
     )
     if has_apisix_header:
         assert response.url == settings.MITOL_APIGATEWAY_LOGOUT_URL
+        if next_url:
+            assert response.cookies.get("next")
+            assert response.cookies["next"].value == (
+                next_url
+                if next_url
+                else settings.MITOL_APIGATEWAY_DEFAULT_POST_LOGOUT_DEST
+            )
     else:
         assert response.url == (
             next_url if next_url else settings.MITOL_APIGATEWAY_DEFAULT_POST_LOGOUT_DEST
@@ -56,7 +91,9 @@ def test_next_logout(  # noqa: PLR0913
     mock_request = mocker.MagicMock(
         GET={"next": next_url if has_next else None},
     )
-    settings.MITOL_APIGATEWAY_ALLOWED_REDIRECT_HOSTS = [
+    original_allowed_hosts = settings.ALLOWED_HOSTS
+    settings.ALLOWED_HOSTS = [
+        "testserver",
         "invalid.com" if next_host_is_invalid else "ocw.mit.edu",
     ]
     if is_authenticated:
@@ -99,3 +136,5 @@ def test_next_logout(  # noqa: PLR0913
         assert resp.url.endswith(
             next_url if has_next else settings.MITOL_APIGATEWAY_DEFAULT_POST_LOGOUT_DEST
         )
+
+    settings.ALLOWED_HOSTS = original_allowed_hosts

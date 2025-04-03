@@ -4,7 +4,11 @@ Settings for the apigateway app. See the README.md for more detail.
 These should be reasonable defaults - override (or pull from env) as necessary.
 """
 
-# ol_oidc configuration
+# apigateway configuration
+
+# Disable middleware. For local testing - you can have the middleware in place
+# but not use it and use Django's built-in users instead.
+MITOL_APIGATEWAY_DISABLE_MIDDLEWARE = False
 
 # The header that contains the user data from the upstream API gateway.
 MITOL_APIGATEWAY_USERINFO_HEADER_NAME = "HTTP_X_USERINFO"
