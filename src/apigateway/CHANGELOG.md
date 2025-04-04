@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.4.4.1'></a>
+## [2025.4.4.1] - 2025-04-04
+
+### Added
+
+- Adds the apigateway app to pull API gateway (APISIX) authentication code into one reusable implementation.
+
 <a id='changelog-2024.10.24'></a>
 ## [2024.10.24] - 2024-10-24
 
