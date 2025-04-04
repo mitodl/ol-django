@@ -39,7 +39,7 @@ def get_redirect_url(request):
         next_url
         if next_url
         and url_has_allowed_host_and_scheme(
-            next_url, allowed_hosts=settings.ALLOWED_HOSTS
+            next_url, allowed_hosts=settings.MITOL_APIGATEWAY_ALLOWED_REDIRECT_HOSTS
         )
         else settings.MITOL_APIGATEWAY_DEFAULT_POST_LOGOUT_DEST
     )

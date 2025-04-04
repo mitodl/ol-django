@@ -91,8 +91,8 @@ def test_next_logout(  # noqa: PLR0913
     mock_request = mocker.MagicMock(
         GET={"next": next_url if has_next else None},
     )
-    original_allowed_hosts = settings.ALLOWED_HOSTS
-    settings.ALLOWED_HOSTS = [
+    original_allowed_hosts = settings.MITOL_APIGATEWAY_ALLOWED_REDIRECT_HOSTS
+    settings.MITOL_APIGATEWAY_ALLOWED_REDIRECT_HOSTS = [
         "testserver",
         "invalid.com" if next_host_is_invalid else "ocw.mit.edu",
     ]
@@ -137,4 +137,4 @@ def test_next_logout(  # noqa: PLR0913
             next_url if has_next else settings.MITOL_APIGATEWAY_DEFAULT_POST_LOGOUT_DEST
         )
 
-    settings.ALLOWED_HOSTS = original_allowed_hosts
+    settings.MITOL_APIGATEWAY_ALLOWED_REDIRECT_HOSTS = original_allowed_hosts
