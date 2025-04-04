@@ -92,7 +92,18 @@ def add_group_settings(
         destination_bucket (str, optional): S3 bucket for the transcoded output.
     """
 
-    for group in job_dict["Settings"]["OutputGroups"]:
+    exclude_mp4 = group_settings.get("exclude_mp4", False)
+    output_groups = job_dict["Settings"]["OutputGroups"]
+
+    if exclude_mp4:
+        # Remove the MP4 output group if not needed
+        output_groups = [
+            group
+            for group in output_groups
+            if group["OutputGroupSettings"]["Type"] != GroupSettings.FILE_GROUP_SETTINGS
+        ]
+
+    for group in output_groups:
         output_group_settings = group["OutputGroupSettings"]
         group_settings_type = group["OutputGroupSettings"]["Type"]
         if group_settings_type == GroupSettings.HLS_GROUP_SETTINGS:
@@ -104,7 +115,6 @@ def add_group_settings(
                 "ManifestNameModifier"
             ] = group_settings.get("ManifestNameModifier", "__index")
         elif group_settings_type == GroupSettings.FILE_GROUP_SETTINGS:
-            # This is the default group settings
             group_settings_key = GroupSettings.FILE_GROUP_SETTINGS_KEY
         else:
             group_type = group_settings_type
