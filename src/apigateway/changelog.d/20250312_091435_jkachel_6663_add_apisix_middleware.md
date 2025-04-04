@@ -12,7 +12,7 @@ Uncomment the section that is right (remove the HTML comment wrapper).
 -->
 ### Added
 
-- Adds the apigateway app to consolidate API gateway (APISIX) authentication code into one reusable implementation.
+- Adds the apigateway app to pull API gateway (APISIX) authentication code into one reusable implementation.
 
 <!--
 ### Changed
