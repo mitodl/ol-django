@@ -7,6 +7,8 @@ from typing import Optional
 import boto3
 from django.conf import settings
 
+from mitol.transcoding.constants import GroupSettings
+
 
 def media_convert_job(  # noqa: PLR0913
     video_source_key: str,
@@ -14,7 +16,7 @@ def media_convert_job(  # noqa: PLR0913
     source_bucket: str = settings.AWS_STORAGE_BUCKET_NAME,
     destination_prefix: str = settings.VIDEO_S3_TRANSCODE_PREFIX,
     destination_bucket: str = (
-        settings.AWS_TRANSCODE_BUCKET_NAME or settings.AWS_STORAGE_BUCKET_NAME
+        settings.VIDEO_S3_TRANSCODE_BUCKET or settings.AWS_STORAGE_BUCKET_NAME
     ),
     group_settings: Optional[dict] = None,
 ) -> dict:
@@ -69,7 +71,7 @@ def media_convert_job(  # noqa: PLR0913
             f"s3://{source_bucket}/{video_source_key}"
         )
 
-        add_group_settings(job_dict, destination, group_settings, destination_bucket)
+        add_group_settings(job_dict, destination, destination_bucket, group_settings)
 
         return client.create_job(**job_dict)
 
@@ -77,8 +79,8 @@ def media_convert_job(  # noqa: PLR0913
 def add_group_settings(
     job_dict: dict,
     destination: str,
+    destination_bucket: str,
     group_settings: dict,
-    destination_bucket: Optional[str] = None,
 ) -> None:
     """
     Add group settings to the MediaConvert job dictionary.
@@ -91,13 +93,16 @@ def add_group_settings(
     """
 
     for group in job_dict["Settings"]["OutputGroups"]:
-        group_settings = group["OutputGroupSettings"]
+        output_group_settings = group["OutputGroupSettings"]
         group_settings_type = group["OutputGroupSettings"]["Type"]
         if group_settings_type == GroupSettings.HLS_GROUP_SETTINGS:
             group_settings_key = GroupSettings.HLS_GROUP_SETTINGS_KEY
-            group_settings[group_settings_key]["SegmentLength"] = group_settings.get(
-                "SegmentLength", 10
+            output_group_settings[group_settings_key]["SegmentLength"] = (
+                group_settings.get("SegmentLength", 10)
             )
+            output_group_settings[group_settings_key]["AdditionalManifests"][0][
+                "ManifestNameModifier"
+            ] = group_settings.get("ManifestNameModifier", "__index")
         elif group_settings_type == GroupSettings.FILE_GROUP_SETTINGS:
             # This is the default group settings
             group_settings_key = GroupSettings.FILE_GROUP_SETTINGS_KEY
@@ -106,18 +111,6 @@ def add_group_settings(
             error_msg = f"Unsupported group settings type: {group_type}"
             raise ValueError(error_msg)
 
-        group_settings[group_settings_key]["Destination"] = (
+        output_group_settings[group_settings_key]["Destination"] = (
             f"s3://{destination_bucket}/{destination}"
         )
-
-
-class GroupSettings:
-    """
-    Constants for AWS MediaConvert group settings types used in job configuration.
-    """
-
-    HLS_GROUP_SETTINGS = "HLS_GROUP_SETTINGS"
-    HLS_GROUP_SETTINGS_KEY = "HlsGroupSettings"
-
-    FILE_GROUP_SETTINGS = "FILE_GROUP_SETTINGS"
-    FILE_GROUP_SETTINGS_KEY = "FileGroupSettings"

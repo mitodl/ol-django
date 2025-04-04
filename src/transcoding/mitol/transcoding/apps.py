@@ -18,7 +18,7 @@ class Transcoding(AppConfig):
         "VIDEO_S3_TRANSCODE_PREFIX",
         "VIDEO_S3_UPLOAD_PREFIX",
         "AWS_STORAGE_BUCKET_NAME",
-        "AWS_TRANSCODE_BUCKET_NAME",
+        "VIDEO_S3_TRANSCODE_BUCKET",
         "AWS_REGION",
         "AWS_ACCOUNT_ID",
         "AWS_ROLE_NAME",
