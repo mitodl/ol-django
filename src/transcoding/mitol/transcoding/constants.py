@@ -6,3 +6,15 @@ TRANSCODE_JOB_SUBSCRIPTION_URL = (
     "TopicArn=arn:aws:sns:{AWS_REGION}:{AWS_ACCOUNT_ID}:"
     "MediaConvertJobAlert&Token={TOKEN}"
 )
+
+
+class GroupSettings:
+    """
+    Constants for AWS MediaConvert group settings types used in job configuration.
+    """
+
+    HLS_GROUP_SETTINGS = "HLS_GROUP_SETTINGS"
+    HLS_GROUP_SETTINGS_KEY = "HlsGroupSettings"
+
+    FILE_GROUP_SETTINGS = "FILE_GROUP_SETTINGS"
+    FILE_GROUP_SETTINGS_KEY = "FileGroupSettings"
