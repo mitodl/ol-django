@@ -22,8 +22,7 @@ MITOL_APIGATEWAY_USERINFO_MODEL_MAP = {
     # Mappings to the user model.
     "user_fields": {
         # Keys are data returned from the API gateway.
-        # Values are tuple of model name (from above) and field name.
-        # The base model is "user".
+        # Values are the user object field name.
         "preferred_username": "username",
         "email": "email",
         "sub": "global_id",

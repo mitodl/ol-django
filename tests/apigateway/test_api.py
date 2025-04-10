@@ -1,5 +1,8 @@
 """Tests for the Apigateway API."""
 
+import base64
+import json
+
 import faker
 import pytest
 from django.conf import settings
@@ -47,3 +50,14 @@ def test_get_username(obj_type):
     decoded = api.get_username_from_userinfo_header(request)
     assert decoded != user_info[settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD]
     assert decoded == user.username
+
+
+def test_create_userinfo_header():
+    """Test that the userinfo header gets created properly."""
+
+    user = SsoUserFactory.create()
+    header_name = settings.MITOL_APIGATEWAY_USERINFO_HEADER_NAME.replace("HTTP_", "")
+    header_data = api.create_userinfo_header(user)
+    result = json.loads(base64.b64decode(header_data[header_name]).decode())
+
+    assert result["sub"] == user.global_id
