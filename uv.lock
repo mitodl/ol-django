@@ -1613,7 +1613,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-transcoding"
-version = "2025.3.17"
+version = "2025.4.8"
 source = { editable = "src/transcoding" }
 dependencies = [
     { name = "boto3" },
