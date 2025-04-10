@@ -102,6 +102,7 @@ def add_group_settings(
             for group in output_groups
             if group["OutputGroupSettings"]["Type"] != GroupSettings.FILE_GROUP_SETTINGS
         ]
+        job_dict["Settings"]["OutputGroups"] = output_groups
 
     for group in output_groups:
         output_group_settings = group["OutputGroupSettings"]
