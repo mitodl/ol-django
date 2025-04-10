@@ -6,6 +6,21 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.4.10'></a>
+## [2025.4.10] - 2025-04-10
+
+### Fixed
+
+- Fixed the exclude mp4 param for group settings
+
+-->
+
+### Security
+
+- A bullet item for the Security category.
+
+-->
+
 <a id='changelog-2025.4.8'></a>
 ## [2025.4.8] - 2025-04-09
 
