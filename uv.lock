@@ -8,6 +8,7 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "mitol-django-apigateway",
     "mitol-django-authentication",
     "mitol-django-common",
     "mitol-django-digitalcredentials",
@@ -213,6 +214,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f1/47/d7145bf2dc04684935d57d67dff9d6d795b2ba2796806bb109864be3a151/cffi-1.17.1-cp313-cp313-musllinux_1_1_x86_64.whl", hash = "sha256:72e72408cad3d5419375fc87d289076ee319835bdfa2caad331e377589aebba9", size = 488469 },
     { url = "https://files.pythonhosted.org/packages/bf/ee/f94057fa6426481d663b88637a9a10e859e492c73d0384514a17d78ee205/cffi-1.17.1-cp313-cp313-win32.whl", hash = "sha256:e03eab0a8677fa80d646b5ddece1cbeaf556c313dcfac435ba11f107ba117b5d", size = 172475 },
     { url = "https://files.pythonhosted.org/packages/7c/fc/6a8cb64e5f0324877d503c854da15d76c1e50eb722e320b15345c4d0c6de/cffi-1.17.1-cp313-cp313-win_amd64.whl", hash = "sha256:f6a16c31041f09ead72d69f583767292f750d24913dadacf5756b966aacb3f1a", size = 182009 },
+]
+
+[[package]]
+name = "channels"
+version = "4.2.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "asgiref" },
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/16/d6/049f93c3c96a88265a52f85da91d2635279261bbd4a924b45caa43b8822e/channels-4.2.2.tar.gz", hash = "sha256:8d7208e48ab8fdb972aaeae8311ce920637d97656ffc7ae5eca4f93f84bcd9a0", size = 26647 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cc/bf/4799809715225d19928147d59fda0d3a4129da055b59a9b3e35aa6223f52/channels-4.2.2-py3-none-any.whl", hash = "sha256:ff36a6e1576cacf40bcdc615fa7aece7a709fc4fdd2dc87f2971f4061ffdaa81", size = 31048 },
 ]
 
 [[package]]
@@ -1240,6 +1254,25 @@ wheels = [
 ]
 
 [[package]]
+name = "mitol-django-apigateway"
+version = "2025.4.4.1"
+source = { editable = "src/apigateway" }
+dependencies = [
+    { name = "channels" },
+    { name = "django" },
+    { name = "django-stubs" },
+    { name = "edx-opaque-keys" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "channels", specifier = ">=4.2.0" },
+    { name = "django", specifier = ">=3.0" },
+    { name = "django-stubs", specifier = ">=1.13.1" },
+    { name = "edx-opaque-keys", specifier = "==2.2.2" },
+]
+
+[[package]]
 name = "mitol-django-authentication"
 version = "2025.3.17"
 source = { editable = "src/authentication" }
@@ -1693,6 +1726,7 @@ name = "ol-django"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "mitol-django-apigateway" },
     { name = "mitol-django-authentication" },
     { name = "mitol-django-authentication", extra = ["touchstone"], marker = "python_full_version < '3.13'" },
     { name = "mitol-django-common" },
@@ -1710,6 +1744,7 @@ dependencies = [
     { name = "mitol-django-scim" },
     { name = "mitol-django-transcoding" },
     { name = "mitol-django-uvtestapp" },
+    { name = "xmlsec" },
 ]
 
 [package.dev-dependencies]
@@ -1732,6 +1767,7 @@ dev = [
     { name = "mypy-extensions" },
     { name = "psycopg2-binary" },
     { name = "pytest" },
+    { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "pytest-django" },
     { name = "pytest-lazy-fixtures" },
@@ -1746,6 +1782,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "mitol-django-apigateway", editable = "src/apigateway" },
     { name = "mitol-django-authentication", marker = "python_full_version >= '3.13'", editable = "src/authentication" },
     { name = "mitol-django-authentication", extras = ["touchstone"], marker = "python_full_version < '3.13'", editable = "src/authentication" },
     { name = "mitol-django-common", editable = "src/common" },
@@ -1763,6 +1800,7 @@ requires-dist = [
     { name = "mitol-django-scim", editable = "src/scim" },
     { name = "mitol-django-transcoding", editable = "src/transcoding" },
     { name = "mitol-django-uvtestapp", editable = "src/uvtestapp" },
+    { name = "xmlsec", specifier = "<1.3.15" },
 ]
 
 [package.metadata.requires-dev]
@@ -1784,9 +1822,10 @@ dev = [
     { name = "mypy" },
     { name = "mypy-extensions" },
     { name = "psycopg2-binary" },
-    { name = "pytest", specifier = "~=8.3" },
+    { name = "pytest", specifier = ">=8.3.3" },
+    { name = "pytest-asyncio", specifier = ">=0.25.3" },
     { name = "pytest-cov", specifier = ">=4.0.0" },
-    { name = "pytest-django", specifier = "==4.10.0" },
+    { name = "pytest-django", specifier = "==4.11.1" },
     { name = "pytest-lazy-fixtures", specifier = ">=1" },
     { name = "pytest-mock", specifier = "==1.13.0" },
     { name = "responses", specifier = "==0.25.7" },
@@ -2159,6 +2198,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-asyncio"
+version = "0.26.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8e/c4/453c52c659521066969523e87d85d54139bbd17b78f09532fb8eb8cdb58e/pytest_asyncio-0.26.0.tar.gz", hash = "sha256:c4df2a697648241ff39e7f0e4a73050b03f123f760673956cf0d72a4990e312f", size = 54156 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/20/7f/338843f449ace853647ace35870874f69a764d251872ed1b4de9f234822c/pytest_asyncio-0.26.0-py3-none-any.whl", hash = "sha256:7b51ed894f4fbea1340262bdae5135797ebbe21d8638978e35d31c6d19f72fb0", size = 19694 },
+]
+
+[[package]]
 name = "pytest-cov"
 version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2173,14 +2224,14 @@ wheels = [
 
 [[package]]
 name = "pytest-django"
-version = "4.10.0"
+version = "4.11.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pytest" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a5/10/a096573b4b896f18a8390d9dafaffc054c1f613c60bf838300732e538890/pytest_django-4.10.0.tar.gz", hash = "sha256:1091b20ea1491fd04a310fc9aaff4c01b4e8450e3b157687625e16a6b5f3a366", size = 84710 }
+sdist = { url = "https://files.pythonhosted.org/packages/b1/fb/55d580352db26eb3d59ad50c64321ddfe228d3d8ac107db05387a2fadf3a/pytest_django-4.11.1.tar.gz", hash = "sha256:a949141a1ee103cb0e7a20f1451d355f83f5e4a5d07bdd4dcfdd1fd0ff227991", size = 86202 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/4c/a4fe18205926216e1aebe1f125cba5bce444f91b6e4de4f49fa87e322775/pytest_django-4.10.0-py3-none-any.whl", hash = "sha256:57c74ef3aa9d89cae5a5d73fbb69a720a62673ade7ff13b9491872409a3f5918", size = 23975 },
+    { url = "https://files.pythonhosted.org/packages/be/ac/bd0608d229ec808e51a21044f3f2f27b9a37e7a0ebaca7247882e67876af/pytest_django-4.11.1-py3-none-any.whl", hash = "sha256:1b63773f648aa3d8541000c26929c1ea63934be1cfa674c76436966d73fe6a10", size = 25281 },
 ]
 
 [[package]]
@@ -2698,7 +2749,7 @@ name = "xmlsec"
 version = "1.3.14"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "lxml", marker = "python_full_version < '3.13'" },
+    { name = "lxml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/25/5b/244459b51dfe91211c1d9ec68fb5307dfc51e014698f52de575d25f753e0/xmlsec-1.3.14.tar.gz", hash = "sha256:934f804f2f895bcdb86f1eaee236b661013560ee69ec108d29cdd6e5f292a2d9", size = 68854 }
 wheels = [

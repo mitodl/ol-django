@@ -6,6 +6,15 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.4.8'></a>
+## [2025.4.8] - 2025-04-09
+
+### Changed
+
+- Updated handling for multiple profiles in transcoding job
+
+- Added handling to exclude file group with hls groups
+
 <a id='changelog-2025.3.17'></a>
 ## [2025.3.17] - 2025-03-17
 

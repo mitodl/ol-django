@@ -23,6 +23,8 @@ dependencies = [
   "mitol-django-uvtestapp",
   "mitol-django-transcoding",
   "mitol-django-scim",
+  "xmlsec<1.3.15",
+  "mitol-django-apigateway",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -51,9 +53,10 @@ dev-dependencies = [
     "mypy",
     "mypy-extensions",
     "psycopg2-binary",
-    "pytest~=8.3",
+    "pytest>=8.3.3",
+    "pytest-asyncio>=0.25.3",
     "pytest-cov>=4.0.0",
-    "pytest-django==4.10.0",
+    "pytest-django==4.11.1",
     "pytest-lazy-fixtures>=1",
     "pytest-mock==1.13.0",
     "responses==0.25.7",
@@ -90,6 +93,7 @@ mitol-django-payment_gateway = { workspace = true }
 mitol-django-uvtestapp = { workspace = true }
 mitol-django-transcoding = { workspace = true }
 mitol-django-scim = { workspace = true }
+mitol-django-apigateway = { workspace = true }
 
 [tool.hatch.build.targets.sdist]
 include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]

@@ -26,6 +26,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("mitol.transcoding.urls")),
     path("", include("mitol.scim.urls")),
+    path("", include("mitol.apigateway.urls")),
 ]
 
 if sys.version_info < (3, 13):
