@@ -27,7 +27,7 @@ The `apigateway` app needs to be added to the `INSTALLED_APPS` in your Django pr
 ```python
 INSTALLED_APPS = [
     ...
-    "mitol.apigateway",
+    "mitol.apigateway.apps.ApigatewayApp",
 ]
 ```
 
@@ -86,13 +86,13 @@ These settings are needed for your environment:
 
 These settings are likely to need adjustment for your environment:
 
-- `MITOL_APIGATEWAY_CREATE_USER` - controls if the backend will create _new_ users or not. If set to False, users will have to be pre-created within the system before they can be authenticated.
-- `MITOL_APIGATEWAY_UPDATE_USER` - controls if the backend will update _existing_ users or not.
+- `MITOL_APIGATEWAY_USERINFO_CREATE` - controls if the backend will create _new_ users or not. If set to False, users will have to be pre-created within the system before they can be authenticated.
+- `MITOL_APIGATEWAY_USERINFO_UPDATE` - controls if the backend will update _existing_ users or not.
 
 These settings are unlikely to need adjustment:
 
-- `MITOL_APIGATEWAY_HEADER_NAME` - the name of the header the API gateway will use to attach user data to the request. For APISIX's `openid-connect` plugin, this will be `HTTP_X_USERINFO` and it isn't changeable (at time of writing). **This should be formatted as it will be after Django normalizes the header names.**
-- `MITOL_APIGATEWAY_ID_FIELD` - the name of the field to use to identify the user. This will depend on your SSO provider; for Keycloak, this is usually `sub`. You should use whatever immutable ID is available for this - email and username are not good choices unless there's no other option.
+- `MITOL_APIGATEWAY_USERINFO_HEADER_NAME` - the name of the header the API gateway will use to attach user data to the request. For APISIX's `openid-connect` plugin, this will be `HTTP_X_USERINFO` and it isn't changeable (at time of writing). **This should be formatted as it will be after Django normalizes the header names.**
+- `MITOL_APIGATEWAY_USERINFO_ID_FIELD` - the name of the field to use to identify the user. This will depend on your SSO provider; for Keycloak, this is usually `sub`. You should use whatever immutable ID is available for this - email and username are not good choices unless there's no other option.
 
 
 > ### Account management considerations
@@ -103,9 +103,9 @@ These settings are unlikely to need adjustment:
 >
 > When an existing user is matched to the remote user, the backend can update the user's data with what has been attached to the request. This is an easy way to keep your user database up to date. However, if you have a process that manages that for you, you may want to turn this off to prevent potential conflicts. (But be warned: if you do turn this off, you should make sure to configure the back-channel update process or your userdata will fall out of sync quickly.)
 
-_If you've turned on user creation or update_, you should additionally check the field mappings. The fields present in the user info attached to the request are often not a 1-to-1 map to what's in your `User` model, so the backend uses a setting that contains a map between the userinfo field and the `User` model field. This mapping is in `MITOL_APIGATEWAY_MODEL_MAP`.
+_If you've turned on user creation or update_, you should additionally check the field mappings. The fields present in the user info attached to the request are often not a 1-to-1 map to what's in your `User` model, so the backend uses a setting that contains a map between the userinfo field and the `User` model field. This mapping is in `MITOL_APIGATEWAY_USERINFO_MODEL_MAP`.
 
-The `MODEL_MAP` is a dict with two root keys:
+The `MITOL_APIGATEWAY_USERINFO_MODEL_MAP` is a dict with two root keys:
 
 - `user_fields`: Maps data into the user model. Contains a dict.
    - Keys are the userinfo field name and values are the target user model field.
