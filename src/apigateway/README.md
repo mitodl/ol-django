@@ -103,9 +103,9 @@ These settings are unlikely to need adjustment:
 >
 > When an existing user is matched to the remote user, the backend can update the user's data with what has been attached to the request. This is an easy way to keep your user database up to date. However, if you have a process that manages that for you, you may want to turn this off to prevent potential conflicts. (But be warned: if you do turn this off, you should make sure to configure the back-channel update process or your userdata will fall out of sync quickly.)
 
-_If you've turned on user creation or update_, you should additionally check the field mappings. The fields present in the user info attached to the request are often not a 1-to-1 map to what's in your `User` model, so the backend uses a setting that contains a map between the userinfo field and the `User` model field. This mapping is in `MITOL_APIGATEWAY_MODEL_MAP`.
+_If you've turned on user creation or update_, you should additionally check the field mappings. The fields present in the user info attached to the request are often not a 1-to-1 map to what's in your `User` model, so the backend uses a setting that contains a map between the userinfo field and the `User` model field. This mapping is in `MITOL_APIGATEWAY_USERINFO_MODEL_MAP`.
 
-The `MODEL_MAP` is a dict with two root keys:
+The `MITOL_APIGATEWAY_USERINFO_MODEL_MAP` is a dict with two root keys:
 
 - `user_fields`: Maps data into the user model. Contains a dict.
    - Keys are the userinfo field name and values are the target user model field.
