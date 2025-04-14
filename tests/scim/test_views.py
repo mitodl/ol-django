@@ -20,7 +20,7 @@ from mitol.scim import constants
 User = get_user_model()
 
 
-@pytest.fixture()
+@pytest.fixture
 def scim_client(staff_user):
     """Test client for scim"""
     client = Client()
@@ -284,7 +284,7 @@ def _delete_operation(user, bulk_id_gen):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def bulk_test_data():
     """Test data for the /Bulk API tests"""
     existing_users = UserFactory.create_batch(500)
