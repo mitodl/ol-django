@@ -81,3 +81,24 @@ def get_username_from_userinfo_header(request: HttpRequest | dict) -> str | None
         return None
 
     return User.objects.get(global_id=user_id).username
+
+
+def create_userinfo_header(user):
+    """
+    Create an X_USERINFO header, so we can fake out auth properly.
+    APIClient has a force_authenticate method that adds the user account to the
+    fake request, but the middleware in apigateway will kick it out because the
+    header won't be there. So, use this to add the header when creating APIClients.
+    Ex: new APIClient(headers=create_userinfo_header(myuser))
+    This will use the model map in reverse. It will only care about the
+    user_fields
+    """
+
+    model_map = settings.MITOL_APIGATEWAY_USERINFO_MODEL_MAP
+    header_name = settings.MITOL_APIGATEWAY_USERINFO_HEADER_NAME.replace("HTTP_", "")
+    header_data = {
+        k: str(getattr(user, model_map["user_fields"][k], None))
+        for k in model_map["user_fields"]
+    }
+
+    return {header_name: base64.b64encode(json.dumps(header_data).encode())}
