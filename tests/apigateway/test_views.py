@@ -11,7 +11,7 @@ pytestmark = pytest.mark.django_db
 INTERNAL_LOGOUT_URL_PATH = "/applogout"
 
 
-@pytest.fixture()
+@pytest.fixture
 def user():
     """Create a user."""
 
