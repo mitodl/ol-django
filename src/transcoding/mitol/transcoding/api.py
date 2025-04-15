@@ -10,6 +10,35 @@ from django.conf import settings
 from mitol.transcoding.constants import GroupSettings
 
 
+def get_destination_path(
+    video_source_key: str,
+    source_prefix: str = "",
+    destination_prefix: str = "",
+) -> str:
+    """
+    Calculate the destination path for transcoded files.
+
+    Args:
+        video_source_key (str): S3 key for the video source.
+        source_prefix (str): Prefix for the source video.
+        destination_prefix (str): Prefix for the destination video.
+
+    Returns:
+        str: Destination path for the transcoded files.
+    """
+    if source_prefix:
+        destination_path = Path(
+            video_source_key.replace(
+                source_prefix,
+                destination_prefix,
+            )
+        )
+    else:
+        destination_path = Path(destination_prefix, video_source_key)
+
+    return str(destination_path.parent / destination_path.stem)
+
+
 def media_convert_job(  # noqa: PLR0913
     video_source_key: str,
     source_prefix: str = settings.VIDEO_S3_UPLOAD_PREFIX,
@@ -56,16 +85,11 @@ def media_convert_job(  # noqa: PLR0913
             f"arn:aws:iam::{settings.AWS_ACCOUNT_ID}:role/{settings.AWS_ROLE_NAME}"
         )
 
-        if source_prefix:
-            destination_path = Path(
-                video_source_key.replace(
-                    source_prefix,
-                    destination_prefix,
-                )
-            )
-        else:
-            destination_path = Path(destination_prefix, video_source_key)
-        destination = str(destination_path.parent / destination_path.stem)
+        destination = get_destination_path(
+            video_source_key=video_source_key,
+            source_prefix=source_prefix,
+            destination_prefix=destination_prefix,
+        )
 
         job_dict["Settings"]["Inputs"][0]["FileInput"] = (
             f"s3://{source_bucket}/{video_source_key}"
