@@ -27,7 +27,7 @@ class ApisixUserMiddleware(RemoteUserMiddleware):
         log.debug("ApisixUserMiddleware.process_request: started")
 
         if settings.MITOL_APIGATEWAY_DISABLE_MIDDLEWARE:
-            return super().process_request(request)
+            return self.get_response(request)
 
         if request.META.get(settings.MITOL_APIGATEWAY_USERINFO_HEADER_NAME):
             new_header = get_user_id_from_userinfo_header(request)
