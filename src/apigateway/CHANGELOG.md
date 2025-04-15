@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.4.15'></a>
+## [2025.4.15] - 2025-04-15
+
+### Added
+
+- Added create_userinfo_header to assist with creating test clients.
+
 <a id='changelog-2025.4.4.1'></a>
 ## [2025.4.4.1] - 2025-04-04
 
