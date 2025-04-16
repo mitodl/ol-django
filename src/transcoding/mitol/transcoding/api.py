@@ -39,11 +39,13 @@ def get_destination_path(
     return str(destination_path.parent / destination_path.stem)
 
 
-def media_convert_job(  # noqa: PLR0913
+def make_media_convert_job(  # noqa: PLR0913
     video_source_key: str,
     source_prefix: str = settings.VIDEO_S3_UPLOAD_PREFIX,
     source_bucket: str = settings.AWS_STORAGE_BUCKET_NAME,
-    destination_prefix: str = settings.VIDEO_S3_TRANSCODE_PREFIX,
+    destination_prefix: str = (
+        settings.VIDEO_S3_TRANSCODE_PREFIX or settings.VIDEO_S3_UPLOAD_PREFIX
+    ),
     destination_bucket: str = (
         settings.VIDEO_S3_TRANSCODE_BUCKET or settings.AWS_STORAGE_BUCKET_NAME
     ),
@@ -67,11 +69,6 @@ def media_convert_job(  # noqa: PLR0913
     if group_settings is None:
         group_settings = {}
 
-    client = boto3.client(
-        "mediaconvert",
-        region_name=settings.AWS_REGION,
-        endpoint_url=settings.VIDEO_S3_TRANSCODE_ENDPOINT,
-    )
     with Path(Path.cwd() / settings.TRANSCODE_JOB_TEMPLATE).open(
         encoding="utf-8",
     ) as job_template:
@@ -97,7 +94,101 @@ def media_convert_job(  # noqa: PLR0913
 
         add_group_settings(job_dict, destination, destination_bucket, group_settings)
 
+    return job_dict
+
+
+def media_convert_job(video_source_key: str) -> dict:
+    """
+    Create a MediaConvert job.
+    Args:
+        video_source_key (str): S3 key for the video source.
+    Returns:
+        dict: Response from MediaConvert job creation.
+    """
+    job_dict = make_media_convert_job(video_source_key)
+
+    try:
+        client = boto3.client(
+            "mediaconvert",
+            region_name=settings.AWS_REGION,
+            endpoint_url=settings.VIDEO_S3_TRANSCODE_ENDPOINT,
+        )
         return client.create_job(**job_dict)
+
+    except Exception as e:
+        err_msg = f"Failed to create MediaConvert client: {e}"
+        raise ValueError(err_msg) from e
+
+
+def _filter_mp4_groups(output_groups: list) -> list:
+    """
+    Filter out MP4 output groups.
+    Args:
+        output_groups (list): List of output groups from the MediaConvert job.
+    Returns:
+        filtered_groups (list): Filtered list of output groups without MP4 outputs.
+    """
+    filtered_groups = []
+    for group in output_groups:
+        # Check if this group contains MP4 outputs
+        is_mp4_group = False
+        for output in group.get("Outputs", []):
+            container_settings = output.get("ContainerSettings", {})
+            if container_settings.get("Container") == "MP4":
+                is_mp4_group = True
+                break
+
+        # Keep the group if it's not an MP4 group
+        if not is_mp4_group:
+            filtered_groups.append(group)
+    return filtered_groups
+
+
+def _is_thumbnail_group(group: dict) -> bool:
+    """
+    Determine if the group is for thumbnails by checking for FRAME_CAPTURE codec.
+    Args:
+        group (dict): Output group from the MediaConvert job.
+    Returns:
+        bool: True if the group adds thumbnails, False otherwise.
+    """
+    for output in group.get("Outputs", []):
+        video_description = output.get("VideoDescription", {})
+        codec_settings = video_description.get("CodecSettings", {})
+        if codec_settings.get("Codec") == "FRAME_CAPTURE":
+            return True
+    return False
+
+
+def _get_output_path(
+    destination: str,
+    destination_bucket: str,
+    *,  # keyword-only arguments
+    is_thumbnail_group: bool = False,
+    thumbnail_bucket: Optional[str] = settings.VIDEO_S3_THUMBNAIL_BUCKET,
+    thumbnail_prefix: Optional[str] = settings.VIDEO_S3_THUMBNAIL_PREFIX,
+) -> str:
+    """
+    Get the appropriate output path based on group type and settings.
+    Args:
+        is_thumbnail_group (bool): Flag indicating if the group is for thumbnails.
+        destination (str): Destination path for the output files.
+        destination_bucket (str): S3 bucket for the transcoded output.
+        thumbnail_bucket (str, optional): S3 bucket for thumbnail generation.
+        thumbnail_prefix (str, optional): Prefix for the thumbnail video.
+    Returns:
+        str: Output path for the MediaConvert job.
+    """
+
+    # Use Django settings for thumbnail bucket/prefix, with fallbacks
+    if is_thumbnail_group:
+        # Create the thumbnail destination path from the video source path
+        thumbnail_destination = get_destination_path(
+            video_source_key=Path(destination).name,
+            destination_prefix=(thumbnail_prefix or settings.VIDEO_S3_TRANSCODE_PREFIX),
+        )
+        return f"s3://{thumbnail_bucket or destination_bucket}/{thumbnail_destination}"
+    return f"s3://{destination_bucket}/{destination}"
 
 
 def add_group_settings(
@@ -115,32 +206,20 @@ def add_group_settings(
         destination_bucket (str): S3 bucket for the transcoded output.
         group_settings (dict): Group settings for the job.
     """
-
     exclude_mp4 = group_settings.get("exclude_mp4", False)
     output_groups = job_dict["Settings"]["OutputGroups"]
 
     if exclude_mp4:
-        # Identify and remove MP4 groups by their container type, not by name
-        filtered_groups = []
-        for group in output_groups:
-            # Check if this group contains MP4 outputs
-            is_mp4_group = False
-            for output in group.get("Outputs", []):
-                container_settings = output.get("ContainerSettings", {})
-                if container_settings.get("Container") == "MP4":
-                    is_mp4_group = True
-                    break
-
-            # Keep the group if it's not an MP4 group
-            if not is_mp4_group:
-                filtered_groups.append(group)
-
+        filtered_groups = _filter_mp4_groups(output_groups)
         job_dict["Settings"]["OutputGroups"] = filtered_groups
         output_groups = filtered_groups
 
     for group in output_groups:
         output_group_settings = group["OutputGroupSettings"]
         group_settings_type = output_group_settings["Type"]
+
+        is_thumbnail_group = _is_thumbnail_group(group)
+
         if group_settings_type == GroupSettings.HLS_GROUP_SETTINGS:
             group_settings_key = GroupSettings.HLS_GROUP_SETTINGS_KEY
             output_group_settings[group_settings_key]["SegmentLength"] = (
@@ -155,7 +234,9 @@ def add_group_settings(
             group_type = group_settings_type
             error_msg = f"Unsupported group settings type: {group_type}"
             raise ValueError(error_msg)
-
-        output_group_settings[group_settings_key]["Destination"] = (
-            f"s3://{destination_bucket}/{destination}"
+        output_path = _get_output_path(
+            destination,
+            destination_bucket,
+            is_thumbnail_group=is_thumbnail_group,
         )
+        output_group_settings[group_settings_key]["Destination"] = output_path
