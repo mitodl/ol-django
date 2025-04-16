@@ -184,7 +184,7 @@ def _get_output_path(
     if is_thumbnail_group:
         # Create the thumbnail destination path from the video source path
         thumbnail_destination = get_destination_path(
-            video_source_key=Path(destination).name,
+            video_source_key=str(Path(destination).parent),
             destination_prefix=(thumbnail_prefix or settings.VIDEO_S3_TRANSCODE_PREFIX),
         )
         return f"s3://{thumbnail_bucket or destination_bucket}/{thumbnail_destination}"
