@@ -52,7 +52,7 @@ def make_media_convert_job(  # noqa: PLR0913
     group_settings: Optional[dict] = None,
 ) -> dict:
     """
-    Create a MediaConvert job for a Video
+    Create a MediaConvert job config.
 
     Args:
         video_source_key (str): S3 key for the video source.
@@ -97,15 +97,41 @@ def make_media_convert_job(  # noqa: PLR0913
     return job_dict
 
 
-def media_convert_job(video_source_key: str) -> dict:
+def media_convert_job(  # noqa: PLR0913
+    video_source_key: str,
+    source_prefix: str = settings.VIDEO_S3_UPLOAD_PREFIX,
+    source_bucket: str = settings.AWS_STORAGE_BUCKET_NAME,
+    destination_prefix: str = (
+        settings.VIDEO_S3_TRANSCODE_PREFIX or settings.VIDEO_S3_UPLOAD_PREFIX
+    ),
+    destination_bucket: str = (
+        settings.VIDEO_S3_TRANSCODE_BUCKET or settings.AWS_STORAGE_BUCKET_NAME
+    ),
+    group_settings: Optional[dict] = None,
+) -> dict:
     """
-    Create a MediaConvert job.
+    Create a MediaConvert job for a Video
+
     Args:
         video_source_key (str): S3 key for the video source.
+        source_prefix (str): Prefix for the source video.
+        source_bucket (str, optional): S3 bucket for the source video.
+        destination_prefix (str): Prefix for the destination video.
+        destination_bucket (str): S3 bucket for the transcoded output
+        group_settings (dict, optional): Settings for output groups. Defaults to None.
+
     Returns:
-        dict: Response from MediaConvert job creation.
+        dict: MediaConvert job details.
     """
-    job_dict = make_media_convert_job(video_source_key)
+
+    job_dict = make_media_convert_job(
+        video_source_key,
+        source_prefix,
+        source_bucket,
+        destination_prefix,
+        destination_bucket,
+        group_settings,
+    )
 
     try:
         client = boto3.client(
