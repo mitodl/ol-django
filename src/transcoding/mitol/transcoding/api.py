@@ -112,25 +112,35 @@ def add_group_settings(
     Args:
         job_dict (dict): MediaConvert job dictionary.
         destination (str): Destination path for the output files.
+        destination_bucket (str): S3 bucket for the transcoded output.
         group_settings (dict): Group settings for the job.
-        destination_bucket (str, optional): S3 bucket for the transcoded output.
     """
 
     exclude_mp4 = group_settings.get("exclude_mp4", False)
     output_groups = job_dict["Settings"]["OutputGroups"]
 
     if exclude_mp4:
-        # Remove the MP4 output group if not needed
-        output_groups = [
-            group
-            for group in output_groups
-            if group["OutputGroupSettings"]["Type"] != GroupSettings.FILE_GROUP_SETTINGS
-        ]
-        job_dict["Settings"]["OutputGroups"] = output_groups
+        # Identify and remove MP4 groups by their container type, not by name
+        filtered_groups = []
+        for group in output_groups:
+            # Check if this group contains MP4 outputs
+            is_mp4_group = False
+            for output in group.get("Outputs", []):
+                container_settings = output.get("ContainerSettings", {})
+                if container_settings.get("Container") == "MP4":
+                    is_mp4_group = True
+                    break
+
+            # Keep the group if it's not an MP4 group
+            if not is_mp4_group:
+                filtered_groups.append(group)
+
+        job_dict["Settings"]["OutputGroups"] = filtered_groups
+        output_groups = filtered_groups
 
     for group in output_groups:
         output_group_settings = group["OutputGroupSettings"]
-        group_settings_type = group["OutputGroupSettings"]["Type"]
+        group_settings_type = output_group_settings["Type"]
         if group_settings_type == GroupSettings.HLS_GROUP_SETTINGS:
             group_settings_key = GroupSettings.HLS_GROUP_SETTINGS_KEY
             output_group_settings[group_settings_key]["SegmentLength"] = (
