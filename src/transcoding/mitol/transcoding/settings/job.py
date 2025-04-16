@@ -5,27 +5,37 @@ from mitol.common.envs import get_delimited_list, get_string
 VIDEO_S3_TRANSCODE_ENDPOINT = get_string(
     name="VIDEO_S3_TRANSCODE_ENDPOINT",
     default="aws_mediaconvert_transcodes",
-    description=("Endpoint to be used for AWS MediaConvert"),
+    description="Endpoint to be used for AWS MediaConvert",
 )
 VIDEO_TRANSCODE_QUEUE = get_string(
     name="VIDEO_TRANSCODE_QUEUE",
     default="Default",
-    description=("Name of MediaConvert queue to use for transcoding"),
+    description="Name of MediaConvert queue to use for transcoding",
 )
 VIDEO_S3_TRANSCODE_BUCKET = get_string(
     name="VIDEO_S3_TRANSCODE_BUCKET",
     default="",
-    description=("Bucket to be used for transcoding"),
+    description="Bucket to be used for transcoding",
 )
 VIDEO_S3_TRANSCODE_PREFIX = get_string(
     name="VIDEO_S3_TRANSCODE_PREFIX",
     default="",
-    description=("Prefix for the transcoded video"),
+    description="Prefix for the transcoded video",
+)
+VIDEO_S3_THUMBNAIL_BUCKET = get_string(
+    name="VIDEO_S3_THUMBNAIL_BUCKET",
+    default="",
+    description="Bucket to be used for thumbnail generation",
+)
+VIDEO_S3_THUMBNAIL_PREFIX = get_string(
+    name="VIDEO_S3_THUMBNAIL_PREFIX",
+    default="",
+    description="Prefix for the thumbnail video",
 )
 VIDEO_S3_UPLOAD_PREFIX = get_string(
     name="VIDEO_S3_UPLOAD_PREFIX",
     default="",
-    description=("Prefix for the source video"),
+    description="Prefix for the source video",
 )
 POST_TRANSCODE_ACTIONS = get_delimited_list(
     name="POST_TRANSCODE_ACTIONS",
