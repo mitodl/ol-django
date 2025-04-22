@@ -489,7 +489,7 @@ def create_transaction_detail_record():
                             "name": "ics_auth",
                             "r_code": "1",
                             "r_flag": "SOK",
-                            "r_message": "Request was " "processed " "successfully.",
+                            "r_message": "Request was processed successfully.",
                             "reason_code": "100",
                             "reconciliation_id": fake_recon_id,
                             "return_code": 1010000,
@@ -501,7 +501,7 @@ def create_transaction_detail_record():
                             "name": "ics_bill",
                             "r_code": "1",
                             "r_flag": "SOK",
-                            "r_message": "Request was " "processed " "successfully.",
+                            "r_message": "Request was processed successfully.",
                             "reason_code": "100",
                             "reconciliation_id": fake_recon_id,
                             "return_code": 1260000,
@@ -523,7 +523,7 @@ def create_transaction_detail_record():
         ),
         "client_reference_information": cs_models.TssV2TransactionsGet200ResponseClientReferenceInformation(  # noqa: E501
             **{
-                "application_name": "Secure Acceptance " "Web/Mobile",
+                "application_name": "Secure Acceptance Web/Mobile",
                 "application_user": None,
                 "application_version": None,
                 "code": "mitxonline-dev-4",
