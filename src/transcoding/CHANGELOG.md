@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.4.23'></a>
+## [2025.4.23] - 2025-04-23
+
+### Fixed
+
+- Fixed thumbnail path in s3
+
 <a id='changelog-2025.4.10'></a>
 ## [2025.4.10] - 2025-04-10
 
