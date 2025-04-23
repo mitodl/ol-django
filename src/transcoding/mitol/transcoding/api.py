@@ -166,6 +166,6 @@ def add_group_settings(job_dict: dict, file_config: FileConfig) -> None:
             error_msg = f"Unsupported group settings type: {group_type}"
             raise ValueError(error_msg)
         output_path = get_output_path(
-            file_config, _is_thumbnail_group=_is_thumbnail_group
+            file_config, is_thumbnail_group=_is_thumbnail_group
         )
         output_group_settings[group_settings_key]["Destination"] = output_path
