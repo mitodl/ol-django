@@ -100,7 +100,7 @@ def filter_mp4_groups(output_groups: list) -> list:
 def get_output_path(
     file_config: FileConfig,
     *,
-    _is_thumbnail_group: bool,
+    is_thumbnail_group: bool,
     thumbnail_bucket: Optional[str] = (
         settings.VIDEO_S3_THUMBNAIL_BUCKET or settings.AWS_STORAGE_BUCKET_NAME
     ),
@@ -113,7 +113,7 @@ def get_output_path(
     Args:
         file_config (FileConfig): Configuration for file paths and settings.
     Kwargs:
-        _is_thumbnail_group (bool): Flag indicating if the group is for thumbnails.
+        is_thumbnail_group (bool): Flag indicating if the group is for thumbnails.
         thumbnail_bucket (str, optional): S3 bucket for thumbnail generation.
         thumbnail_prefix (str, optional): Prefix for the thumbnail video.
     Returns:
@@ -122,13 +122,13 @@ def get_output_path(
 
     # Use Django settings for thumbnail bucket/prefix, with fallbacks
     destination_bucket = (
-        thumbnail_bucket if _is_thumbnail_group else file_config.destination_bucket
+        thumbnail_bucket if is_thumbnail_group else file_config.destination_bucket
     )
     destination = (
         file_config.destination.replace(
             file_config.destination_prefix, thumbnail_prefix
         )
-        if _is_thumbnail_group and thumbnail_prefix
+        if is_thumbnail_group and thumbnail_prefix
         else file_config.destination
     )
 
