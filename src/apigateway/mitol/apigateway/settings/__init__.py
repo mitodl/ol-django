@@ -41,7 +41,6 @@ MITOL_APIGATEWAY_USERINFO_MODEL_MAP = {
     },
 }
 
-MITOL_APIGATEWAY_USERINFO_ID_SEARCH_FIELD = "global_id"
 # Set to True to create users that we see but aren't aware of.
 # Set to False if you're managing that elsewhere (like with social-auth).
 MITOL_APIGATEWAY_USERINFO_CREATE = True
@@ -50,6 +49,9 @@ MITOL_APIGATEWAY_USERINFO_CREATE = True
 # sure there's a backchannel way to update the user data (SCIM, etc) or user
 # info will fall out of sync with the IdP pretty quickly.
 MITOL_APIGATEWAY_USERINFO_UPDATE = True
+
+# This is the name of the field used to lookup the user
+MITOL_APIGATEWAY_USER_LOOKUP_FIELD = "global_id"
 
 # URL configuation
 

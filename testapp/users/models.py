@@ -8,6 +8,4 @@ from mitol.common.models import TimestampedModel
 class User(AbstractUser, AbstractSCIMUserMixin, TimestampedModel):
     """Custom user"""
 
-    USERNAME_FIELD = "global_id"
-
     global_id = models.CharField(max_length=255, blank=True, default="")
