@@ -7,6 +7,7 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import RemoteUserBackend
+from django.db import transaction
 
 from mitol.apigateway.api import decode_x_header
 
@@ -71,6 +72,26 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
 
     create_unknown_user = settings.MITOL_APIGATEWAY_USERINFO_CREATE
     update_known_user = settings.MITOL_APIGATEWAY_USERINFO_UPDATE
+
+    def authenticate(self, request, remote_user):
+        """
+        Authenticate the user
+        """
+        try:
+            with transaction.atomic():
+                return super().authenticate(request, remote_user)
+        except Exception:
+            log.exception("Unable to authenticate api gateway user")
+            return None
+
+    async def aauthenticate(self, request, remote_user):
+        """See authenticate()."""
+        try:
+            with transaction.atomic():
+                return super().aauthenticate(request, remote_user)
+        except Exception:
+            log.exception("Unable to authenticate api gateway user")
+            return None
 
     def configure_user(self, request, user, *, created=True):
         """
