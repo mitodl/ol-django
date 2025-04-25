@@ -1,5 +1,6 @@
 """Authentication backends for the API Gateway."""
 
+import contextlib
 import logging
 
 from django.apps import apps
@@ -13,7 +14,51 @@ log = logging.getLogger(__name__)
 User = get_user_model()
 
 
-class ApisixRemoteUserBackend(RemoteUserBackend):
+class RemoteUserCustomFieldBackend(RemoteUserBackend):
+    """
+    RemoteUserBackend variant that allows the field for the lookup to be configured
+    """
+
+    lookup_field: str
+
+    def authenticate(self, request, remote_user):
+        """
+        Authenticate the user
+        """
+        if not remote_user:
+            return None
+        created = False
+        user = None
+        username = self.clean_username(remote_user)
+
+        if self.create_unknown_user:
+            user, created = User.objects.get_or_create(**{self.lookup_field: username})
+        else:
+            with contextlib.suppress(User.DoesNotExist):
+                user = User.objects.get_by_natural_key(username)
+        user = self.configure_user(request, user, created=created)
+        return user if self.user_can_authenticate(user) else None
+
+    async def aauthenticate(self, request, remote_user):
+        """See authenticate()."""
+        if not remote_user:
+            return None
+        created = False
+        user = None
+        username = self.clean_username(remote_user)
+
+        if self.create_unknown_user:
+            user, created = await User.objects.aget_or_create(
+                **{self.lookup_field: username}
+            )
+        else:
+            with contextlib.suppress(User.DoesNotExist):
+                user = await User.objects.aget_by_natural_key(username)
+        user = await self.aconfigure_user(request, user, created=created)
+        return user if self.user_can_authenticate(user) else None
+
+
+class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
     """
     Custom RemoteUserBackend that updates users using the APISIX headers.
 
@@ -21,6 +66,8 @@ class ApisixRemoteUserBackend(RemoteUserBackend):
     it won't fill out all the data we'll generally want to capture. Additionally,
     we'll want to toggle the user creation code with a setting.
     """
+
+    lookup_field = "global_id"
 
     create_unknown_user = settings.MITOL_APIGATEWAY_USERINFO_CREATE
     update_known_user = settings.MITOL_APIGATEWAY_USERINFO_UPDATE
