@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.4.25.1'></a>
+## [2025.4.25.1] - 2025-04-25
+
+### Fixed
+
+- Made authentication for users transactional to avoid incomplete state.
+
 <a id='changelog-2025.4.25'></a>
 ## [2025.4.25] - 2025-04-25
 
