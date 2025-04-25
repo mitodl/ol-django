@@ -6,6 +6,14 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.4.25'></a>
+## [2025.4.25] - 2025-04-25
+
+### Changed
+
+- Switch the backend to lookup the user based off a configurable field,
+  defaulting to `global_id`.
+
 <a id='changelog-2025.4.15'></a>
 ## [2025.4.15] - 2025-04-15
 
