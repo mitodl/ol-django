@@ -25,7 +25,7 @@ FAKE_COMMON_BUNDLE = [
 
 
 @pytest.fixture(autouse=True)
-def dont_disable_webpack(settings):  # noqa: PT004
+def dont_disable_webpack(settings):
     """Re-enable webpack loader stats for these tests."""
     settings.WEBPACK_DISABLE_LOADER_STATS = False
 

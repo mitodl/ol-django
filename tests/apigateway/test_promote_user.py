@@ -11,7 +11,7 @@ pytestmark = pytest.mark.django_db
 FAKE = faker.Faker()
 
 
-@pytest.fixture()
+@pytest.fixture
 def user():
     """Create a user."""
 

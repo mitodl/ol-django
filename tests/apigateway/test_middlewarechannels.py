@@ -18,14 +18,14 @@ class MockApplication:
         return (scope, receive, send)
 
 
-@pytest.fixture()
+@pytest.fixture
 def application():
     """Return a fake application."""
 
     return MockApplication()
 
 
-@pytest.fixture()
+@pytest.fixture
 def scope():
     """Return a fake scope."""
 
@@ -42,7 +42,7 @@ def scope():
     }
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_middleware(application, scope):
     """Construct a fake scope and see if the middleware attaches the user."""
 
@@ -57,7 +57,7 @@ async def test_middleware(application, scope):
     assert result_scope["user"].is_authenticated
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_middleware_logout(application, scope):
     """Make sure the user is dropped from the scope if the header is not present."""
 
