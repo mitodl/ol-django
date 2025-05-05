@@ -4,9 +4,10 @@ from typing import Optional, Union
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django_scim import constants
 from django_scim.adapters import SCIMUser
 from scim2_filter_parser.attr_paths import AttrPath
+
+from mitol.scim.constants import SchemaURI
 
 User = get_user_model()
 
@@ -98,7 +99,7 @@ class UserAdapter(SCIMUser):
         return {
             "id": self.id,
             "externalId": self.obj.scim_external_id,
-            "schemas": [constants.SchemaURI.USER],
+            "schemas": [SchemaURI.USER],
             "userName": self.obj.username,
             "name": {
                 "givenName": self.obj.first_name,
@@ -131,6 +132,7 @@ class UserAdapter(SCIMUser):
         self.obj.last_name = d.get("name", {}).get("familyName", "")
         self.obj.scim_username = d.get("userName")
         self.obj.scim_external_id = d.get("externalId")
+        self.obj.global_id = self.obj.scim_external_id or ""
 
     def _save_user(self):
         self.obj.save()

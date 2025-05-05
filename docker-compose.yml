@@ -9,6 +9,11 @@ services:
     ports:
     - "${POSTGRES_PORT:-55432}:5432"
 
+  redis:
+    image: redis
+    ports:
+    - "${REDIS_PORT:-36379}:6379"
+
   shell:
     build:
       target: uv

@@ -11,6 +11,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import (
     PROTECT,
+    CharField,
     DateTimeField,
     ForeignKey,
     JSONField,
@@ -243,3 +244,24 @@ class PrefetchGenericQuerySet(QuerySet):
             self._prefetch_generic_related_lookups
         )
         return c
+
+
+class UserGlobalIdMixin(Model):
+    """
+    Mixin that adds a standard global_id definition.
+
+    The `global_id` field points to the SSO ID for the user (so, usually the Keycloak
+    ID, which is a UUID). We store it as a string in case the SSO source changes.
+    We allow a blank value so we can have out-of-band users - we may want a
+     Django user that's not connected to an SSO user, for instance.
+    """
+
+    global_id = CharField(
+        max_length=36,
+        blank=True,
+        default="",
+        help_text="The SSO ID (usually a Keycloak UUID) for the user.",
+    )
+
+    class Meta:
+        abstract = True

@@ -1,11 +1,8 @@
 from django.contrib.auth.models import AbstractUser
-from django.db import models
 from django_scim.models import AbstractSCIMUserMixin
-from mitol.common.models import TimestampedModel
+from mitol.common.models import TimestampedModel, UserGlobalIdMixin
 
 
 # Create your models here.
-class User(AbstractUser, AbstractSCIMUserMixin, TimestampedModel):
+class User(AbstractUser, AbstractSCIMUserMixin, TimestampedModel, UserGlobalIdMixin):
     """Custom user"""
-
-    global_id = models.CharField(max_length=255, blank=True, default="")

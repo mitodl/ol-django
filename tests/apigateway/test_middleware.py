@@ -6,8 +6,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from mitol.apigateway.middleware import ApisixUserMiddleware
+from mitol.common.factories.defaults import SsoUserFactory
 
-from testapp.main.factories import SsoUserFactory
 from testapp.main.utils import generate_apisix_request, generate_fake_apisix_payload
 
 FAKE = faker.Faker()

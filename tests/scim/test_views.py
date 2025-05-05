@@ -13,7 +13,6 @@ from deepmerge import always_merger
 from django.contrib.auth import get_user_model
 from django.test import Client
 from django.urls import reverse
-from django_scim import constants as djs_constants
 from main.factories import UserFactory
 from mitol.scim import constants
 
@@ -29,7 +28,6 @@ def scim_client(staff_user):
 
 
 @pytest.fixture(scope="module")
-@pytest.mark.usefixture("django_db_setup")
 def large_user_set(django_db_blocker):
     """Large set of users"""
     # per https://pytest-django.readthedocs.io/en/latest/database.html#populate-the-test-database-if-you-don-t-use-transactional-or-live-server
@@ -47,7 +45,7 @@ def test_scim_user_post(scim_client):
         content_type="application/scim+json",
         data=json.dumps(
             {
-                "schemas": [djs_constants.SchemaURI.USER],
+                "schemas": [constants.SchemaURI.USER],
                 "emails": [{"value": "jdoe@example.com", "primary": True}],
                 "active": True,
                 "userName": "jdoe",
@@ -80,7 +78,7 @@ def test_scim_user_put(scim_client):
         content_type="application/scim+json",
         data=json.dumps(
             {
-                "schemas": [djs_constants.SchemaURI.USER],
+                "schemas": [constants.SchemaURI.USER],
                 "emails": [{"value": "jsmith@example.com", "primary": True}],
                 "active": True,
                 "userName": "jsmith",
@@ -114,7 +112,7 @@ def test_scim_user_patch(scim_client):
         content_type="application/scim+json",
         data=json.dumps(
             {
-                "schemas": [djs_constants.SchemaURI.PATCH_OP],
+                "schemas": [constants.SchemaURI.PATCH_OP],
                 "Operations": [
                     {
                         "op": "replace",
@@ -122,7 +120,7 @@ def test_scim_user_patch(scim_client):
                         # string...inside JSON...
                         "value": json.dumps(
                             {
-                                "schemas": [djs_constants.SchemaURI.USER],
+                                "schemas": [constants.SchemaURI.USER],
                                 "emailOptIn": 1,
                                 "fullName": "Billy Bob",
                                 "name": {
@@ -150,7 +148,7 @@ def test_scim_user_patch(scim_client):
 def _user_to_scim_payload(user):
     """Test util to serialize a user to a SCIM representation"""
     return {
-        "schemas": [djs_constants.SchemaURI.USER],
+        "schemas": [constants.SchemaURI.USER],
         "emails": [{"value": user.email, "primary": True}],
         "userName": user.username,
         "name": {
@@ -239,7 +237,7 @@ def _patch_operation(user, data, fields_to_patch, bulk_id_gen):
             "bulkId": bulk_id,
             "path": f"/Users/{user.scim_id}",
             "data": {
-                "schemas": [djs_constants.SchemaURI.PATCH_OP],
+                "schemas": [constants.SchemaURI.PATCH_OP],
                 "Operations": [
                     {
                         "op": "replace",
@@ -453,7 +451,7 @@ def test_user_search(large_user_set, scim_client, sort_by, sort_order, count):
             content_type="application/scim+json",
             data=json.dumps(
                 {
-                    "schemas": [djs_constants.SchemaURI.SERACH_REQUEST],
+                    "schemas": [constants.SchemaURI.SERACH_REQUEST],
                     "filter": " OR ".join([f'email EQ "{email}"' for email in emails]),
                     # SCIM API is 1-based index
                     # Additionally, scim-for-keycloak sends this as a string,
@@ -473,7 +471,7 @@ def test_user_search(large_user_set, scim_client, sort_by, sort_order, count):
             "totalResults": len(emails),
             "itemsPerPage": effective_count,
             "startIndex": start_index + 1,
-            "schemas": [djs_constants.SchemaURI.LIST_RESPONSE],
+            "schemas": [constants.SchemaURI.LIST_RESPONSE],
             "Resources": [
                 {
                     "id": user.scim_id,
@@ -495,7 +493,7 @@ def test_user_search(large_user_set, scim_client, sort_by, sort_order, count):
                         "created": user.created_on.isoformat(timespec="milliseconds"),
                     },
                     "groups": [],
-                    "schemas": [djs_constants.SchemaURI.USER],
+                    "schemas": [constants.SchemaURI.USER],
                 }
                 for user in expected_in_resp
             ],

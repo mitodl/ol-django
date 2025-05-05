@@ -1,6 +1,15 @@
 """Messages tests"""
 
+import pytest
 from main.messages import SampleMessage
+from responses import RequestsMock
+
+
+@pytest.fixture(autouse=True)
+def mock_assets(responses: RequestsMock):
+    responses.get(
+        "https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700",
+    )
 
 
 def test_create_message_subclass(mocker):
