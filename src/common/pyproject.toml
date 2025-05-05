@@ -17,6 +17,11 @@ readme = "README.md"
 license = "BSD-3-Clause"
 requires-python = ">=3.10"
 
+[project.optional-dependencies]
+celery = [
+  "celery>=5.5.0",
+]
+
 [tool.bumpver]
 current_version = "2025.4.2"
 version_pattern = "YYYY.MM.DD[.INC0]"
