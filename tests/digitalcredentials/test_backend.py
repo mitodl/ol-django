@@ -30,7 +30,7 @@ def test_build_api_url_invalid(settings):
         build_api_url("/path")
 
 
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_create_deep_link_url(settings):
     """Test create_deep_link_url()"""
     settings.MITOL_DIGITAL_CREDENTIALS_AUTH_TYPE = "test_auth_type"

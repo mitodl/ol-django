@@ -12,7 +12,7 @@ from mitol.geoip.factories import NetBlockIPv4Factory, NetBlockIPv6Factory
 fake = faker.Factory.create()
 
 
-@pytest.mark.django_db()
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "v4,in_block",  # noqa: PT006
     [
