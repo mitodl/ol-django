@@ -8,6 +8,7 @@ dependencies = [
   "django_scim2>=0.19.1",
   "mitol-django-common",
   "pyparsing>=3.2",
+  "requests>=2.32.0",
   # Remove this why py310 support is dropped
   "StrEnum>=0.4.15 ; python_version < '3.11'",
   "strenum>=0.4.15",
@@ -15,6 +16,11 @@ dependencies = [
 readme = "README.md"
 license = "BSD-3-Clause"
 requires-python = ">=3.10"
+
+[project.optional-dependencies]
+celery = [
+  "mitol-django-common[celery]",
+]
 
 [tool.bumpver]
 current_version = "2025.3.31"
