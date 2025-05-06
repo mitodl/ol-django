@@ -941,7 +941,7 @@ class CyberSourcePaymentGateway(
         for search in searches:
             results[search[1]] = search[0]
 
-        for order_id in results:
+        for order_id in results.items():
             search_id = results[order_id]
 
             (orig_response, formatted_response) = self.get_transaction_details(

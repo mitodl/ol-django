@@ -17,7 +17,7 @@ class NoTemplateNameMessage(TemplatedMessage):
 
 
 @pytest.fixture(autouse=True)
-def default_settings(settings):  # noqa: PT004
+def default_settings(settings):
     """Default settings for tests"""  # noqa: D401
     settings.SITE_BASE_URL = "http://mit.edu/"
     settings.SITE_NAME = "MIT"

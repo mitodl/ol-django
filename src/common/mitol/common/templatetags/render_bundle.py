@@ -60,7 +60,7 @@ def render_bundle(
         return _render_tags(bundle, added_attrs)
     except OSError:
         # webpack-stats.json doesn't exist
-        return mark_safe("")  # noqa: S308
+        return mark_safe("")
 
 
 def _render_tags(bundle: Iterator[dict], added_attrs: str = "") -> SafeText:

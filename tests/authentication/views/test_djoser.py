@@ -9,7 +9,7 @@ pytestmark = pytest.mark.django_db
 EMAIL = "email@example.com"
 
 
-@pytest.fixture()
+@pytest.fixture
 def user():
     from mitol.common.factories import UserFactory
 

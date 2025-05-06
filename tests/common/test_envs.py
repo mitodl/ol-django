@@ -31,7 +31,7 @@ FAKE_ENVIRONS = {
 
 
 @pytest.fixture(autouse=True)
-def clean_env(mocker):  # noqa: PT004
+def clean_env(mocker):
     """Clean the configured environment variables before a test"""
     mocker.patch.dict("os.environ", FAKE_ENVIRONS, clear=True)
     envs.env.reload()
@@ -172,7 +172,7 @@ def test_get_crontab_kwargs_invalid(env_var, default):  # noqa: ARG001
 def test_get_crontab_kwargs_valid(env_var, default):
     assert envs.get_crontab_kwargs(
         name=env_var, default=default, description="desc"
-    ) == {key: "*" for key in envs.CRONTAB_KEYS}
+    ) == dict.fromkeys(envs.CRONTAB_KEYS, "*")
 
 
 @pytest.mark.parametrize(

@@ -28,22 +28,22 @@ from urllib3.response import HTTPResponse
 ISO_8601_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
-@pytest.fixture()
+@pytest.fixture
 def order():
     return OrderFactory()
 
 
-@pytest.fixture()
+@pytest.fixture
 def refund():
     return RefundFactory()
 
 
-@pytest.fixture()
+@pytest.fixture
 def cartitems():
     return CartItemFactory.create_batch(5)
 
 
-@pytest.fixture()
+@pytest.fixture
 def response_payload(request, load_data_fixture_json):
     """Fixture to return dictionary of a specific JSON file with provided name in request param"""  # noqa: E501
     return load_data_fixture_json(f"payment_gateway/api/{request.param}.json")
