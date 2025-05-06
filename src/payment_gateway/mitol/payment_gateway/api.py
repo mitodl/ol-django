@@ -948,6 +948,6 @@ class CyberSourcePaymentGateway(
                 search_id
             )
 
-            results[order_id] = formatted_response
+            results[order_id] = formatted_response.items()
 
         return results

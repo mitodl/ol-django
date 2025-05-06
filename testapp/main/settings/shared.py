@@ -135,7 +135,7 @@ DATABASES = {"default": DEFAULT_DATABASE_CONFIG}
 
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
 
-if sys.version_info <= (3, 13):
+if sys.version_info < (3, 14):
     AUTHENTICATION_BACKENDS += ("social_core.backends.saml.SAMLAuth",)
 
 

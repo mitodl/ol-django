@@ -1,7 +1,7 @@
 """SAML view tests"""
 
 import sys
-from xml.etree import ElementTree
+from xml.etree import ElementTree as ET
 
 import pytest
 from django.urls import reverse
@@ -32,6 +32,6 @@ def test_saml_metadata(settings, client):
     }
     response = client.get(reverse("saml-metadata"))
 
-    root = ElementTree.fromstring(response.content)  # noqa: S314
+    root = ET.fromstring(response.content)  # noqa: S314
     assert root.tag == "{urn:oasis:names:tc:SAML:2.0:metadata}EntityDescriptor"
     assert response.status_code == 200  # noqa: PLR2004
