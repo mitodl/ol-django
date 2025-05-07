@@ -1694,6 +1694,7 @@ dependencies = [
     { name = "django-stubs" },
     { name = "mitol-django-common" },
     { name = "pyparsing" },
+    { name = "requests" },
     { name = "strenum" },
 ]
 
@@ -1710,6 +1711,7 @@ requires-dist = [
     { name = "mitol-django-common", editable = "src/common" },
     { name = "mitol-django-common", extras = ["celery"], marker = "extra == 'celery'", editable = "src/common" },
     { name = "pyparsing", specifier = ">=3.2" },
+    { name = "requests", specifier = ">=2.32.0" },
     { name = "strenum", specifier = ">=0.4.15" },
     { name = "strenum", marker = "python_full_version < '3.11'", specifier = ">=0.4.15" },
 ]

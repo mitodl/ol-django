@@ -1,3 +1,22 @@
+from mitol.common.envs import get_int, get_string
+
+MITOL_SCIM_REQUESTS_TIMEOUT_SECONDS = get_int(
+    name="MITOL_SCIM_REQUESTS_TIMEOUT_SECONDS",
+    default=60,
+    description="Number of seconds to timeout requests to Keycloak",
+)
+MITOL_SCIM_KEYCLOAK_BATCH_SIZE = get_int(
+    name="MITOL_SCIM_KEYCLOAK_BATCH_SIZE",
+    default=250,
+    description="Number of operations to send in a single batch request",
+)
+
+MITOL_SCIM_KEYCLOAK_BASE_URL = get_string(
+    name="MITOL_SCIM_KEYCLOAK_BASE_URL",
+    description="The base url for the upstream Keycloak service",
+    required=True,
+)
+
 SCIM_SERVICE_PROVIDER = {
     "SCHEME": "https",
     # use default value,

@@ -9,8 +9,10 @@ def get_celery_app() -> Celery:
     app = import_string(settings.MITOL_CELERY_APP_INSTANCE_PATH)
 
     if not isinstance(app, Celery):
-        raise ImproperlyConfigured(
-            "Setting MITOL_CELERY_APP_INSTANCE_PATH does not reference an instance of `celery.Celery`"
+        msg = (
+            "Setting MITOL_CELERY_APP_INSTANCE_PATH does not reference "
+            "an instance of `celery.Celery`"
         )
+        raise ImproperlyConfigured(msg)
 
     return app

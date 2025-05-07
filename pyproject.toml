@@ -214,7 +214,7 @@ lint.ignore = [
     "RET507",
     "RET508",
     "RUF012",
-    "UP007"
+    "UP007",
 ]
 lint.typing-modules = ["colour.hints"]
 
