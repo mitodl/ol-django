@@ -1,19 +1,19 @@
 [project]
 name = "mitol-django-transcoding"
-version = "2025.4.23"
+version = "2025.5.7"
 description = "MIT Open Learning Django app extension for Transcoding jobs"
 dependencies = [
   "mitol-django-common",
   "django-stubs>=1.13.1",
   "django>=3.0",
-  "boto3==1.37.11",
+  "boto3>=1.37.11,<2.0"
 ]
 readme = "README.md"
 license = "BSD-3-Clause"
 requires-python = ">=3.10"
 
 [tool.bumpver]
-current_version = "2025.4.23"
+current_version = "2025.5.7"
 version_pattern = "YYYY.MM.DD[.INC0]"
 
 [tool.bumpver.file_patterns]
