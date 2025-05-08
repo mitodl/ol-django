@@ -6,13 +6,6 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
-<a id='changelog-2025.5.7'></a>
-## [2025.5.7] - 2025.5.7
-
-### Changed
-
-- Made boto3 versioning flexible
-
 <a id='changelog-2025.4.23'></a>
 ## [2025.4.23] - 2025-04-23
 
