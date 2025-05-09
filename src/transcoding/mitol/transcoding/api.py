@@ -136,14 +136,21 @@ def add_group_settings(job_dict: dict, file_config: FileConfig) -> None:
     Args:
         job_dict (dict): MediaConvert job dictionary.
         file_config (FileConfig): Configuration for file paths and settings.
-
     """
     output_groups = job_dict["Settings"]["OutputGroups"]
+    exclude_mp4 = file_config.group_settings.get("exclude_mp4", False)
+    exclude_thumbnail = file_config.group_settings.get("exclude_thumbnail", False)
 
-    if file_config.group_settings.get("exclude_mp4", False):
-        filtered_groups = filter_mp4_groups(output_groups)
-        job_dict["Settings"]["OutputGroups"] = filtered_groups
-        output_groups = filtered_groups
+    # Apply all filters sequentially
+    if exclude_mp4:
+        output_groups = filter_mp4_groups(output_groups)
+
+    if exclude_thumbnail:
+        output_groups = [
+            group for group in output_groups if not is_thumbnail_group(group)
+        ]
+
+    job_dict["Settings"]["OutputGroups"] = output_groups
 
     for group in output_groups:
         output_group_settings = group["OutputGroupSettings"]
