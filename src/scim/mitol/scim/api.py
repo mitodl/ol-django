@@ -157,11 +157,13 @@ def _perform_sync_operations(
             bulk_id = resource["bulkId"]
             location = resource["location"]
             external_id = _parse_external_id_from_location(location)
+            user = users_by_bulk_id[bulk_id]
 
-            yield UserState(users_by_bulk_id[bulk_id], external_id)
+            yield UserState(user, external_id)
 
 
 def _update_users(states: StateGenerator):
+    """Update the users to store the scim ids"""
     updates = []
 
     for state in states:

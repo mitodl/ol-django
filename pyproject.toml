@@ -110,6 +110,10 @@ DJANGO_SETTINGS_MODULE = "main.settings.test"
 python_files = ["tests/**/test_*.py"]
 pythonpath = ["testapp", "src", "tests"]
 
+env ="""
+  CELERY_ALWAYS_EAGER=True
+  """
+
 [tool.django-stubs]
 django_settings_module = "main.settings.test"
 

@@ -11,10 +11,14 @@ MITOL_SCIM_KEYCLOAK_BATCH_SIZE = get_int(
     description="Number of operations to send in a single batch request",
 )
 
+MITOL_SCIM_KEYCLOAK_API_TOKEN = get_string(
+    name="MITOL_SCIM_KEYCLOAK_API_TOKEN",
+    description="The API token for the Keycloak service",
+)
+
 MITOL_SCIM_KEYCLOAK_BASE_URL = get_string(
     name="MITOL_SCIM_KEYCLOAK_BASE_URL",
     description="The base url for the upstream Keycloak service",
-    required=True,
 )
 
 SCIM_SERVICE_PROVIDER = {
