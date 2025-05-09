@@ -1615,7 +1615,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-transcoding"
-version = "2025.4.23"
+version = "2025.5.7"
 source = { editable = "src/transcoding" }
 dependencies = [
     { name = "boto3" },
@@ -1626,7 +1626,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "boto3", specifier = "==1.37.11" },
+    { name = "boto3", specifier = ">=1.37.11,<2.0" },
     { name = "django", specifier = ">=3.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
     { name = "mitol-django-common", editable = "src/common" },
