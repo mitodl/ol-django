@@ -1,3 +1,5 @@
+import http
+import logging
 from collections.abc import Generator
 from dataclasses import dataclass
 from typing import Any
@@ -16,6 +18,9 @@ from mitol.scim.requests import InMemoryHttpRequest
 
 User = get_user_model()
 UserAdapter: type[SCIMUser] = get_user_adapter()
+
+
+log = logging.getLogger()
 
 
 @dataclass()
@@ -106,6 +111,9 @@ def _user_search_by_email(
             },
             timeout=settings.MITOL_SCIM_REQUESTS_TIMEOUT_SECONDS,
         )
+
+        if resp.status_code != http.HTTPStatus.OK:
+            log.error("Error response: %s", resp.json())
 
         resp.raise_for_status()
 
