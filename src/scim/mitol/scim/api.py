@@ -147,17 +147,18 @@ def _parse_external_id_from_location(location: str) -> str:
     return path.split("/")[-1]
 
 
-def _get_sync_operations(users, found_users) -> StateOrOperationGenerator:
+def _get_sync_operations(
+    users: list["User"], found_users: StateOrOperationGenerator
+) -> StateOrOperationGenerator:
     """Generate the operations we need to perform"""
     missing_users = set(users)
 
     for user_resource in found_users:
         user = user_resource.user
-        resource = user_resource.resource
 
         missing_users.remove(user)
 
-        yield UserState(user, resource["id"])
+        yield UserState(user=user, external_id=user_resource.external_id)
 
     for user in missing_users:
         bulk_id = str(user.id)
