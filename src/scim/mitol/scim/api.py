@@ -120,9 +120,8 @@ def _user_search_by_email(
         resp.raise_for_status()
 
         data = resp.json()
-        print(data)
 
-        resources = data["Resources"]
+        resources = data.get("Resources", [])
 
         for resource in resources:
             email = first(
