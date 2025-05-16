@@ -3,13 +3,15 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlsplit
 
+import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django_scim.adapters import SCIMUser
 from django_scim.utils import get_user_adapter
 from more_itertools import chunked
+from oauthlib.oauth2 import BackendApplicationClient
+from requests_oauthlib import OAuth2Session
 
-from mitol.common.requests import SessionWithBaseUrl
 from mitol.scim.requests import InMemoryHttpRequest
 
 User = get_user_model()
@@ -34,14 +36,39 @@ StateOrOperationGenerator = Generator[StateOrOperation, Any, Any]
 StateGenerator = Generator[UserState, Any, Any]
 
 
-def get_session() -> SessionWithBaseUrl:
-    session = SessionWithBaseUrl(
-        base_url=f"{settings.MITOL_SCIM_KEYCLOAK_BASE_URL}/scim/v2"
+def realm_api_url(path: str) -> str:
+    base_url: str = settings.MITOL_SCIM_KEYCLOAK_BASE_URL
+    base_url = base_url.rstrip("/")
+    path = path.lstrip("/")
+    return f"{base_url}/{path}"
+
+
+def scim_api_url(path: str) -> str:
+    path = path.lstrip("/")
+    return realm_api_url(f"/scim/v2/{path}")
+
+
+def oidc_discovery_url():
+    return realm_api_url("/.well-known/openid-configuration")
+
+
+def get_openid_configuration():
+    response = requests.get(
+        oidc_discovery_url(), timeout=settings.MITOL_SCIM_REQUESTS_TIMEOUT_SECONDS
     )
-    session.headers.update(
-        {"Authorization": f"Bearer {settings.MITOL_SCIM_KEYCLOAK_API_TOKEN}"}
-    )
-    return session
+    response.raise_for_status()
+    return response.json()
+
+
+def get_session() -> OAuth2Session:
+    openid_config = get_openid_configuration()
+
+    token_url = openid_config["token_endpoint"]
+    client = BackendApplicationClient(client_id=settings.MITOL_SCIM_KEYCLOAK_CLIENT_ID)
+    oauth = OAuth2Session(client=client)
+    token = oauth.fetch_token(token_url=token_url)
+
+    return OAuth2Session(token=token)
 
 
 def sync_users_to_scim_remote(users: list["User"]):
@@ -53,7 +80,7 @@ def sync_users_to_scim_remote(users: list["User"]):
 
 
 def _user_search_by_email(
-    session: SessionWithBaseUrl, users: list["User"]
+    session: OAuth2Session, users: list["User"]
 ) -> StateOrOperationGenerator:
     """Perform a search for a set of users by email"""
     users_by_email = {user.email: user for user in users}
@@ -66,7 +93,7 @@ def _user_search_by_email(
     start_index = 1
     while True:
         resp = session.post(
-            "/Users/.search",
+            scim_api_url("/Users/.search"),
             json={
                 **payload,
                 "startIndex": start_index,
@@ -132,7 +159,7 @@ def _get_sync_operations(users, found_users) -> StateOrOperationGenerator:
 
 
 def _perform_sync_operations(
-    session: SessionWithBaseUrl,
+    session: OAuth2Session,
     sync_operations: StateOrOperationGenerator,
 ) -> StateGenerator:
     for chunk in chunked(
@@ -150,7 +177,7 @@ def _perform_sync_operations(
                 users_by_bulk_id[state_or_operation.bulk_id] = state_or_operation.user
 
         response = session.post(
-            "/Users/Bulk",
+            scim_api_url("/Users/Bulk"),
             json={
                 "schemas": ["urn:ietf:params:scim:api:messages:2.0:BulkRequest"],
                 "Operations": operations,

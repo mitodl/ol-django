@@ -18,9 +18,13 @@ MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT = get_int(
     required=True,
 )
 
-MITOL_SCIM_KEYCLOAK_API_TOKEN = get_string(
-    name="MITOL_SCIM_KEYCLOAK_API_TOKEN",
-    description="The API token for the Keycloak service",
+MITOL_SCIM_KEYCLOAK_CLIENT_ID = get_string(
+    name="MITOL_SCIM_KEYCLOAK_CLIENT_ID",
+    description="The client id for the Keycloak service",
+)
+MITOL_SCIM_KEYCLOAK_CLIENT_SECRET = get_string(
+    name="MITOL_SCIM_KEYCLOAK_CLIENT_SECRET",
+    description="The client secret for the Keycloak service",
 )
 
 MITOL_SCIM_KEYCLOAK_BASE_URL = get_string(
