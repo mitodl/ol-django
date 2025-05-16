@@ -211,6 +211,9 @@ def _perform_sync_operations(
             timeout=settings.MITOL_SCIM_REQUESTS_TIMEOUT_SECONDS,
         )
 
+        if response.status_code != http.HTTPStatus.OK:
+            log.error("Error response: %s", response.json())
+
         response.raise_for_status()
 
         data = response.json()
