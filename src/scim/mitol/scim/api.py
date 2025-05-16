@@ -5,11 +5,15 @@ from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django_scim.adapters import SCIMUser
+from django_scim.utils import get_user_adapter
 
 from mitol.common.requests import SessionWithBaseUrl
 from mitol.common.utils.collections import chunks
+from mitol.scim.requests import InMemoryHttpRequest
 
 User = get_user_model()
+UserAdapter: type[SCIMUser] = get_user_adapter()
 
 
 @dataclass()
@@ -31,7 +35,9 @@ StateGenerator = Generator[UserState, Any, Any]
 
 
 def get_session() -> SessionWithBaseUrl:
-    session = SessionWithBaseUrl(base_url=settings.MITOL_SCIM_KEYCLOAK_BASE_URL)
+    session = SessionWithBaseUrl(
+        base_url=f"{settings.MITOL_SCIM_KEYCLOAK_BASE_URL}/scim/v2"
+    )
     session.headers.update(
         {"Authorization": f"Bearer {settings.MITOL_SCIM_KEYCLOAK_API_TOKEN}"}
     )
@@ -54,7 +60,7 @@ def _user_search_by_email(
 
     payload = {
         "schemas": ["urn:ietf:params:scim:api:messages:2.0:SearchRequest"],
-        "filter": " or ".join([f'email eq "{email}"' for email in users_by_email]),
+        "filter": " OR ".join([f'email EQ "{email}"' for email in users_by_email]),
     }
 
     start_index = 1
@@ -104,6 +110,15 @@ def _get_sync_operations(users, found_users) -> StateOrOperationGenerator:
 
     for user in missing_users:
         bulk_id = user.id
+        adapter = UserAdapter(
+            # The request is only necessary because `SCIMUser.location` accesses
+            # `SCIMUser.request`, whch raises an exception if the request is
+            # `None` (yay side-effecting properties). However, the default
+            # location getter doesn't even use the request. We create an in-memory
+            # request that would be correct if it's ever used just in case.
+            user,
+            InMemoryHttpRequest({}, settings.SITE_BASE_URL, "", ""),
+        )
         yield UserOperation(
             user,
             bulk_id,
@@ -111,15 +126,7 @@ def _get_sync_operations(users, found_users) -> StateOrOperationGenerator:
                 "method": "POST",
                 "path": "/Users",
                 "bulkId": bulk_id,
-                "data": {
-                    "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
-                    "email": user.email,
-                    "fullName": user.name,
-                    "name": {
-                        "familyName": user.profile.last_name,
-                        "givenName": user.profile.first_name,
-                    },
-                },
+                "data": adapter.to_dict(),
             },
         )
 
@@ -140,7 +147,7 @@ def _perform_sync_operations(
                 yield state_or_operation
             elif isinstance(state_or_operation, UserOperation):
                 operations.append(state_or_operation.operation)
-                users_by_bulk_id[state_or_operation] = state_or_operation
+                users_by_bulk_id[state_or_operation.bulk_id] = state_or_operation
 
         response = session.post(
             "/Users/Bulk/",
@@ -168,7 +175,7 @@ def _update_users(states: StateGenerator):
 
     for state in states:
         user = state.user
-        user.scim_id = user.id
+        user.scim_id = user.id  # normally done in User.save()
         user.scim_external_id = state.external_id
         updates.append(user)
 

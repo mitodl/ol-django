@@ -26,6 +26,7 @@ members = [
     "mitol-django-transcoding",
     "mitol-django-uvtestapp",
     "ol-django",
+    "testapp",
 ]
 
 [[package]]
@@ -1876,6 +1877,7 @@ dev = [
     { name = "pytest-django" },
     { name = "pytest-lazy-fixtures" },
     { name = "pytest-mock" },
+    { name = "pytest-responses" },
     { name = "responses" },
     { name = "ruff" },
     { name = "scriv", extra = ["toml"] },
@@ -1931,6 +1933,7 @@ dev = [
     { name = "pytest-django", specifier = "==4.11.1" },
     { name = "pytest-lazy-fixtures", specifier = ">=1" },
     { name = "pytest-mock", specifier = "==3.14.0" },
+    { name = "pytest-responses", specifier = ">=0.5.1" },
     { name = "responses", specifier = "==0.25.7" },
     { name = "ruff" },
     { name = "scriv", extras = ["toml"] },
@@ -2364,6 +2367,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-responses"
+version = "0.5.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+    { name = "responses" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c4/0a/81b8cc3cf4b6605d97ed37217af9e2f82c97ebe130f60cf85fe82edfe0e1/pytest_responses-0.5.1-py2.py3-none-any.whl", hash = "sha256:4172e565b94ac1ea3b10aba6e40855ad60cd7f141476b2d8a47e4b5f250be734", size = 6693 },
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -2718,6 +2733,51 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/85/ad/430fb60d90e1d112a62ff57bdd1f286ec73a2a0331272febfddd21f330e1/StrEnum-0.4.15.tar.gz", hash = "sha256:878fb5ab705442070e4dd1929bb5e2249511c0bcf2b0eeacf3bcd80875c82eff", size = 23384 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/81/69/297302c5f5f59c862faa31e6cb9a4cd74721cd1e052b38e464c5b402df8b/StrEnum-0.4.15-py3-none-any.whl", hash = "sha256:a30cda4af7cc6b5bf52c8055bc4bf4b2b6b14a93b574626da33df53cf7740659", size = 8851 },
+]
+
+[[package]]
+name = "testapp"
+version = "0.0.0"
+source = { virtual = "testapp" }
+dependencies = [
+    { name = "mitol-django-apigateway" },
+    { name = "mitol-django-authentication" },
+    { name = "mitol-django-authentication", extra = ["touchstone"], marker = "python_full_version < '3.13'" },
+    { name = "mitol-django-common", extra = ["celery"] },
+    { name = "mitol-django-digitalcredentials" },
+    { name = "mitol-django-geoip" },
+    { name = "mitol-django-google-sheets" },
+    { name = "mitol-django-google-sheets-deferrals" },
+    { name = "mitol-django-google-sheets-refunds" },
+    { name = "mitol-django-hubspot-api" },
+    { name = "mitol-django-mail" },
+    { name = "mitol-django-oauth-toolkit-extensions" },
+    { name = "mitol-django-olposthog" },
+    { name = "mitol-django-openedx" },
+    { name = "mitol-django-payment-gateway" },
+    { name = "mitol-django-scim", extra = ["celery"] },
+    { name = "mitol-django-transcoding" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "mitol-django-apigateway", editable = "src/apigateway" },
+    { name = "mitol-django-authentication", marker = "python_full_version >= '3.13'", editable = "src/authentication" },
+    { name = "mitol-django-authentication", extras = ["touchstone"], marker = "python_full_version < '3.13'", editable = "src/authentication" },
+    { name = "mitol-django-common", extras = ["celery"], editable = "src/common" },
+    { name = "mitol-django-digitalcredentials", editable = "src/digitalcredentials" },
+    { name = "mitol-django-geoip", editable = "src/geoip" },
+    { name = "mitol-django-google-sheets", editable = "src/google_sheets" },
+    { name = "mitol-django-google-sheets-deferrals", editable = "src/google_sheets_deferrals" },
+    { name = "mitol-django-google-sheets-refunds", editable = "src/google_sheets_refunds" },
+    { name = "mitol-django-hubspot-api", editable = "src/hubspot_api" },
+    { name = "mitol-django-mail", editable = "src/mail" },
+    { name = "mitol-django-oauth-toolkit-extensions", editable = "src/oauth_toolkit_extensions" },
+    { name = "mitol-django-olposthog", editable = "src/olposthog" },
+    { name = "mitol-django-openedx", editable = "src/openedx" },
+    { name = "mitol-django-payment-gateway", editable = "src/payment_gateway" },
+    { name = "mitol-django-scim", extras = ["celery"], editable = "src/scim" },
+    { name = "mitol-django-transcoding", editable = "src/transcoding" },
 ]
 
 [[package]]

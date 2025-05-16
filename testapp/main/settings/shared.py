@@ -212,3 +212,6 @@ MITOL_HUBSPOT_API_ID_PREFIX = "app"
 MITOL_HUBSPOT_API_PRIVATE_TOKEN = "testtoken"  # noqa: S105
 
 MITOL_CELERY_APP_INSTANCE_PATH = "main.celery.app"
+
+MITOL_SCIM_KEYCLOAK_BASE_URL = "http://keycloak:8080/realms/ol-local"
+MITOL_SCIM_KEYCLOAK_API_TOKEN = "not_a_secret"  # noqa: S105

@@ -64,13 +64,14 @@ dev-dependencies = [
     "semver",
     "toml",
     "typing-extensions",
+    "pytest-responses>=0.5.1",
 ]
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.uv.workspace]
-members = ["src/*"]
+members = ["src/*", "testapp"]
 
 [tool.uv.pip]
 no-binary = ["lxml", "xmlsec"]
