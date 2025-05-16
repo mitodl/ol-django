@@ -82,7 +82,7 @@ def mock_search_requests(users: Users, responses: RequestsMock):
                             "urn:ietf:params:scim:api:messages:2.0:SearchRequest"
                         ],
                         "filter": " OR ".join(
-                            [f'email EQ "{user.email}"' for user in users.users]
+                            [f'emails.value EQ "{user.email}"' for user in users.users]
                         ),
                         "startIndex": offset + 1,
                     }

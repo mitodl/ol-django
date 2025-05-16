@@ -98,7 +98,9 @@ def _user_search_by_email(
 
     payload = {
         "schemas": ["urn:ietf:params:scim:api:messages:2.0:SearchRequest"],
-        "filter": " OR ".join([f'email EQ "{email}"' for email in users_by_email]),
+        "filter": " OR ".join(
+            [f'emails.value EQ "{email}"' for email in users_by_email]
+        ),
     }
 
     start_index = 1
