@@ -212,6 +212,7 @@ def _perform_sync_operations(
         )
 
         if response.status_code != http.HTTPStatus.OK:
+            print(response.request.body)
             log.error("Error response: %s", response.json())
 
         response.raise_for_status()
