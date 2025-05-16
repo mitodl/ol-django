@@ -136,7 +136,7 @@ def _user_search_by_email(
 
         items_per_page = data["itemsPerPage"]
 
-        if len(resources) < items_per_page:
+        if not resources or len(resources) < items_per_page:
             break
 
         start_index += items_per_page
