@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from django_scim.adapters import SCIMUser
 from django_scim.utils import get_user_adapter
 from more_itertools import chunked
+from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
 
 from mitol.scim.requests import InMemoryHttpRequest
@@ -61,13 +62,16 @@ def get_openid_configuration():
 
 def get_session() -> OAuth2Session:
     openid_config = get_openid_configuration()
+    client_id = settings.MITOL_SCIM_KEYCLOAK_CLIENT_ID
+    client_secret = settings.MITOL_SCIM_KEYCLOAK_CLIENT_SECRET
 
     token_url = openid_config["token_endpoint"]
-    oauth = OAuth2Session()
+    client = BackendApplicationClient(client_id=client_id)
+    oauth = OAuth2Session(client=client)
     token = oauth.fetch_token(
         token_url=token_url,
-        client_id=settings.MITOL_SCIM_KEYCLOAK_CLIENT_ID,
-        client_secret=settings.MITOL_SCIM_KEYCLOAK_CLIENT_SECRET,
+        client_id=client_id,
+        client_secret=client_secret,
     )
 
     return OAuth2Session(token=token)
