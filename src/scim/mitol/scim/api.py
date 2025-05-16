@@ -120,7 +120,8 @@ def _user_search_by_email(
         resp.raise_for_status()
 
         data = resp.json()
-        resources = data["Resources"]
+
+        resources = data["Operations"]
 
         for resource in resources:
             email = first(
@@ -212,11 +213,22 @@ def _perform_sync_operations(
 
         response.raise_for_status()
 
-        for resource in response.json()["Resources"]:
+        data = response.json()
+
+        for resource in data["Operations"]:
             bulk_id = resource["bulkId"]
+            user = users_by_bulk_id[bulk_id]
+
+            if resource["status"] != http.HTTPStatus.CREATED:
+                log.error(
+                    "Unable to create user %s, response: %s",
+                    user.email,
+                    str(resource["response"]),
+                )
+                continue
+
             location = resource["location"]
             external_id = _parse_external_id_from_location(location)
-            user = users_by_bulk_id[bulk_id]
 
             yield UserState(user, external_id)
 
