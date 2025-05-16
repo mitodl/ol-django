@@ -15,16 +15,17 @@ from responses import BaseResponse, RequestsMock, matchers
 User = get_user_model()
 
 
+@pytest.mark.usefixtures("mock_client_init_requests")
 def test_get_session(responses: RequestsMock):
     _ = responses.get(
-        url="http://keycloak:8080/realms/ol-local/scim/v2/",
+        url="https://keycloak:8080/realms/ol-local/scim/v2/",
         json={"success": True},
-        match=[matchers.header_matcher({"Authorization": "Bearer not_a_secret"})],
+        match=[matchers.header_matcher({"Authorization": "Bearer abc123"})],
     )
 
     session = api.get_session()
 
-    response = session.get("/")
+    response = session.get("https://keycloak:8080/realms/ol-local/scim/v2/")
 
     assert response.json() == {"success": True}
 
@@ -54,6 +55,23 @@ def users(request):
 
 
 @pytest.fixture
+def mock_client_init_requests(responses: RequestsMock):
+    _ = responses.get(
+        "https://keycloak:8080/realms/ol-local/.well-known/openid-configuration",
+        json={
+            "token_endpoint": "https://keycloak:8080/realms/ol-local/protocol/openid/token",
+        },
+    )
+    _ = responses.post(
+        "https://keycloak:8080/realms/ol-local/protocol/openid/token",
+        json={
+            "access_token": "abc123",
+            "grant_type": "client_credentials",
+        },
+    )
+
+
+@pytest.fixture
 def mock_search_requests(users: Users, responses: RequestsMock):
     search_responses: list[BaseResponse] = []
     items_per_page = 10
@@ -64,11 +82,17 @@ def mock_search_requests(users: Users, responses: RequestsMock):
         ]
 
         response = responses.post(
-            url="http://keycloak:8080/realms/ol-local/scim/v2/Users/.search",
+            url="https://keycloak:8080/realms/ol-local/scim/v2/Users/.search",
             json={
                 "Resources": [
                     {
-                        "location": f"http://keycloak:8080/realms/ol-local/scim/v2/Users/{users.external_ids_by_user_id[user.id]}",
+                        "location": f"https://keycloak:8080/realms/ol-local/scim/v2/Users/{users.external_ids_by_user_id[user.id]}",
+                        "emails": [
+                            {
+                                "value": user.email,
+                                "primary": True,
+                            }
+                        ],
                     }
                     for user in search_result_users
                     if user in search_result_users and user in users.existing_user_ids
@@ -110,12 +134,12 @@ def mock_bulk_requests(
 
     for chunk in chunked(users_to_create, bulk_operations_count):
         response = responses.post(
-            url="http://keycloak:8080/realms/ol-local/scim/v2/Users/Bulk",
+            url="https://keycloak:8080/realms/ol-local/scim/v2/Users/Bulk",
             json={
                 "schemas": ["urn:ietf:params:scim:api:messages:2.0:BulkResponse"],
                 "Resources": [
                     {
-                        "location": f"http://keycloak:8080/realms/ol-local/scim/v2/Users/{users.external_ids_by_user_id[user.id]}",
+                        "location": f"https://keycloak:8080/realms/ol-local/scim/v2/Users/{users.external_ids_by_user_id[user.id]}",
                         "bulkId": str(user.id),
                     }
                     for user in chunk
@@ -150,7 +174,11 @@ def mock_bulk_requests(
 @pytest.mark.parametrize("users", [5], indirect=True)
 @pytest.mark.parametrize("bulk_operations_count", [3], indirect=True)
 @pytest.mark.usefixtures(
-    "responses", "mock_search_requests", "mock_bulk_requests", "bulk_operations_count"
+    "responses",
+    "mock_client_init_requests",
+    "mock_search_requests",
+    "mock_bulk_requests",
+    "bulk_operations_count",
 )
 def test_sync_users_to_scim_remote(users: Users):
     api.sync_users_to_scim_remote(users.users)

@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django_scim.adapters import SCIMUser
 from django_scim.utils import get_user_adapter
-from more_itertools import chunked
+from more_itertools import chunked, first
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
 
@@ -123,7 +123,15 @@ def _user_search_by_email(
         resources = data["Resources"]
 
         for resource in resources:
-            yield UserState(users_by_email[resource["email"]], resource)
+            email = first(
+                [
+                    email["value"]
+                    for email in resource.get("emails", [])
+                    if email.get("primary", False)
+                ]
+            )
+            if email is not None:
+                yield UserState(users_by_email[email], resource)
 
         items_per_page = data["itemsPerPage"]
 
