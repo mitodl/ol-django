@@ -7,9 +7,9 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django_scim.adapters import SCIMUser
 from django_scim.utils import get_user_adapter
+from more_itertools import chunked
 
 from mitol.common.requests import SessionWithBaseUrl
-from mitol.common.utils.collections import chunks
 from mitol.scim.requests import InMemoryHttpRequest
 
 User = get_user_model()
@@ -109,7 +109,7 @@ def _get_sync_operations(users, found_users) -> StateOrOperationGenerator:
         yield UserState(user, resource["id"])
 
     for user in missing_users:
-        bulk_id = user.id
+        bulk_id = str(user.id)
         adapter = UserAdapter(
             # The request is only necessary because `SCIMUser.location` accesses
             # `SCIMUser.request`, whch raises an exception if the request is
@@ -117,7 +117,7 @@ def _get_sync_operations(users, found_users) -> StateOrOperationGenerator:
             # location getter doesn't even use the request. We create an in-memory
             # request that would be correct if it's ever used just in case.
             user,
-            InMemoryHttpRequest({}, settings.SITE_BASE_URL, "", ""),
+            InMemoryHttpRequest.stub(),
         )
         yield UserOperation(
             user,
@@ -135,22 +135,22 @@ def _perform_sync_operations(
     session: SessionWithBaseUrl,
     sync_operations: StateOrOperationGenerator,
 ) -> StateGenerator:
-    for chunk in chunks(
+    for chunk in chunked(
         sync_operations,
-        chunk_size=settings.MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT,
+        settings.MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT,
     ):
         operations = []
-        users_by_bulk_id = {}
+        users_by_bulk_id: dict[int, User] = {}
 
         for state_or_operation in chunk:
             if isinstance(state_or_operation, UserState):
                 yield state_or_operation
             elif isinstance(state_or_operation, UserOperation):
                 operations.append(state_or_operation.operation)
-                users_by_bulk_id[state_or_operation.bulk_id] = state_or_operation
+                users_by_bulk_id[state_or_operation.bulk_id] = state_or_operation.user
 
         response = session.post(
-            "/Users/Bulk/",
+            "/Users/Bulk",
             json={
                 "schemas": ["urn:ietf:params:scim:api:messages:2.0:BulkRequest"],
                 "Operations": operations,
@@ -175,7 +175,7 @@ def _update_users(states: StateGenerator):
 
     for state in states:
         user = state.user
-        user.scim_id = user.id  # normally done in User.save()
+        user.scim_id = str(user.id)  # normally done in User.save()
         user.scim_external_id = state.external_id
         updates.append(user)
 

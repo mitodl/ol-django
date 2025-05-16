@@ -1,5 +1,7 @@
 import copy
+from urllib.parse import urlparse
 
+from django.conf import settings
 from django.http import HttpRequest
 from django_scim import constants as djs_constants
 
@@ -14,6 +16,19 @@ class InMemoryHttpRequest(HttpRequest):
     @classmethod
     def from_request(cls, request: HttpRequest, path: str, method: str, body: str):
         return cls(request.META, path, method, body)
+
+    @classmethod
+    def stub(cls, *, path: str = "/", method: str = "GET", body: str = ""):
+        parsed = urlparse(settings.SITE_BASE_URL)
+        return cls(
+            {
+                "SERVER_HOST": parsed.hostname,
+                "SERVER_PORT": parsed.port,
+            },
+            path,
+            method,
+            body,
+        )
 
     def __init__(self, meta: dict[str, str], path: str, method: str, body: str):
         super().__init__()

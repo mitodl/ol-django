@@ -7,6 +7,9 @@ import pytest
 from django.contrib.auth import get_user_model
 from mitol.common.factories import UserFactory
 from mitol.scim import api
+from mitol.scim.adapters import UserAdapter
+from mitol.scim.requests import InMemoryHttpRequest
+from more_itertools import chunked
 from responses import BaseResponse, RequestsMock, matchers
 
 User = get_user_model()
@@ -52,7 +55,7 @@ def users(request):
 
 @pytest.fixture
 def mock_search_requests(users: Users, responses: RequestsMock):
-    requests: list[BaseResponse] = []
+    search_responses: list[BaseResponse] = []
     items_per_page = 10
     for search_page_num in range(math.ceil(len(users.users) / items_per_page)):
         offset = search_page_num * items_per_page
@@ -60,7 +63,7 @@ def mock_search_requests(users: Users, responses: RequestsMock):
             offset : (search_page_num + 1) * items_per_page
         ]
 
-        request = responses.post(
+        response = responses.post(
             url="http://keycloak:8080/realms/ol-local/scim/v2/Users/.search",
             json={
                 "Resources": [
@@ -86,21 +89,74 @@ def mock_search_requests(users: Users, responses: RequestsMock):
                 )
             ],
         )
-        requests.append(request)
-    return requests
+        search_responses.append(response)
+    return search_responses
+
+
+@pytest.fixture
+def bulk_operations_count(request, settings):
+    settings.MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT = request.param
+    return request.param
+
+
+@pytest.fixture
+def mock_bulk_requests(
+    users: Users, responses: RequestsMock, bulk_operations_count: int
+):
+    bulk_responses: list[BaseResponse] = []
+    users_to_create = [
+        user for user in users.users if user not in users.existing_user_ids
+    ]
+
+    for chunk in chunked(users_to_create, bulk_operations_count):
+        response = responses.post(
+            url="http://keycloak:8080/realms/ol-local/scim/v2/Users/Bulk",
+            json={
+                "schemas": ["urn:ietf:params:scim:api:messages:2.0:BulkResponse"],
+                "Resources": [
+                    {
+                        "location": f"http://keycloak:8080/realms/ol-local/scim/v2/Users/{users.external_ids_by_user_id[user.id]}",
+                        "bulkId": str(user.id),
+                    }
+                    for user in chunk
+                ],
+            },
+            match=[
+                matchers.json_params_matcher(
+                    {
+                        "schemas": [
+                            "urn:ietf:params:scim:api:messages:2.0:BulkRequest"
+                        ],
+                        "Operations": [
+                            {
+                                "method": "POST",
+                                "path": "/Users",
+                                "bulkId": str(user.id),
+                                "data": UserAdapter(
+                                    user, InMemoryHttpRequest.stub()
+                                ).to_dict(),
+                            }
+                            for user in chunk
+                        ],
+                    }
+                )
+            ],
+        )
+        bulk_responses.append(response)
+    return bulk_responses
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("users", [50, 100], indirect=True)
-@pytest.mark.parametrize("bulk_operations_count", [20])
-@pytest.mark.usefixtures("responses", "mock_search_requests")
-def test_sync_users_to_scim_remote(users: Users, settings, bulk_operations_count: int):
-    settings.MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT = bulk_operations_count
-
+@pytest.mark.parametrize("users", [5], indirect=True)
+@pytest.mark.parametrize("bulk_operations_count", [3], indirect=True)
+@pytest.mark.usefixtures(
+    "responses", "mock_search_requests", "mock_bulk_requests", "bulk_operations_count"
+)
+def test_sync_users_to_scim_remote(users: Users):
     api.sync_users_to_scim_remote(users.users)
 
-    for user, external_id in zip(users.users, users.external_ids):
+    for user in users.users:
         user.refresh_from_db()
 
-        assert user.scim_id == user.id
-        assert user.scim_external_id == external_id
+        assert user.scim_id == str(user.id)
+        assert user.scim_external_id == users.external_ids_by_user_id[user.id]
