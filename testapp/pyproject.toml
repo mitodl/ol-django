@@ -1,0 +1,27 @@
+[project]
+name = "testapp"
+description = "Test app for ol-django"
+version = "0.0.0"
+dependencies = [
+  "mitol-django-common[celery]",
+  "mitol-django-mail",
+  'mitol-django-authentication[touchstone]; python_version < "3.13"',
+  'mitol-django-authentication; python_version >= "3.13"',
+  "mitol-django-digitalcredentials",
+  "mitol-django-geoip",
+  "mitol-django-google_sheets",
+  "mitol-django-google_sheets_deferrals",
+  "mitol-django-google_sheets_refunds",
+  "mitol-django-hubspot_api",
+  "mitol-django-oauth_toolkit_extensions",
+  "mitol-django-olposthog",
+  "mitol-django-openedx",
+  "mitol-django-payment_gateway",
+  "mitol-django-transcoding",
+  "mitol-django-scim[celery]",
+  "mitol-django-apigateway",
+]
+readme = "README.md"
+license = "BSD-3-Clause"
+requires-python = ">=3.10"
+classifiers = ["Private :: Do Not Upload"]

@@ -3,19 +3,24 @@ name = "mitol-django-common"
 description = "MIT Open Learning django app extensions for common utilities"
 version = "2025.4.2"
 dependencies = [
-"django-redis~=5.0",
-"django-stubs>=1.13.1",
-"django-webpack-loader>=0.7.0",
-"django>=3.0",
-"factory-boy~=3.2",
-"pytest>=7,<9",
-"pytz>=2020.4",
-"requests>=2.20.0",
-"typing-extensions",
+  "django-redis~=5.0",
+  "django-stubs>=1.13.1",
+  "django-webpack-loader>=0.7.0",
+  "django>=3.0",
+  "factory-boy~=3.2",
+  "pytest>=7,<9",
+  "pytz>=2020.4",
+  "requests>=2.20.0",
+  "typing-extensions",
 ]
 readme = "README.md"
 license = "BSD-3-Clause"
 requires-python = ">=3.10"
+
+[project.optional-dependencies]
+celery = [
+  "celery>=5.5.0",
+]
 
 [tool.bumpver]
 current_version = "2025.4.2"
