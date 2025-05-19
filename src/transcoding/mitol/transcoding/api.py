@@ -55,17 +55,12 @@ def media_convert_job(  # noqa: PLR0913
     # Make MediaConvert job
     job_dict = make_media_convert_job(file_config)
 
-    try:
-        client = boto3.client(
-            "mediaconvert",
-            region_name=settings.AWS_REGION,
-            endpoint_url=settings.VIDEO_S3_TRANSCODE_ENDPOINT,
-        )
-        return client.create_job(**job_dict)
-
-    except Exception as e:
-        err_msg = f"Failed to create MediaConvert client: {e}"
-        raise ValueError(err_msg) from e
+    client = boto3.client(
+        "mediaconvert",
+        region_name=settings.AWS_REGION,
+        endpoint_url=settings.VIDEO_S3_TRANSCODE_ENDPOINT,
+    )
+    return client.create_job(**job_dict)
 
 
 def make_media_convert_job(file_config: FileConfig) -> dict:
