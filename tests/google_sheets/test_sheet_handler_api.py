@@ -11,7 +11,7 @@ from pytest_lazy_fixtures import lf as lazy_fixture
         lazy_fixture("google_sheets_client_creds_settings"),
     ],
 )
-def test_is_configured_missing(_creds):  # noqa: PT019
+def test_is_configured_missing(_creds):
     """Test that is_configured returns correctly"""
     handler = SheetHandler()
     assert handler.is_configured() is True
