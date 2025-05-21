@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.5.21'></a>
+## [2025.5.21] - 2025-05-21
+
+### Changed
+
+- removed exception handling for transcoding app
+
 <a id='changelog-2025.5.9'></a>
 ## [2025.5.9] - 2025-05-09
 
