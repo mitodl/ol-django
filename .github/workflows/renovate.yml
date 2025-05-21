@@ -21,7 +21,7 @@ jobs:
       uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6
 
     - name: Self-hosted Renovate
-      uses: renovatebot/github-action@8ac70de2fe55752c573155866e30735411e3b61c # v41.0.22
+      uses: renovatebot/github-action@2e8e8c59e00d930224943f86f6812fbc6640f454 # v42.0.3
       with:
         configurationFile: renovate-config.json
         token: ${{ secrets.GITHUB_TOKEN }}
