@@ -1,7 +1,6 @@
 """Utilities around library django apps"""
 
 from contextlib import contextmanager
-from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 
@@ -13,10 +12,9 @@ from scripts.contextlibs import chdir
 from scripts.project import Project
 
 
-@dataclass
 class App:
-    module_name: str
-    project: Project
+    module_name: str | None = None
+    project: Project | None = None
 
     @property
     def pyproject(self):
