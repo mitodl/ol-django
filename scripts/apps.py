@@ -13,8 +13,8 @@ from scripts.project import Project
 
 
 class App:
-    module_name: str | None
-    project: Project | None
+    module_name: str | None = None
+    project: Project | None = None
 
     @property
     def pyproject(self):
