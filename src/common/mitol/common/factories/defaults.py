@@ -22,6 +22,21 @@ class UserFactory(DjangoModelFactory):
         model = get_user_model()
 
     class Params:
+        with_global_id = Trait(global_id=Faker("uuid4"))
         with_scim = Trait(
-            scim_external_id=Faker("uuid4"), scim_username=SelfAttribute("email")
+            with_global_id=True,
+            scim_external_id=SelfAttribute("global_id"),
+            scim_username=SelfAttribute("email"),
         )
+
+
+class SsoUserFactory(UserFactory):
+    """Factory for Users with a global ID."""
+
+    with_global_id = True
+
+
+class ScimUserFactory(UserFactory):
+    """Factory for Users with a global ID + SCIM."""
+
+    with_scim = True

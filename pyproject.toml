@@ -6,7 +6,7 @@ authors = [
     { name = "MIT Open Learning Engineering", email = "odl-devops@mit.edu" }
 ]
 dependencies = [
-  "mitol-django-common",
+  "mitol-django-common[celery]",
   "mitol-django-mail",
   'mitol-django-authentication[touchstone]; python_version < "3.13"',
   'mitol-django-authentication; python_version >= "3.13"',
@@ -22,7 +22,7 @@ dependencies = [
   "mitol-django-payment_gateway",
   "mitol-django-uvtestapp",
   "mitol-django-transcoding",
-  "mitol-django-scim",
+  "mitol-django-scim[celery]",
   "mitol-django-apigateway",
 ]
 readme = "README.md"
@@ -64,13 +64,16 @@ dev-dependencies = [
     "semver",
     "toml",
     "typing-extensions",
+    "pytest-responses>=0.5.1",
+    "more-itertools>=10.6.0",
+    "deepdiff>=8.5.0",
 ]
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.uv.workspace]
-members = ["src/*"]
+members = ["src/*", "testapp"]
 
 [tool.uv.pip]
 no-binary = ["lxml", "xmlsec"]
@@ -214,7 +217,7 @@ lint.ignore = [
     "RET507",
     "RET508",
     "RUF012",
-    "UP007"
+    "UP007",
 ]
 lint.typing-modules = ["colour.hints"]
 

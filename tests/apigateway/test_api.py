@@ -7,8 +7,8 @@ import faker
 import pytest
 from django.conf import settings
 from mitol.apigateway import api
+from mitol.common.factories.defaults import SsoUserFactory
 
-from testapp.main.factories import SsoUserFactory
 from testapp.main.utils import generate_apisix_request, generate_fake_apisix_payload
 
 FAKE = faker.Faker()

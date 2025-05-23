@@ -1,12 +1,11 @@
 """SCIM view customizations"""
 
-import copy
 import json
 import logging
 from http import HTTPStatus
 from urllib.parse import urljoin, urlparse
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponse
 from django.urls import Resolver404, resolve, reverse
 from django_scim import constants as djs_constants
 from django_scim import exceptions
@@ -14,33 +13,9 @@ from django_scim import views as djs_views
 from django_scim.utils import get_base_scim_location_getter
 
 from mitol.scim import constants
+from mitol.scim.requests import InMemoryHttpRequest
 
 log = logging.getLogger()
-
-
-class InMemoryHttpRequest(HttpRequest):
-    """
-    A spoofed HttpRequest that only exists in-memory.
-    It does not implement all features of HttpRequest and is only used
-    for the bulk SCIM operations here so we can reuse view implementations.
-    """
-
-    def __init__(self, request, path, method, body):
-        super().__init__()
-
-        self.META = copy.deepcopy(
-            {
-                key: value
-                for key, value in request.META.items()
-                if not key.startswith(("wsgi", "uwsgi"))
-            }
-        )
-        self.path = path
-        self.method = method
-        self.content_type = djs_constants.SCIM_CONTENT_TYPE
-
-        # normally HttpRequest would read this in, but we already have the value
-        self._body = body
 
 
 class BulkView(djs_views.SCIMView):
@@ -55,7 +30,7 @@ class BulkView(djs_views.SCIMView):
 
         fail_on_errors = body.get("failOnErrors", None)
 
-        if fail_on_errors is not None and isinstance(int, fail_on_errors):
+        if fail_on_errors is not None and not isinstance(fail_on_errors, int):
             msg = "Invalid failOnErrors. Must be an integer."
             raise exceptions.BaseRequestError(msg)
 
@@ -114,7 +89,7 @@ class BulkView(djs_views.SCIMView):
             )
 
         # this is an ephemeral request not tied to the real request directly
-        op_request = InMemoryHttpRequest(
+        op_request = InMemoryHttpRequest.from_request(
             bulk_request, path, method, json.dumps(data).encode(djs_constants.ENCODING)
         )
 
