@@ -6,6 +6,14 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.5.23'></a>
+## [2025.5.23] - 2025-05-23
+
+### Added
+
+- Added utilies and settings to look up the configured celery app.
+- Added a `UserGlobalIdMixin` for a common definition of `global_id` on users.
+
 <a id='changelog-2025.4.2'></a>
 ## [2025.4.2] - 2025-04-02
 
