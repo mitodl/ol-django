@@ -2,5 +2,12 @@
   "allowedPostUpgradeCommands": [
       "^uv sync",
       "^uv .+"
-  ]
+  ],
+  "postUpgradeTasks": {
+    "commands": [
+      "uv run scripts/changelog.py create-renovate -m 'Updated `{{{depName}}}` from {{{currentVersion}}} -> {{{newVersion}}}'",
+      "uv sync"
+    ],
+    "executionMode": "update"
+  }
 }
