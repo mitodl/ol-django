@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.5.30.2'></a>
+## [2025.5.30.2] - 2025-05-30
+
+### Fixed
+
+- Address global_id not being updated
+
 <a id='changelog-2025.5.30.1'></a>
 ## [2025.5.30.1] - 2025-05-30
 
