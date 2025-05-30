@@ -6,6 +6,14 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.5.30'></a>
+## [2025.5.30] - 2025-05-30
+
+### Fixed
+
+- Fixed status code handling for batch operations
+- Fixed email case sensitivity issue with scim sync
+
 <a id='changelog-2025.5.23'></a>
 ## [2025.5.23] - 2025-05-23
 
