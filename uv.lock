@@ -1524,7 +1524,7 @@ requires-dist = [
     { name = "google-auth", specifier = ">=2.0" },
     { name = "google-auth-oauthlib", specifier = ">=0.5.2" },
     { name = "mitol-django-common", editable = "src/common" },
-    { name = "pygsheets", specifier = "==2.0.2" },
+    { name = "pygsheets", specifier = "==2.0.6" },
     { name = "pytz", specifier = ">=2020.4" },
 ]
 
@@ -1706,7 +1706,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-scim"
-version = "2025.5.23"
+version = "2025.5.30"
 source = { editable = "src/scim" }
 dependencies = [
     { name = "django" },
@@ -2234,15 +2234,15 @@ wheels = [
 
 [[package]]
 name = "pygsheets"
-version = "2.0.2"
+version = "2.0.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-api-python-client" },
     { name = "google-auth-oauthlib" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e8/d6/5bb7a006b56ce1ca2d2a3aa5e23bb3fda89c0377cc90f3c97cde6f2b9a7c/pygsheets-2.0.2.tar.gz", hash = "sha256:8f3e3c614a39d9d69e8e2184033dcad996653a62773ce41795b407400e692668", size = 89377, upload-time = "2019-07-26T20:43:50.973Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/76/87/4589262da7fdc9cc8c609099a5525dcbd05bd0f4ee22c28f640f261a4292/pygsheets-2.0.6.tar.gz", hash = "sha256:bff46c812e99f9b8b81a09b456581365281c797620ec08530b0d0e48fa9299e2", size = 154743, upload-time = "2022-11-30T17:27:27.065Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c3/f3/475eeb41f91d5807adaafe3186486ed0410fadddfc793ac884c72b05db96/pygsheets-2.0.2-py3-none-any.whl", hash = "sha256:c2ddd56ff9dcccad6fa4da5fabb747c0b71ca53643e200e5f51a844fc815fc5c", size = 97644, upload-time = "2019-07-26T20:43:48.631Z" },
+    { url = "https://files.pythonhosted.org/packages/07/c5/f462089614ae9d9f3354b34ec6e527c2d520d5cdad85925ad89f65beaf2d/pygsheets-2.0.6-py3-none-any.whl", hash = "sha256:3338c2eb8990fdee9f463b42a370ec0870c118d607d775471a6dfb8b08f6cd87", size = 158205, upload-time = "2022-11-30T17:27:23.164Z" },
 ]
 
 [[package]]
