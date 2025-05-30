@@ -255,13 +255,13 @@ def _perform_sync_operations(
 
 def _update_users(states: StateGenerator):
     """Update the users to store the scim ids"""
-    updates = []
+    for batch in chunked(states, settings.MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT):
+        updates = []
+        for state in batch:
+            user = state.user
+            user.scim_id = str(user.id)  # normally done in User.save()
+            user.scim_external_id = state.external_id
+            user.global_id = state.external_id
+            updates.append(user)
 
-    for state in states:
-        user = state.user
-        user.scim_id = str(user.id)  # normally done in User.save()
-        user.scim_external_id = state.external_id
-        user.global_id = state.external_id
-        updates.append(user)
-
-    User.objects.bulk_update(updates, ["scim_id", "scim_external_id"])
+        User.objects.bulk_update(updates, ["global_id", "scim_id", "scim_external_id"])
