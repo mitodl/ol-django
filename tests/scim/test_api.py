@@ -105,7 +105,7 @@ def mock_search_requests(users: Users, responses: RequestsMock):
                             "id": users.external_ids_by_user_id[user.id],
                             "emails": [
                                 {
-                                    "value": user.email,
+                                    "value": user.email.lower(),
                                     "primary": True,
                                 }
                             ],
@@ -130,7 +130,10 @@ def mock_search_requests(users: Users, responses: RequestsMock):
                 params={
                     "schemas": [SchemaURI.SERACH_REQUEST],
                     "filter": " OR ".join(
-                        [f'emails.value EQ "{user.email}"' for user in users.users]
+                        [
+                            f'emails.value EQ "{user.email.lower()}"'
+                            for user in users.users
+                        ]
                     ),
                 },
                 strict_match=False,
@@ -190,7 +193,7 @@ def mock_bulk_requests(users: Users, responses: RequestsMock):
                                 "location": f"https://keycloak:8080/realms/ol-local/scim/v2/Users/{users.external_ids_by_user_id[user.id]}",
                                 "bulkId": str(user.id),
                                 "method": "POST",
-                                "status": str(HTTPStatus.CREATED),
+                                "status": HTTPStatus.CREATED,
                             }
                         )
                         for user in req_users
