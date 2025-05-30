@@ -130,7 +130,10 @@ def mock_search_requests(users: Users, responses: RequestsMock):
                 params={
                     "schemas": [SchemaURI.SERACH_REQUEST],
                     "filter": " OR ".join(
-                        [f'emails.value EQ "{user.email}"' for user in users.users]
+                        [
+                            f'emails.value EQ "{user.email.lower()}"'
+                            for user in users.users
+                        ]
                     ),
                 },
                 strict_match=False,

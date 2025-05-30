@@ -95,7 +95,7 @@ def _user_search_by_email(
     session: OAuth2Session, users: list["User"]
 ) -> StateOrOperationGenerator:
     """Perform a search for a set of users by email"""
-    users_by_email = {user.email: user for user in users}
+    users_by_email = {user.email.lower(): user for user in users}
 
     payload = {
         "schemas": [SchemaURI.SERACH_REQUEST],  # typo in upstream lib
@@ -127,12 +127,18 @@ def _user_search_by_email(
         for resource in resources:
             email = first(
                 [
-                    email["value"]
+                    email["value"].lower()
                     for email in resource.get("emails", [])
                     if email.get("primary", False)
                 ]
             )
-            if email is not None:
+            if email is None:
+                log.error("Unexpected user result with no email")
+            elif email not in users_by_email:
+                log.error(
+                    "Received an email in search results that does not match: %s", email
+                )
+            else:
                 yield UserState(users_by_email[email], resource["id"])
 
         if not resources:
@@ -232,7 +238,7 @@ def _perform_sync_operations(
             bulk_id = operation["bulkId"]
             user = users_by_bulk_id[bulk_id]
 
-            if operation["status"] != str(http.HTTPStatus.CREATED):
+            if int(operation["status"]) != http.HTTPStatus.CREATED:
                 log.error(
                     "Unable to perform operation for user: %s, response: %s",
                     str(user),
