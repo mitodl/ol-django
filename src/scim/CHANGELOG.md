@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.5.30.1'></a>
+## [2025.5.30.1] - 2025-05-30
+
+### Fixed
+
+- Fixed a duplicate user on sync error
+
 <a id='changelog-2025.5.30'></a>
 ## [2025.5.30] - 2025-05-30
 
