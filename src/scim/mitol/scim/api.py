@@ -162,7 +162,8 @@ def _get_sync_operations(
     for user_resource in found_users:
         user = user_resource.user
 
-        missing_users.remove(user)
+        if user in missing_users:
+            missing_users.remove(user)
 
         yield user_resource
 
