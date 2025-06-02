@@ -143,6 +143,7 @@ class SearchView(djs_views.UserSearchView):
 
     def post(self, request, *args, **kwargs):  # noqa: ARG002
         body = self.load_body(request.body)
+        print(body)
         if body.get("schemas") != [djs_constants.SchemaURI.SERACH_REQUEST]:
             msg = "Invalid schema uri. Must be SearchRequest."
             raise exceptions.BadRequestError(msg)
