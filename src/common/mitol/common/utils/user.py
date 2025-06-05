@@ -6,7 +6,7 @@ import re
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 
-from common.constants import (
+from mitol.common.constants import (
     USERNAME_INVALID_CHAR_PATTERN,
     USERNAME_TURKISH_I_CHARS,
     USERNAME_TURKISH_I_CHARS_REPLACEMENT,
@@ -40,7 +40,7 @@ def _reformat_for_username(string):
     )
 
 
-def _is_duplicate_username_error(exc):
+def is_duplicate_username_error(exc):
     """
     Return True if the given exception indicates that there was an attempt to save a User record with an
     already-existing username.
@@ -196,7 +196,7 @@ def create_user_with_generated_username(
         try:
             created_user = serializer.save(username=username)
         except IntegrityError as exc:
-            if not _is_duplicate_username_error(exc):
+            if not is_duplicate_username_error(exc):
                 raise
             username = _find_available_username(
                 initial_username,
