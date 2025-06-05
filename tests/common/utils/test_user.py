@@ -24,8 +24,8 @@ def test_usernameify(mocker, full_name, email, expected_username):
     """Usernameify should turn a user's name into a username, or use the email if necessary"""
     # Change the username max length to 20 for test data simplicity's sake
     temp_username_max_len = 20
-    mocker.patch("users.utils.USERNAME_MAX_LEN", temp_username_max_len)
-    patched_log_error = mocker.patch("users.utils.log.error")
+    mocker.patch("mitol.common.utils.user.USERNAME_MAX_LEN", temp_username_max_len)
+    patched_log_error = mocker.patch("mitol.common.utils.user.log.error")
 
     assert usernameify(full_name, email=email) == expected_username
     assert patched_log_error.called == bool(email and not full_name)
