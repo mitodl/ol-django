@@ -8,11 +8,24 @@ class Command(BaseCommand):
 
     help = "Sync users with SCIM to the remote"
 
+    def add_arguments(self, parser) -> None:
+        parser.add_argument(
+            "--never-synced-only",
+            type=bool,
+            action="store_true",
+            default=False,
+            help="Only sync users who have never been synced",
+        )
+
     def handle(self, *args, **options):  # noqa: ARG002
         """Sync users with SCIM to the remote"""
         from mitol.scim import tasks
 
-        task = tasks.sync_all_users_to_scim_remote.delay()
+        never_synced_only = options["never-synced-only"]
+
+        task = tasks.sync_all_users_to_scim_remote.delay(
+            never_synced_only=never_synced_only
+        )
 
         task.get()
 
