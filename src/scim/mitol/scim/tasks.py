@@ -1,4 +1,5 @@
 import logging
+
 import celery
 from django.contrib.auth import get_user_model
 from django.db.models import Q
@@ -30,7 +31,8 @@ def sync_all_users_to_scim_remote(self, *, never_synced_only: bool = False):
     if never_synced_only:
         user_q = user_q.filter(Q(global_id="") | Q(scim_external_id=None))
 
-    log.info(f"Syncing {user_q.count()} users to SCIM remote")
+    msg = f"Syncing {user_q.count()} users to SCIM remote"
+    log.info(msg)
 
     return self.replace(
         celery.group(
