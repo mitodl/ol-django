@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 import pytest
 from mitol.common.factories import UserFactory
 from mitol.common.factories.defaults import ScimUserFactory, SsoUserFactory
@@ -6,9 +7,13 @@ from more_itertools import flatten
 
 pytestmark = pytest.mark.django_db
 
+User = get_user_model()
+
 
 @pytest.mark.parametrize("never_synced_only", [True, False])
 def test_sync_all_users_to_scim_remote(mocker, never_synced_only):
+    print(User.objects.all())
+
     synced_users = ScimUserFactory.create_batch(10)
     unsynced_users = UserFactory.create_batch(10)
     sso_users = SsoUserFactory.create_batch(10)
