@@ -7,14 +7,15 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 
 from mitol.common.constants import (
+    USERNAME_COLLISION_ATTEMPTS,
     USERNAME_INVALID_CHAR_PATTERN,
+    USERNAME_MAX_LEN,
+    USERNAME_SEPARATOR,
+    USERNAME_SEPARATOR_REPLACE_PATTERN,
     USERNAME_TURKISH_I_CHARS,
     USERNAME_TURKISH_I_CHARS_REPLACEMENT,
-    USERNAME_SEPARATOR_REPLACE_PATTERN,
-    USERNAME_SEPARATOR,
-    USERNAME_MAX_LEN,
-    USERNAME_COLLISION_ATTEMPTS,
 )
+
 from .helpers import max_or_none
 
 log = logging.getLogger(__name__)
@@ -98,7 +99,7 @@ def _find_available_username(
         model = get_user_model()
 
     # Keeps track of the number of characters that must be cut from the
-    # username to be less than the username max length when the 
+    # username to be less than the username max length when the
     # suffix is applied.
     letters_to_truncate = 0 if len(initial_username_base) < max_length else 1
     # Any query for suffixed usernames could come up empty. The minimum suffix
@@ -175,7 +176,7 @@ def usernameify(full_name, email="", max_length=USERNAME_MAX_LEN):
     return username[0:max_length]
 
 
-def create_user_with_generated_username(
+def create_user_with_generated_username(  # noqa: PLR0913
     serializer,
     initial_username,
     username_field,
@@ -212,7 +213,7 @@ def create_user_with_generated_username(
     while created_user is None and attempts < attempts_limit:
         try:
             created_user = serializer.save(username=username)
-        except IntegrityError as exc:
+        except IntegrityError as exc:  # noqa: PERF203
             if not is_duplicate_username_error(exc):
                 raise
             username = _find_available_username(
