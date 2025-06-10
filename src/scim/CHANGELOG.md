@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.6.10.1'></a>
+## [2025.6.10.1] - 2025-06-10
+
+### Fixed
+
+- Removed errant `type=` argument passed to scim_scim arg setup.
+
 <a id='changelog-2025.6.10'></a>
 ## [2025.6.10] - 2025-06-10
 
