@@ -75,14 +75,14 @@ def _find_available_username(
     initial_username_base = "johndoe"
         Existing usernames = "johndoe", "johndoe1" through "johndoe5"
         Return value = "johndoe6"
-    initial_username_base = "abcdefghijklmnopqrstuvwxyz"
-        (26 characters, assuming 26 character max)
+    initial_username_base = "abcdefghijklmnopqrstuvwxyz"  (26 characters,
+        assuming 26 character max)
         Existing usernames = "abcdefghijklmnopqrstuvwxyz"
-        Return value = "abcdefghijklmnopqrstuvwxy1"  # pragma: allowlist secre
+        Return value = "abcdefghijklmnopqrstuvwxy1"  # pragma: allowlist secret
     initial_username_base = "abcdefghijklmnopqrstuvwxy"
         (25 characters long, assuming 26 character max)
         Existing usernames = "abc...y", "abc...y1" through "abc...y9"
-        Return value = "abcdefghijklmnopqrstuvwx10"  # pragma: allowlist secre
+        Return value = "abcdefghijklmnopqrstuvwx10"  # pragma: allowlist secret
 
     Args:
          initial_username_base (str): Base username to start with
