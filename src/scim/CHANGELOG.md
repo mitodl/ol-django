@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.6.10.2'></a>
+## [2025.6.10.2] - 2025-06-10
+
+### Fixed
+
+- Fixed key name for `--never-synced-only` option.
+
 <a id='changelog-2025.6.10.1'></a>
 ## [2025.6.10.1] - 2025-06-10
 
