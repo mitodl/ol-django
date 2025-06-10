@@ -20,7 +20,7 @@ class Command(BaseCommand):
         """Sync users with SCIM to the remote"""
         from mitol.scim import tasks
 
-        never_synced_only = options["never-synced-only"]
+        never_synced_only = options["never_synced_only"]
 
         task = tasks.sync_all_users_to_scim_remote.delay(
             never_synced_only=never_synced_only
