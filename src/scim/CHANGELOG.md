@@ -6,6 +6,17 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.6.10'></a>
+## [2025.6.10] - 2025-06-10
+
+### Added
+
+- Added `--never-synced-only` option to `scim_sync` command.
+
+### Changed
+
+- Renamed `scim_push` command to `scim_sync`.
+
 <a id='changelog-2025.5.30.2'></a>
 ## [2025.5.30.2] - 2025-05-30
 
