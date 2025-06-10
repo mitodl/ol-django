@@ -2,7 +2,7 @@
 
 
 def max_or_none(iterable):
-    """Returns the max of some iterable, or None if the iterable has no items
+    """Return the max of some iterable, or None if the iterable has no items
 
     Args:
         iterable (iterable): Some iterable
