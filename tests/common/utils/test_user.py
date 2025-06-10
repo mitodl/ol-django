@@ -1,7 +1,7 @@
 """users utils tests"""
 
 import pytest
-from mitol.common.utils.user import (usernameify, is_duplicate_username_error)
+from mitol.common.utils.user import is_duplicate_username_error, usernameify
 
 
 @pytest.mark.parametrize(
@@ -26,10 +26,13 @@ def test_usernameify(mocker, full_name, email, expected_username):
     """
     # Change the username max length to 20 for test data simplicity's sake
     temp_username_max_len = 20
-    mocker.patch("mitol.common.utils.user.USERNAME_MAX_LEN", temp_username_max_len)
     patched_log_error = mocker.patch("mitol.common.utils.user.log.error")
 
-    assert usernameify(full_name, email=email) == expected_username
+    assert usernameify(
+        full_name,
+        email=email,
+        max_length=temp_username_max_len
+    ) == expected_username
     assert patched_log_error.called == bool(email and not full_name)
 
 
