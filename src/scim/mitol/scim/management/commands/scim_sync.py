@@ -11,7 +11,6 @@ class Command(BaseCommand):
     def add_arguments(self, parser) -> None:
         parser.add_argument(
             "--never-synced-only",
-            type=bool,
             action="store_true",
             default=False,
             help="Only sync users who have never been synced",
