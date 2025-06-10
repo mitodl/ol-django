@@ -32,12 +32,12 @@ def _reformat_for_username(string):
     """
     cleaned_string = re.sub(USERNAME_INVALID_CHAR_PATTERN, "", string)
     cleaned_string = re.sub(
-        USERNAME_TURKISH_I_CHARS, USERNAME_TURKISH_I_CHARS_REPLACEMENT,
+        USERNAME_TURKISH_I_CHARS,
+        USERNAME_TURKISH_I_CHARS_REPLACEMENT,
         cleaned_string,
     )
     return (
-        re.sub(USERNAME_SEPARATOR_REPLACE_PATTERN, USERNAME_SEPARATOR,
-               cleaned_string)
+        re.sub(USERNAME_SEPARATOR_REPLACE_PATTERN, USERNAME_SEPARATOR, cleaned_string)
         .lower()
         .strip(USERNAME_SEPARATOR)
     )
@@ -53,9 +53,7 @@ def is_duplicate_username_error(exc):
     Returns:
         bool: Whether or not the exception indicates a duplicate username error
     """
-    return re.search(
-        r"\(username\)=\([^\s]+\) already exists",
-        str(exc)) is not None
+    return re.search(r"\(username\)=\([^\s]+\) already exists", str(exc)) is not None
 
 
 def _find_available_username(
@@ -107,7 +105,7 @@ def _find_available_username(
     current_min_suffix = 1
     while letters_to_truncate < len(initial_username_base):  # noqa: RET503
         username_base = initial_username_base[
-            0: len(initial_username_base) - letters_to_truncate
+            0 : len(initial_username_base) - letters_to_truncate
         ]
         # Find usernames that match the username base and have a numerical
         # suffix, then find the max suffix
@@ -116,8 +114,7 @@ def _find_available_username(
             username_field, flat=True
         )
         max_suffix = max_or_none(
-            int(re.search(r"\d+$", username).group())
-            for username in existing_usernames
+            int(re.search(r"\d+$", username).group()) for username in existing_usernames
         )
         if max_suffix is None:
             return "".join([username_base, str(current_min_suffix)])
@@ -154,7 +151,7 @@ def usernameify(full_name, email="", max_length=USERNAME_MAX_LEN):
     Returns:
         str: A generated username
     Raises:
-        ValueError: Raised if generated username was blank after trying both 
+        ValueError: Raised if generated username was blank after trying both
             the full name and email
     """
     username = _reformat_for_username(full_name)
