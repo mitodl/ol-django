@@ -8,6 +8,8 @@ from mitol.common.apps import BaseApp
 class GoogleSheetsRefundsApp(BaseApp):
     """Default configuration for the Google Sheets Refunds app"""
 
+    # Explicitly set default auto field type to avoid migrations in Django 3.2+
+    default_auto_field = "django.db.models.BigAutoField"
     name = "mitol.google_sheets_refunds"
     label = "google_sheets_refunds"
     verbose_name = "Google Sheets Refunds"
