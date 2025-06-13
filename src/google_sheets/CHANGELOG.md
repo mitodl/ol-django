@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.6.13'></a>
+## [2025.6.13] - 2025-06-13
+
+### Fixed
+
+- Added a missing default setting for auto-incrementing primary key in app config
+
 <a id='changelog-2025.3.17'></a>
 ## [2025.3.17] - 2025-03-17
 
