@@ -17,7 +17,7 @@ WORKDIR /tmp
 COPY apt.txt /tmp/apt.txt
 RUN xargs apt-get install -y <apt.txt
 
-COPY --from=ghcr.io/astral-sh/uv:0.7.12 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.7.13 /uv /uvx /bin/
 
 RUN useradd -G ubuntu dev
 USER dev
