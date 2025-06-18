@@ -28,11 +28,10 @@ def test_usernameify(mocker, full_name, email, expected_username):
     temp_username_max_len = 20
     patched_log_error = mocker.patch("mitol.common.utils.user.log.error")
 
-    assert usernameify(
-        full_name,
-        email=email,
-        max_length=temp_username_max_len
-    ) == expected_username
+    assert (
+        usernameify(full_name, email=email, max_length=temp_username_max_len)
+        == expected_username
+    )
     assert patched_log_error.called == bool(email and not full_name)
 
 
