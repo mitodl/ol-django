@@ -6,6 +6,19 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.6.20'></a>
+## [2025.6.20] - 2025-06-20
+
+### Added
+
+username generation functionality:
+
+- usernameify() - Generate usernames from full names with email fallback
+- create_user_with_generated_username() - Create users with automatic username collision handling
+- _find_available_username() - Handle username conflicts by appending numeric suffixes
+- _reformat_for_username() - Clean and format strings for username use
+- is_duplicate_username_error() - Detect database integrity errors for username collisions
+
 <a id='changelog-2025.5.23'></a>
 ## [2025.5.23] - 2025-05-23
 
