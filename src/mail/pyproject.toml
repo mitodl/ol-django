@@ -37,5 +37,5 @@ include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py", "**/templates/**/
 exclude = ["BUILD", "pyproject.toml"]
 
 [tool.hatch.build.targets.wheel]
-include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]
+include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py", "**/templates/**/*"]
 exclude = ["BUILD", "pyproject.toml"]
