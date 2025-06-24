@@ -1,6 +1,6 @@
 [project]
 name = "mitol-django-mail"
-version = "2025.6.23"
+version = "2025.6.24"
 description = "MIT Open Learning django app extensions for mail"
 dependencies = [
 "beautifulsoup4>=4.6.0",
@@ -17,7 +17,7 @@ license = "BSD-3-Clause"
 requires-python = ">=3.10"
 
 [tool.bumpver]
-current_version = "2025.6.23"
+current_version = "2025.6.24"
 version_pattern = "YYYY.MM.DD[.INC0]"
 
 [tool.bumpver.file_patterns]

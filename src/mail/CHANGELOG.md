@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.6.24'></a>
+## [2025.6.24] - 2025-06-25
+
+### Fixed
+
+- Added templates directory in mail app build
+
 <a id='changelog-2025.6.23'></a>
 ## [2025.6.23] - 2025-06-24
 
