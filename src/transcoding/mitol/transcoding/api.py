@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-from typing import Optional
 
 import boto3
 from django.conf import settings
@@ -26,7 +25,7 @@ def media_convert_job(  # noqa: PLR0913
     destination_bucket: str = (
         settings.VIDEO_S3_TRANSCODE_BUCKET or settings.AWS_STORAGE_BUCKET_NAME
     ),
-    group_settings: Optional[dict] = None,
+    group_settings: dict | None = None,
 ) -> dict:
     """
     Create a MediaConvert job for a Video
