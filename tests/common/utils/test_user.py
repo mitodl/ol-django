@@ -106,17 +106,14 @@ def test_create_user_with_collision_and_retry(mock_find_username, fake_user):
     collision and succeeds on retry.
     """
     serializer = Mock()
-    duplicate_error = IntegrityError(
-        "duplicate key value violates unique constraint"
-    )
+    duplicate_error = IntegrityError("duplicate key value violates unique constraint")
     serializer.save.side_effect = [
         duplicate_error,
         fake_user,
     ]
     mock_find_username.return_value = "testuser1"
     with patch(
-        "mitol.common.utils.user.is_duplicate_username_error",
-        return_value=True
+        "mitol.common.utils.user.is_duplicate_username_error", return_value=True
     ):
         result = create_user_with_generated_username(
             serializer=serializer,
@@ -142,8 +139,7 @@ def test_create_user_fails_after_max_attempts(mock_find_username):
     serializer.save.side_effect = IntegrityError("duplicate")
     mock_find_username.side_effect = lambda *_args, **_kwargs: "newusername"
     with patch(
-        "mitol.common.utils.user.is_duplicate_username_error",
-        return_value=True
+        "mitol.common.utils.user.is_duplicate_username_error", return_value=True
     ):
         result = create_user_with_generated_username(
             serializer=serializer,
@@ -165,10 +161,12 @@ def test_create_user_non_username_error_raises():
     """
     serializer = Mock()
     serializer.save.side_effect = IntegrityError("some other db error")
-    with patch(
-        "mitol.common.utils.user.is_duplicate_username_error",
-        return_value=False
-    ), pytest.raises(IntegrityError, match="some other db error"):
+    with (
+        patch(
+            "mitol.common.utils.user.is_duplicate_username_error", return_value=False
+        ),
+        pytest.raises(IntegrityError, match="some other db error"),
+    ):
         create_user_with_generated_username(
             serializer=serializer,
             initial_username="testuser",
@@ -255,9 +253,7 @@ def test_full_username_creation():
     """
     expected_username_max = 30
     user_full_name = "Longerton McLongernamenbergenstein"
-    generated_username = usernameify(
-        user_full_name, max_length=expected_username_max
-    )
+    generated_username = usernameify(user_full_name, max_length=expected_username_max)
     assert len(generated_username) == expected_username_max
 
     mock_model = Mock()
