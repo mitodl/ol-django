@@ -23,8 +23,8 @@ class CustomSendEmailResetSerializer(SendEmailResetSerializer):
                 return user
         except User.DoesNotExist:
             pass
-        if (  # noqa: RET503
+        if (
             settings.PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND
             or settings.USERNAME_RESET_SHOW_EMAIL_NOT_FOUND
         ):
-            self.fail("email_not_found")  # noqa: RET503
+            self.fail("email_not_found")
