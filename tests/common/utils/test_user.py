@@ -3,6 +3,7 @@
 from unittest.mock import Mock, patch
 
 import pytest
+import re
 from django.db import IntegrityError
 from mitol.common.utils.user import (
     _find_available_username,
@@ -158,7 +159,7 @@ def test_create_user_fails_after_max_attempts(mock_find_username):
 
 
 @patch("mitol.common.utils.user._find_available_username")
-def test_create_user_non_username_error_raises():
+def test_create_user_non_username_error_raises(mock_find_username):
     """
     Test that create_user_with_generated_username does not retry and raises
     if the error is not a username collision.
@@ -235,7 +236,12 @@ def test_find_available_username(username_base, existing_usernames, expected):
     """
     mock_model = Mock()
     mock_qs = Mock()
-    mock_qs.values_list.return_value = existing_usernames
+
+    filtered_usernames = [
+        u for u in existing_usernames 
+        if re.match(rf"{username_base}[0-9]+$", u)
+    ]
+    mock_qs.values_list.return_value = filtered_usernames
     mock_model.objects.filter.return_value = mock_qs
 
     result = _find_available_username(
