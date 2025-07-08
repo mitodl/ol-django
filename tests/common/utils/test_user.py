@@ -159,7 +159,7 @@ def test_create_user_fails_after_max_attempts(mock_find_username):
 
 
 @patch("mitol.common.utils.user._find_available_username")
-def test_create_user_non_username_error_raises(mock_find_username):
+def test_create_user_non_username_error_raises(mock_find_username):  # noqa: ARG001
     """
     Test that create_user_with_generated_username does not retry and raises
     if the error is not a username collision.
