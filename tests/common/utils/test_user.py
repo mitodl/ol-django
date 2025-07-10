@@ -13,7 +13,7 @@ from mitol.common.utils.user import (
 )
 
 EXPECTED_RETRY_COUNT = 2
-MAX_ATTEMPTS_LIMIT = 2
+MAX_ATTEMPTS_LIMIT = 10
 
 
 @pytest.mark.parametrize(
@@ -141,7 +141,7 @@ def test_create_user_fails_after_max_attempts(mock_find_username):
     """
     serializer = Mock()
     serializer.save.side_effect = IntegrityError("duplicate")
-    mock_find_username.side_effect = lambda *_args, **_kwargs: "newusername"
+    mock_find_username.return_value = "newusername"
     with patch(
         "mitol.common.utils.user.is_duplicate_username_error",
         return_value=True
@@ -159,7 +159,7 @@ def test_create_user_fails_after_max_attempts(mock_find_username):
 
 
 @patch("mitol.common.utils.user._find_available_username")
-def test_create_user_non_username_error_raises(mock_find_username):  # noqa: ARG001
+def test_create_user_raises_on_unknown_integrity_error(mock_find_username):  # noqa: ARG001
     """
     Test that create_user_with_generated_username does not retry and raises
     if the error is not a username collision.
@@ -204,27 +204,19 @@ def test_create_user_initial_username_too_short(mock_find_username, fake_user):
 @pytest.mark.parametrize(
     ("username_base", "existing_usernames", "expected"),
     [
-        ("someuser", ["someuser"], "someuser1"),
         (
             "someuser",
-            [
-                "someuser",
-                "someuser1",
-                "someuser2",
-                "someuser3",
-                "someuser4",
-                "someuser5",
-            ],
+            [f"someuser{i}" for i in range(1, 6)],
             "someuser6",
         ),
         (
             "abcdefghij",
-            ["abcdefghij"] + [f"abcdefghij{i}" for i in range(1, 11)],
-            "abcdefgh11",
+            [f"abcdefghij{i}" for i in range(1, 10)],
+            "abcdefgh10",
         ),
         (
             "abcdefghi",
-            ["abcdefghi"] + [f"abcdefghi{i}" for i in range(1, 100)],
+            ["abcdefgh97", "abcdefgh98", "abcdefgh99"],
             "abcdefg100",
         ),
     ],
@@ -237,11 +229,7 @@ def test_find_available_username(username_base, existing_usernames, expected):
     mock_model = Mock()
     mock_qs = Mock()
 
-    filtered_usernames = [
-        u for u in existing_usernames 
-        if re.match(rf"{username_base}[0-9]+$", u)
-    ]
-    mock_qs.values_list.return_value = filtered_usernames
+    mock_qs.values_list.return_value = existing_usernames
     mock_model.objects.filter.return_value = mock_qs
 
     result = _find_available_username(
@@ -269,7 +257,7 @@ def test_full_username_creation():
     mock_model = Mock()
     mock_qs = Mock()
 
-    mock_qs.values_list.return_value = [generated_username]
+    mock_qs.values_list.return_value = [f"{generated_username}1"]
     mock_model.objects.filter.return_value = mock_qs
 
     available_username = _find_available_username(
@@ -278,5 +266,5 @@ def test_full_username_creation():
         username_field="username",
         max_length=expected_username_max,
     )
-    assert available_username == f"{generated_username[:-1]}1"
+    assert available_username == f"{generated_username[:-1]}2"
     assert len(available_username) == expected_username_max

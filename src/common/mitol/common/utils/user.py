@@ -116,7 +116,6 @@ def _find_available_username(
         max_suffix = max_or_none(
             int(re.search(r"\d+$", username).group())
             for username in existing_usernames
-            if re.search(r"\d+$", username) is not None
         )
         if max_suffix is None:
             return "".join([username_base, str(current_min_suffix)])
