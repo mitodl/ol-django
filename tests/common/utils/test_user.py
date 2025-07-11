@@ -3,14 +3,13 @@
 from unittest.mock import Mock, patch
 
 import pytest
-import re
 from django.db import IntegrityError
 from mitol.common.utils.user import (
+    USERNAME_COLLISION_ATTEMPTS,
     _find_available_username,
     create_user_with_generated_username,
     is_duplicate_username_error,
     usernameify,
-    USERNAME_COLLISION_ATTEMPTS,
 )
 
 EXPECTED_RETRY_COUNT = 2
@@ -107,17 +106,14 @@ def test_create_user_with_collision_and_retry(mock_find_username, fake_user):
     collision and succeeds on retry.
     """
     serializer = Mock()
-    duplicate_error = IntegrityError(
-        "duplicate key value violates unique constraint"
-    )
+    duplicate_error = IntegrityError("duplicate key value violates unique constraint")
     serializer.save.side_effect = [
         duplicate_error,
         fake_user,
     ]
     mock_find_username.return_value = "testuser1"
     with patch(
-        "mitol.common.utils.user.is_duplicate_username_error",
-        return_value=True
+        "mitol.common.utils.user.is_duplicate_username_error", return_value=True
     ):
         result = create_user_with_generated_username(
             serializer=serializer,
@@ -143,8 +139,7 @@ def test_create_user_fails_after_max_attempts(mock_find_username):
     serializer.save.side_effect = IntegrityError("duplicate")
     mock_find_username.return_value = "newusername"
     with patch(
-        "mitol.common.utils.user.is_duplicate_username_error",
-        return_value=True
+        "mitol.common.utils.user.is_duplicate_username_error", return_value=True
     ):
         result = create_user_with_generated_username(
             serializer=serializer,
@@ -165,10 +160,12 @@ def test_create_user_raises_on_unknown_integrity_error():
     """
     serializer = Mock()
     serializer.save.side_effect = IntegrityError("some other db error")
-    with patch(
-        "mitol.common.utils.user.is_duplicate_username_error",
-        return_value=False
-    ), pytest.raises(IntegrityError, match="some other db error"):
+    with (
+        patch(
+            "mitol.common.utils.user.is_duplicate_username_error", return_value=False
+        ),
+        pytest.raises(IntegrityError, match="some other db error"),
+    ):
         create_user_with_generated_username(
             serializer=serializer,
             initial_username="testuser",
@@ -248,9 +245,7 @@ def test_full_username_creation():
     """
     expected_username_max = 30
     user_full_name = "Longerton McLongernamenbergenstein"
-    generated_username = usernameify(
-        user_full_name, max_length=expected_username_max
-    )
+    generated_username = usernameify(user_full_name, max_length=expected_username_max)
     assert len(generated_username) == expected_username_max
 
     mock_model = Mock()

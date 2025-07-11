@@ -114,8 +114,7 @@ def _find_available_username(
             username_field, flat=True
         )
         max_suffix = max_or_none(
-            int(re.search(r"\d+$", username).group())
-            for username in existing_usernames
+            int(re.search(r"\d+$", username).group()) for username in existing_usernames
         )
         if max_suffix is None:
             return "".join([username_base, str(current_min_suffix)])
