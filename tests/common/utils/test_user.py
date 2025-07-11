@@ -10,10 +10,19 @@ from mitol.common.utils.user import (
     create_user_with_generated_username,
     is_duplicate_username_error,
     usernameify,
+    USERNAME_COLLISION_ATTEMPTS,
 )
 
 EXPECTED_RETRY_COUNT = 2
-MAX_ATTEMPTS_LIMIT = 10
+
+
+@pytest.fixture
+def fake_user():
+    """
+    Fixture that returns a mock user object with a username attribute.
+    Used for testing username generation and collision logic.
+    """
+    return Mock(username="testuser")
 
 
 @pytest.mark.parametrize(
@@ -68,15 +77,6 @@ def test_is_duplicate_username_error(exception_text, expected_value):
     provided indicates a duplicate username error
     """
     assert is_duplicate_username_error(exception_text) is expected_value
-
-
-@pytest.fixture
-def fake_user():
-    """
-    Fixture that returns a mock user object with a username attribute.
-    Used for testing username generation and collision logic.
-    """
-    return Mock(username="testuser")
 
 
 @patch("mitol.common.utils.user._find_available_username")
@@ -152,14 +152,13 @@ def test_create_user_fails_after_max_attempts(mock_find_username):
             username_field="username",
             max_length=30,
             model=None,
-            attempts_limit=MAX_ATTEMPTS_LIMIT,
+            attempts_limit=USERNAME_COLLISION_ATTEMPTS,
         )
     assert result is None
-    assert serializer.save.call_count == MAX_ATTEMPTS_LIMIT
+    assert serializer.save.call_count == USERNAME_COLLISION_ATTEMPTS
 
 
-@patch("mitol.common.utils.user._find_available_username")
-def test_create_user_raises_on_unknown_integrity_error(mock_find_username):  # noqa: ARG001
+def test_create_user_raises_on_unknown_integrity_error():
     """
     Test that create_user_with_generated_username does not retry and raises
     if the error is not a username collision.
