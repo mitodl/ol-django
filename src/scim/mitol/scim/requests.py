@@ -37,7 +37,7 @@ class InMemoryHttpRequest(HttpRequest):
             {
                 key: value
                 for key, value in meta.items()
-                if not key.startswith(("wsgi", "uwsgi"))
+                if isinstance(value, str) and not key.startswith(("wsgi", "uwsgi"))
             }
         )
         self.path = path
