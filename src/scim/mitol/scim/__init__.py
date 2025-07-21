@@ -2,5 +2,5 @@
 
 default_app_config = "mitol.scim.apps.ScimApp"
 
-__version__ = "2025.6.10.2"
+__version__ = "2025.7.21"
 __distributionname__ = "mitol-django-scim"
