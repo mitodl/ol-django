@@ -3,7 +3,6 @@
 import hashlib
 import json
 import logging
-from typing import Optional
 
 import posthog
 from django.conf import settings
@@ -75,7 +74,7 @@ def _generate_cache_key(key: str, unique_id: str, person_properties: dict) -> st
     )
 
 
-def get_all_feature_flags(opt_unique_id: Optional[str] = None):
+def get_all_feature_flags(opt_unique_id: str | None = None):
     """
     Get the set of all feature flags
     """
@@ -97,8 +96,8 @@ def get_all_feature_flags(opt_unique_id: Optional[str] = None):
 
 def is_enabled(
     name: str,
-    default: Optional[bool] = None,
-    opt_unique_id: Optional[str] = None,
+    default: bool | None = None,
+    opt_unique_id: str | None = None,
 ) -> bool:
     """
     Return True if the feature flag is enabled

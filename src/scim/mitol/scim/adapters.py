@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Optional, Union
+from typing import Union
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -160,7 +160,7 @@ class UserAdapter(SCIMUser):
 
     def handle_add(
         self,
-        path: Optional[AttrPath],
+        path: AttrPath | None,
         value: Union[str, list, dict],
         operation: dict,  # noqa: ARG002
     ):
@@ -198,7 +198,7 @@ class UserAdapter(SCIMUser):
         return result
 
     def parse_path_and_values(
-        self, path: Optional[str], value: Union[str, list, dict]
+        self, path: str | None, value: Union[str, list, dict]
     ) -> list:
         """Parse the incoming value(s)"""
         if isinstance(value, str):
@@ -239,7 +239,7 @@ class UserAdapter(SCIMUser):
 
     def handle_replace(
         self,
-        path: Optional[AttrPath],
+        path: AttrPath | None,
         value: Union[str, list, dict],
         operation: dict,  # noqa: ARG002
     ):
