@@ -17,7 +17,7 @@ from collections import namedtuple
 from collections.abc import Generator, Iterable
 from copy import deepcopy
 from os import path
-from typing import Optional, Union
+from typing import Union
 
 import premailer
 from bs4 import BeautifulSoup
@@ -62,7 +62,7 @@ def get_message_classes() -> Iterable[type[TemplatedMessage]]:
 
 def safe_format_recipient(
     recipient_or_user: Union[AbstractBaseUser, str],
-) -> Optional[str]:
+) -> str | None:
     """
     Returns a "safe"formatted recipient
     This means if MAILGUN_RECIPIENT_OVERRIDE is set, we only use that
@@ -226,7 +226,7 @@ def send_message(message: TemplatedMessage):
 def get_message_sender(
     message_cls: type[TemplatedMessage],
     *,
-    shared_context: Optional[dict] = None,
+    shared_context: dict | None = None,
 ) -> Generator:
     """
     Context manager to provide a unified interface to the mail APIs, also providing some extra functionality around shared contexts
