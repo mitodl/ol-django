@@ -33,6 +33,8 @@ class FilterQuery:
 
     dj_negated_ops = ("ne", "pr")
 
+    dj_op_mapping_per_field_overrides: dict[tuple[str, str | None], dict[str, str]] = {}
+
     @classmethod
     def _filter_expr(cls, parsed: ParseResults) -> Q:
         if parsed is None:
@@ -47,9 +49,12 @@ class FilterQuery:
 
     @classmethod
     def _attr_expr(cls, parsed: ParseResults) -> Q:
-        dj_op = cls.dj_op_mapping[parsed.comparison_operator.lower()]
-
         scim_keys = (parsed.attr_name, parsed.sub_attr)
+
+        field_op_overrides = cls.dj_op_mapping_per_field_overrides.get(scim_keys, {})
+
+        op_name = parsed.comparison_operator.lower()
+        dj_op = field_op_overrides.get(op_name, cls.dj_op_mapping[op_name])
 
         path_parts = list(
             filter(
@@ -121,5 +126,22 @@ class UserFilterQuery(FilterQuery):
     }
 
     related_selects = []
+
+    dj_op_mapping_per_field_overrides = {
+        ("emails", "value"): {
+            "eq": "iexact",
+            "ne": "iexact",
+            "co": "contains",
+            "sw": "startswith",
+            "ew": "endswith",
+        },
+        ("emails", None): {
+            "eq": "iexact",
+            "ne": "iexact",
+            "co": "contains",
+            "sw": "startswith",
+            "ew": "endswith",
+        },
+    }
 
     model_cls = get_user_model()

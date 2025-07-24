@@ -782,16 +782,17 @@ wheels = [
 
 [[package]]
 name = "djoser"
-version = "2.3.1"
+version = "2.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
+    { name = "djangorestframework" },
     { name = "djangorestframework-simplejwt" },
     { name = "social-auth-app-django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/01/4a/d5bb069b49199c9fd0dc33c25dd7a6c15152926c47d73a560b6fde3bd2fb/djoser-2.3.1.tar.gz", hash = "sha256:4e7e2716b5b961f1289b5e49b2216ba5c18eb2a3b4b597dd6430638716ff5107", size = 33806, upload-time = "2024-11-09T16:57:50.682Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/35/bc/8931752c12ddc987fc0c729e9b675e2f72e37ebd82f7ca31a10f287de045/djoser-2.3.3.tar.gz", hash = "sha256:6ceeea9898cbdd585f1daa1ee9d46270600c0401dcd2d1db6f7894782006f6a6", size = 35032, upload-time = "2025-07-13T14:36:03.38Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ea/77/eae6f6ae6b71d578d08f7eee7c0965cff59a270cf024ecdcbb8048fc7a4b/djoser-2.3.1-py3-none-any.whl", hash = "sha256:386f337b9e05cb82354525fe2b6fec19fb1743e93e53b5b4b9dfaffccc38789f", size = 64215, upload-time = "2024-11-09T16:57:49.603Z" },
+    { url = "https://files.pythonhosted.org/packages/01/b3/f51273281172ff233a8c16df916282d75502dbc6a06b9b5d01ed3039f8ed/djoser-2.3.3-py3-none-any.whl", hash = "sha256:b97d233b626c26ebccb09f5614420873ad78b8b1fb1459c76475b05319bae567", size = 71905, upload-time = "2025-07-13T14:36:02.385Z" },
 ]
 
 [[package]]
@@ -1408,7 +1409,7 @@ requires-dist = [
     { name = "django-anymail", specifier = ">=6.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
     { name = "djangorestframework", specifier = ">=3.0.0" },
-    { name = "djoser", specifier = "==2.3.1" },
+    { name = "djoser", specifier = "==2.3.3" },
     { name = "mitol-django-common", editable = "src/common" },
     { name = "mitol-django-mail", editable = "src/mail" },
     { name = "python3-saml", marker = "python_full_version < '3.13' and extra == 'touchstone'", specifier = ">=1.10.1" },
@@ -1706,7 +1707,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-scim"
-version = "2025.6.10.2"
+version = "2025.7.21"
 source = { editable = "src/scim" }
 dependencies = [
     { name = "django" },
