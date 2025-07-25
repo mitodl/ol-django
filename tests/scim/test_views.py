@@ -5,6 +5,7 @@ import random
 from collections.abc import Callable
 from functools import reduce
 from http import HTTPStatus
+from math import floor
 from types import SimpleNamespace
 
 import pytest
@@ -405,6 +406,15 @@ def test_bulk_post(scim_client, bulk_test_data):
                     assert actual_value == expected_value
 
 
+def _randomize_local_part_casing(email: str) -> str:
+    """Randomize the casing of the local part of the email"""
+    local, hostname = email.split("@")
+
+    local = "".join(random.choice((str.lower, str.upper))(char) for char in local)  # noqa: S311
+
+    return f"{local}@{hostname}"
+
+
 @pytest.mark.parametrize(
     ("sort_by", "sort_order"),
     [
@@ -423,8 +433,8 @@ def test_bulk_post(scim_client, bulk_test_data):
 @pytest.mark.parametrize("count", [None, 100, 500])
 def test_user_search(large_user_set, scim_client, sort_by, sort_order, count):
     """Test the user search endpoint"""
-    search_users = large_user_set[:1000]
-    emails = [user.email for user in search_users]
+    search_users = large_user_set[: floor(len(large_user_set) / 2)]
+    emails = [_randomize_local_part_casing(user.email) for user in search_users]
 
     expected = search_users
 
@@ -452,7 +462,9 @@ def test_user_search(large_user_set, scim_client, sort_by, sort_order, count):
             data=json.dumps(
                 {
                     "schemas": [constants.SchemaURI.SERACH_REQUEST],
-                    "filter": " OR ".join([f'email EQ "{email}"' for email in emails]),
+                    "filter": " OR ".join(
+                        [f'emails.value EQ "{email}"' for email in emails]
+                    ),
                     # SCIM API is 1-based index
                     # Additionally, scim-for-keycloak sends this as a string,
                     # but spec examples have ints
