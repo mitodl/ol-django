@@ -6,6 +6,15 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.7.25'></a>
+## [2025.7.25] - 2025-07-25
+
+### Fixed
+
+- Added filtering to not deepcopy non-str values on the header dict `request.META`.
+
+- Made searching for users by email case insensitive.
+
 <a id='changelog-2025.7.21'></a>
 ## [2025.7.21] - 2025-07-21
 
