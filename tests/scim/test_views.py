@@ -490,7 +490,7 @@ def test_user_search(large_user_set, scim_client, sort_by, sort_order, count):
                     "active": user.is_active,
                     "userName": user.username,
                     "displayName": f"{user.first_name} {user.last_name}",
-                    "emails": [{"value": user.email, "primary": True}],
+                    "emails": [{"value": user.email.lower(), "primary": True}],
                     "externalId": None,
                     "name": {
                         "givenName": user.first_name,
