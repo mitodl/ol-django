@@ -1,6 +1,5 @@
 """Transcoding utilities"""
 
-from typing import Optional
 
 from django.conf import settings
 
@@ -23,7 +22,7 @@ class FileConfig:
         destination_bucket: str = (
             settings.VIDEO_S3_TRANSCODE_BUCKET or settings.AWS_STORAGE_BUCKET_NAME
         ),
-        group_settings: Optional[dict] = None,
+        group_settings: dict | None = None,
     ):
         """
         Initialize the FilePathConfig with the given parameters.
@@ -101,10 +100,10 @@ def get_output_path(
     file_config: FileConfig,
     *,
     is_thumbnail_group: bool,
-    thumbnail_bucket: Optional[str] = (
+    thumbnail_bucket: str | None = (
         settings.VIDEO_S3_THUMBNAIL_BUCKET or settings.AWS_STORAGE_BUCKET_NAME
     ),
-    thumbnail_prefix: Optional[str] = (
+    thumbnail_prefix: str | None = (
         settings.VIDEO_S3_THUMBNAIL_PREFIX or settings.VIDEO_S3_UPLOAD_PREFIX
     ),
 ) -> str:
