@@ -70,7 +70,7 @@ class UserAdapter(SCIMUser):
         """
         Return the email of the user per the SCIM spec.
         """
-        return [{"value": self.obj.email, "primary": True}]
+        return [{"value": self.obj.email.lower(), "primary": True}]
 
     @property
     def display_name(self):
