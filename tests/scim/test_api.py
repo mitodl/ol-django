@@ -12,7 +12,7 @@ from mitol.scim import api
 from mitol.scim.adapters import UserAdapter
 from mitol.scim.constants import SchemaURI
 from mitol.scim.requests import InMemoryHttpRequest
-from more_itertools import distribute
+from more_itertools import chunked, distribute
 from responses import RequestsMock, matchers
 
 User = get_user_model()
@@ -85,61 +85,69 @@ def mock_client_init_requests(responses: RequestsMock):
 
 
 @pytest.fixture
-def mock_search_requests(users: Users, responses: RequestsMock):
+def mock_search_requests(settings, users: Users, responses: RequestsMock):
     items_per_page = 10
 
-    def _callback(request):
-        payload = json.loads(request.body)
+    def _mk_callback(batch):
+        batch_users_in_remote = [
+            user for user in users.users_in_remote if user in batch
+        ]
 
-        # remap to 0-based index
-        start_index = payload["startIndex"] - 1
+        def _callback(request):
+            payload = json.loads(request.body)
 
-        return (
-            200,
-            {},
-            json.dumps(
-                {
-                    "schemas": [SchemaURI.LIST_RESPONSE],
-                    "Resources": [
-                        {
-                            "id": users.external_ids_by_user_id[user.id],
-                            "emails": [
-                                {
-                                    "value": user.email.lower(),
-                                    "primary": True,
-                                }
-                            ],
-                        }
-                        for user in users.users_in_remote[
-                            start_index : start_index + items_per_page
-                        ]
-                    ],
-                    "itemsPerPage": items_per_page,
-                    "totalResults": len(users.users_in_remote),
-                    "startIndex": start_index,
-                }
-            ),
-        )
+            # remap to 0-based index
+            start_index = payload["startIndex"] - 1
 
-    responses.add_callback(
-        responses.POST,
-        url="https://keycloak:8080/realms/ol-local/scim/v2/Users/.search",
-        callback=_callback,
-        match=[
-            matchers.json_params_matcher(
-                params={
-                    "schemas": [SchemaURI.SERACH_REQUEST],
-                    "filter": " OR ".join(
-                        [
-                            f'emails.value EQ "{user.email.lower()}"'
-                            for user in users.users
-                        ]
-                    ),
-                },
-                strict_match=False,
+            return (
+                200,
+                {},
+                json.dumps(
+                    {
+                        "schemas": [SchemaURI.LIST_RESPONSE],
+                        "Resources": [
+                            {
+                                "id": users.external_ids_by_user_id[user.id],
+                                "emails": [
+                                    {
+                                        "value": user.email.lower(),
+                                        "primary": True,
+                                    }
+                                ],
+                            }
+                            for user in batch_users_in_remote[
+                                start_index : start_index + items_per_page
+                            ]
+                        ],
+                        "itemsPerPage": items_per_page,
+                        "totalResults": len(batch_users_in_remote),
+                        "startIndex": start_index,
+                    }
+                ),
             )
-        ],
-    )
+
+        return _callback
+
+    for batch in chunked(users.users, settings.MITOL_SCIM_KEYCLOAK_SEARCH_BATCH_SIZE):
+        responses.add_callback(
+            responses.POST,
+            url="https://keycloak:8080/realms/ol-local/scim/v2/Users/.search",
+            callback=_mk_callback(batch),
+            match=[
+                matchers.json_params_matcher(
+                    params={
+                        "schemas": [SchemaURI.SERACH_REQUEST],
+                        "filter": " OR ".join(
+                            [
+                                f'emails.value EQ "{user.email.lower()}"'
+                                for user in batch
+                            ]
+                        ),
+                    },
+                    strict_match=False,
+                )
+            ],
+        )
 
 
 @pytest.fixture

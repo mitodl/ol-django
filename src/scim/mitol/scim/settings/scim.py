@@ -10,6 +10,11 @@ MITOL_SCIM_KEYCLOAK_BATCH_SIZE = get_int(
     default=250,
     description="Number of operations to send in a single batch request",
 )
+MITOL_SCIM_KEYCLOAK_SEARCH_BATCH_SIZE = get_int(
+    name="MITOL_SCIM_KEYCLOAK_SEARCH_BATCH_SIZE",
+    default=100,
+    description="Number of operations to send in a single search request",
+)
 
 MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT = get_int(
     name="MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT",

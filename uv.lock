@@ -1728,7 +1728,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-scim"
-version = "2025.7.25"
+version = "2025.7.28"
 source = { editable = "src/scim" }
 dependencies = [
     { name = "django" },
