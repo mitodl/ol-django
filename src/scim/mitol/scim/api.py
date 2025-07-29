@@ -94,6 +94,13 @@ def sync_users_to_scim_remote(users: list["User"]):
 def _user_search_by_email(
     session: OAuth2Session, users: list["User"]
 ) -> StateOrOperationGenerator:
+    for users_batch in chunked(users, settings.MITOL_SCIM_KEYCLOAK_SEARCH_BATCH_SIZE):
+        yield from _user_search_by_email_batch(session, users_batch)
+
+
+def _user_search_by_email_batch(
+    session: OAuth2Session, users: list["User"]
+) -> StateOrOperationGenerator:
     """Perform a search for a set of users by email"""
     users_by_email = {user.email.lower(): user for user in users}
 
