@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.7.29'></a>
+## [2025.7.29] - 2025-07-29
+
+### Fixed
+
+- Batched up search requests to avoid timeouts (pagination wasn't enough).
+
 <a id='changelog-2025.7.28'></a>
 ## [2025.7.28] - 2025-07-28
 
