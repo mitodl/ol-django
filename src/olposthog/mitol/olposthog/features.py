@@ -26,7 +26,7 @@ def configure():
     expose all the client config options.
     """
     posthog.default_client = posthog.Client(
-        api_key=getattr(settings, "POSTHOG_PROJECT_API_KEY", None),
+        project_api_key=getattr(settings, "POSTHOG_PROJECT_API_KEY", None),
         host=getattr(settings, "POSTHOG_API_HOST", None),
         debug=settings.DEBUG,
         on_error=None,

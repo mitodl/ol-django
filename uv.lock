@@ -1441,7 +1441,7 @@ provides-extras = ["touchstone"]
 
 [[package]]
 name = "mitol-django-common"
-version = "2025.6.20"
+version = "2025.8.1"
 source = { editable = "src/common" }
 dependencies = [
     { name = "django" },
@@ -1687,7 +1687,7 @@ requires-dist = [
     { name = "django", specifier = ">=3.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
     { name = "mitol-django-common", editable = "src/common" },
-    { name = "posthog", specifier = ">=3.5.0" },
+    { name = "posthog", specifier = ">=6.3.1,<7" },
 ]
 
 [[package]]
@@ -1793,15 +1793,6 @@ requires-dist = [
     { name = "django", specifier = ">=3.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
     { name = "edx-opaque-keys", specifier = "==2.2.2" },
-]
-
-[[package]]
-name = "monotonic"
-version = "1.6"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ea/ca/8e91948b782ddfbd194f323e7e7d9ba12e5877addf04fb2bf8fca38e86ac/monotonic-1.6.tar.gz", hash = "sha256:3a55207bcfed53ddd5c5bae174524062935efed17792e9de2ad0205ce9ad63f7", size = 7615, upload-time = "2021-08-11T14:37:28.79Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9a/67/7e8406a29b6c45be7af7740456f7f37025f0506ae2e05fb9009a53946860/monotonic-1.6-py2.py3-none-any.whl", hash = "sha256:68687e19a14f11f26d140dd5c86f3dba4bf5df58003000ed467e0e2a69bca96c", size = 8154, upload-time = "2021-04-09T21:58:05.122Z" },
 ]
 
 [[package]]
@@ -2050,19 +2041,19 @@ wheels = [
 
 [[package]]
 name = "posthog"
-version = "3.23.0"
+version = "6.3.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "backoff" },
     { name = "distro" },
-    { name = "monotonic" },
     { name = "python-dateutil" },
     { name = "requests" },
     { name = "six" },
+    { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5a/dd/30f7d2e992f80fcaedc5b99761e006bbb0b954813243542c480b9576b4be/posthog-3.23.0.tar.gz", hash = "sha256:1ac0305ab6c54a80c4a82c137231f17616bef007bbf474d1a529cda032d808eb", size = 72077, upload-time = "2025-03-26T16:11:42.072Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9a/fc/a58dc74861c37a14db083752a20a51ed87872f1c9f3ad77f4b8355a63eac/posthog-6.3.2.tar.gz", hash = "sha256:8ce32918ad63eef1fd216150dd1dad4aab019596c5332eb4889b9589170db3b8", size = 97987, upload-time = "2025-07-31T21:14:08.814Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/17/1e/aa457f5b15c9a018434dd71567c4a8f09c1701607a1d4daf5f01d6eccb7a/posthog-3.23.0-py2.py3-none-any.whl", hash = "sha256:2b07d06670170ac2e21465dffa8d356722834cc877ab34e583da6e525c1037df", size = 84976, upload-time = "2025-03-26T16:11:40.582Z" },
+    { url = "https://files.pythonhosted.org/packages/a9/ab/8a2ea33f4daddda2fac8ca1884b55da0e2da36cebba63b53c000538f1280/posthog-6.3.2-py3-none-any.whl", hash = "sha256:19171873b8e4beccf7611bea845e07194aa5af975598ab44a71201ee8a1bb2d2", size = 115410, upload-time = "2025-07-31T21:14:06.806Z" },
 ]
 
 [[package]]
