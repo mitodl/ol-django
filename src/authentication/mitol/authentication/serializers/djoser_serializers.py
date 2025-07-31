@@ -10,7 +10,7 @@ User = get_user_model()
 
 
 class CustomSendEmailResetSerializer(SendEmailResetSerializer):
-    def get_user(self, is_active=True):  # noqa: FBT002
+    def get_user(self, is_active=True):  # noqa: FBT002, RET503
         # NOTE: This directly copies the implementation of djoser.serializers.UserFunctionsMixin.get_user  # noqa: E501
         # and only changes the User query. If this method is changed in an updated Djoser  # noqa: E501
         # release, this method may need to be updated as well.
@@ -23,8 +23,8 @@ class CustomSendEmailResetSerializer(SendEmailResetSerializer):
                 return user
         except User.DoesNotExist:
             pass
-        if (  # noqa: RET503
+        if (
             settings.PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND
             or settings.USERNAME_RESET_SHOW_EMAIL_NOT_FOUND
         ):
-            self.fail("email_not_found")  # noqa: RET503
+            self.fail("email_not_found")

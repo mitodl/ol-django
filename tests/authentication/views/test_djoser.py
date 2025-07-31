@@ -11,7 +11,7 @@ EMAIL = "email@example.com"
 
 @pytest.fixture
 def user():
-    from mitol.common.factories import UserFactory
+    from mitol.common.factories import UserFactory  # noqa: PLC0415
 
     return UserFactory.create(email=EMAIL)
 

@@ -56,7 +56,7 @@ def is_duplicate_username_error(exc):
     return re.search(r"\(username\)=\([^\s]+\) already exists", str(exc)) is not None
 
 
-def _find_available_username(
+def _find_available_username(  # noqa: RET503
     initial_username_base,
     model=None,
     username_field="username",
@@ -103,7 +103,7 @@ def _find_available_username(
     # Any query for suffixed usernames could come up empty. The minimum suffix
     # will be added to the username in that case.
     current_min_suffix = 1
-    while letters_to_truncate < len(initial_username_base):  # noqa: RET503
+    while letters_to_truncate < len(initial_username_base):
         username_base = initial_username_base[
             0 : len(initial_username_base) - letters_to_truncate
         ]

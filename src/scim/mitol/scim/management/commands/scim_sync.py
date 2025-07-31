@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):  # noqa: ARG002
         """Sync users with SCIM to the remote"""
-        from mitol.scim import tasks
+        from mitol.scim import tasks  # noqa: PLC0415
 
         never_synced_only = options["never_synced_only"]
 

@@ -1,6 +1,5 @@
 import operator
 from collections.abc import Callable
-from typing import Optional
 
 from django.contrib.auth import get_user_model
 from django.db.models import Model, Q
@@ -14,7 +13,7 @@ class FilterQuery:
 
     model_cls: type[Model]
 
-    attr_map: dict[tuple[str, Optional[str]], tuple[str, ...]]
+    attr_map: dict[tuple[str, str | None], tuple[str, ...]]
 
     related_selects: list[str] = []
 
@@ -117,7 +116,7 @@ class FilterQuery:
 class UserFilterQuery(FilterQuery):
     """FilterQuery for User"""
 
-    attr_map: dict[tuple[str, Optional[str]], tuple[str, ...]] = {
+    attr_map: dict[tuple[str, str | None], tuple[str, ...]] = {
         ("userName", None): ("username",),
         ("emails", "value"): ("email",),
         ("active", None): ("is_active",),

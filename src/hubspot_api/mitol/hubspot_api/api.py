@@ -140,7 +140,7 @@ def get_all_objects(
         after = page.paging.next.after
 
 
-def get_hubspot_id(object_id: int, content_type: ContentType) -> str:
+def get_hubspot_id(object_id: int, content_type: ContentType) -> str:  # noqa: RET503
     """
     Return the hubspot_api id if any for an object w/the specified id and content type
 
@@ -154,7 +154,7 @@ def get_hubspot_id(object_id: int, content_type: ContentType) -> str:
     hubspot_obj = HubspotObject.objects.filter(
         object_id=object_id, content_type=content_type
     ).first()
-    if hubspot_obj:  # noqa: RET503
+    if hubspot_obj:
         return hubspot_obj.hubspot_id
 
 
