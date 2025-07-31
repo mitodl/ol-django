@@ -56,7 +56,7 @@ def is_duplicate_username_error(exc):
     return re.search(r"\(username\)=\([^\s]+\) already exists", str(exc)) is not None
 
 
-def _find_available_username(
+def _find_available_username(  # noqa: RET503
     initial_username_base,
     model=None,
     username_field="username",

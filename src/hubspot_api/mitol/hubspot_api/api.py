@@ -140,7 +140,7 @@ def get_all_objects(
         after = page.paging.next.after
 
 
-def get_hubspot_id(object_id: int, content_type: ContentType) -> str:
+def get_hubspot_id(object_id: int, content_type: ContentType) -> str:  # noqa: RET503
     """
     Return the hubspot_api id if any for an object w/the specified id and content type
 

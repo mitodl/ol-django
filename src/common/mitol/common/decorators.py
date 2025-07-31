@@ -37,7 +37,7 @@ def cache_control_max_age_jitter(*args, **kwargs):  # noqa: ARG001
 
 def single_task(
     timeout: int,
-    raise_block: bool | None = True,  # noqa: FBT002
+    raise_block: bool | None = True,  # noqa: FBT002, FBT001
     key: (str or Callable[[str, P.args, P.kwargs], str]) | None = None,
     cache_name: str | None = "redis",
 ) -> Callable:

@@ -33,7 +33,7 @@ def django_db_modify_db_settings_parallel_suffix(
 def learner_drf_client(learner):
     """DRF API test client that is authenticated with the user"""
     # import is here to avoid trying to load django before settings are initialized
-    from rest_framework.test import APIClient
+    from rest_framework.test import APIClient  # noqa: PLC0415
 
     client = APIClient()
     client.force_authenticate(user=learner)
@@ -44,7 +44,7 @@ def learner_drf_client(learner):
 def learner(db):  # noqa: ARG001
     """Fixture for a default learner"""
     # import is here to avoid trying to load django before settings are initialized
-    from mitol.common.factories import UserFactory
+    from mitol.common.factories import UserFactory  # noqa: PLC0415
 
     return UserFactory.create()
 
@@ -53,7 +53,10 @@ def learner(db):  # noqa: ARG001
 def learner_and_oauth2(learner):
     """Fixture for a default learner and oauth2 records"""
     # import is here to avoid trying to load django before settings are initialized
-    from oauth2_provider.models import AccessToken, get_application_model
+    from oauth2_provider.models import (  # noqa: PLC0415
+        AccessToken,
+        get_application_model,
+    )
 
     Application = get_application_model()
     application = Application.objects.create(
@@ -78,7 +81,7 @@ def learner_and_oauth2(learner):
 @pytest.fixture
 def staff_user(db):  # noqa: ARG001
     """Staff user fixture"""
-    from mitol.common.factories import UserFactory
+    from mitol.common.factories import UserFactory  # noqa: PLC0415
 
     return UserFactory.create(is_staff=True)
 

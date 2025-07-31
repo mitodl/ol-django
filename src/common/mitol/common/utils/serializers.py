@@ -5,7 +5,7 @@ import json
 from django.core.serializers import serialize
 
 
-def serialize_model_object(obj):
+def serialize_model_object(obj):  # noqa: RET503
     """
     Serialize model into a dict representable as JSON
     Args:

@@ -20,7 +20,7 @@ def any_instance_of(*cls):
         AnyInstanceOf: dynamic class type with the desired equality
     """  # noqa: D401
 
-    class AnyInstanceOf(metaclass=abc.ABCMeta):  # noqa: B024
+    class AnyInstanceOf(metaclass=abc.ABCMeta):  # noqa: B024, PLW1641
         """Dynamic class type for __eq__ in terms of isinstance"""
 
         def __eq__(self, other):
@@ -73,7 +73,7 @@ def test_app_json_modified():
 
     from mitol.common.pytest_utils import test_app_json_modified
     """
-    from mitol.common import envs
+    from mitol.common import envs  # noqa: PLC0415
 
     envs.reload()
 

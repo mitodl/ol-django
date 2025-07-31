@@ -96,7 +96,7 @@ def get_all_feature_flags(opt_unique_id: str | None = None):
 
 def is_enabled(
     name: str,
-    default: bool | None = None,
+    default: bool | None = None,  # noqa: FBT001
     opt_unique_id: str | None = None,
 ) -> bool:
     """

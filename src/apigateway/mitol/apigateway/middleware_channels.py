@@ -39,7 +39,7 @@ def get_apisix_user(scope):
         backend = ApisixRemoteUserBackend()
         return backend.authenticate(request=scope, remote_user=user_id)
 
-    from django.contrib.auth.models import AnonymousUser
+    from django.contrib.auth.models import AnonymousUser  # noqa: PLC0415
 
     return AnonymousUser()
 

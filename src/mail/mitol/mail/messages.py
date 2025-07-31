@@ -34,7 +34,7 @@ class TemplatedMessage(AnymailMessage):
         Render the email's templates
         """
         # avoid circular import issue
-        from mitol.mail import api
+        from mitol.mail import api  # noqa: PLC0415
 
         return api.render_email_templates(cls.template_name, template_context)
 

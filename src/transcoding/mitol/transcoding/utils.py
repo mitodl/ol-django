@@ -1,6 +1,5 @@
 """Transcoding utilities"""
 
-
 from django.conf import settings
 
 from mitol.transcoding.constants import TRANSCODE_JOB_SUBSCRIPTION_URL
