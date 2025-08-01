@@ -1673,7 +1673,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-olposthog"
-version = "2025.3.17"
+version = "2025.8.1"
 source = { editable = "src/olposthog" }
 dependencies = [
     { name = "django" },
