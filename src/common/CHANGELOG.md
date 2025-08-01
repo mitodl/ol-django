@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.8.1'></a>
+## [2025.8.1] - 2025-08-01
+
+### Changed
+
+- Updated `django-redis` to version 6.x.
+
 <a id='changelog-2025.6.20'></a>
 ## [2025.6.20] - 2025-06-20
 
