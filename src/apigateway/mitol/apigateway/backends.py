@@ -114,7 +114,8 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
 
         for header_field, model_field in infomap["user_fields"].items():
             if isinstance(model_field, tuple):
-                # If the model_field is a tuple, it means we have a flag for not updating the value.
+                # If the model_field is a tuple, it means we have a flag for not
+                # updating the value.
                 model_field_name, override = model_field
                 if override:
                     setattr(user, model_field_name, decoded_headers.get(header_field, None))
