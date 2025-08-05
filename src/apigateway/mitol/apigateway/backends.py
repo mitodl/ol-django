@@ -118,7 +118,9 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
                 # updating the value.
                 model_field_name, override = model_field
                 if override:
-                    setattr(user, model_field_name, decoded_headers.get(header_field, None))
+                    setattr(
+                        user, model_field_name, decoded_headers.get(header_field, None)
+                    )
             else:
                 setattr(user, model_field, decoded_headers.get(header_field, None))
 
