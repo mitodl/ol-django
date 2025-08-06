@@ -28,15 +28,15 @@ def test_configure_user_updates_fields(settings):
 
     # Create user and request
     test_user = SsoUserFactory.create()
+
+    test_user.name = "Updated Name"
+    test_user.save()
     payload, user_info = generate_fake_apisix_payload(user=test_user)
+    assert test_user.email == user_info.get('email')
     request = generate_apisix_request("request", payload)
 
-    # Patch decode_x_header to return test headers
-    with mock.patch("mitol.apigateway.api.decode_x_header") as decode_mock:
-        decode_mock.return_value = {"X-Name": "Test User", "X-Email": "test@example.com"}
-        backend = ApisixRemoteUserBackend()
-        backend.configure_user(request, test_user, created=True)
-
+    backend = ApisixRemoteUserBackend()
+    backend.configure_user(request, test_user, created=True)
     test_user = User.objects.get(global_id=user_info.get(id_field))
-    assert test_user.name == "Test User"
-    assert test_user.email == "test@example.com"
+    assert test_user.name == "Updated Name"
+    assert test_user.email == user_info.get('email')
