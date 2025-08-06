@@ -13,13 +13,15 @@ from mitol.common.factories.defaults import SsoUserFactory
 User = get_user_model()
 
 @pytest.mark.django_db
-def test_configure_user_updates_fields(settings):
+@pytest.mark.parametrize("override", [False, True])
+@pytest.mark.parametrize("has_value", [False, True])
+def test_configure_user_updates_fields(settings, override, has_value):
     # Mock settings
     id_field = settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD
     settings.MITOL_APIGATEWAY_USERINFO_MODEL_MAP = {
         "user_fields": {
-            "name": ("name", False),
-            "email": ("email", True),
+            "email": ("email", override),
+            "preferred_username": "username",
         },
         "additional_models": {},
     }
@@ -29,14 +31,22 @@ def test_configure_user_updates_fields(settings):
     # Create user and request
     test_user = SsoUserFactory.create()
 
-    test_user.name = "Updated Name"
-    test_user.save()
+
     payload, user_info = generate_fake_apisix_payload(user=test_user)
     assert test_user.email == user_info.get('email')
     request = generate_apisix_request("request", payload)
+    if has_value:
+        test_user.email = "updated@email.com"
+    else:
+        test_user.email = User._meta.get_field('email').get_default()
+
+    test_user.save()
 
     backend = ApisixRemoteUserBackend()
     backend.configure_user(request, test_user, created=True)
     test_user = User.objects.get(global_id=user_info.get(id_field))
-    assert test_user.name == "Updated Name"
-    assert test_user.email == user_info.get('email')
+    if override or not has_value:
+        assert test_user.email == user_info.get('email')
+    else:
+        # If not overriding, the email should remain unchanged
+        assert test_user.email == "updated@email.com"
