@@ -14,7 +14,7 @@ For top level release notes, leave all the headers commented out.
 
 ### Added
 
-- Added a new `override` flag to configure_user, 
+- Added a new `override` flag to configure_user,
 allowing to set the flag to 'False' to prevent overriding existing value.
 
 

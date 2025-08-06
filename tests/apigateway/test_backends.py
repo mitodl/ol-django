@@ -1,4 +1,3 @@
-
 import pytest
 from django.contrib.auth import get_user_model
 from main.utils import generate_apisix_request, generate_fake_apisix_payload
@@ -27,7 +26,6 @@ def test_configure_user_updates_fields(settings, override, has_value):
     # Create user and request
     test_user = SsoUserFactory.create()
 
-
     payload, user_info = generate_fake_apisix_payload(user=test_user)
     assert test_user.email == user_info.get("email")
     request = generate_apisix_request("request", payload)
@@ -42,7 +40,7 @@ def test_configure_user_updates_fields(settings, override, has_value):
     backend.configure_user(request, test_user, created=True)
     test_user = User.objects.get(global_id=user_info.get(id_field))
     if override or not has_value:
-        assert test_user.email == user_info.get('email')
+        assert test_user.email == user_info.get("email")
     else:
         # If not overriding, the email should remain unchanged
         assert test_user.email == "updated@email.com"
