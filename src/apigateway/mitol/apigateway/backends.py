@@ -113,7 +113,18 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
         decoded_headers = decode_x_header(request)
 
         for header_field, model_field in infomap["user_fields"].items():
-            setattr(user, model_field, decoded_headers.get(header_field, None))
+            value = decoded_headers.get(header_field, None)
+            if isinstance(model_field, tuple):
+                # If the model_field is a tuple, it means we have a flag for not
+                # updating the value.
+                model_field_name, override = model_field
+                default_value = User._meta.get_field(model_field_name).get_default()  # noqa: SLF001
+                field_not_set = getattr(user, model_field_name) == default_value
+                if not override and not field_not_set:
+                    continue
+                setattr(user, model_field_name, value)
+            else:
+                setattr(user, model_field, value)
 
         user.save()
 
