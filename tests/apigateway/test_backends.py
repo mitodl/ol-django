@@ -1,16 +1,12 @@
 
-
-from unittest import mock
-
 import pytest
 from django.contrib.auth import get_user_model
-from django.test import RequestFactory, override_settings
-
 from main.utils import generate_apisix_request, generate_fake_apisix_payload
 from mitol.apigateway.backends import ApisixRemoteUserBackend
 from mitol.common.factories.defaults import SsoUserFactory
 
 User = get_user_model()
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("override", [False, True])
@@ -33,12 +29,12 @@ def test_configure_user_updates_fields(settings, override, has_value):
 
 
     payload, user_info = generate_fake_apisix_payload(user=test_user)
-    assert test_user.email == user_info.get('email')
+    assert test_user.email == user_info.get("email")
     request = generate_apisix_request("request", payload)
     if has_value:
         test_user.email = "updated@email.com"
     else:
-        test_user.email = User._meta.get_field('email').get_default()
+        test_user.email = User._meta.get_field("email").get_default()  # noqa: SLF001
 
     test_user.save()
 
