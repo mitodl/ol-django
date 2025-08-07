@@ -6,6 +6,14 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.8.7'></a>
+## [2025.8.7] - 2025-08-07
+
+### Added
+
+- Added a new `override` flag to configure_user,
+allowing to set the flag to 'False' to prevent overriding existing value.
+
 <a id='changelog-2025.4.25.1'></a>
 ## [2025.4.25.1] - 2025-04-25
 
