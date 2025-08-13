@@ -223,7 +223,7 @@ def test_create_user_initial_username_too_short(mock_find_username, fake_user):
         (
             "someuser",
             ["someuser1", "someuser2dy", "someuser5"],
-            "ayush6",
+            "someuser6",
         ),
     ],
 )
