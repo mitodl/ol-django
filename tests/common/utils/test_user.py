@@ -215,6 +215,16 @@ def test_create_user_initial_username_too_short(mock_find_username, fake_user):
             ["abcdefgh97", "abcdefgh98", "abcdefgh99"],
             "abcdefg100",
         ),
+        (
+            "someuser",
+            ["someuser2dy"],
+            "someuser1",
+        ),
+        (
+            "someuser",
+            ["someuser1", "someuser2dy", "someuser5"],
+            "ayush6",
+        ),
     ],
 )
 def test_find_available_username(username_base, existing_usernames, expected):

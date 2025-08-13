@@ -113,9 +113,18 @@ def _find_available_username(  # noqa: RET503
         existing_usernames = model.objects.filter(**filter_kwargs).values_list(
             username_field, flat=True
         )
-        max_suffix = max_or_none(
-            int(re.search(r"\d+$", username).group()) for username in existing_usernames
-        )
+
+        suffixes = []
+        for username in existing_usernames:
+            match = re.search(r"\d+$", username)
+            if match is not None:
+                try:
+                    suffixes.append(int(match.group()))
+                except (ValueError, AttributeError):
+                    continue
+
+        max_suffix = max_or_none(suffixes) if suffixes else None
+
         if max_suffix is None:
             return "".join([username_base, str(current_min_suffix)])
         else:
