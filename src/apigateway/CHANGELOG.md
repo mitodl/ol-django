@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.8.14'></a>
+## [2025.8.14] - 2025-08-14
+
+### Changed
+
+- Gateway middleware no longer updates the user on every request. Updates now only occur when `request.user` changes
+
 <a id='changelog-2025.8.7'></a>
 ## [2025.8.7] - 2025-08-07
 
