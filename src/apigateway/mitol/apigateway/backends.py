@@ -32,6 +32,12 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
         user = None
         username = self.clean_username(remote_user)
 
+        # if the current user and the user from the backend match
+        # just return that user and do no further queries or configuration
+        if getattr(request.user, self.lookup_field, None) == username:
+            user = request.user
+            return user if self.user_can_authenticate(user) else None
+
         if self.create_unknown_user:
             user, created = User.objects.get_or_create(**{self.lookup_field: username})
         else:
@@ -47,6 +53,12 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
         created = False
         user = None
         username = self.clean_username(remote_user)
+
+        # if the current user and the user from the backend match
+        # just return that user and do no further queries or configuration
+        if getattr(request.user, self.lookup_field, None) == username:
+            user = request.user
+            return user if self.user_can_authenticate(user) else None
 
         if self.create_unknown_user:
             user, created = await User.objects.aget_or_create(
