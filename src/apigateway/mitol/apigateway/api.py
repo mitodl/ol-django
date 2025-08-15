@@ -1,9 +1,9 @@
 """API functions."""
 
 import base64
-import json
 import logging
 
+import orjson
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import HttpRequest
@@ -58,7 +58,7 @@ def decode_x_header(request: HttpRequest | dict) -> dict | None:
         return None
 
     decoded_x_userinfo = base64.b64decode(x_userinfo)
-    return json.loads(decoded_x_userinfo)
+    return orjson.loads(decoded_x_userinfo)
 
 
 def get_user_id_from_userinfo_header(request: HttpRequest | dict) -> str | None:
@@ -101,4 +101,4 @@ def create_userinfo_header(user):
         for k in model_map["user_fields"]
     }
 
-    return {header_name: base64.b64encode(json.dumps(header_data).encode())}
+    return {header_name: base64.b64encode(orjson.dumps(header_data).encode())}

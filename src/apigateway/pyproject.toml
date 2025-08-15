@@ -7,6 +7,7 @@ dependencies = [
     "django>=3.0",
     "edx-opaque-keys==2.2.2",
     "channels>=4.2.0",
+    "orjson>=3.11.2,<4",
 ]
 readme = "README.md"
 license = "BSD-3-Clause"

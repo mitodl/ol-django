@@ -4,7 +4,6 @@ import faker
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.http import HttpResponse
 from mitol.apigateway.middleware import ApisixUserMiddleware
 from mitol.common.factories.defaults import SsoUserFactory
 
@@ -16,7 +15,7 @@ User = get_user_model()
 
 
 @pytest.mark.parametrize("new_user", [False, True])
-def test_middleware(new_user):
+def test_middleware(mocker, new_user):
     """
     Test that the middleware extracts the data properly.
 
@@ -30,13 +29,17 @@ def test_middleware(new_user):
     ]
 
     test_user = None if new_user else SsoUserFactory.create()
+    mock_get_response = mocker.Mock()
 
     payload, user_info = generate_fake_apisix_payload(user=test_user)
     request = generate_apisix_request("request", payload)
 
-    middleware = ApisixUserMiddleware(lambda req: HttpResponse())  # noqa: ARG005
+    middleware = ApisixUserMiddleware(mock_get_response)
 
-    middleware.process_request(request)
+    response = middleware(request)
+
+    mock_get_response.assert_called_once_with(request)
+    assert response == mock_get_response.return_value
 
     assert request.META["REMOTE_USER"] == user_info.get(id_field)
 
@@ -47,7 +50,7 @@ def test_middleware(new_user):
 
 
 @pytest.mark.parametrize("new_user", [False, True])
-def test_middleware_logs_out(new_user):
+def test_middleware_logs_out(mocker, new_user):
     """
     Test that the middleware logs out the user if the header is not present.
     """
@@ -58,12 +61,16 @@ def test_middleware_logs_out(new_user):
     ]
 
     test_user = None if new_user else SsoUserFactory.create()
+    mock_get_response = mocker.Mock()
 
     payload, user_info = generate_fake_apisix_payload(user=test_user)
     request = generate_apisix_request("request", payload)
 
-    middleware = ApisixUserMiddleware(lambda req: HttpResponse())  # noqa: ARG005
-    middleware.process_request(request)
+    middleware = ApisixUserMiddleware(mock_get_response)
+    response = middleware(request)
+
+    mock_get_response.assert_called_once_with(request)
+    assert response == mock_get_response.return_value
 
     assert request.META["REMOTE_USER"] == user_info.get(id_field)
 
