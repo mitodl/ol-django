@@ -6,6 +6,14 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.8.19'></a>
+## [2025.8.19] - 2025-08-19
+
+### Fixed
+
+- Improved username collision detection regex to be more precise and avoid false matches
+- Added proper error handling for username suffix extraction in `_find_available_username`
+
 <a id='changelog-2025.8.1'></a>
 ## [2025.8.1] - 2025-08-01
 
