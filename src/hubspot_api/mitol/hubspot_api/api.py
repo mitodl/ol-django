@@ -25,7 +25,6 @@ from hubspot.crm.properties.exceptions import ApiException as PropertiesApiExcep
 from urllib3 import Retry
 
 from mitol.common.utils.collections import replace_null_values
-
 from mitol.hubspot_api.models import HubspotObject
 
 log = logging.getLogger()
