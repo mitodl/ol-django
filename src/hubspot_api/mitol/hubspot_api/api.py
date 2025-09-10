@@ -21,12 +21,12 @@ from hubspot.crm.objects import (
     SimplePublicObject,
     SimplePublicObjectInput,
 )
-from hubspot.crm.properties import ApiException as PropertiesApiException
+from hubspot.crm.properties.exceptions import ApiException as PropertiesApiException
 from urllib3 import Retry
 
 from mitol.common.utils.collections import replace_null_values
 
-# from mitol.hubspot_api.models import HubspotObject
+from mitol.hubspot_api.models import HubspotObject
 
 log = logging.getLogger()
 
@@ -333,7 +333,7 @@ def associate_objects_request(
     Returns:
         SimplePublicObject: The Hubspot association object returned from the API
     """
-    return HubspotApi().crm.objects.associations_api.create(
+    return HubspotApi().crm.associations.v4.basic_api.create(
         from_type, from_id, to_type, to_id, assoc_type
     )
 
