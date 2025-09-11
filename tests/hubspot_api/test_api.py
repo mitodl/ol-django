@@ -667,13 +667,10 @@ def test_find_line_item(mocker, product_id, quantity, raise_error):
 def test_get_line_items_for_deal(mocker, mock_hubspot_api):
     """get_line_items_for_deal should make expected api calls and return expected results"""  # noqa: E501
     mock_lines = SimplePublicObjectFactory.create_batch(2)
-    mock_hubspot_api.return_value.crm.associations.v4.basic_api.get_page.return_value = (
-        mocker.Mock(
-            results=[
-                AssociatedId(id=line.id, type="deal_to_line_item")
-                for line in mock_lines
-            ]
-        )
+    mock_hubspot_api.return_value.crm.associations.v4.basic_api.get_page.return_value = mocker.Mock(
+        results=[
+            AssociatedId(id=line.id, type="deal_to_line_item") for line in mock_lines
+        ]
     )
     mock_hubspot_api.return_value.crm.line_items.basic_api.get_by_id.side_effect = (
         mock_lines[0],
