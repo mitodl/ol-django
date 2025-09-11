@@ -317,7 +317,7 @@ def upsert_object_request(
 
 
 def associate_objects_request(
-    from_type: str, from_id: str, to_type: str, to_id: str, assoc_type: str
+    from_type: str, from_id: str, to_type: str, to_id: str, assoc_type: str  # noqa: ARG001
 ) -> SimplePublicObject:
     """
     Make an association between two objects
@@ -663,17 +663,15 @@ def get_line_items_for_deal(hubspot_id: str) -> list[SimplePublicObject]:
 
     """
     client = HubspotApi()
-    line_items = []
     associations = client.crm.associations.v4.basic_api.get_page(
         object_type="deals",
         object_id=hubspot_id,
         to_object_type=HubspotObjectType.LINES.value,
     ).results
-    for association in associations:
-        line_items.append(
-            client.crm.line_items.basic_api.get_by_id(association.to_object_id)
-        )
-    return line_items
+    return [
+        client.crm.line_items.basic_api.get_by_id(association.to_object_id)
+        for association in associations
+    ]
 
 
 def find_line_item(

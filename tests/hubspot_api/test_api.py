@@ -676,16 +676,15 @@ def test_get_line_items_for_deal(mocker, mock_hubspot_api):
     mock_associations = [
         mocker.Mock(to_object_id=line.id, association_types=[]) for line in mock_lines
     ]
-    mock_hubspot_api.return_value.crm.associations.v4.basic_api.get_page.return_value = mocker.Mock(
-        results=mock_associations
-    )
+    mock_get_page = mock_hubspot_api.return_value.crm.associations.v4.basic_api.get_page
+    mock_get_page.return_value = mocker.Mock(results=mock_associations)
     mock_hubspot_api.return_value.crm.line_items.basic_api.get_by_id.side_effect = (
         mock_lines[0],
         mock_lines[1],
     )
     deal_id = "111123"
     results = api.get_line_items_for_deal(deal_id)
-    mock_hubspot_api.return_value.crm.associations.v4.basic_api.get_page.assert_called_once_with(
+    mock_get_page.assert_called_once_with(
         object_type="deals",
         object_id=deal_id,
         to_object_type=api.HubspotObjectType.LINES.value,
