@@ -21,7 +21,7 @@ from hubspot.crm.objects import (
     SimplePublicObject,
     SimplePublicObjectInput,
 )
-from hubspot.crm.properties import ApiException as PropertiesApiException
+from hubspot.crm.properties.exceptions import ApiException as PropertiesApiException
 from urllib3 import Retry
 
 from mitol.common.utils.collections import replace_null_values
@@ -317,7 +317,11 @@ def upsert_object_request(
 
 
 def associate_objects_request(
-    from_type: str, from_id: str, to_type: str, to_id: str, assoc_type: str
+    from_type: str,
+    from_id: str,
+    to_type: str,
+    to_id: str,
+    assoc_type: str,  # noqa: ARG001
 ) -> SimplePublicObject:
     """
     Make an association between two objects
@@ -332,8 +336,11 @@ def associate_objects_request(
     Returns:
         SimplePublicObject: The Hubspot association object returned from the API
     """
-    return HubspotApi().crm.objects.associations_api.create(
-        from_type, from_id, to_type, to_id, assoc_type
+    return HubspotApi().crm.associations.v4.basic_api.create_default(
+        from_object_type=from_type,
+        from_object_id=from_id,
+        to_object_type=to_type,
+        to_object_id=to_id,
     )
 
 
@@ -660,13 +667,15 @@ def get_line_items_for_deal(hubspot_id: str) -> list[SimplePublicObject]:
 
     """
     client = HubspotApi()
-    line_items = []
-    associations = client.crm.deals.associations_api.get_all(
-        hubspot_id, HubspotObjectType.LINES.value
+    associations = client.crm.associations.v4.basic_api.get_page(
+        object_type="deals",
+        object_id=hubspot_id,
+        to_object_type=HubspotObjectType.LINES.value,
     ).results
-    for association in associations:
-        line_items.append(client.crm.line_items.basic_api.get_by_id(association.id))  # noqa: PERF401
-    return line_items
+    return [
+        client.crm.line_items.basic_api.get_by_id(association.to_object_id)
+        for association in associations
+    ]
 
 
 def find_line_item(
