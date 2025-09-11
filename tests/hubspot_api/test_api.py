@@ -12,7 +12,6 @@ from django.contrib.contenttypes.models import ContentType
 from faker import Faker
 from hubspot.crm.objects import (
     ApiException,
-    AssociatedId,
     SimplePublicObject,
     SimplePublicObjectInput,
 )
@@ -431,14 +430,16 @@ def test_associate_objects_request(mock_hubspot_api):
     to_type = api.HubspotObjectType.CONTACTS.value
     to_id = 456
     assoc_type = api.HubspotAssociationType.DEAL_CONTACT.value
-    mock_create = mock_hubspot_api.return_value.crm.associations.v4.basic_api.create_default
+    mock_create = (
+        mock_hubspot_api.return_value.crm.associations.v4.basic_api.create_default
+    )
 
     api.associate_objects_request(from_type, from_id, to_type, to_id, assoc_type)
     mock_create.assert_called_once_with(
-        from_object_type=from_type, 
-        from_object_id=from_id, 
-        to_object_type=to_type, 
-        to_object_id=to_id
+        from_object_type=from_type,
+        from_object_id=from_id,
+        to_object_type=to_type,
+        to_object_id=to_id,
     )
 
 
@@ -673,11 +674,10 @@ def test_get_line_items_for_deal(mocker, mock_hubspot_api):
     """get_line_items_for_deal should make expected api calls and return expected results"""  # noqa: E501
     mock_lines = SimplePublicObjectFactory.create_batch(2)
     mock_associations = [
-        mocker.Mock(to_object_id=line.id, association_types=[])
-        for line in mock_lines
+        mocker.Mock(to_object_id=line.id, association_types=[]) for line in mock_lines
     ]
-    mock_hubspot_api.return_value.crm.associations.v4.basic_api.get_page.return_value = (
-        mocker.Mock(results=mock_associations)
+    mock_hubspot_api.return_value.crm.associations.v4.basic_api.get_page.return_value = mocker.Mock(
+        results=mock_associations
     )
     mock_hubspot_api.return_value.crm.line_items.basic_api.get_by_id.side_effect = (
         mock_lines[0],
