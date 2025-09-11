@@ -332,8 +332,11 @@ def associate_objects_request(
     Returns:
         SimplePublicObject: The Hubspot association object returned from the API
     """
-    return HubspotApi().crm.associations.v4.basic_api.create(
-        from_type, from_id, to_type, to_id, assoc_type
+    return HubspotApi().crm.associations.v4.basic_api.create_default(
+        from_object_type=from_type, 
+        from_object_id=from_id, 
+        to_object_type=to_type, 
+        to_object_id=to_id
     )
 
 
