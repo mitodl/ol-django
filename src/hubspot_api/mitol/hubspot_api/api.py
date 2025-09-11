@@ -317,7 +317,11 @@ def upsert_object_request(
 
 
 def associate_objects_request(
-    from_type: str, from_id: str, to_type: str, to_id: str, assoc_type: str  # noqa: ARG001
+    from_type: str,
+    from_id: str,
+    to_type: str,
+    to_id: str,
+    assoc_type: str,  # noqa: ARG001
 ) -> SimplePublicObject:
     """
     Make an association between two objects
