@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.9.16'></a>
+## [2025.9.16] - 2025-09-16
+
+### Changed
+
+- update dependency hubspot-api-client to v12
+
 <a id='changelog-2025.3.17'></a>
 ## [2025.3.17] - 2025-03-17
 
