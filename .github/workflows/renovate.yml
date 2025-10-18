@@ -18,7 +18,7 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y libxmlsec1-dev
 
     - name: Install uv
-      uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6
+      uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
 
     - name: Self-hosted Renovate
       uses: renovatebot/github-action@70ea19f1b0dc8a9cc7af1b4278f8d3fd9778b577 # v43.0.17
