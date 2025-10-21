@@ -260,8 +260,8 @@ def handle_create_api_error(  # noqa: C901, PLR0913
                 )
             elif retry_create:
                 return HubspotApi().crm.objects.basic_api.create(
-                    simple_public_object_input=body,
                     object_type=hubspot_type,
+                    simple_public_object_input_for_create=body,
                 )
     # This was some other kind of error so raise it
     raise error
@@ -298,7 +298,8 @@ def upsert_object_request(
     else:
         try:
             result = api.create(
-                simple_public_object_input=body, object_type=hubspot_type
+                object_type=hubspot_type,
+                simple_public_object_input_for_create=body,
             )
         except ApiException as err:
             result = handle_create_api_error(
