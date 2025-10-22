@@ -22,18 +22,9 @@ def get_redirect_url(request):
         str: Redirect URL
     """
     log.debug("views.get_redirect_url: Request GET is: %s", request.GET.get("next"))
-    log.debug(
-        "views.get_redirect_url: Request cookie is: %s", request.COOKIES.get("next")
-    )
 
-    next_url = request.GET.get("next") or request.COOKIES.get("next")
+    next_url = request.GET.get("next")
     log.debug("views.get_redirect_url: Redirect URL (before valid check): %s", next_url)
-
-    if request.COOKIES.get("next"):
-        # Clear the cookie after using it
-        log.debug("views.get_redirect_url: Popping the next cookie")
-
-        request.COOKIES.pop("next", None)
 
     return (
         next_url

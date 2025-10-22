@@ -35,22 +35,7 @@ class ApisixUserMiddleware(RemoteUserMiddleware):
 
         super().process_request(request)
 
-        response = self.get_response(request)
-
-        next_param = request.GET.get("next", None) if request.GET else None
-        if next_param:
-            log.debug(
-                "ApisixUserMiddleware.process_request: Setting next cookie to %s",
-                next_param,
-            )
-            response.set_cookie("next", next_param, max_age=30, secure=False)
-
-        log.debug(
-            "ApisixUserMiddleware.process_request: Next cookie is %s",
-            response.cookies.get("next"),
-        )
-
-        return response
+        return self.get_response(request)
 
 
 class PersistentApisixUserMiddleware(
