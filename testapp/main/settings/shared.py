@@ -20,6 +20,7 @@ import_settings_modules(
     "mitol.common.settings.base",
     "mitol.common.settings.webpack",
     "mitol.mail.settings.email",
+    "mitol.authentication.settings.auth",
     "mitol.authentication.settings.djoser_settings",
     "mitol.payment_gateway.settings",
     "mitol.google_sheets.settings.google_sheets",

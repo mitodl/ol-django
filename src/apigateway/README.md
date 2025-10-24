@@ -82,7 +82,7 @@ Your application configuration will need some settings added to it. Reasonable d
 These settings are needed for your environment:
 
 - `MITOL_APIGATEWAY_LOGOUT_URL` - the URL that APISIX uses for logout. This needs to be set in your APISIX configuration; the corresponding setting is `logout_path`. Defaults to `/logout`.
-- `MITOL_APIGATEWAY_DEFAULT_POST_LOGOUT_DEST` - the URL that the logout view should send users when they log out by default. (You can programmatically set a destination but you should also have a default.) Defaults to `/app`.
+- `MITOL_APIGATEWAY_DEFAULT_POST_LOGOUT_URL` - the URL that the logout view should send users when they log out by default. (You can programmatically set a destination but you should also have a default.) Defaults to `/app`.
 
 These settings are likely to need adjustment for your environment:
 
