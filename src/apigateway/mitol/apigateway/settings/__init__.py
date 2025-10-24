@@ -57,12 +57,7 @@ MITOL_APIGATEWAY_USER_LOOKUP_FIELD = "global_id"
 
 # Set to the URL that APISIX uses for logout.
 MITOL_APIGATEWAY_LOGOUT_URL = "/logout"
+MITOL_APIGATEWAY_HEADER_NAME = "HTTP_X_USERINFO"
 
-# Set to the default URL the user should be sent to when logging out.
-# If there's no redirect URL specified otherwise, the user gets sent here.
-MITOL_APIGATEWAY_DEFAULT_POST_LOGOUT_DEST = "/app"
-
-# Set to the list of hosts the app is allowed to redirect to.
-MITOL_APIGATEWAY_ALLOWED_REDIRECT_HOSTS = [
-    "localhost",
-]
+MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_TTL = 60
+MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_NAME = "logout-next"
