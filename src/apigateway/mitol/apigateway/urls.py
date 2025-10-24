@@ -1,13 +1,9 @@
-"""URL routes for the apigateway app. Mostly for testing."""
+"""URL routes for the apigateway app."""
 
-from django.urls import path
+from django.urls import re_path
 
 from mitol.apigateway.views import ApiGatewayLogoutView
 
 urlpatterns = [
-    path(
-        "applogout/",
-        ApiGatewayLogoutView.as_view(),
-        name="logout",
-    ),
+    re_path(r"^logout", ApiGatewayLogoutView.as_view(), name="logout"),
 ]
