@@ -39,8 +39,7 @@ class UserAdapter(SCIMUser):
 
     ATTR_MAP = {
         ("active", None, None): "is_active",
-        ("name", "givenName", None): "first_name",
-        ("name", "familyName", None): "last_name",
+        ("name", None, None): "name",
         ("userName", None, None): "username",
     }
 
@@ -77,7 +76,7 @@ class UserAdapter(SCIMUser):
         """
         Return the displayName of the user per the SCIM spec.
         """
-        return f"{self.obj.first_name} {self.obj.last_name}"
+        return f"{self.obj.name}"
 
     @property
     def meta(self):
@@ -101,10 +100,7 @@ class UserAdapter(SCIMUser):
             "externalId": self.obj.scim_external_id,
             "schemas": [SchemaURI.USER],
             "userName": self.obj.username,
-            "name": {
-                "givenName": self.obj.first_name,
-                "familyName": self.obj.last_name,
-            },
+            "name": self.obj.name,
             "displayName": self.display_name,
             "emails": self.emails,
             "active": self.obj.is_active,
@@ -128,8 +124,7 @@ class UserAdapter(SCIMUser):
 
         self.obj.is_active = d.get("active", True)
         self.obj.username = d.get("userName")
-        self.obj.first_name = d.get("name", {}).get("givenName", "")
-        self.obj.last_name = d.get("name", {}).get("familyName", "")
+        self.obj.name = d.get("name")
         self.obj.scim_username = d.get("userName")
         self.obj.scim_external_id = d.get("externalId")
         self.obj.global_id = self.obj.scim_external_id or ""

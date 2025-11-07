@@ -120,8 +120,7 @@ class UserFilterQuery(FilterQuery):
         ("userName", None): ("username",),
         ("emails", "value"): ("email",),
         ("active", None): ("is_active",),
-        ("name", "givenName"): ("first_name",),
-        ("name", "familyName"): ("last_name",),
+        ("name", None): ("name",),
     }
 
     related_selects = []
