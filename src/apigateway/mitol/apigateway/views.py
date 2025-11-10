@@ -55,7 +55,7 @@ class ApiGatewayLogoutView(AuthRedirectView):
             response.set_cookie(
                 settings.MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_NAME,
                 value=next_url,
-                max_age=settings.MITOL_APIGATEWAY_LOGOUT_NEXT_URL_TTL,
+                max_age=settings.MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_TTL,
             )
 
         return response

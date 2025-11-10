@@ -81,7 +81,7 @@ def _get_redirect_url(record: dict[str, str], keys: list[str]) -> str | None:
     for key in keys:
         next_url = record.get(key)
         if next_url and url_has_allowed_host_and_scheme(
-            next_url, allowed_hosts=settings.ALLOWED_REDIRECT_HOSTS
+            next_url, allowed_hosts=settings.MITOL_ALLOWED_REDIRECT_HOSTS
         ):
             return next_url
 
