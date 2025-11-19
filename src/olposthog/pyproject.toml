@@ -6,7 +6,7 @@ dependencies = [
     "django-stubs>=1.13.1",
     "django>=3.0",
     "mitol-django-common",
-    "posthog>=6.3.1,<7",
+    "posthog>=7.0.1,<8",
 ]
 readme = "README.md"
 license = "BSD-3-Clause"
