@@ -67,6 +67,7 @@ dev-dependencies = [
     "pytest-responses>=0.5.1",
     "more-itertools>=10.6.0",
     "deepdiff>=8.5.0",
+    "lxml<=5.3.2",
 ]
 
 [tool.hatch.metadata]
