@@ -56,11 +56,13 @@ def test_usernameify(mocker, full_name, email, expected_username):
 
 
 def test_usernameify_fail():
-    """Usernameify should raise an exception if the full name and email both
+    """Usernameify should generate a random username if the full name and email both
     fail to produce a username
     """
-    with pytest.raises(ValueError):  # noqa: PT011
-        assert usernameify("!!!", email="???@example.com")
+    result = usernameify("!!!", email="???@example.com")
+    assert result is not None
+    assert len(result) > 0
+    assert result[0].isalpha()
 
 
 @pytest.mark.parametrize(
