@@ -850,16 +850,16 @@ wheels = [
 
 [[package]]
 name = "edx-opaque-keys"
-version = "2.13.0"
+version = "2.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pymongo" },
     { name = "stevedore" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/cb/83/f6e41c1e570ad4bc4f6673aabc80bf372c09794f9e105fa281810036c7f7/edx_opaque_keys-2.13.0.tar.gz", hash = "sha256:2a1f6bd86102c922c155f539b94cecbc6b0115b3613eb29b0db31dbbe6b442ec", size = 66489, upload-time = "2025-04-22T17:13:41.46Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4a/80/0136dba335542f65e02bb2b70930ff19e0e39c8f1cdf1ccfb684c17d83b2/edx_opaque_keys-2.12.0.tar.gz", hash = "sha256:9b929651225dbbd89925947999e96999afe12a7b3ccc0fb7bec7c9b95b21b167", size = 66487, upload-time = "2025-03-21T20:07:10.768Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/d7/8345936b33a20f8188aaabd7e2dda72e01b6651b5239b266532660a8d638/edx_opaque_keys-2.13.0-py3-none-any.whl", hash = "sha256:7801a763d865358dc7ff9064240ddf287baf4a120aef58b2a989a642935d1185", size = 75949, upload-time = "2025-04-22T17:13:40.492Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/16/72839151a4452df9b4379974ff95dd65497febe9ec0b42521c32fe6ecb8b/edx_opaque_keys-2.12.0-py3-none-any.whl", hash = "sha256:c40231ed16275d6d39cf1c4ecdac8bd48403c7b75a17c0bbf743d866b3ff9ad1", size = 75968, upload-time = "2025-03-21T20:07:09.624Z" },
 ]
 
 [[package]]
@@ -1428,7 +1428,7 @@ requires-dist = [
     { name = "channels", specifier = ">=4.2.0" },
     { name = "django", specifier = ">=3.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
-    { name = "edx-opaque-keys", specifier = "==2.13.0" },
+    { name = "edx-opaque-keys", specifier = "==2.12.0" },
 ]
 
 [[package]]
@@ -1732,7 +1732,7 @@ dependencies = [
 requires-dist = [
     { name = "django", specifier = ">=3.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
-    { name = "edx-opaque-keys", specifier = "==2.13.0" },
+    { name = "edx-opaque-keys", specifier = "==2.12.0" },
 ]
 
 [[package]]
@@ -1820,7 +1820,7 @@ dependencies = [
 requires-dist = [
     { name = "django", specifier = ">=3.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
-    { name = "edx-opaque-keys", specifier = "==2.13.0" },
+    { name = "edx-opaque-keys", specifier = "==2.12.0" },
 ]
 
 [[package]]
