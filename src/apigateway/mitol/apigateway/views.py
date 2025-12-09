@@ -27,14 +27,12 @@ class ApiGatewayLogoutView(AuthRedirectView):
 
     def get_redirect_url(self, request: HttpRequest) -> tuple[str, bool]:
         """Get the redirect url"""
-        next_url, prune_cookies = super().get_redirect_url(request)
-
         if has_gateway_auth(request):
             # Still logged in via Apisix/Keycloak, so log out there
             # and use cookies to preserve the next url
             return settings.MITOL_APIGATEWAY_LOGOUT_URL, False
-
-        return next_url, prune_cookies
+        else:
+            return super().get_redirect_url(request)
 
     def get(
         self,
