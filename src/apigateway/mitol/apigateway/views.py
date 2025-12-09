@@ -1,51 +1,13 @@
 """Custom logout view for the API Gateway."""
 
-import logging
-
 from django.conf import settings
-from django.contrib.auth import logout
-from django.shortcuts import redirect
-from django.utils.http import url_has_allowed_host_and_scheme
-from django.views import View
+from django.http.request import HttpRequest
 
-log = logging.getLogger(__name__)
+from mitol.apigateway.utils import has_gateway_auth
+from mitol.authentication.views.auth import AuthRedirectView
 
 
-def get_redirect_url(request):
-    """
-    Get the redirect URL from the request.
-
-    Args:
-        request: Django request object
-
-    Returns:
-        str: Redirect URL
-    """
-    log.debug("views.get_redirect_url: Request GET is: %s", request.GET.get("next"))
-    log.debug(
-        "views.get_redirect_url: Request cookie is: %s", request.COOKIES.get("next")
-    )
-
-    next_url = request.GET.get("next") or request.COOKIES.get("next")
-    log.debug("views.get_redirect_url: Redirect URL (before valid check): %s", next_url)
-
-    if request.COOKIES.get("next"):
-        # Clear the cookie after using it
-        log.debug("views.get_redirect_url: Popping the next cookie")
-
-        request.COOKIES.pop("next", None)
-
-    return (
-        next_url
-        if next_url
-        and url_has_allowed_host_and_scheme(
-            next_url, allowed_hosts=settings.MITOL_APIGATEWAY_ALLOWED_REDIRECT_HOSTS
-        )
-        else settings.MITOL_APIGATEWAY_DEFAULT_POST_LOGOUT_DEST
-    )
-
-
-class ApiGatewayLogoutView(View):
+class ApiGatewayLogoutView(AuthRedirectView):
     """
     Log the user out.
 
@@ -61,27 +23,37 @@ class ApiGatewayLogoutView(View):
     Keycloak will throw an error.)
     """
 
+    next_url_cookie_names = [settings.MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_NAME]
+
+    def get_redirect_url(self, request: HttpRequest) -> tuple[str, bool]:
+        """Get the redirect url"""
+        if has_gateway_auth(request):
+            # Still logged in via Apisix/Keycloak, so log out there
+            # and use cookies to preserve the next url
+            return settings.MITOL_APIGATEWAY_LOGOUT_URL, False
+        else:
+            return super().get_redirect_url(request)
+
     def get(
         self,
         request,
-        *args,  # noqa: ARG002
-        **kwargs,  # noqa: ARG002
+        *args,
+        **kwargs,
     ):
         """
-        GET endpoint reached after logging a user out from Keycloak
+        GET endpoint reached to logout the user
         """
-        user = getattr(request, "user", None)
-        user_redirect_url = get_redirect_url(request)
-        log.debug(
-            "views.ApiGatewayLogoutView.get: User redirect URL: %s", user_redirect_url
-        )
-        if user and user.is_authenticated:
-            logout(request)
+        response = super().get(request, *args, **kwargs)
 
-        if request.META.get(settings.MITOL_APIGATEWAY_USERINFO_HEADER_NAME):
-            # Still logged in via Apisix/Keycloak, so log out there as well
-            log.debug("views.ApiGatewayLogoutView.get: Send to APISIX logout URL")
-            return redirect(settings.MITOL_APIGATEWAY_LOGOUT_URL)
-        else:
-            log.debug("views.ApiGatewayLogoutView.get: Send to %s", user_redirect_url)
-            return redirect(user_redirect_url)
+        if has_gateway_auth(request):
+            # we can only preserve the next url via cookies because APISIX
+            # won't accept a post_logout_redirect_url
+            next_url, _ = super().get_redirect_url(request)
+
+            response.set_cookie(
+                settings.MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_NAME,
+                value=next_url,
+                max_age=settings.MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_TTL,
+            )
+
+        return response
