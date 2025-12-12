@@ -1,4 +1,4 @@
-from mitol.common.views import PrefetchQuerySetSerializerMixin
+from mitol.common.mixins import PrefetchQuerySetSerializerMixin
 from rest_framework import viewsets
 
 from libraries.models import Library
