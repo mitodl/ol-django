@@ -27,6 +27,7 @@ urlpatterns = [
     path("api/", include("mitol.transcoding.urls")),
     path("", include("mitol.scim.urls")),
     path("", include("mitol.apigateway.urls")),
+    path("api/", include("libraries.urls")),
 ]
 
 if sys.version_info < (3, 13):

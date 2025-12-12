@@ -28,13 +28,8 @@ dependencies = [
 readme = "README.md"
 requires-python = ">= 3.10"
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.uv]
-managed = true
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "GitPython",
     "anys>=0.3.1",
     "bumpver",
@@ -69,6 +64,13 @@ dev-dependencies = [
     "deepdiff>=8.5.0",
     "lxml<=5.3.2",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+managed = true
 
 [tool.hatch.metadata]
 allow-direct-references = true
