@@ -5,7 +5,7 @@ USERNAME_SEPARATOR = "-"
 USERNAME_SEPARATOR_REPLACE_CHARS = "\\s_"
 # Characters that should be removed entirely from the full name to create the username
 USERNAME_INVALID_CHAR_PATTERN = (
-    rf"[^\w{USERNAME_SEPARATOR_REPLACE_CHARS}{USERNAME_SEPARATOR}]|[\d]"
+    rf"[^\w{USERNAME_SEPARATOR_REPLACE_CHARS}{USERNAME_SEPARATOR}]"
 )
 
 USERNAME_TURKISH_I_CHARS = r"[ıİ]"
