@@ -32,7 +32,7 @@ def fake_user():
         ["Àccèntèd Ñame, Ësq.", None, "àccèntèd-ñame-ësq"],  # noqa: PT007
         ["-Dashy_St._Underscores-", None, "dashy-st-underscores"],  # noqa: PT007
         ["Repeated-----Chars___Jr.", None, "repeated-chars-jr"],  # noqa: PT007
-        ["Numbers123 !$!@ McStrange!!##^", None, "numbers-mcstrange"],  # noqa: PT007
+        ["Numbers123 !$!@ McStrange!!##^", None, "numbers123-mcstrange"],  # noqa: PT007
         ["Кирил Френков", None, "кирил-френков"],  # noqa: PT007
         ["年號", None, "年號"],  # noqa: PT007
         ["abcdefghijklmnopqrstuvwxyz", None, "abcdefghijklmnopqrst"],  # noqa: PT007
