@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.12.18'></a>
+## [2025.12.18] - 2025-12-18
+
+### Fixed
+
+- Hubspot Basic API create paramter name
+
 <a id='changelog-2025.9.16'></a>
 ## [2025.9.16] - 2025-09-16
 
