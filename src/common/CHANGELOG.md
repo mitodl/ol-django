@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2025.12.23.2'></a>
+## [2025.12.23.2] - 2025-12-23
+
+### Fixed
+
+- Remove check for numeric usernames & generate random username as fallback
+
 <a id='changelog-2025.8.19'></a>
 ## [2025.8.19] - 2025-08-19
 

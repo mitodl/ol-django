@@ -1,7 +1,7 @@
 [project]
 name = "mitol-django-common"
 description = "MIT Open Learning django app extensions for common utilities"
-version = "2025.8.19"
+version = "2025.12.23.2"
 dependencies = [
   "django-redis~=6.0",
   "django-stubs>=1.13.1",
@@ -23,7 +23,7 @@ celery = [
 ]
 
 [tool.bumpver]
-current_version = "2025.8.19"
+current_version = "2025.12.23.2"
 version_pattern = "YYYY.MM.DD[.INC0]"
 
 [tool.bumpver.file_patterns]
