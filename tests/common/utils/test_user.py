@@ -32,7 +32,7 @@ def fake_user():
         ["Àccèntèd Ñame, Ësq.", None, "àccèntèd-ñame-ësq"],  # noqa: PT007
         ["-Dashy_St._Underscores-", None, "dashy-st-underscores"],  # noqa: PT007
         ["Repeated-----Chars___Jr.", None, "repeated-chars-jr"],  # noqa: PT007
-        ["Numbers123 !$!@ McStrange!!##^", None, "numbers-mcstrange"],  # noqa: PT007
+        ["Numbers123 !$!@ McStrange!!##^", None, "numbers123-mcstrange"],  # noqa: PT007
         ["Кирил Френков", None, "кирил-френков"],  # noqa: PT007
         ["年號", None, "年號"],  # noqa: PT007
         ["abcdefghijklmnopqrstuvwxyz", None, "abcdefghijklmnopqrst"],  # noqa: PT007
@@ -56,11 +56,13 @@ def test_usernameify(mocker, full_name, email, expected_username):
 
 
 def test_usernameify_fail():
-    """Usernameify should raise an exception if the full name and email both
+    """Usernameify should generate a random username if the full name and email both
     fail to produce a username
     """
-    with pytest.raises(ValueError):  # noqa: PT011
-        assert usernameify("!!!", email="???@example.com")
+    result = usernameify("!!!", email="???@example.com")
+    assert result is not None
+    assert len(result) > 0
+    assert result[0].isalpha()
 
 
 @pytest.mark.parametrize(

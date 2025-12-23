@@ -2,6 +2,8 @@
 
 import logging
 import re
+import secrets
+import string
 
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
@@ -149,7 +151,8 @@ def _find_available_username(  # noqa: RET503
 
 def usernameify(full_name, email="", max_length=USERNAME_MAX_LEN):
     """Public API for username generation Generate a username based on a
-    full name, or an email address as a fallback.
+    full name, or an email address as a fallback. If both fail, generates
+    a random username.
 
     Args:
         full_name (str): A full name (i.e.: User.name)
@@ -159,9 +162,6 @@ def usernameify(full_name, email="", max_length=USERNAME_MAX_LEN):
             (defaults to USERNAME_MAX_LEN)
     Returns:
         str: A generated username
-    Raises:
-        ValueError: Raised if generated username was blank after trying both
-            the full name and email
     """
     username = _reformat_for_username(full_name)
 
@@ -174,12 +174,40 @@ def usernameify(full_name, email="", max_length=USERNAME_MAX_LEN):
         )
         username = _reformat_for_username(email.split("@")[0])
     if not username:
-        raise ValueError(
-            "Username could not be generated (full_name: '{}', email: '{}')".format(  # noqa: EM103, UP032
-                full_name, email
-            )
+        log.warning(
+            "Username could not be generated from full name or email "
+            "(full_name: '%s', email: '%s'). Generating random username...",
+            full_name,
+            email,
         )
+        username = _generate_random_username(max_length)
     return username[0:max_length]
+
+
+def _generate_random_username(max_length=USERNAME_MAX_LEN):
+    """Generate a random username with letters and numbers.
+
+    Args:
+        max_length (int): The maximum allowed username length
+            (defaults to USERNAME_MAX_LEN)
+
+    Returns:
+        str: A randomly generated username starting with a letter
+    """
+    min_length = min(8, max_length)
+    length_range = max_length - min_length + 1
+    random_length = (
+        min_length
+        if length_range <= 1
+        else secrets.randbelow(length_range) + min_length
+    )
+
+    first_char = secrets.choice(string.ascii_lowercase)
+    remaining_chars = "".join(
+        secrets.choice(string.ascii_lowercase + string.digits)
+        for _ in range(random_length - 1)
+    )
+    return first_char + remaining_chars
 
 
 def create_user_with_generated_username(  # noqa: PLR0913
