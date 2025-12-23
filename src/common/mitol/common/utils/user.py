@@ -196,7 +196,11 @@ def _generate_random_username(max_length=USERNAME_MAX_LEN):
     """
     min_length = min(8, max_length)
     length_range = max_length - min_length + 1
-    random_length = min_length if length_range <= 1 else secrets.randbelow(length_range) + min_length
+    random_length = (
+        min_length
+        if length_range <= 1
+        else secrets.randbelow(length_range) + min_length
+    )
 
     first_char = secrets.choice(string.ascii_lowercase)
     remaining_chars = "".join(
