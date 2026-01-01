@@ -7,7 +7,7 @@ faker = Faker()
 
 def test_scim_filter_parser():
     """Runer the parser tests"""
-    success, results = Filters.run_tests(
+    success, _results = Filters.run_tests(
         """\
         userName eq "bjensen"
 
