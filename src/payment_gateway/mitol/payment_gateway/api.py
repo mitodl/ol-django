@@ -559,7 +559,7 @@ class CyberSourcePaymentGateway(
         transaction_id = refund.transaction_id
 
         try:
-            return_data, status, body = api_instance.refund_payment(
+            _return_data, _status, body = api_instance.refund_payment(
                 refund_payload, transaction_id
             )
             response_body = json.loads(body)
@@ -803,7 +803,7 @@ class CyberSourcePaymentGateway(
             query=query_string,
         )
 
-        response, status, body = api.create_search(
+        response, status, _body = api.create_search(
             json.dumps(strip_nones(query_request.__dict__))
         )
 
@@ -845,7 +845,7 @@ class CyberSourcePaymentGateway(
 
         api = TransactionDetailsApi(self.get_client_configuration())
 
-        response, status, body = api.get_transaction(transaction)
+        response, status, _body = api.get_transaction(transaction)
 
         if status > 299:  # noqa: PLR2004
             raise Exception(  # noqa: TRY002, TRY003
@@ -944,7 +944,7 @@ class CyberSourcePaymentGateway(
         for order_id in results.items():
             search_id = results[order_id]
 
-            (orig_response, formatted_response) = self.get_transaction_details(
+            (_orig_response, formatted_response) = self.get_transaction_details(
                 search_id
             )
 
