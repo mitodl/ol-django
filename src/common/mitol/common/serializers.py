@@ -22,33 +22,8 @@ class QuerySetSerializer(serializers.ModelSerializer):
     """
 
     queryset: QuerySet | None = None
-    _init_queryset: QuerySet | Callable[[HttpRequest], QuerySet] | None = None
 
-    def __init__(
-        self,
-        *args,
-        queryset: QuerySet | Callable[[HttpRequest], QuerySet] | None = None,
-        **kwargs,
-    ):
-        self._init_queryset = queryset
-
-        if queryset is not None and not (isinstance(queryset, Callable | QuerySet)):
-            msg = (
-                "Expected `queryset` to be a Callable or QuerySet, got: "
-                f"{type(queryset)}"
-            )
-            raise TypeError(msg)
-
-        super().__init__(*args, **kwargs)
-
-    def get_base_queryset(self, request: HttpRequest) -> QuerySet:
-        # critical to compare against None to avoid an evaluation
-        if self._init_queryset is not None:
-            if isinstance(self._init_queryset, Callable):
-                return self._init_queryset(request)
-            else:
-                return self._init_queryset
-
+    def get_base_queryset(self, request: HttpRequest) -> QuerySet:  # noqa: ARG002
         # critical to compare against None to avoid an evaluation
         return (
             self.queryset
@@ -57,6 +32,32 @@ class QuerySetSerializer(serializers.ModelSerializer):
         )
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
+        """
+        Get the queryset for this serializer
+
+        Override this method to customize the queryset used for fetching models
+        to be serialized.
+
+        It is *highly* recommended that you call `super().get_queryset(request)` and
+        extend the return value.
+
+        If you need to customize the queryset used for a nested serializer field, define
+        a `get_{field_name}_queryset` with the following signature:
+
+        `
+        def get_books_queryset(
+            self,
+            queryset: QuerySet,
+            request: HttpRequest
+        ) -> QuerySet:
+            ...
+        `
+
+        It is *highly* recommended that you extend the queryset passed in so you get the
+        prefetches defined on the nested serializer too. This function is mainly used
+        for things like altering the sorting.
+
+        """
         return self.get_base_queryset(request)
 
     def get_prefetch_for_field(
@@ -66,9 +67,19 @@ class QuerySetSerializer(serializers.ModelSerializer):
         serializer: "QuerySetSerializer",
         request: HttpRequest,
     ) -> Prefetch:
+        queryset = serializer.get_queryset_tree(request)
+
+        get_serializer_queryset_func = getattr(self, f"get_{name}_queryset", None)
+
+        if get_serializer_queryset_func is not None and isinstance(
+            get_serializer_queryset_func,
+            Callable,
+        ):
+            queryset = get_serializer_queryset_func(queryset, request)
+
         return Prefetch(
             field.source,
-            queryset=serializer.get_queryset_tree(request),
+            queryset=queryset,
             to_attr=name if name != field.source else None,
         )
 
