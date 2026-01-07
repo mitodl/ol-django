@@ -31,7 +31,7 @@ class QuerySetSerializer(serializers.ModelSerializer):
             else self.Meta.model.objects.all()
         )
 
-    def get_queryset(self, request: HttpRequest) -> QuerySet:
+    def get_queryset(self, queryset: QuerySet, request: HttpRequest) -> QuerySet:
         """
         Get the queryset for this serializer
 
@@ -58,7 +58,7 @@ class QuerySetSerializer(serializers.ModelSerializer):
         for things like altering the sorting.
 
         """
-        return self.get_base_queryset(request)
+        return self.get_nested_prefetches(queryset, request)
 
     def get_prefetch_for_field(
         self,
@@ -67,7 +67,7 @@ class QuerySetSerializer(serializers.ModelSerializer):
         serializer: "QuerySetSerializer",
         request: HttpRequest,
     ) -> Prefetch:
-        queryset = serializer.get_queryset_tree(request)
+        queryset = serializer.get_queryset_tree(None, request)
 
         get_serializer_queryset_func = getattr(self, f"get_{name}_queryset", None)
 
@@ -83,10 +83,10 @@ class QuerySetSerializer(serializers.ModelSerializer):
             to_attr=name if name != field.source else None,
         )
 
-    def get_queryset_tree(self, request: HttpRequest) -> QuerySet:
-        """Get the queryset required for the serializer"""
-        queryset = self.get_queryset(request)
-
+    def get_nested_prefetches(
+        self, queryset: QuerySet, request: HttpRequest
+    ) -> QuerySet:
+        """Get prefetches for nested serializers"""
         for name, field in self.fields.items():
             serializer = field
 
@@ -98,4 +98,8 @@ class QuerySetSerializer(serializers.ModelSerializer):
                     self.get_prefetch_for_field(name, field, serializer, request)
                 )
 
-        return queryset
+    def get_queryset_tree(self, queryset: QuerySet, request: HttpRequest) -> QuerySet:
+        """Get the queryset required for the serializer"""
+        queryset = queryset if queryset is not None else self.get_base_queryset(request)
+
+        return self.get_queryset(queryset, request)

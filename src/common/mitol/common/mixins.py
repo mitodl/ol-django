@@ -28,6 +28,6 @@ class PrefetchQuerySetSerializerMixin:
             return super().get_queryset()
 
         # `self.queryset` defaults to None
-        serializer = serializer_class(queryset=self.queryset)
+        serializer = serializer_class()
 
-        return serializer.get_queryset_tree(self.request)
+        return serializer.get_queryset_tree(self.queryset, self.request)
