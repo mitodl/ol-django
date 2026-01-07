@@ -38,7 +38,7 @@ class QuerySetSerializer(serializers.ModelSerializer):
         Override this method to customize the queryset used for fetching models
         to be serialized.
 
-        It is *highly* recommended that you call `super().get_queryset(request)` and
+        It is *required* that you call `super().get_queryset(queryset, request)` and
         extend the return value.
 
         If you need to customize the queryset used for a nested serializer field, define
@@ -53,9 +53,8 @@ class QuerySetSerializer(serializers.ModelSerializer):
             ...
         `
 
-        It is *highly* recommended that you extend the queryset passed in so you get the
-        prefetches defined on the nested serializer too. This function is mainly used
-        for things like altering the sorting.
+        It is *required* that you extend the queryset passed in so you get the
+        prefetches defined on the nested serializer too.
 
         """
         return self.get_nested_prefetches(queryset, request)
