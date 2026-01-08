@@ -23,7 +23,7 @@ class QuerySetSerializer(serializers.ModelSerializer):
 
     queryset: QuerySet | None = None
 
-    def get_base_queryset(self, request: HttpRequest) -> QuerySet:  # noqa: ARG002
+    def get_base_queryset(self) -> QuerySet:
         # critical to compare against None to avoid an evaluation
         return (
             self.queryset
@@ -66,7 +66,7 @@ class QuerySetSerializer(serializers.ModelSerializer):
         serializer: "QuerySetSerializer",
         request: HttpRequest,
     ) -> Prefetch:
-        queryset = serializer.get_queryset_tree(None, request)
+        queryset = serializer.get_queryset_tree(serializer.get_base_queryset(), request)
 
         get_serializer_queryset_func = getattr(self, f"get_{name}_queryset", None)
 
@@ -99,6 +99,6 @@ class QuerySetSerializer(serializers.ModelSerializer):
 
     def get_queryset_tree(self, queryset: QuerySet, request: HttpRequest) -> QuerySet:
         """Get the queryset required for the serializer"""
-        queryset = queryset if queryset is not None else self.get_base_queryset(request)
+        queryset = queryset if queryset is not None else self.get_base_queryset()
 
         return self.get_queryset(queryset, request)
