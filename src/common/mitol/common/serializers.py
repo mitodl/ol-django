@@ -97,6 +97,8 @@ class QuerySetSerializer(serializers.ModelSerializer):
                     self.get_prefetch_for_field(name, field, serializer, request)
                 )
 
+        return queryset
+
     def get_queryset_tree(self, queryset: QuerySet, request: HttpRequest) -> QuerySet:
         """Get the queryset required for the serializer"""
         queryset = queryset if queryset is not None else self.get_base_queryset()
