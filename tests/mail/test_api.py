@@ -21,7 +21,7 @@ User = get_user_model()
 
 @pytest.fixture
 def email_settings(settings):
-    """Default settings for email tests"""  # noqa: D401
+    """Default settings for email tests"""
     settings.MITOL_MAIL_RECIPIENT_OVERRIDE = None
 
 
