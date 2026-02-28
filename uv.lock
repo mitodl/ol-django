@@ -864,13 +864,17 @@ wheels = [
 
 [[package]]
 name = "edx-opaque-keys"
-version = "2.2.2"
+version = "3.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pymongo" },
     { name = "stevedore" },
+    { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8b/25/880f4bcb2bb4bacad1347d66720f9d35adc670acf158da7539959e3e9d8b/edx-opaque-keys-2.2.2.tar.gz", hash = "sha256:2510c39c947671c4a347ef05b077395ea504983bbc2a7e4f5ba1713c425864cb", size = 62316, upload-time = "2021-06-29T14:18:20.682Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/c5/d021457791640a9dd4284a8fe6b3e8b54ca130a9079c64f72b61df1d73fc/edx_opaque_keys-3.1.0.tar.gz", hash = "sha256:23f87d3bec2f5e0e27a443cea86e9266b2b4f2631136f23b3281b4af92f25336", size = 68186, upload-time = "2026-02-24T17:58:29.059Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/04/21/bac47541081f2f33b19b071d95482350809a0bed08450931e4cdd4281767/edx_opaque_keys-3.1.0-py3-none-any.whl", hash = "sha256:4779f2f9e188078252471b9c151b345656d34939a281d310e56a7d7a363fe69f", size = 77657, upload-time = "2026-02-24T17:58:28.157Z" },
+]
 
 [[package]]
 name = "exceptiongroup"
@@ -1438,7 +1442,7 @@ requires-dist = [
     { name = "channels", specifier = ">=4.2.0" },
     { name = "django", specifier = ">=3.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
-    { name = "edx-opaque-keys", specifier = "==2.2.2" },
+    { name = "edx-opaque-keys", specifier = "==3.1.0" },
 ]
 
 [[package]]
@@ -1742,7 +1746,7 @@ dependencies = [
 requires-dist = [
     { name = "django", specifier = ">=3.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
-    { name = "edx-opaque-keys", specifier = "==2.2.2" },
+    { name = "edx-opaque-keys", specifier = "==3.1.0" },
 ]
 
 [[package]]
@@ -1830,7 +1834,7 @@ dependencies = [
 requires-dist = [
     { name = "django", specifier = ">=3.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
-    { name = "edx-opaque-keys", specifier = "==2.2.2" },
+    { name = "edx-opaque-keys", specifier = "==3.1.0" },
 ]
 
 [[package]]
