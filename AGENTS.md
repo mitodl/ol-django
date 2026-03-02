@@ -14,17 +14,17 @@ uv sync
 uv run pytest
 
 # Run a specific test file
-uv run pytest tests/mitol/<appname>/test_something.py
+uv run pytest tests/<appname>/test_something.py
 
 # Run a single test
-uv run pytest tests/mitol/<appname>/test_something.py::test_function_name
+uv run pytest tests/<appname>/test_something.py::test_function_name
 
 # Lint and format
 uv run ruff check --fix .
 uv run ruff format .
 
 # Django management (use testapp)
-uv run tests/manage.py <command>
+uv run testapp/manage.py <command>
 
 # Create a changelog entry (required before every PR)
 uv run scripts/changelog.py create --app <appname>
@@ -35,11 +35,11 @@ uv run scripts/changelog.py create --app <appname>
 ```
 src/<appname>/          # Each reusable app's package root
   mitol/<appname>/      # Code lives under implicit namespace `mitol`
-    apps.py             # AppConfig: registers as "<name>" in INSTALLED_APPS
+    apps.py             # AppConfig: registered via full dotted path in INSTALLED_APPS (e.g., "mitol.<appname>.apps.<AppConfigName>")
     settings/           # App settings modules (imported by testapp)
   pyproject.toml        # Per-app package config and versioning
 
-tests/mitol/<appname>/  # Test suites (mirror app structure)
+tests/<appname>/        # Test suites (mirror app structure, no `mitol` subdir)
 testapp/                # Django project used only for testing
   main/settings/
     shared.py           # Base settings, INSTALLED_APPS, imports app settings modules
@@ -58,7 +58,7 @@ pyproject.toml          # Root: workspace config, pytest config, ruff config, de
 
 **User model**: Never import `django.contrib.auth.models.User` directly. Use `get_user_model()` or `settings.AUTH_USER_MODEL`. Ruff enforces this via `banned-api`.
 
-**Test placement**: Tests go in `tests/mitol/<appname>/test_*.py`. The `tests/` directory is itself a Django app. `pytest` `pythonpath` includes `testapp`, `src`, and `tests`.
+**Test placement**: Tests go in `tests/<appname>/test_*.py`. The `tests/` directory is on `pytest`'s `pythonpath` and contains test modules. `pytest` `pythonpath` includes `testapp`, `src`, and `tests`.
 
 **Factories**: Use `factory-boy`. Common fixtures (`learner`, `staff_user`, `user_client`, etc.) are in root `conftest.py`. App-level factories live in `mitol/<appname>/factories/`.
 
@@ -66,7 +66,7 @@ pyproject.toml          # Root: workspace config, pytest config, ruff config, de
 
 **Versioning**: Date-based scheme `YYYY.MM.DD[.INC0]`. Tags follow `{package-name}/v{version}`.
 
-**Adding a new app**: Copy `src/uvtestapp`, update names throughout, add to root `pyproject.toml` under `[project].dependencies` and `[tool.uv.sources]`, add to `testapp/main/settings/shared.py` (`INSTALLED_APPS` + `import_settings_modules`), and create `tests/mitol/<appname>/__init__.py`.
+**Adding a new app**: Copy `src/uvtestapp`, update names throughout, add to root `pyproject.toml` under `[project].dependencies` and `[tool.uv.sources]`, add to `testapp/main/settings/shared.py` (`INSTALLED_APPS` + `import_settings_modules`), and create `tests/<appname>/__init__.py`.
 
 ## CI
 
@@ -74,7 +74,7 @@ CI (`.github/workflows/ci.yml`) runs on every push across Python 3.10–3.13 wit
 1. Changelog presence (`uv run scripts/changelog.py check`)
 2. Tests (`uv run pytest`)
 
-Releases to PyPI are triggered by version tags and run `uv build --package mitol-django-<appname>`.
+Releases to PyPI are triggered by version tags and run `uv build "src/<app-package>"` for the selected app.
 
 ## Ruff Configuration
 
