@@ -1,6 +1,7 @@
 """Tests for feature flags"""
 
 import logging
+import time
 from datetime import timedelta
 
 import pytest
@@ -98,6 +99,88 @@ def test_cache_population(mocker, settings):
     for k in all_flags:
         assert features.is_enabled(k)
         get_feature_flag_mock.assert_not_called()
+
+
+def test_circuit_breaker_trips_on_slow_response(mocker, caplog, settings):
+    """Test that a slow PostHog call trips the circuit breaker."""
+
+    def slow_flag(*args, **kwargs):
+        time.sleep(0.1)
+        return None
+
+    mocker.patch("posthog.get_feature_flag", autospec=True, side_effect=slow_flag)
+    durable_cache = caches["durable"]
+    settings.POSTHOG_ENABLED = True
+    settings.HOSTNAME = "fake_host_name"
+    settings.ENVIRONMENT = "prod"
+    settings.FEATURES["testing_function"] = False
+    settings.POSTHOG_CIRCUIT_BREAKER_COOLDOWN_SECONDS = 60
+    settings.POSTHOG_CIRCUIT_BREAKER_TRIP_THRESHOLD_SECONDS = 0  # trip immediately
+
+    durable_cache.clear()
+
+    with caplog.at_level(logging.DEBUG):
+        result = features.is_enabled("testing_function")
+
+    # Falls back to settings.FEATURES
+    assert result is False
+    # Circuit is now open
+    assert durable_cache.get(features.CIRCUIT_BREAKER_CACHE_KEY) is not None
+
+
+def test_circuit_breaker_skips_posthog_when_open(mocker, caplog, settings):
+    """Test that an open circuit skips PostHog and returns the settings fallback."""
+    mocker.patch(
+        "posthog.get_feature_flag", side_effect=lambda *_, **__: time.sleep(0.1)
+    )
+    durable_cache = caches["durable"]
+    settings.POSTHOG_ENABLED = True
+    settings.HOSTNAME = "fake_host_name"
+    settings.ENVIRONMENT = "prod"
+    settings.FEATURES["testing_function"] = False
+    settings.POSTHOG_CIRCUIT_BREAKER_COOLDOWN_SECONDS = 60
+    settings.POSTHOG_CIRCUIT_BREAKER_TRIP_THRESHOLD_SECONDS = 0
+
+    durable_cache.clear()
+    features.is_enabled("testing_function")  # trips the circuit
+
+    # Now swap in a mock that returns True — should never be called
+    get_feature_flag_mock = mocker.patch(
+        "posthog.get_feature_flag", autospec=True, return_value=True
+    )
+
+    with caplog.at_level(logging.DEBUG):
+        result = features.is_enabled("testing_function")
+
+    get_feature_flag_mock.assert_not_called()
+    assert result is False
+    assert "circuit open" in caplog.text
+
+
+def test_circuit_breaker_closes_after_cooldown(mocker, settings):
+    """Test that the circuit closes after the cooldown period expires."""
+    get_feature_flag_mock = mocker.patch(
+        "posthog.get_feature_flag", autospec=True, return_value=True
+    )
+    durable_cache = caches["durable"]
+    settings.POSTHOG_ENABLED = True
+    settings.HOSTNAME = "fake_host_name"
+    settings.ENVIRONMENT = "prod"
+    settings.FEATURES["testing_function"] = False
+    settings.POSTHOG_CIRCUIT_BREAKER_COOLDOWN_SECONDS = 60
+
+    durable_cache.clear()
+    durable_cache.set(features.CIRCUIT_BREAKER_CACHE_KEY, 1, 60)
+
+    time_freezer = freeze_time(now_in_utc() + timedelta(seconds=61))
+    time_freezer.start()
+
+    result = features.is_enabled("testing_function")
+
+    time_freezer.stop()
+
+    get_feature_flag_mock.assert_called()
+    assert result is True
 
 
 def test_posthog_flag_cache_timeout(mocker, settings):
