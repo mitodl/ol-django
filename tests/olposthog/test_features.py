@@ -104,9 +104,8 @@ def test_cache_population(mocker, settings):
 def test_circuit_breaker_trips_on_slow_response(mocker, caplog, settings):
     """Test that a slow PostHog call trips the circuit breaker."""
 
-    def slow_flag(*args, **kwargs):
+    def slow_flag(*_args, **_kwargs):
         time.sleep(0.1)
-        return None
 
     mocker.patch("posthog.get_feature_flag", autospec=True, side_effect=slow_flag)
     durable_cache = caches["durable"]

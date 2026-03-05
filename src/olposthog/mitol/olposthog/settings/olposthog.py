@@ -14,7 +14,7 @@ POSTHOG_PROJECT_API_KEY = get_string(
 POSTHOG_PERSONAL_API_KEY = get_string(
     name="POSTHOG_PERSONAL_API_KEY",
     default="",
-    description="Personal API key for PostHog local flag evaluation. When set, flags are evaluated locally without per-request HTTP calls.",
+    description="Personal API key for PostHog local flag evaluation. When set, flags are evaluated locally without per-request HTTP calls.",  # noqa: E501
 )
 POSTHOG_API_HOST = get_string(
     name="POSTHOG_API_HOST",
@@ -36,7 +36,7 @@ POSTHOG_MAX_RETRIES = get_int(
 POSTHOG_POLL_INTERVAL = get_int(
     name="POSTHOG_POLL_INTERVAL",
     default=300,
-    description="Seconds between PostHog flag config polling. Relevant when POSTHOG_PERSONAL_API_KEY is set for local evaluation.",
+    description="Seconds between PostHog flag config polling. Relevant when POSTHOG_PERSONAL_API_KEY is set for local evaluation.",  # noqa: E501
 )
 
 POSTHOG_CIRCUIT_BREAKER_COOLDOWN_SECONDS = get_int(
