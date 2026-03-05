@@ -130,7 +130,7 @@ def test_circuit_breaker_trips_on_slow_response(mocker, caplog, settings):
 
 def test_circuit_breaker_skips_posthog_when_open(mocker, caplog, settings):
     """Test that an open circuit skips PostHog and returns the settings fallback."""
-    mocker.patch(
+    get_feature_flag_mock = mocker.patch(
         "posthog.get_feature_flag", side_effect=lambda *_, **__: time.sleep(0.1)
     )
     durable_cache = caches["durable"]
@@ -144,10 +144,10 @@ def test_circuit_breaker_skips_posthog_when_open(mocker, caplog, settings):
     durable_cache.clear()
     features.is_enabled("testing_function")  # trips the circuit
 
-    # Now swap in a mock that returns True — should never be called
-    get_feature_flag_mock = mocker.patch(
-        "posthog.get_feature_flag", autospec=True, return_value=True
-    )
+    # Reset and verify the open circuit skips PostHog entirely
+    get_feature_flag_mock.reset_mock()
+    get_feature_flag_mock.side_effect = None
+    get_feature_flag_mock.return_value = True
 
     with caplog.at_level(logging.DEBUG):
         result = features.is_enabled("testing_function")
