@@ -10,6 +10,12 @@ POSTHOG_PROJECT_API_KEY = get_string(
     default="",
     description="Private API key to communicate with PostHog",
 )
+
+POSTHOG_PERSONAL_API_KEY = get_string(
+    name="POSTHOG_PERSONAL_API_KEY",
+    default="",
+    description="Personal API key for PostHog local flag evaluation. When set, flags are evaluated locally without per-request HTTP calls.",
+)
 POSTHOG_API_HOST = get_string(
     name="POSTHOG_API_HOST",
     default="https://us.posthog.com",
@@ -25,4 +31,22 @@ POSTHOG_MAX_RETRIES = get_int(
     name="POSTHOG_MAX_RETRIES",
     default=3,
     description="Numbers of time requests to PostHog should be retried after failing.",
+)
+
+POSTHOG_POLL_INTERVAL = get_int(
+    name="POSTHOG_POLL_INTERVAL",
+    default=300,
+    description="Seconds between PostHog flag config polling. Relevant when POSTHOG_PERSONAL_API_KEY is set for local evaluation.",
+)
+
+POSTHOG_CIRCUIT_BREAKER_COOLDOWN_SECONDS = get_int(
+    name="POSTHOG_CIRCUIT_BREAKER_COOLDOWN_SECONDS",
+    default=60,
+    description="Seconds to wait before retrying PostHog after a failed request.",
+)
+
+POSTHOG_CIRCUIT_BREAKER_TRIP_THRESHOLD_SECONDS = get_int(
+    name="POSTHOG_CIRCUIT_BREAKER_TRIP_THRESHOLD_SECONDS",
+    default=6,
+    description="Seconds a PostHog request can take before the circuit breaker trips.",
 )
