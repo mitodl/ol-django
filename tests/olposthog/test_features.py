@@ -156,6 +156,30 @@ def test_circuit_breaker_skips_posthog_when_open(mocker, caplog, settings):
     assert "circuit open" in caplog.text
 
 
+def test_circuit_breaker_trips_on_exception(mocker, caplog, settings):
+    """Test that an unexpected PostHog exception trips the circuit and falls back."""
+    mocker.patch(
+        "posthog.get_feature_flag",
+        autospec=True,
+        side_effect=RuntimeError("unexpected SDK error"),
+    )
+    durable_cache = caches["durable"]
+    settings.POSTHOG_ENABLED = True
+    settings.HOSTNAME = "fake_host_name"
+    settings.ENVIRONMENT = "prod"
+    settings.FEATURES["testing_function"] = False
+    settings.POSTHOG_CIRCUIT_BREAKER_COOLDOWN_SECONDS = 60
+    settings.POSTHOG_CIRCUIT_BREAKER_TRIP_THRESHOLD_SECONDS = 0
+
+    durable_cache.clear()
+
+    with caplog.at_level(logging.DEBUG):
+        result = features.is_enabled("testing_function")
+
+    assert result is False
+    assert durable_cache.get(features.CIRCUIT_BREAKER_CACHE_KEY) is not None
+
+
 def test_circuit_breaker_closes_after_cooldown(mocker, settings):
     """Test that the circuit closes after the cooldown period expires."""
     get_feature_flag_mock = mocker.patch(

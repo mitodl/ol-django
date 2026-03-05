@@ -34,11 +34,13 @@ def _trip_circuit():
 def _circuit_breaker_watch():
     """Trip the circuit breaker if the PostHog call takes too long."""
     start = time.monotonic()
-    yield
-    elapsed = time.monotonic() - start
-    if elapsed >= settings.POSTHOG_CIRCUIT_BREAKER_TRIP_THRESHOLD_SECONDS:
-        log.warning("PostHog request took %.2fs, tripping circuit breaker", elapsed)
-        _trip_circuit()
+    try:
+        yield
+    finally:
+        elapsed = time.monotonic() - start
+        if elapsed >= settings.POSTHOG_CIRCUIT_BREAKER_TRIP_THRESHOLD_SECONDS:
+            log.warning("PostHog request took %.2fs, tripping circuit breaker", elapsed)
+            _trip_circuit()
 
 
 class Features:
@@ -113,11 +115,17 @@ def get_all_feature_flags(opt_unique_id: str | None = None):
     unique_id = opt_unique_id or default_unique_id()
     person_properties = _get_person_properties(unique_id)
 
-    with _circuit_breaker_watch():
-        flag_data = posthog.get_all_flags(
-            unique_id,
-            person_properties=person_properties,
-        )
+    # The PostHog SDK catches errors internally and returns None/{}; an exception
+    # here would be highly unexpected, but we guard anyway.
+    try:
+        with _circuit_breaker_watch():
+            flag_data = posthog.get_all_flags(
+                unique_id,
+                person_properties=person_properties,
+            )
+    except Exception:
+        log.exception("PostHog get_all_flags raised unexpectedly")
+        return {}
 
     if not flag_data:
         return {}
@@ -167,17 +175,23 @@ def is_enabled(
 
     log.debug("Retrieving %s from Posthog", name)
 
-    # value will be None if either there is no value or we can't get a response back
-    with _circuit_breaker_watch():
-        value = (
-            posthog.get_feature_flag(
-                name,
-                unique_id,
-                person_properties=person_properties,
+    # value will be None if either there is no value or we can't get a response back.
+    # The PostHog SDK catches errors internally and returns None; an exception
+    # here would be highly unexpected, but we guard anyway.
+    try:
+        with _circuit_breaker_watch():
+            value = (
+                posthog.get_feature_flag(
+                    name,
+                    unique_id,
+                    person_properties=person_properties,
+                )
+                if getattr(settings, "POSTHOG_ENABLED", False)
+                else None
             )
-            if getattr(settings, "POSTHOG_ENABLED", False)
-            else None
-        )
+    except Exception:
+        log.exception("PostHog get_feature_flag raised unexpectedly")
+        return settings.FEATURES.get(name, default or False)
 
     if value is None:
         return settings.FEATURES.get(name, default or False)
