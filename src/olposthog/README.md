@@ -8,7 +8,7 @@ This is the Open Learning OlPosthog app. It provides an API to interact with Pos
 
 Add the OlPosthog app:
 
-`docker-compose run -u root --rm web poetry add mitol-django-olposthog`
+`docker-compose run -u root --rm web uv add mitol-django-olposthog`
 
 Add the following to the `ready()` method for your App.
 
