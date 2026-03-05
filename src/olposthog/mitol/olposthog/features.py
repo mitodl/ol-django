@@ -3,6 +3,8 @@
 import hashlib
 import json
 import logging
+import time
+from contextlib import contextmanager
 
 import posthog
 from django.conf import settings
@@ -12,6 +14,33 @@ from django.core.cache import caches
 log = logging.getLogger()
 User = get_user_model()
 durable_cache = caches["durable"]
+
+CIRCUIT_BREAKER_CACHE_KEY = "posthog_circuit_open"
+
+
+def _is_circuit_open() -> bool:
+    return durable_cache.get(CIRCUIT_BREAKER_CACHE_KEY) is not None
+
+
+def _trip_circuit():
+    durable_cache.set(
+        CIRCUIT_BREAKER_CACHE_KEY,
+        1,
+        settings.POSTHOG_CIRCUIT_BREAKER_COOLDOWN_SECONDS,
+    )
+
+
+@contextmanager
+def _circuit_breaker_watch():
+    """Trip the circuit breaker if the PostHog call takes too long."""
+    start = time.monotonic()
+    try:
+        yield
+    finally:
+        elapsed = time.monotonic() - start
+        if elapsed >= settings.POSTHOG_CIRCUIT_BREAKER_TRIP_THRESHOLD_SECONDS:
+            log.warning("PostHog request took %.2fs, tripping circuit breaker", elapsed)
+            _trip_circuit()
 
 
 class Features:
@@ -27,12 +56,13 @@ def configure():
     """
     posthog.default_client = posthog.Client(
         project_api_key=getattr(settings, "POSTHOG_PROJECT_API_KEY", None),
+        personal_api_key=getattr(settings, "POSTHOG_PERSONAL_API_KEY", None) or None,
         host=getattr(settings, "POSTHOG_API_HOST", None),
         debug=settings.DEBUG,
         on_error=None,
         send=None,
         sync_mode=False,
-        poll_interval=30,
+        poll_interval=settings.POSTHOG_POLL_INTERVAL,
         disable_geoip=True,
         feature_flags_request_timeout_seconds=settings.POSTHOG_FEATURE_FLAG_REQUEST_TIMEOUT_MS
         / 1000,
@@ -78,13 +108,27 @@ def get_all_feature_flags(opt_unique_id: str | None = None):
     """
     Get the set of all feature flags
     """
+    if _is_circuit_open():
+        log.debug("PostHog circuit open, skipping get_all_feature_flags")
+        return {}
+
     unique_id = opt_unique_id or default_unique_id()
     person_properties = _get_person_properties(unique_id)
 
-    flag_data = posthog.get_all_flags(
-        unique_id,
-        person_properties=person_properties,
-    )
+    # The PostHog SDK catches errors internally and returns None/{}; an exception
+    # here would be highly unexpected, but we guard anyway.
+    try:
+        with _circuit_breaker_watch():
+            flag_data = posthog.get_all_flags(
+                unique_id,
+                person_properties=person_properties,
+            )
+    except Exception:
+        log.exception("PostHog get_all_flags raised unexpectedly")
+        return {}
+
+    if not flag_data:
+        return {}
 
     [
         durable_cache.set(_generate_cache_key(k, unique_id, person_properties), v)
@@ -124,20 +168,33 @@ def is_enabled(
     if cached_value is not None:
         log.debug("Retrieved %s from the cache", name)
         return cached_value
-    else:
-        log.debug("Retrieving %s from Posthog", name)
 
-    # value will be None if either there is no value or we can't get a response back
-    value = (
-        posthog.get_feature_flag(
-            name,
-            unique_id,
-            person_properties=person_properties,
-        )
-        if getattr(settings, "POSTHOG_ENABLED", False)
-        else None
-    )
+    if _is_circuit_open():
+        log.debug("PostHog circuit open, skipping %s", name)
+        return settings.FEATURES.get(name, default or False)
 
-    durable_cache.set(cache_key, value) if value is not None else None
+    log.debug("Retrieving %s from Posthog", name)
 
-    return value if value is not None else settings.FEATURES.get(name, default or False)
+    # value will be None if either there is no value or we can't get a response back.
+    # The PostHog SDK catches errors internally and returns None; an exception
+    # here would be highly unexpected, but we guard anyway.
+    try:
+        with _circuit_breaker_watch():
+            value = (
+                posthog.get_feature_flag(
+                    name,
+                    unique_id,
+                    person_properties=person_properties,
+                )
+                if getattr(settings, "POSTHOG_ENABLED", False)
+                else None
+            )
+    except Exception:
+        log.exception("PostHog get_feature_flag raised unexpectedly")
+        return settings.FEATURES.get(name, default or False)
+
+    if value is None:
+        return settings.FEATURES.get(name, default or False)
+
+    durable_cache.set(cache_key, value)
+    return value

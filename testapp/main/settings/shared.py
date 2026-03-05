@@ -31,6 +31,7 @@ import_settings_modules(
     "mitol.transcoding.settings.job",
     "mitol.scim.settings.scim",
     "mitol.apigateway.settings",
+    "mitol.olposthog.settings.olposthog",
 )
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
