@@ -1,4 +1,18 @@
 
+<a id='changelog-2026.3.6'></a>
+## [2026.3.6] - 2026-03-06
+
+### Added
+
+- Added posthog application.
+
+- Added a time-based circuit breaker to PostHog feature flag evaluation. If PostHog calls are slow or failing, the circuit opens and subsequent calls return default values immediately, preventing PostHog outages from degrading service for users. The trip threshold and cooldown are configurable.
+- Added support for local evaluation of PostHog feature flags via `POSTHOG_PERSONAL_API_KEY`. When set, flag definitions are retrieved locally and evaluated without hitting PostHog, reducing latency and outage impact.
+
+### Changed
+
+- Version date from using 04 to 4.
+
 <a id='changelog-2025.8.1'></a>
 ## [2025.8.1] - 2025-08-01
 
