@@ -83,6 +83,7 @@ INSTALLED_APPS = [
     # test app, integrates the reusable apps
     "main",
     "users",
+    "libraries",
 ]
 
 MIDDLEWARE = [
