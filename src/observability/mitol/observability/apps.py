@@ -3,6 +3,9 @@
 import os
 
 from mitol.common.apps import BaseApp
+from mitol.observability.alerts import baseline as _  # noqa: F401
+from mitol.observability.logging import configure_structlog
+from mitol.observability.telemetry import configure_opentelemetry
 
 
 class ObservabilityConfig(BaseApp):
@@ -33,11 +36,5 @@ class ObservabilityConfig(BaseApp):
 
     def ready(self) -> None:
         """Initialize observability — configure structlog and OpenTelemetry."""
-        from mitol.observability.alerts import baseline as _  # noqa: F401
-        from mitol.observability.logging import configure_structlog
-        from mitol.observability.telemetry import (
-            configure_opentelemetry,
-        )
-
         configure_structlog()
         configure_opentelemetry()

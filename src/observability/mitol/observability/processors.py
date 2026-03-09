@@ -12,8 +12,8 @@ _NODE_NAME: str | None = os.environ.get("KUBERNETES_NODE_NAME")
 
 
 def inject_otel_context(
-    logger: Any,
-    method: str,
+    _logger: Any,
+    _method: str,
     event_dict: dict[str, Any],
 ) -> dict[str, Any]:
     """Inject OpenTelemetry trace context into structlog event dict."""
@@ -26,8 +26,8 @@ def inject_otel_context(
 
 
 def inject_k8s_context(
-    logger: Any,
-    method: str,
+    _logger: Any,
+    _method: str,
     event_dict: dict[str, Any],
 ) -> dict[str, Any]:
     """Inject Kubernetes metadata into structlog event dict."""

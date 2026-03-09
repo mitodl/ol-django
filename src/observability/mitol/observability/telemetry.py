@@ -8,6 +8,10 @@ import os
 
 from django.conf import settings
 from opentelemetry import trace
+from opentelemetry.baggage.propagation import W3CBaggagePropagator
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+    OTLPSpanExporter as GrpcExporter,
+)
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.propagate import set_global_textmap
 from opentelemetry.propagators.composite import CompositePropagator
@@ -70,8 +74,6 @@ def configure_opentelemetry() -> TracerProvider | None:
     log.info("Initializing OpenTelemetry")
 
     # Register W3C propagators
-    from opentelemetry.baggage.propagation import W3CBaggagePropagator
-
     set_global_textmap(
         CompositePropagator([TraceContextTextMapPropagator(), W3CBaggagePropagator()])
     )
@@ -87,10 +89,6 @@ def configure_opentelemetry() -> TracerProvider | None:
         try:
             use_grpc = getattr(settings, "OPENTELEMETRY_USE_GRPC", False)
             if use_grpc:
-                from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
-                    OTLPSpanExporter as GrpcExporter,
-                )
-
                 exporter = GrpcExporter(
                     endpoint=endpoint,
                     insecure=getattr(settings, "OPENTELEMETRY_INSECURE", True),

@@ -1,6 +1,7 @@
 """Tests for mitol.observability.processors."""
 
 import mitol.observability.processors as processors_module
+import opentelemetry.trace as otel_trace
 from mitol.observability.processors import inject_k8s_context, inject_otel_context
 
 
@@ -8,6 +9,7 @@ class FakeSpanContext:
     """Minimal span context stub for testing."""
 
     def __init__(self, trace_id, span_id):
+        """Initialize with trace and span IDs."""
         self.trace_id = trace_id
         self.span_id = span_id
 
@@ -16,6 +18,7 @@ class FakeSpan:
     """Minimal OTel span stub for testing."""
 
     def __init__(self, recording=True, trace_id=0xDEADBEEF, span_id=0xCAFE):  # noqa: FBT002
+        """Initialize with recording state and span context."""
         self._recording = recording
         self._ctx = FakeSpanContext(trace_id=trace_id, span_id=span_id)
 
@@ -34,8 +37,6 @@ def test_inject_otel_context_with_active_span(monkeypatch):
     span_id = 0xBEEFCAFEDEAD1234
     fake_span = FakeSpan(recording=True, trace_id=trace_id, span_id=span_id)
 
-    import opentelemetry.trace as otel_trace
-
     monkeypatch.setattr(otel_trace, "get_current_span", lambda: fake_span)
 
     event_dict = {}
@@ -52,8 +53,6 @@ def test_inject_otel_context_with_active_span(monkeypatch):
 def test_inject_otel_context_no_active_span(monkeypatch):
     """Non-recording span adds no fields to event_dict."""
     fake_span = FakeSpan(recording=False)
-
-    import opentelemetry.trace as otel_trace
 
     monkeypatch.setattr(otel_trace, "get_current_span", lambda: fake_span)
 

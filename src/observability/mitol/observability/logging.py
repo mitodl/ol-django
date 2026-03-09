@@ -8,6 +8,7 @@ import os
 from typing import Any
 
 import structlog
+from django.conf import settings
 
 from mitol.observability.processors import inject_k8s_context, inject_otel_context
 
@@ -34,15 +35,13 @@ def _shared_processors() -> list[Any]:
     ]
 
 
-def configure_structlog(debug: bool | None = None) -> None:
+def configure_structlog(*, debug: bool | None = None) -> None:
     """
     Configure structlog and route stdlib logging through it.
 
     Args:
         debug: Override debug mode detection. If None, reads from Django settings.
     """
-    from django.conf import settings
-
     if debug is None:
         debug = getattr(settings, "DEBUG", False)
 

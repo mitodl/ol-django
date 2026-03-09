@@ -9,6 +9,7 @@ from mitol.observability.alerting import (
     _registry,
     get_all_rule_groups,
 )
+from mitol.observability.alerts.baseline import BaselineAlerts
 
 
 @pytest.fixture(autouse=True)
@@ -105,8 +106,6 @@ def test_baseline_returns_rules(monkeypatch):
     """BaselineAlerts returns the expected number of rules."""
     monkeypatch.delenv("OTEL_SERVICE_NAME", raising=False)
 
-    from mitol.observability.alerts.baseline import BaselineAlerts
-
     prom_rules = BaselineAlerts.get_prometheus_rules()
     loki_rules = BaselineAlerts.get_loki_rules()
 
@@ -117,8 +116,6 @@ def test_baseline_returns_rules(monkeypatch):
 def test_baseline_uses_service_name(monkeypatch):
     """BaselineAlerts rule names contain the configured service name."""
     monkeypatch.setenv("OTEL_SERVICE_NAME", "test-svc")
-
-    from mitol.observability.alerts.baseline import BaselineAlerts
 
     for rule in BaselineAlerts.get_prometheus_rules() + BaselineAlerts.get_loki_rules():
         assert "test-svc" in rule.name, (
