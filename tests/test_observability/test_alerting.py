@@ -71,8 +71,8 @@ def test_prometheus_rule_to_cortex_dict():
     assert d["for"] == "10m"
     assert d["labels"]["severity"] == "critical"
     assert d["labels"]["team"] == "platform"
-    assert "description" in d["annotations"]
-    assert "resolution" in d["annotations"]
+    assert d["annotations"]["description"] == "high error rate"
+    assert d["annotations"]["resolution"] == "check logs"
 
 
 def test_get_loki_rules_from_group():
