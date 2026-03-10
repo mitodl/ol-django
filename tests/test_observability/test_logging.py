@@ -17,7 +17,7 @@ def reset_structlog():
 
 @override_settings(DEBUG=True)
 def test_configure_structlog_debug():
-    """In DEBUG mode, structlog pipeline ends with wrap_for_formatter and formatter uses ConsoleRenderer."""
+    """In DEBUG mode, pipeline ends with wrap_for_formatter; uses ConsoleRenderer."""
     configure_structlog(debug=True)
 
     assert structlog.is_configured()
@@ -41,7 +41,7 @@ def test_configure_structlog_debug():
 
 @override_settings(DEBUG=False)
 def test_configure_structlog_production():
-    """In production mode, structlog pipeline ends with wrap_for_formatter and formatter uses JSONRenderer."""
+    """In production mode, pipeline ends with wrap_for_formatter; uses JSONRenderer."""
     configure_structlog(debug=False)
 
     assert structlog.is_configured()
@@ -53,7 +53,7 @@ def test_configure_structlog_production():
         is structlog.stdlib.ProcessorFormatter.wrap_for_formatter
     )
 
-    # The root handler's ProcessorFormatter should use JSONRenderer (not ConsoleRenderer).
+    # The root handler's ProcessorFormatter should use JSONRenderer.
     root_handler = logging.getLogger().handlers[0]
     assert isinstance(root_handler.formatter, structlog.stdlib.ProcessorFormatter)
     formatter_processor_types = [
