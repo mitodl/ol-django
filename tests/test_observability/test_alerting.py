@@ -129,7 +129,7 @@ def test_celery_alerts_rule_expr(monkeypatch):
     monkeypatch.setenv("OTEL_SERVICE_NAME", "test-svc")
 
     rules = CeleryAlerts.get_prometheus_rules()
-    assert len(rules) == 1  # noqa: PLR2004
+    assert len(rules) == 1
     rule = rules[0]
     assert "test-svc" in rule.name
     assert "or vector(0)" in rule.expr, (
@@ -147,5 +147,5 @@ def test_celery_alerts_not_in_baseline(monkeypatch):
 
     baseline_names = {r.name for r in BaselineAlerts.get_prometheus_rules()}
     assert not any("CeleryWorkerDown" in name for name in baseline_names), (
-        "CeleryWorkerDown should be an opt-in rule (CeleryAlerts), not in BaselineAlerts"
+        "CeleryWorkerDown should be opt-in (CeleryAlerts), not in BaselineAlerts"
     )
