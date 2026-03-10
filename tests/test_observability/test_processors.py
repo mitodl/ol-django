@@ -2,6 +2,7 @@
 
 import mitol.observability.processors as processors_module
 import opentelemetry.trace as otel_trace
+import pytest
 from mitol.observability.processors import inject_k8s_context, inject_otel_context
 
 
@@ -104,3 +105,79 @@ def test_inject_k8s_context_partial(monkeypatch):
     assert result["pod_name"] == "my-pod"
     assert "namespace" not in result
     assert "node_name" not in result
+
+
+# ---------------------------------------------------------------------------
+# Performance / caching tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def clear_format_cache():
+    """Clear the _format_span_ids LRU cache before each test."""
+    processors_module._format_span_ids.cache_clear()  # noqa: SLF001
+    yield
+    processors_module._format_span_ids.cache_clear()  # noqa: SLF001
+
+
+def test_format_span_ids_cached_on_repeat_calls(monkeypatch):
+    """_format_span_ids returns cached strings for the same (trace_id, span_id)."""
+    trace_id = 0xDEADBEEFCAFEBABE1234567890ABCDEF
+    span_id = 0xBEEFCAFEDEAD1234
+    fake_span = FakeSpan(recording=True, trace_id=trace_id, span_id=span_id)
+
+    monkeypatch.setattr(otel_trace, "get_current_span", lambda: fake_span)
+
+    n_calls = 50
+    for _ in range(n_calls):
+        inject_otel_context(None, "info", {})
+
+    info = processors_module._format_span_ids.cache_info()  # noqa: SLF001
+    assert info.misses == 1, "first call should be a cache miss"
+    assert info.hits == n_calls - 1, "subsequent calls should all be cache hits"
+
+
+def test_format_span_ids_distinct_spans_are_separate_entries(monkeypatch):
+    """Each unique (trace_id, span_id) pair gets its own cache entry."""
+    spans = [
+        FakeSpan(recording=True, trace_id=0xAAAA0000, span_id=0x0001),
+        FakeSpan(recording=True, trace_id=0xBBBB0000, span_id=0x0002),
+        FakeSpan(recording=True, trace_id=0xCCCC0000, span_id=0x0003),
+    ]
+
+    for span in spans:
+        monkeypatch.setattr(otel_trace, "get_current_span", lambda s=span: s)
+        inject_otel_context(None, "info", {})
+
+    info = processors_module._format_span_ids.cache_info()  # noqa: SLF001
+    assert info.misses == len(spans), "each distinct span should be a separate miss"
+    assert info.currsize == len(spans)
+
+
+def test_inject_otel_context_result_consistent_with_cache(monkeypatch):
+    """Cached values match the directly-formatted expected strings."""
+    trace_id = 0x000102030405060708090A0B0C0D0E0F
+    span_id = 0xDECAFBADDECAFBAD
+    fake_span = FakeSpan(recording=True, trace_id=trace_id, span_id=span_id)
+
+    monkeypatch.setattr(otel_trace, "get_current_span", lambda: fake_span)
+
+    # Two calls: one miss (cold), one hit (warm) — both must return correct values.
+    for _ in range(2):
+        result = inject_otel_context(None, "info", {})
+        assert result["trace_id"] == format(trace_id, "032x")
+        assert result["span_id"] == format(span_id, "016x")
+
+
+def test_inject_otel_context_no_span_does_not_populate_cache(monkeypatch):
+    """When no span is recording, _format_span_ids is never called."""
+    fake_span = FakeSpan(recording=False)
+
+    monkeypatch.setattr(otel_trace, "get_current_span", lambda: fake_span)
+
+    for _ in range(10):
+        inject_otel_context(None, "info", {})
+
+    info = processors_module._format_span_ids.cache_info()  # noqa: SLF001
+    assert info.misses == 0
+    assert info.hits == 0
