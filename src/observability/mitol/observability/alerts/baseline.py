@@ -69,16 +69,6 @@ class BaselineAlerts(AlertRuleGroup):
                     "resolution": "Investigate slow queries, downstream dependencies, or resource contention.",  # noqa: E501
                 },
             ),
-            PrometheusRule(
-                name=f"{svc}CeleryWorkerDown",
-                expr=f'sum(celery_worker_up{{service="{svc}"}}) == 0',
-                for_duration="2m",
-                severity="critical",
-                annotations={
-                    "description": f"No Celery workers are reporting as up for {svc}.",
-                    "resolution": "Check Celery worker deployment and broker connectivity.",  # noqa: E501
-                },
-            ),
         ]
 
     @classmethod
