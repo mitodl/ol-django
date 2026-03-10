@@ -5,7 +5,8 @@ import logging
 import pytest
 import structlog
 from django.test import override_settings
-from mitol.observability.logging import configure_structlog
+from mitol.observability.logging import _shared_processors, configure_structlog
+from mitol.observability.settings.logging import _make_formatter
 
 
 @pytest.fixture(autouse=True)
@@ -87,3 +88,39 @@ def test_configure_structlog_log_level_from_env(monkeypatch):
 
     root_logger = logging.getLogger()
     assert root_logger.level == logging.WARNING
+
+
+@override_settings(DEBUG=False)
+def test_make_formatter_has_foreign_pre_chain():
+    """_make_formatter includes foreign_pre_chain so stdlib logs are enriched."""
+    formatter = _make_formatter()
+
+    assert isinstance(formatter, structlog.stdlib.ProcessorFormatter)
+    assert formatter.foreign_pre_chain is not None
+    assert len(formatter.foreign_pre_chain) > 0
+
+    # The foreign_pre_chain must include the same processors as _shared_processors()
+    # so that timestamps, log levels, and trace context are injected into all
+    # foreign (non-structlog) log records from Django, boto3, etc.
+    expected_chain = _shared_processors()
+    assert len(formatter.foreign_pre_chain) == len(expected_chain)
+
+
+@override_settings(DEBUG=False)
+def test_make_formatter_production_uses_json_renderer():
+    """In production (DEBUG=False), _make_formatter uses JSONRenderer."""
+    formatter = _make_formatter()
+
+    renderer_types = [type(p).__name__ for p in formatter.processors]
+    assert "JSONRenderer" in renderer_types
+    assert "ConsoleRenderer" not in renderer_types
+
+
+@override_settings(DEBUG=True)
+def test_make_formatter_debug_uses_console_renderer():
+    """In debug mode (DEBUG=True), _make_formatter uses ConsoleRenderer."""
+    formatter = _make_formatter()
+
+    renderer_types = [type(p).__name__ for p in formatter.processors]
+    assert "ConsoleRenderer" in renderer_types
+    assert "JSONRenderer" not in renderer_types

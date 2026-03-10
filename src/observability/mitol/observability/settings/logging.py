@@ -38,11 +38,14 @@ def _make_formatter():
         if debug
         else structlog.processors.JSONRenderer()
     )
+    from mitol.observability.logging import _shared_processors  # noqa: PLC0415
+
     return structlog.stdlib.ProcessorFormatter(
         processors=[
             structlog.stdlib.ProcessorFormatter.remove_processors_meta,
             renderer,
-        ]
+        ],
+        foreign_pre_chain=_shared_processors(),
     )
 
 
