@@ -14,9 +14,10 @@ from mitol.observability.alerting import (
 @pytest.fixture(autouse=True)
 def clean_registry():
     """Remove test-only rule groups from the registry after each test."""
-    before = set(_registry)
+    before = dict(_registry)
     yield
-    _registry[:] = [g for g in _registry if g in before]
+    _registry.clear()
+    _registry.update(before)
 
 
 def test_generate_alert_rules_loki(tmp_path, monkeypatch):

@@ -22,6 +22,11 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 
 log = logging.getLogger(__name__)
 
+# Idempotency guards prevent double-instrumentation under Django autoreload
+# or test setups that call ready() multiple times
+_configured = False
+_instrumented = False
+
 
 def _get_resource() -> Resource:
     """Build OTel Resource from environment and Django settings."""
@@ -45,11 +50,30 @@ def _get_resource() -> Resource:
 
 
 def _auto_instrument() -> None:
-    """Auto-discover and apply installed OTel instrumentors via entry points."""
+    """Auto-discover and apply installed OTel instrumentors via entry points.
+
+    Supports two modes:
+    - Allowlist: Set MITOL_OBSERVABILITY_ALLOW_INSTRUMENTORS to instrument only
+      specific instrumentors (recommended for performance-sensitive apps)
+    - Skiplist: Set MITOL_OBSERVABILITY_SKIP_INSTRUMENTORS to exclude specific
+      instrumentors (default: instrument everything except skipped)
+    """
+    global _instrumented  # noqa: PLW0603
+    if _instrumented:
+        log.debug("OpenTelemetry: auto-instrumentation already applied, skipping")
+        return
+    _instrumented = True
+
     skip: set[str] = set(
         getattr(settings, "MITOL_OBSERVABILITY_SKIP_INSTRUMENTORS", set())
     )
+    allow = getattr(settings, "MITOL_OBSERVABILITY_ALLOW_INSTRUMENTORS", None)
+    allow = set(allow) if allow else None
+
     for ep in importlib.metadata.entry_points(group="opentelemetry_instrumentor"):
+        if allow is not None and ep.name not in allow:
+            log.debug("Instrumentor not in allowlist: %s", ep.name)
+            continue
         if ep.name in skip:
             log.debug("Skipping instrumentor: %s", ep.name)
             continue
@@ -61,7 +85,19 @@ def _auto_instrument() -> None:
 
 
 def configure_opentelemetry() -> TracerProvider | None:
-    """Configure OpenTelemetry tracing. Called from AppConfig.ready()."""
+    """Configure OpenTelemetry tracing. Called from AppConfig.ready().
+
+    This function is idempotent — safe to call multiple times (e.g., under
+    Django autoreload or in test setups). Subsequent calls return the
+    existing tracer provider without re-configuring.
+    """
+    global _configured  # noqa: PLW0603
+    if _configured:
+        log.debug("OpenTelemetry: already configured, returning existing provider")
+        existing = trace.get_tracer_provider()
+        return existing if isinstance(existing, TracerProvider) else None
+    _configured = True
+
     endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT") or getattr(
         settings, "OPENTELEMETRY_ENDPOINT", None
     )
@@ -81,7 +117,9 @@ def configure_opentelemetry() -> TracerProvider | None:
     provider = TracerProvider(resource=_get_resource())
     trace.set_tracer_provider(provider)
 
-    if is_debug:
+    # Console exporter is opt-in even in DEBUG to avoid slowdown during development
+    enable_console = getattr(settings, "OPENTELEMETRY_CONSOLE_EXPORTER", False)
+    if is_debug and enable_console:
         provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
         log.debug("OpenTelemetry: console exporter added (DEBUG mode)")
 
@@ -119,3 +157,14 @@ def configure_opentelemetry() -> TracerProvider | None:
     _auto_instrument()
     log.info("OpenTelemetry initialized successfully")
     return provider
+
+
+def reset_configuration() -> None:
+    """Reset configuration state for testing purposes.
+
+    This allows tests to re-run configure_opentelemetry() with different settings.
+    Should only be used in test code.
+    """
+    global _configured, _instrumented  # noqa: PLW0603
+    _configured = False
+    _instrumented = False

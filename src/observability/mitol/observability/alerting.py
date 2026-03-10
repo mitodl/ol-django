@@ -5,8 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-# Global registry of all AlertRuleGroup subclasses
-_registry: list[type[AlertRuleGroup]] = []
+# Global registry of all AlertRuleGroup subclasses, keyed by fully-qualified name
+# to deduplicate on module reload (common in tests and Django dev server)
+_registry: dict[str, type[AlertRuleGroup]] = {}
 
 
 @dataclass
@@ -82,7 +83,8 @@ class AlertRuleGroup:
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """Auto-register subclasses in the global rule group registry."""
         super().__init_subclass__(**kwargs)
-        _registry.append(cls)
+        key = f"{cls.__module__}.{cls.__qualname__}"
+        _registry[key] = cls
 
     @classmethod
     def get_loki_rules(cls) -> list[LokiRule]:
@@ -97,4 +99,4 @@ class AlertRuleGroup:
 
 def get_all_rule_groups() -> list[type[AlertRuleGroup]]:
     """Return all registered AlertRuleGroup subclasses."""
-    return list(_registry)
+    return list(_registry.values())

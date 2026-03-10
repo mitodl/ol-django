@@ -16,9 +16,10 @@ from mitol.observability.alerts.celery import CeleryAlerts
 @pytest.fixture(autouse=True)
 def clean_registry():
     """Remove test-only rule groups from the registry after each test."""
-    before = set(_registry)
+    before = dict(_registry)
     yield
-    _registry[:] = [g for g in _registry if g in before]
+    _registry.clear()
+    _registry.update(before)
 
 
 def test_rule_group_registration():
@@ -148,4 +149,23 @@ def test_celery_alerts_not_in_baseline(monkeypatch):
     baseline_names = {r.name for r in BaselineAlerts.get_prometheus_rules()}
     assert not any("CeleryWorkerDown" in name for name in baseline_names), (
         "CeleryWorkerDown should be opt-in (CeleryAlerts), not in BaselineAlerts"
+    )
+
+
+def test_registry_deduplication():
+    """Registry uses dict to prevent duplicate entries on reload."""
+    initial_count = len(_registry)
+
+    class DedupeTestAlerts(AlertRuleGroup):
+        service = "dedupe-test"
+
+    count_after_first = len(_registry)
+    assert count_after_first == initial_count + 1
+
+    key = f"{DedupeTestAlerts.__module__}.{DedupeTestAlerts.__qualname__}"
+    _registry[key] = DedupeTestAlerts
+
+    count_after_second = len(_registry)
+    assert count_after_second == count_after_first, (
+        "Registry should not grow when re-registering the same class"
     )

@@ -12,6 +12,9 @@ from django.conf import settings
 
 from mitol.observability.processors import inject_k8s_context, inject_otel_context
 
+# Idempotency guard prevents double-configuration under Django autoreload
+_configured = False
+
 
 def _get_log_level() -> str:
     return os.environ.get("LOG_LEVEL", "INFO").upper()
@@ -39,9 +42,17 @@ def configure_structlog(*, debug: bool | None = None) -> None:
     """
     Configure structlog and route stdlib logging through it.
 
+    This function is idempotent — safe to call multiple times (e.g., under
+    Django autoreload or in test setups).
+
     Args:
         debug: Override debug mode detection. If None, reads from Django settings.
     """
+    global _configured  # noqa: PLW0603
+    if _configured:
+        return
+    _configured = True
+
     if debug is None:
         debug = getattr(settings, "DEBUG", False)
 
@@ -129,3 +140,13 @@ def configure_structlog(*, debug: bool | None = None) -> None:
             "root": {"handlers": ["console"], "level": log_level},
         }
     )
+
+
+def reset_configuration() -> None:
+    """Reset configuration state for testing purposes.
+
+    This allows tests to re-run configure_structlog() with different settings.
+    Should only be used in test code.
+    """
+    global _configured  # noqa: PLW0603
+    _configured = False
