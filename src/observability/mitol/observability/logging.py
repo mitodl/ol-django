@@ -51,38 +51,33 @@ def configure_structlog(*, debug: bool | None = None) -> None:
     shared = _shared_processors()
 
     if debug:
-        processors = [
-            *shared,
-            structlog.dev.set_exc_info,
-            structlog.dev.ConsoleRenderer(colors=True),
-        ]
+        exc_processor = structlog.dev.set_exc_info
+        renderer = structlog.dev.ConsoleRenderer(colors=True)
     else:
-        processors = [
-            *shared,
-            structlog.processors.format_exc_info,
-            structlog.processors.JSONRenderer(),
-        ]
+        exc_processor = structlog.processors.format_exc_info
+        renderer = structlog.processors.JSONRenderer()
 
+    # structlog pipeline: ends with wrap_for_formatter so that stdlib records
+    # routed through ProcessorFormatter share the same pre-chain processing.
     structlog.configure(
-        processors=processors,
+        processors=[
+            *shared,
+            exc_processor,
+            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+        ],
         wrapper_class=structlog.stdlib.BoundLogger,
         logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
     )
 
-    # Route stdlib logging through structlog's ProcessorFormatter
-    # so that third-party libraries (django, celery, etc.) emit structured records
-    stdlib_processors = [
-        structlog.stdlib.add_log_level,
-        structlog.stdlib.add_logger_name,
-        structlog.processors.TimeStamper(fmt="iso"),
-        inject_otel_context,
-        inject_k8s_context,
-        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
-    ]
-
+    # ProcessorFormatter handles both structlog records (wrapped above) and
+    # foreign stdlib records (via foreign_pre_chain).  The final processor
+    # must be a renderer that returns a string.
     formatter = structlog.stdlib.ProcessorFormatter(
-        processors=stdlib_processors,
+        processors=[
+            structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+            renderer,
+        ],
         foreign_pre_chain=shared,
     )
 
