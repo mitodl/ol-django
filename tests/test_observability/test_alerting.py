@@ -10,6 +10,7 @@ from mitol.observability.alerting import (
     get_all_rule_groups,
 )
 from mitol.observability.alerts.baseline import BaselineAlerts
+from mitol.observability.alerts.celery import CeleryAlerts
 
 
 @pytest.fixture(autouse=True)
@@ -109,7 +110,7 @@ def test_baseline_returns_rules(monkeypatch):
     prom_rules = BaselineAlerts.get_prometheus_rules()
     loki_rules = BaselineAlerts.get_loki_rules()
 
-    assert len(prom_rules) == 3  # noqa: PLR2004
+    assert len(prom_rules) == 2  # noqa: PLR2004
     assert len(loki_rules) == 2  # noqa: PLR2004
 
 
@@ -121,3 +122,30 @@ def test_baseline_uses_service_name(monkeypatch):
         assert "test-svc" in rule.name, (
             f"Rule '{rule.name}' doesn't contain service name"
         )
+
+
+def test_celery_alerts_rule_expr(monkeypatch):
+    """CeleryAlerts uses the absent-safe PromQL pattern."""
+    monkeypatch.setenv("OTEL_SERVICE_NAME", "test-svc")
+
+    rules = CeleryAlerts.get_prometheus_rules()
+    assert len(rules) == 1
+    rule = rules[0]
+    assert "test-svc" in rule.name
+    assert "or vector(0)" in rule.expr, (
+        "CeleryWorkerDown must use '(sum(...) or vector(0)) == 0' to fire "
+        "even when all workers have gone down and stopped emitting metrics"
+    )
+    assert rule.expr.endswith("== 0"), (
+        "CeleryWorkerDown expression must end with '== 0'"
+    )
+
+
+def test_celery_alerts_not_in_baseline(monkeypatch):
+    """CeleryWorkerDown must not appear in BaselineAlerts."""
+    monkeypatch.setenv("OTEL_SERVICE_NAME", "test-svc")
+
+    baseline_names = {r.name for r in BaselineAlerts.get_prometheus_rules()}
+    assert not any("CeleryWorkerDown" in name for name in baseline_names), (
+        "CeleryWorkerDown should be opt-in (CeleryAlerts), not in BaselineAlerts"
+    )
