@@ -44,9 +44,7 @@ class CeleryAlerts(AlertRuleGroup):
         return [
             PrometheusRule(
                 name=f"{svc}CeleryWorkerDown",
-                expr=(
-                    f'(sum(celery_worker_up{{service="{svc}"}}) or vector(0)) == 0'
-                ),
+                expr=(f'(sum(celery_worker_up{{service="{svc}"}}) or vector(0)) == 0'),
                 for_duration="2m",
                 severity="critical",
                 annotations={
