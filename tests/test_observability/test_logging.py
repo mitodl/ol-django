@@ -5,15 +5,32 @@ import logging
 import pytest
 import structlog
 from django.test import override_settings
-from mitol.observability.logging import _shared_processors, configure_structlog
+from mitol.observability.logging import (
+    _shared_processors,
+    configure_structlog,
+    reset_configuration,
+)
 from mitol.observability.settings.logging import _make_formatter
 
 
 @pytest.fixture(autouse=True)
 def reset_structlog():
-    """Reset structlog configuration between tests."""
+    """Reset structlog configuration and root logger state between tests."""
+    root = logging.getLogger()
+    saved_handlers = root.handlers[:]
+    saved_level = root.level
+
+    # Start each test with a clean slate
+    reset_configuration()
+    root.handlers.clear()
+
     yield
+
+    # Restore original state after each test
     structlog.reset_defaults()
+    reset_configuration()
+    root.handlers = saved_handlers
+    root.level = saved_level
 
 
 @override_settings(DEBUG=True)
