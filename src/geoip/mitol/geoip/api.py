@@ -185,4 +185,6 @@ def ip_to_country_code(ip_address: str, locale: str = "en") -> str:
         .first()
     )
 
+    if location is None:
+        return None
     return location.country_iso_code
