@@ -103,7 +103,10 @@ def configure_opentelemetry() -> TracerProvider | None:
                         settings, "OPENTELEMETRY_BATCH_SIZE", 512
                     ),
                     schedule_delay_millis=getattr(
-                        settings, "OPENTELEMETRY_EXPORT_TIMEOUT_MS", 5000
+                        settings, "OPENTELEMETRY_SCHEDULE_DELAY_MS", 5000
+                    ),
+                    export_timeout_millis=getattr(
+                        settings, "OPENTELEMETRY_EXPORT_TIMEOUT_MS", 30000
                     ),
                 )
             )

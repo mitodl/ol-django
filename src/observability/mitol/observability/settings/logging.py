@@ -16,6 +16,36 @@ import structlog
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 DJANGO_LOG_LEVEL = os.environ.get("DJANGO_LOG_LEVEL", "INFO").upper()
 
+
+def _make_formatter():
+    """
+    Create a ProcessorFormatter whose renderer is chosen from Django settings.
+
+    This factory is called by Django's logging configuration machinery *after*
+    settings are fully loaded, so ``settings.DEBUG`` is always available and
+    we avoid the boot-time mismatch that arises when reading the ``DEBUG``
+    environment variable at module import time.
+    """
+    try:
+        from django.conf import settings  # noqa: PLC0415
+
+        debug = getattr(settings, "DEBUG", False)
+    except Exception:  # noqa: BLE001
+        debug = False
+
+    renderer = (
+        structlog.dev.ConsoleRenderer()
+        if debug
+        else structlog.processors.JSONRenderer()
+    )
+    return structlog.stdlib.ProcessorFormatter(
+        processors=[
+            structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+            renderer,
+        ]
+    )
+
+
 # structlog ProcessorFormatter-based LOGGING dict.
 # Actual structlog configuration happens in apps.py via configure_structlog().
 # This dict only sets up the stdlib logging side so that Django and third-party
@@ -25,13 +55,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "structlog": {
-            "()": structlog.stdlib.ProcessorFormatter,
-            "processors": [
-                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-                structlog.dev.ConsoleRenderer()
-                if os.environ.get("DEBUG", "").lower() in ("true", "1", "yes")
-                else structlog.processors.JSONRenderer(),
-            ],
+            "()": _make_formatter,
         }
     },
     "handlers": {
