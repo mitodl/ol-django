@@ -27,7 +27,7 @@ def _make_formatter():
     environment variable at module import time.
     """
     try:
-        from django.conf import settings
+        from django.conf import settings  # noqa: PLC0415
 
         debug = getattr(settings, "DEBUG", False)
     except Exception:  # noqa: BLE001
