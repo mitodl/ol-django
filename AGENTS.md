@@ -34,7 +34,7 @@ uv run scripts/changelog.py create --app <appname>
 
 ```
 src/<appname>/          # Each reusable app's package root
-  mitol/<appname>/      # Code lives under implicit namespace `mitol`
+  mitol/<appname>/      # Code lives under the `mitol` pkg_resources namespace package
     apps.py             # AppConfig: registered via full dotted path in INSTALLED_APPS (e.g., "mitol.<appname>.apps.<AppConfigName>")
     settings/           # App settings modules (imported by testapp)
   pyproject.toml        # Per-app package config and versioning
@@ -52,7 +52,7 @@ pyproject.toml          # Root: workspace config, pytest config, ruff config, de
 
 ## Key Conventions
 
-**Namespace packages**: All app code lives under the `mitol` implicit namespace. Module paths are `mitol.<appname>.*`. Apps register in `INSTALLED_APPS` using their `AppConfig` class (e.g., `"mitol.common.apps.CommonApp"`).
+**Namespace packages**: All app code lives under the `mitol` `pkg_resources` namespace package (each app's `mitol/__init__.py` calls `pkg_resources.declare_namespace(__name__)`). Module paths are `mitol.<appname>.*`. Apps register in `INSTALLED_APPS` using their `AppConfig` class (e.g., `"mitol.common.apps.CommonApp"`).
 
 **Settings**: App-specific settings use a `MITOL_` prefix and are declared in `mitol.<appname>.settings.*` modules. The testapp imports them via `import_settings_modules()` in `testapp/main/settings/shared.py`. New apps must be added there.
 
