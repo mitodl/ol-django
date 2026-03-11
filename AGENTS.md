@@ -44,7 +44,7 @@ testapp/                # Django project used only for testing
   main/settings/
     shared.py           # Base settings, INSTALLED_APPS, imports app settings modules
     test.py             # Test settings (loaded by pytest)
-    dev.py              # Local dev settings (gitignored; copy from example.dev.py)
+    dev.py              # Local dev settings (copy from example.dev.py if you need local overrides)
 
 conftest.py             # Root-level pytest fixtures (learner, staff_user, clients, etc.)
 pyproject.toml          # Root: workspace config, pytest config, ruff config, dev deps
