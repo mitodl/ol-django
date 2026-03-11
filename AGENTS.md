@@ -10,7 +10,7 @@ MIT Open Learning's monorepo of reusable Django apps, published individually to 
 # Install dependencies
 uv sync
 
-# Run all tests (requires PostgreSQL at localhost:5432)
+# Run all tests (requires PostgreSQL; defaults to DATABASE_URL, e.g., docker-compose Postgres on localhost:55432)
 uv run pytest
 
 # Run a specific test file
