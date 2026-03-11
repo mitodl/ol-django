@@ -1,6 +1,10 @@
 """Test-only settings"""
 
+import os
+
 from mitol.common.envs import import_settings_modules
+
+os.environ.setdefault("OTEL_SERVICE_NAME", "testapp")
 
 import_settings_modules("main.settings.shared")
 

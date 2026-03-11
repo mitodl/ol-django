@@ -24,6 +24,7 @@ dependencies = [
   "mitol-django-transcoding",
   "mitol-django-scim[celery]",
   "mitol-django-apigateway",
+  "mitol-django-observability",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -97,6 +98,7 @@ mitol-django-uvtestapp = { workspace = true }
 mitol-django-transcoding = { workspace = true }
 mitol-django-scim = { workspace = true }
 mitol-django-apigateway = { workspace = true }
+mitol-django-observability = { workspace = true }
 
 [tool.hatch.build.targets.sdist]
 include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]

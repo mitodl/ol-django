@@ -32,6 +32,7 @@ import_settings_modules(
     "mitol.scim.settings.scim",
     "mitol.apigateway.settings",
     "mitol.olposthog.settings.olposthog",
+    "mitol.observability.settings.logging",
 )
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -80,6 +81,7 @@ INSTALLED_APPS = [
     "mitol.transcoding.apps.Transcoding",
     "mitol.scim.apps.ScimApp",
     "mitol.apigateway.apps.ApigatewayApp",
+    "mitol.observability.apps.ObservabilityConfig",
     # test app, integrates the reusable apps
     "main",
     "users",
