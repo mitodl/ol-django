@@ -35,7 +35,6 @@ build-backend = "hatchling.build"
 
 [tool.uv]
 managed = true
-override-dependencies = ["setuptools<80"]
 dev-dependencies = [
     "GitPython",
     "anys>=0.3.1",
