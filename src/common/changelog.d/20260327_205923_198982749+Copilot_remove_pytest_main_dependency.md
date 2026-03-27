@@ -19,7 +19,7 @@ For top level release notes, leave all the headers commented out.
 -->
 ### Changed
 
-- Moved `pytest` and `factory-boy` from main dependencies to optional `testing` dependencies. Install with `mitol-django-common[testing]` to use testing utilities.
+- Moved `pytest` and `factory-boy` from main dependencies to a `[dependency-groups] dev` group per PEP 735. These are development-only tools and should not be installed in production environments.
 
 <!--
 ### Deprecated

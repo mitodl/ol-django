@@ -19,7 +19,9 @@ requires-python = ">=3.10"
 celery = [
   "celery>=5.5.0",
 ]
-testing = [
+
+[dependency-groups]
+dev = [
   "factory-boy~=3.2",
   "pytest>=9,<10",
 ]
