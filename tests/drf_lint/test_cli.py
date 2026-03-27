@@ -99,6 +99,34 @@ def test_cli_new_violation_after_baseline(tmp_path: Path):
     assert main([str(f), "--baseline", str(baseline_path)]) == 1
 
 
+def test_cli_generate_baseline_zero_violations_clears_file(tmp_path: Path):
+    """--generate-baseline with a clean file overwrites any existing baseline."""
+    # First generate a baseline with violations
+    bad = _write(tmp_path / "serializers.py", _BAD_SERIALIZER)
+    baseline_path = tmp_path / "baseline.json"
+    main([str(bad), "--generate-baseline", "--baseline", str(baseline_path)])
+    assert len(json.loads(baseline_path.read_text())) > 0
+
+    # Then regenerate on a clean file — baseline should be empty
+    clean = _write(tmp_path / "clean_serializers.py", _CLEAN_SERIALIZER)
+    result = main([str(clean), "--generate-baseline", "--baseline", str(baseline_path)])
+    assert result == 0
+    assert json.loads(baseline_path.read_text()) == []
+
+
+def test_cli_generate_baseline_overwrites_not_merges(tmp_path: Path):
+    """--generate-baseline replaces the baseline rather than appending to it."""
+    f = _write(tmp_path / "serializers.py", _BAD_SERIALIZER)
+    baseline_path = tmp_path / "baseline.json"
+    main([str(f), "--generate-baseline", "--baseline", str(baseline_path)])
+    first_keys = set(json.loads(baseline_path.read_text()))
+
+    # Regenerate on the same file — keys should be identical (not doubled)
+    main([str(f), "--generate-baseline", "--baseline", str(baseline_path)])
+    second_keys = set(json.loads(baseline_path.read_text()))
+    assert first_keys == second_keys
+
+
 def test_cli_prints_violations(tmp_path: Path, capsys):
     """Violations are printed to stdout with rule code and filename."""
     f = _write(tmp_path / "serializers.py", _BAD_SERIALIZER)

@@ -65,8 +65,7 @@ def main(argv: list[str] | None = None) -> int:
         all_violations.extend((str(path), v) for v in check_file(path))
 
     if args.generate_baseline:
-        for filename, violation in all_violations:
-            baseline_mod.save(baseline_path, [violation], filename)
+        baseline_mod.save_all(baseline_path, all_violations)
         print(  # noqa: T201
             f"drf-lint: baseline written to {baseline_path} "
             f"({len(all_violations)} violation(s) recorded)"

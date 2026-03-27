@@ -73,3 +73,27 @@ def test_filter_new_empty_baseline_returns_all():
     ]
     result = baseline_mod.filter_new(violations, "serializers.py", set())
     assert result == violations
+
+
+def test_save_all_overwrites_existing(tmp_baseline: Path):
+    """save_all replaces the baseline rather than merging with it."""
+    v1 = Violation(rule="ORM001", message="test", line=5, col=0)
+    v2 = Violation(rule="ORM002", message="test", line=10, col=0)
+    baseline_mod.save_all(tmp_baseline, [("serializers.py", v1)])
+    assert "serializers.py:5:0:ORM001" in baseline_mod.load(tmp_baseline)
+
+    baseline_mod.save_all(tmp_baseline, [("serializers.py", v2)])
+    loaded = baseline_mod.load(tmp_baseline)
+    # Old entry replaced — only the new violation remains
+    assert "serializers.py:10:0:ORM002" in loaded
+    assert "serializers.py:5:0:ORM001" not in loaded
+
+
+def test_save_all_empty_clears_baseline(tmp_baseline: Path):
+    """save_all with no violations writes an empty baseline."""
+    v = Violation(rule="ORM001", message="test", line=5, col=0)
+    baseline_mod.save_all(tmp_baseline, [("serializers.py", v)])
+    assert len(baseline_mod.load(tmp_baseline)) == 1
+
+    baseline_mod.save_all(tmp_baseline, [])
+    assert baseline_mod.load(tmp_baseline) == set()

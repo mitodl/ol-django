@@ -134,6 +134,18 @@ class MySerializer(serializers.Serializer):
     assert not _violations(source)
 
 
+def test_orm001_noqa_with_trailing_explanation():
+    """'# noqa: ORM001 # some explanation' suppresses the violation."""
+    source = """
+from rest_framework import serializers
+
+class MySerializer(serializers.Serializer):
+    def get_obj(self, instance):
+        return MyModel.objects.get(pk=instance.pk)  # noqa: ORM001 # intentional
+"""
+    assert not _violations(source)
+
+
 def test_orm001_noqa_bare():
     """A bare '# noqa' suppresses all violations on that line."""
     source = """

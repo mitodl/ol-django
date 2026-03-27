@@ -75,5 +75,5 @@ repos:
   - id: drf-serializer-orm-check
     name: DRF Serializer ORM Check
     entry: drf-lint
-    language: python
+    language: system
     files: "serializers\\.py$"

@@ -36,6 +36,17 @@ def save(path: Path, violations: list[Violation], filename: str) -> None:
     path.write_text(json.dumps(merged, indent=2) + "\n", encoding="utf-8")
 
 
+def save_all(path: Path, violations: list[tuple[str, Violation]]) -> None:
+    """Write *violations* to the baseline, replacing any existing content.
+
+    Unlike :func:`save`, this function overwrites the baseline with exactly
+    the provided violations — suitable for ``--generate-baseline`` where the
+    intent is a fresh snapshot of current violations.
+    """
+    keys = sorted({v.baseline_key(filename) for filename, v in violations})
+    path.write_text(json.dumps(keys, indent=2) + "\n", encoding="utf-8")
+
+
 def filter_new(
     violations: list[Violation],
     filename: str,

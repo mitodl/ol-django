@@ -115,6 +115,7 @@ def _is_noqa(source_lines: list[str], violation: Violation) -> bool:
     if "# noqa:" not in line:
         return True
     # Specific codes, e.g. ``# noqa: ORM001`` or ``# noqa: ORM001,ORM002``
-    noqa_part = line[line.index("# noqa:") + 7 :].strip()
+    # Strip any trailing inline comment like ``# explanation``
+    noqa_part = line[line.index("# noqa:") + 7 :].split("#")[0].strip()
     codes = {c.strip() for c in noqa_part.split(",")}
     return violation.rule in codes
