@@ -70,10 +70,3 @@ repos:
   - id: actionlint
     name: actionlint
     description: Runs actionlint to lint GitHub Actions workflow files
-- repo: local
-  hooks:
-  - id: drf-serializer-orm-check
-    name: DRF Serializer ORM Check
-    entry: drf-lint
-    language: system
-    files: "serializers\\.py$"
