@@ -13,6 +13,9 @@ from mitol.drf_lint.rules.base import Violation
 # (POST / PATCH / PUT) on a single resource, so N+1 queries cannot occur
 # in the same way as in read-path methods like `to_representation` or
 # `get_*` methods.  Flagging them produces false positives.
+# NOTE: This exemption intentionally does NOT apply to ListSerializer
+# subclasses, whose create/update methods handle bulk operations where
+# N+1 patterns can and do occur.
 _EXEMPT_METHODS: frozenset[str] = frozenset(
     {
         "validate",
@@ -38,6 +41,10 @@ class _SerializerORMVisitor(cst.CSTVisitor):
         self._class_stack: list[cst.ClassDef] = []
         self._in_serializer_method: bool = False
         self._method_state_stack: list[bool] = []
+        # Tracks how many function scopes deep we are.  Class definitions do
+        # not increment this counter, so a direct method on a class always
+        # sees depth 0 when it is first entered.
+        self._function_depth: int = 0
         self.violations: list[Violation] = []
 
     # ------------------------------------------------------------------ #
@@ -58,17 +65,26 @@ class _SerializerORMVisitor(cst.CSTVisitor):
     def visit_FunctionDef(self, node: cst.FunctionDef) -> None:  # noqa: N802
         # Save current state before entering this function.
         self._method_state_stack.append(self._in_serializer_method)
-        # A method is "inside a serializer" only when its immediately enclosing
-        # class is a serializer.  Nested classes (e.g. Meta) reset this to False.
-        # Write-path methods (validate, validate_*, create, update,
-        # to_internal_value) are exempt because they operate on a single
-        # resource and N+1 detection doesn't apply.
-        in_serializer = bool(
-            self._class_stack and _is_serializer_class(self._class_stack[-1])
-        )
-        self._in_serializer_method = in_serializer and not _is_exempt_method(node)
+        if self._function_depth == 0:
+            # Direct class method (or module-level function): apply the full
+            # serializer / exempt-name logic.  Nested classes (e.g. Meta) also
+            # produce depth-0 entry points, and their non-serializer class name
+            # correctly suppresses checking via _is_serializer_class.
+            enclosing = self._class_stack[-1] if self._class_stack else None
+            in_serializer = bool(enclosing and _is_serializer_class(enclosing))
+            # Write-path methods are exempt only for regular (single-resource)
+            # serializers.  ListSerializer.create/update handle bulk operations
+            # and can have genuine N+1 issues, so they are NOT exempt.
+            is_list = _is_list_serializer_class(enclosing)
+            exempt = in_serializer and not is_list and _is_exempt_method(node)
+            self._in_serializer_method = in_serializer and not exempt
+        # else: nested function — inherit the enclosing function's state so
+        # that helpers defined inside an exempt method stay exempt, and helpers
+        # inside a checked method are still checked.
+        self._function_depth += 1
 
     def leave_FunctionDef(self, node: cst.FunctionDef) -> None:  # noqa: ARG002, N802
+        self._function_depth -= 1
         if self._method_state_stack:
             self._in_serializer_method = self._method_state_stack.pop()
 
@@ -94,6 +110,29 @@ def _is_serializer_class(node: cst.ClassDef) -> bool:
     if node.name.value.endswith("Serializer"):
         return True
     return any(_expr_contains_serializer(base.value) for base in node.bases)
+
+
+def _is_list_serializer_class(node: cst.ClassDef | None) -> bool:
+    """Return True if the class appears to be a ListSerializer subclass.
+
+    ListSerializer.create/update operate on multiple objects and can have
+    genuine N+1 issues, so write-path exemptions do not apply.
+    """
+    if node is None:
+        return False
+    if node.name.value.endswith("ListSerializer"):
+        return True
+    return any(_expr_contains_list_serializer(base.value) for base in node.bases)
+
+
+def _expr_contains_list_serializer(expr: cst.BaseExpression) -> bool:
+    if isinstance(expr, cst.Name):
+        return expr.value.endswith("ListSerializer")
+    if isinstance(expr, cst.Attribute):
+        return expr.attr.value.endswith(
+            "ListSerializer"
+        ) or _expr_contains_list_serializer(expr.value)
+    return False
 
 
 def _expr_contains_serializer(expr: cst.BaseExpression) -> bool:

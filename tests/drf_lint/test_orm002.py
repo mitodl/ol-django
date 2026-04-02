@@ -233,3 +233,61 @@ class MySerializer(serializers.Serializer):
 """
     violations = _violations(source)
     assert any(v.rule == "ORM002" for v in violations)
+
+
+def test_orm002_nested_helper_inside_exempt_method_not_flagged():
+    """A nested helper def inside an exempt method inherits the exempt state."""
+    source = """
+from rest_framework import serializers
+
+class MySerializer(serializers.Serializer):
+    def create(self, validated_data):
+        def _sync_children(obj, items):
+            return obj.children.filter(active=True).update(data=items)
+        instance = super().create(validated_data)
+        _sync_children(instance, validated_data.get("children", []))
+        return instance
+"""
+    assert not _violations(source)
+
+
+def test_orm002_nested_helper_inside_checked_method_is_flagged():
+    """A nested helper def inside a non-exempt method is still checked."""
+    source = """
+from rest_framework import serializers
+
+class MySerializer(serializers.Serializer):
+    def get_summary(self, instance):
+        def _count():
+            return instance.runs.filter(published=True).count()
+        return _count()
+"""
+    violations = _violations(source)
+    assert any(v.rule == "ORM002" for v in violations)
+
+
+def test_orm002_list_serializer_create_is_flagged():
+    """create() on a ListSerializer is NOT exempt — bulk writes can have N+1."""
+    source = """
+from rest_framework import serializers
+
+class MyListSerializer(serializers.ListSerializer):
+    def create(self, validated_data):
+        for item in validated_data:
+            instance.tags.filter(active=True).delete()
+"""
+    violations = _violations(source)
+    assert any(v.rule == "ORM002" for v in violations)
+
+
+def test_orm002_list_serializer_update_is_flagged():
+    """update() on a ListSerializer is NOT exempt — bulk writes can have N+1."""
+    source = """
+from rest_framework import serializers
+
+class MyListSerializer(serializers.ListSerializer):
+    def update(self, instance, validated_data):
+        return [obj.children.all() for obj in instance]
+"""
+    violations = _violations(source)
+    assert any(v.rule == "ORM002" for v in violations)
