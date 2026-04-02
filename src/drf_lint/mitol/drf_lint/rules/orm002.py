@@ -13,7 +13,6 @@ database query for every serialized object instance (N+1).
 from __future__ import annotations
 
 import libcst as cst
-
 from mitol.drf_lint.rules.base import Violation
 
 RULE = "ORM002"

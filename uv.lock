@@ -1569,7 +1569,7 @@ wheels = [
 
 [[package]]
 name = "mitol-django-apigateway"
-version = "2025.8.14"
+version = "2026.4.2"
 source = { editable = "src/apigateway" }
 dependencies = [
     { name = "channels" },
@@ -1588,7 +1588,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-authentication"
-version = "2025.3.17"
+version = "2026.4.2"
 source = { editable = "src/authentication" }
 dependencies = [
     { name = "django" },
@@ -1624,7 +1624,7 @@ provides-extras = ["touchstone"]
 
 [[package]]
 name = "mitol-django-common"
-version = "2025.12.23.2"
+version = "2026.4.2"
 source = { editable = "src/common" }
 dependencies = [
     { name = "django" },
@@ -1660,7 +1660,7 @@ provides-extras = ["celery"]
 
 [[package]]
 name = "mitol-django-digitalcredentials"
-version = "2025.3.17"
+version = "2026.4.2"
 source = { editable = "src/digitalcredentials" }
 dependencies = [
     { name = "django" },
@@ -1685,7 +1685,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-geoip"
-version = "2025.3.17"
+version = "2026.4.2"
 source = { editable = "src/geoip" }
 dependencies = [
     { name = "django" },
@@ -1706,7 +1706,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-google-sheets"
-version = "2025.6.13"
+version = "2026.4.2"
 source = { editable = "src/google_sheets" }
 dependencies = [
     { name = "django" },
@@ -1735,7 +1735,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-google-sheets-deferrals"
-version = "2025.3.17"
+version = "2026.4.2"
 source = { editable = "src/google_sheets_deferrals" }
 dependencies = [
     { name = "django" },
@@ -1756,7 +1756,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-google-sheets-refunds"
-version = "2025.6.13"
+version = "2026.4.2"
 source = { editable = "src/google_sheets_refunds" }
 dependencies = [
     { name = "django" },
@@ -1777,7 +1777,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-hubspot-api"
-version = "2025.12.18"
+version = "2026.4.2"
 source = { editable = "src/hubspot_api" }
 dependencies = [
     { name = "django" },
@@ -1804,7 +1804,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-mail"
-version = "2025.6.24"
+version = "2026.4.2"
 source = { editable = "src/mail" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -1831,7 +1831,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-oauth-toolkit-extensions"
-version = "2025.3.17"
+version = "2026.4.2"
 source = { editable = "src/oauth_toolkit_extensions" }
 dependencies = [
     { name = "django" },
@@ -1890,7 +1890,7 @@ provides-extras = ["sentry"]
 
 [[package]]
 name = "mitol-django-olposthog"
-version = "2026.3.6"
+version = "2026.4.2"
 source = { editable = "src/olposthog" }
 dependencies = [
     { name = "django" },
@@ -1909,7 +1909,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-openedx"
-version = "2025.3.17"
+version = "2026.4.2"
 source = { editable = "src/openedx" }
 dependencies = [
     { name = "django" },
@@ -1926,7 +1926,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-payment-gateway"
-version = "2025.3.17"
+version = "2026.4.2"
 source = { editable = "src/payment_gateway" }
 dependencies = [
     { name = "cybersource-rest-client-python" },
@@ -1945,7 +1945,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-scim"
-version = "2025.7.29"
+version = "2026.4.2"
 source = { editable = "src/scim" }
 dependencies = [
     { name = "django" },
@@ -1978,7 +1978,7 @@ provides-extras = ["celery"]
 
 [[package]]
 name = "mitol-django-transcoding"
-version = "2025.5.21"
+version = "2026.4.2"
 source = { editable = "src/transcoding" }
 dependencies = [
     { name = "boto3" },

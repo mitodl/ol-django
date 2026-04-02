@@ -2,5 +2,5 @@
 
 default_app_config = "mitol.olposthog.apps.OlPosthog"
 
-__version__ = "2026.3.6"
+__version__ = "2026.4.2"
 __distributionname__ = "mitol-django-OlPosthog"
