@@ -10,7 +10,6 @@ from __future__ import annotations
 import os
 
 from django.conf import settings
-
 from mitol.observability.alerting import AlertRuleGroup, LokiRule, PrometheusRule
 
 

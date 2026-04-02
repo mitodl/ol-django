@@ -6,7 +6,6 @@ from pathlib import Path
 
 import libcst as cst
 from libcst.metadata import MetadataWrapper, PositionProvider
-
 from mitol.drf_lint.rules import orm001, orm002
 from mitol.drf_lint.rules.base import Violation
 

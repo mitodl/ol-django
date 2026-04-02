@@ -8,7 +8,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import RemoteUserBackend
 from django.db import transaction
-
 from mitol.apigateway.api import decode_x_header
 
 log = logging.getLogger(__name__)

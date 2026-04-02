@@ -9,7 +9,6 @@ from urllib.parse import quote_plus, urljoin
 import pytz
 from django.conf import settings
 from django.urls import reverse
-
 from mitol.common.utils.base import base_register_subclasses_factory
 from mitol.google_sheets.constants import (
     GOOGLE_AUTH_PROVIDER_X509_CERT_URL,

@@ -3,7 +3,6 @@
 from django.conf import settings
 from django.http import HttpRequest
 from django.templatetags.static import static
-
 from mitol.common.utils.urls import ensure_trailing_slash
 
 

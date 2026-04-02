@@ -12,7 +12,6 @@ N+1 query bugs.
 from __future__ import annotations
 
 import libcst as cst
-
 from mitol.drf_lint.rules.base import Violation
 
 RULE = "ORM001"

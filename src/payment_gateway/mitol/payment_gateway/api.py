@@ -26,7 +26,6 @@ with warnings.catch_warnings():
         TransactionDetailsApi,
     )
 from django.conf import settings
-
 from mitol.common.utils.datetime import now_in_utc
 from mitol.payment_gateway.constants import (
     ISO_8601_FORMAT,

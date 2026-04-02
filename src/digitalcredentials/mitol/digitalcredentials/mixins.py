@@ -4,11 +4,10 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
 from django.contrib.contenttypes.models import ContentType
+from mitol.digitalcredentials.serializers import DigitalCredentialRequestSerializer
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
-
-from mitol.digitalcredentials.serializers import DigitalCredentialRequestSerializer
 
 
 class LearnerObjectModelViewSet(ABC):  # pragma: no cover

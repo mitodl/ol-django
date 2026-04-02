@@ -3,7 +3,6 @@ import logging
 import celery
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-
 from mitol.common.utils.celery import get_celery_app
 from mitol.common.utils.collections import chunks
 from mitol.scim import api

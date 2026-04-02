@@ -9,7 +9,6 @@ from typing import Any
 
 import structlog
 from django.conf import settings
-
 from mitol.observability.processors import inject_k8s_context, inject_otel_context
 
 # Idempotency guard prevents double-configuration under Django autoreload

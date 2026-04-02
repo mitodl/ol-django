@@ -4,7 +4,6 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
-
 from mitol.mail.api import get_message_classes
 from mitol.mail.forms import EmailDebuggerForm
 

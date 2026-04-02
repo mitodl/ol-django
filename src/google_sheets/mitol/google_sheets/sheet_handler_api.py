@@ -7,7 +7,6 @@ import operator as op
 from django.conf import settings
 from django.db import transaction
 from django.utils.functional import cached_property
-
 from mitol.common.utils.collections import group_into_dict
 from mitol.common.utils.config import get_missing_settings
 from mitol.google_sheets.api import get_authorized_pygsheets_client

@@ -4,7 +4,6 @@ import re
 import sys
 
 from django.core.management.base import BaseCommand
-
 from mitol.observability.alerting import LokiRule, PrometheusRule, get_all_rule_groups
 from mitol.observability.alerts.baseline import BaselineAlerts
 

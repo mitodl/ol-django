@@ -7,7 +7,6 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
 from django.utils.module_loading import import_string
-
 from mitol.common.utils import now_in_utc
 from mitol.digitalcredentials.models import DigitalCredentialRequest, LearnerDID
 from mitol.digitalcredentials.requests_utils import (

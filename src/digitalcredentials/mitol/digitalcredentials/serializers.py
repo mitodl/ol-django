@@ -4,16 +4,6 @@ import json
 import logging
 from typing import cast
 
-from rest_framework.serializers import (
-    CharField,
-    IntegerField,
-    ModelSerializer,
-    Serializer,
-    SerializerMethodField,
-    UUIDField,
-    ValidationError,
-)
-
 from mitol.digitalcredentials.backend import (
     build_credential,
     create_deep_link_url,
@@ -24,6 +14,15 @@ from mitol.digitalcredentials.models import (
     DigitalCredential,
     DigitalCredentialRequest,
     LearnerDID,
+)
+from rest_framework.serializers import (
+    CharField,
+    IntegerField,
+    ModelSerializer,
+    Serializer,
+    SerializerMethodField,
+    UUIDField,
+    ValidationError,
 )
 
 log = logging.getLogger(__name__)

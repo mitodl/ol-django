@@ -11,7 +11,6 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from google.auth.exceptions import GoogleAuthError
 from google_auth_oauthlib.flow import Flow
-
 from mitol.google_sheets.constants import REQUIRED_GOOGLE_API_SCOPES
 from mitol.google_sheets.models import GoogleApiAuth
 from mitol.google_sheets.utils import generate_google_client_config

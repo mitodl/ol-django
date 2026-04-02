@@ -28,9 +28,8 @@ from django.core.mail import get_connection as django_get_connection
 from django.core.mail.backends.base import BaseEmailBackend
 from django.template.loader import render_to_string
 from django.utils.module_loading import import_string
-from toolz import compose, partial
-
 from mitol.mail.messages import TemplatedMessage
+from toolz import compose, partial
 
 log = logging.getLogger(__name__)
 

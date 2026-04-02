@@ -5,7 +5,6 @@ from pathlib import Path
 
 import yaml
 from django.core.management.base import BaseCommand
-
 from mitol.observability.alerting import get_all_rule_groups
 from mitol.observability.alerts.baseline import BaselineAlerts
 

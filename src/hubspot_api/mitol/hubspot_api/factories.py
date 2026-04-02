@@ -9,7 +9,6 @@ from factory import Factory, Faker, LazyAttribute, Sequence, SubFactory
 from factory.django import DjangoModelFactory
 from factory.fuzzy import FuzzyInteger, FuzzyText
 from hubspot.crm.objects import SimplePublicObject
-
 from mitol.hubspot_api.models import HubspotObject
 
 pytestmark = pytest.mark.django_db

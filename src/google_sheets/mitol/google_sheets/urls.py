@@ -1,7 +1,6 @@
 """Endpoint URLs for sheets app"""
 
 from django.urls import re_path
-
 from mitol.google_sheets import views
 
 app_name = "google-sheets"

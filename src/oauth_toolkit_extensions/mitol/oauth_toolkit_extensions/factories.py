@@ -3,14 +3,13 @@
 from factory import Faker, SelfAttribute, Sequence, SubFactory
 from factory.django import DjangoModelFactory
 from factory.fuzzy import FuzzyChoice
+from mitol.oauth_toolkit_extensions.models import ApplicationAccess
 from oauth2_provider.models import (
     get_access_token_model,
     get_application_model,
     get_grant_model,
     get_refresh_token_model,
 )
-
-from mitol.oauth_toolkit_extensions.models import ApplicationAccess
 
 DEFAULT_SCOPE = "custom_scope_1 custom_scope_2"
 

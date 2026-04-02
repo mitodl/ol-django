@@ -10,12 +10,11 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django_scim.adapters import SCIMUser
 from django_scim.utils import get_user_adapter
+from mitol.scim.constants import SchemaURI
+from mitol.scim.requests import InMemoryHttpRequest
 from more_itertools import chunked, first, partition
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
-
-from mitol.scim.constants import SchemaURI
-from mitol.scim.requests import InMemoryHttpRequest
 
 User = get_user_model()
 UserAdapter: type[SCIMUser] = get_user_adapter()

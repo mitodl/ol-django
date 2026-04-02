@@ -1,9 +1,8 @@
 """OAuth toolkit extensions model classes"""
 
 from django.db import models
-from oauth2_provider.settings import oauth2_settings
-
 from mitol.common.models import TimestampedModel
+from oauth2_provider.settings import oauth2_settings
 
 APPLICATION_MODEL = oauth2_settings.APPLICATION_MODEL
 

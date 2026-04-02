@@ -1,7 +1,6 @@
 """URL configurations for digital credentials"""
 
 from django.urls import path
-
 from mitol.digitalcredentials.views import DigitalCredentialIssueView
 
 app_name = "digital-credentials"

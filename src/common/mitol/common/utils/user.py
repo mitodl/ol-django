@@ -7,7 +7,6 @@ import string
 
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
-
 from mitol.common.constants import (
     USERNAME_COLLISION_ATTEMPTS,
     USERNAME_INVALID_CHAR_PATTERN,

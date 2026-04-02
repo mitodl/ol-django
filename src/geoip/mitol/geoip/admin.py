@@ -1,7 +1,6 @@
 """Admin for geoip models"""
 
 from django.contrib import admin
-
 from mitol.geoip import models
 
 

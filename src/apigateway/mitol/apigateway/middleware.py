@@ -10,7 +10,6 @@ from django.contrib.auth.middleware import (
     PersistentRemoteUserMiddleware,
     RemoteUserMiddleware,
 )
-
 from mitol.apigateway.api import get_user_id_from_userinfo_header
 
 log = logging.getLogger(__name__)
