@@ -7,8 +7,6 @@ dependencies = [
   "django-stubs>=1.13.1",
   "django-webpack-loader>=0.7.0",
   "django>=3.0",
-  "factory-boy~=3.2",
-  "pytest>=9,<10",
   "pytz>=2020.4",
   "requests>=2.20.0",
   "typing-extensions",
@@ -20,6 +18,12 @@ requires-python = ">=3.10"
 [project.optional-dependencies]
 celery = [
   "celery>=5.5.0",
+]
+
+[dependency-groups]
+dev = [
+  "factory-boy~=3.2",
+  "pytest>=9,<10",
 ]
 
 [tool.bumpver]

@@ -1631,8 +1631,6 @@ dependencies = [
     { name = "django-redis" },
     { name = "django-stubs" },
     { name = "django-webpack-loader" },
-    { name = "factory-boy" },
-    { name = "pytest" },
     { name = "pytz" },
     { name = "requests" },
     { name = "typing-extensions" },
@@ -1643,6 +1641,12 @@ celery = [
     { name = "celery" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "factory-boy" },
+    { name = "pytest" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "celery", marker = "extra == 'celery'", specifier = ">=5.5.0" },
@@ -1650,13 +1654,17 @@ requires-dist = [
     { name = "django-redis", specifier = "~=6.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
     { name = "django-webpack-loader", specifier = ">=0.7.0" },
-    { name = "factory-boy", specifier = "~=3.2" },
-    { name = "pytest", specifier = ">=9,<10" },
     { name = "pytz", specifier = ">=2020.4" },
     { name = "requests", specifier = ">=2.20.0" },
     { name = "typing-extensions" },
 ]
 provides-extras = ["celery"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "factory-boy", specifier = "~=3.2" },
+    { name = "pytest", specifier = ">=9,<10" },
+]
 
 [[package]]
 name = "mitol-django-digitalcredentials"
