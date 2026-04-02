@@ -146,3 +146,90 @@ class MySerializer(serializers.Serializer):
         return list(instance.resource_prices.all())  # noqa
 """
     assert not _violations(source)
+
+
+# ------------------------------------------------------------------ #
+# Exempt write-path methods — should NOT flag
+# ------------------------------------------------------------------ #
+
+
+def test_orm002_exempt_validate():
+    """ORM calls inside `validate` are not flagged (write-path method)."""
+    source = """
+from rest_framework import serializers
+
+class MySerializer(serializers.Serializer):
+    def validate(self, attrs):
+        if not instance.related_items.filter(active=True).exists():
+            raise serializers.ValidationError("No active items")
+        return attrs
+"""
+    assert not _violations(source)
+
+
+def test_orm002_exempt_validate_field():
+    """ORM calls inside `validate_<field>` methods are not flagged (write-path)."""
+    source = """
+from rest_framework import serializers
+
+class MySerializer(serializers.Serializer):
+    def validate_topic(self, value):
+        return value.subtopics.filter(enabled=True).first()
+"""
+    assert not _violations(source)
+
+
+def test_orm002_exempt_create():
+    """ORM calls inside `create` are not flagged (write-path method)."""
+    source = """
+from rest_framework import serializers
+
+class MySerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        children = validated_data.pop("children", [])
+        obj = super().create(validated_data)
+        for child_data in children:
+            obj.children.filter(pk=child_data["pk"]).update(**child_data)
+        return obj
+"""
+    assert not _violations(source)
+
+
+def test_orm002_exempt_update():
+    """ORM calls inside `update` are not flagged (write-path method)."""
+    source = """
+from rest_framework import serializers
+
+class MySerializer(serializers.ModelSerializer):
+    def update(self, instance, validated_data):
+        instance.tags.filter(active=False).delete()
+        return super().update(instance, validated_data)
+"""
+    assert not _violations(source)
+
+
+def test_orm002_exempt_to_internal_value():
+    """ORM calls inside `to_internal_value` are not flagged (write-path method)."""
+    source = """
+from rest_framework import serializers
+
+class MySerializer(serializers.Serializer):
+    def to_internal_value(self, data):
+        result = super().to_internal_value(data)
+        result["items"] = instance.items.all()
+        return result
+"""
+    assert not _violations(source)
+
+
+def test_orm002_non_exempt_method_still_flagged():
+    """ORM calls in non-exempt methods (e.g., `get_*`) are still flagged."""
+    source = """
+from rest_framework import serializers
+
+class MySerializer(serializers.Serializer):
+    def get_children(self, instance):
+        return list(instance.children.all())
+"""
+    violations = _violations(source)
+    assert any(v.rule == "ORM002" for v in violations)

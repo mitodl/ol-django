@@ -1,6 +1,6 @@
 [project]
 name = "mitol-drf-lint"
-version = "2025.3.27"
+version = "2026.4.2"
 description = "LibCST-based linting rules for DRF serializers — detects ORM queries causing N+1"
 authors = [
     { name = "MIT Open Learning Engineering", email = "odl-devops@mit.edu" }
@@ -19,7 +19,7 @@ drf-lint = "mitol.drf_lint.cli:main"
 Repository = "https://github.com/mitodl/ol-django"
 
 [tool.bumpver]
-current_version = "2025.3.27"
+current_version = "2026.4.2"
 version_pattern = "YYYY.MM.DD[.INC0]"
 
 [tool.bumpver.file_patterns]

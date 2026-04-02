@@ -2014,7 +2014,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-drf-lint"
-version = "2025.3.27"
+version = "2026.4.2"
 source = { editable = "src/drf_lint" }
 dependencies = [
     { name = "libcst" },

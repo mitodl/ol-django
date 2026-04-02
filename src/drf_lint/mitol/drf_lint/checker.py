@@ -9,6 +9,25 @@ from libcst.metadata import MetadataWrapper, PositionProvider
 from mitol.drf_lint.rules import orm001, orm002
 from mitol.drf_lint.rules.base import Violation
 
+# These serializer methods are only ever invoked during write operations
+# (POST / PATCH / PUT) on a single resource, so N+1 queries cannot occur
+# in the same way as in read-path methods like `to_representation` or
+# `get_*` methods.  Flagging them produces false positives.
+_EXEMPT_METHODS: frozenset[str] = frozenset(
+    {
+        "validate",
+        "create",
+        "update",
+        "to_internal_value",
+    }
+)
+
+
+def _is_exempt_method(node: cst.FunctionDef) -> bool:
+    """Return True if *node* is a write-path method exempt from ORM checks."""
+    name = node.name.value
+    return name in _EXEMPT_METHODS or name.startswith("validate_")
+
 
 class _SerializerORMVisitor(cst.CSTVisitor):
     """Walk a CST looking for ORM calls inside serializer class methods."""
@@ -36,14 +55,18 @@ class _SerializerORMVisitor(cst.CSTVisitor):
     # Method tracking
     # ------------------------------------------------------------------ #
 
-    def visit_FunctionDef(self, node: cst.FunctionDef) -> None:  # noqa: ARG002, N802
+    def visit_FunctionDef(self, node: cst.FunctionDef) -> None:  # noqa: N802
         # Save current state before entering this function.
         self._method_state_stack.append(self._in_serializer_method)
         # A method is "inside a serializer" only when its immediately enclosing
         # class is a serializer.  Nested classes (e.g. Meta) reset this to False.
-        self._in_serializer_method = bool(
+        # Write-path methods (validate, validate_*, create, update,
+        # to_internal_value) are exempt because they operate on a single
+        # resource and N+1 detection doesn't apply.
+        in_serializer = bool(
             self._class_stack and _is_serializer_class(self._class_stack[-1])
         )
+        self._in_serializer_method = in_serializer and not _is_exempt_method(node)
 
     def leave_FunctionDef(self, node: cst.FunctionDef) -> None:  # noqa: ARG002, N802
         if self._method_state_stack:
@@ -113,7 +136,7 @@ def _is_noqa(source_lines: list[str], violation: Violation) -> bool:
     # Bare noqa (no codes) suppresses everything on this line.
     if "# noqa:" not in line:
         return True
-    # Specific codes, e.g. ``# noqa: ORM001`` or ``# noqa: ORM001,ORM002``
+    # Specific rule codes, e.g. ``ORM001`` or ``ORM001,ORM002`` after "# noqa:"
     # Strip any trailing inline comment like ``# explanation``
     noqa_part = line[line.index("# noqa:") + 7 :].split("#")[0].strip()
     codes = {c.strip() for c in noqa_part.split(",")}
