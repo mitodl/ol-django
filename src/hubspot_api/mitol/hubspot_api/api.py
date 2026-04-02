@@ -22,10 +22,9 @@ from hubspot.crm.objects import (
     SimplePublicObjectInput,
 )
 from hubspot.crm.properties.exceptions import ApiException as PropertiesApiException
-from urllib3 import Retry
-
 from mitol.common.utils.collections import replace_null_values
 from mitol.hubspot_api.models import HubspotObject
+from urllib3 import Retry
 
 log = logging.getLogger()
 

@@ -1,7 +1,6 @@
 """URL configurations for SCIM"""
 
 from django.urls import include, re_path
-
 from mitol.scim import views
 
 ol_scim_urls = (

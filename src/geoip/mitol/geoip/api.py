@@ -6,7 +6,6 @@ from decimal import Decimal
 
 from django.db import transaction
 from django.db.models import Q
-
 from mitol.geoip import models
 
 MAXMIND_CSV_COUNTRY_LOCATIONS_LITE = "geolite2-country-locations"

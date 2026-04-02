@@ -3,9 +3,8 @@ from collections.abc import Callable
 
 from django.contrib.auth import get_user_model
 from django.db.models import Model, Q
-from pyparsing import ParseResults
-
 from mitol.scim.parser import Filters, TermType
+from pyparsing import ParseResults
 
 
 class FilterQuery:

@@ -1,7 +1,6 @@
 """URLs for Transcoding app."""
 
 from django.urls import path
-
 from mitol.transcoding.views import TranscodeJobView
 
 urlpatterns = [

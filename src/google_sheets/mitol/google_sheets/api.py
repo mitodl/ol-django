@@ -15,7 +15,6 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials
 from googleapiclient.discovery import build
-
 from mitol.common.utils import now_in_utc
 from mitol.google_sheets.constants import (
     DEFAULT_GOOGLE_EXPIRE_TIMEDELTA,

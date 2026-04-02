@@ -11,7 +11,6 @@ from django_scim import constants as djs_constants
 from django_scim import exceptions
 from django_scim import views as djs_views
 from django_scim.utils import get_base_scim_location_getter
-
 from mitol.scim import constants
 from mitol.scim.requests import InMemoryHttpRequest
 

@@ -3,13 +3,12 @@
 import json
 
 from django.db import transaction
+from mitol.digitalcredentials.serializers import DigitalCredentialIssueSerializer
 from oauth2_provider.contrib.rest_framework import OAuth2Authentication, TokenHasScope
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-
-from mitol.digitalcredentials.serializers import DigitalCredentialIssueSerializer
 
 
 class DigitalCredentialIssueView(GenericAPIView):

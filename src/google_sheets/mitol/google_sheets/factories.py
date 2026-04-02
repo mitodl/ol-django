@@ -2,7 +2,6 @@
 
 from factory import Faker, SubFactory
 from factory.django import DjangoModelFactory
-
 from mitol.common.factories import UserFactory
 from mitol.google_sheets import models
 

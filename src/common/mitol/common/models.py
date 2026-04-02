@@ -19,7 +19,6 @@ from django.db.models import (
     prefetch_related_objects,
 )
 from django.db.models.query import QuerySet
-
 from mitol.common.utils.datetime import now_in_utc
 
 

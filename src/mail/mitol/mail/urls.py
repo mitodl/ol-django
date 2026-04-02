@@ -2,7 +2,6 @@
 
 from django.conf import settings
 from django.urls import re_path
-
 from mitol.mail.views import EmailDebuggerView
 
 urlpatterns = []

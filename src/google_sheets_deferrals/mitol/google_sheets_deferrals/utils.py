@@ -1,7 +1,6 @@
 """Google Sheets Deferrals app util functions"""
 
 from django.conf import settings
-
 from mitol.google_sheets.constants import GOOGLE_API_TRUE_VAL
 from mitol.google_sheets.exceptions import SheetRowParsingException
 from mitol.google_sheets.utils import (

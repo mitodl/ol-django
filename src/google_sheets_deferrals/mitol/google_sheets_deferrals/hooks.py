@@ -3,7 +3,6 @@ import typing
 import pluggy
 from django.conf import settings
 from django.utils.module_loading import import_string
-
 from mitol.google_sheets_deferrals.utils import DeferralRequestRow
 
 

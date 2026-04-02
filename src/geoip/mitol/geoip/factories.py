@@ -7,7 +7,6 @@ import ipaddress
 import faker
 from factory import LazyAttribute, LazyFunction, fuzzy
 from factory.django import DjangoModelFactory
-
 from mitol.geoip import models
 
 fake = faker.Faker()

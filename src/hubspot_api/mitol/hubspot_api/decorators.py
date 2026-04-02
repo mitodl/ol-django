@@ -4,9 +4,8 @@ import functools
 from collections.abc import Callable
 
 from hubspot.crm.objects import ApiException
-from rest_framework.status import HTTP_429_TOO_MANY_REQUESTS
-
 from mitol.hubspot_api.exceptions import TooManyRequestsException
+from rest_framework.status import HTTP_429_TOO_MANY_REQUESTS
 
 
 def raise_429(func) -> Callable:

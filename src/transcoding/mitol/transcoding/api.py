@@ -5,7 +5,6 @@ from pathlib import Path
 
 import boto3
 from django.conf import settings
-
 from mitol.transcoding.constants import GroupSettings
 from mitol.transcoding.utils import (
     FileConfig,

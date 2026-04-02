@@ -1,10 +1,9 @@
 """oauth_toolkit_extensions admin"""
 
 from django.contrib import admin
+from mitol.oauth_toolkit_extensions.models import ApplicationAccess
 from oauth2_provider.admin import ApplicationAdmin
 from oauth2_provider.models import get_application_model
-
-from mitol.oauth_toolkit_extensions.models import ApplicationAccess
 
 
 class ApplicationAccessInlineAdmin(admin.StackedInline):

@@ -4,7 +4,6 @@ Admin site bindings for sheets models
 
 from django.contrib import admin
 from django.core.exceptions import ValidationError
-
 from mitol.common.admin import SingletonModelAdmin
 from mitol.google_sheets import models
 

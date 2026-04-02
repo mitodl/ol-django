@@ -3,7 +3,6 @@
 from django.contrib.contenttypes.models import ContentType
 from factory import LazyAttribute, SelfAttribute, Sequence, SubFactory
 from factory.django import DjangoModelFactory
-
 from mitol.digitalcredentials.models import (
     DigitalCredential,
     DigitalCredentialRequest,

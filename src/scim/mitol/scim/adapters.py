@@ -5,9 +5,8 @@ from typing import Union
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django_scim.adapters import SCIMUser
-from scim2_filter_parser.attr_paths import AttrPath
-
 from mitol.scim.constants import SchemaURI
+from scim2_filter_parser.attr_paths import AttrPath
 
 User = get_user_model()
 

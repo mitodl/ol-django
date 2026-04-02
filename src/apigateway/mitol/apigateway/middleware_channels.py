@@ -18,7 +18,6 @@ import logging
 from channels.auth import AuthMiddleware
 from channels.db import database_sync_to_async
 from channels.sessions import CookieMiddleware, SessionMiddleware
-
 from mitol.apigateway.api import get_user_id_from_userinfo_header
 from mitol.apigateway.backends import ApisixRemoteUserBackend
 

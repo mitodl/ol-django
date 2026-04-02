@@ -1,7 +1,6 @@
 """Mail forms"""
 
 from django import forms
-
 from mitol.mail.api import get_message_classes
 
 
