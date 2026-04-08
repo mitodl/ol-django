@@ -48,6 +48,12 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Ignore any baseline file and report all violations",
     )
+    parser.add_argument(
+        "--exclude",
+        nargs="+",
+        help="File glob to ignore",
+        default=[],
+    )
     args = parser.parse_args(argv)
 
     if not args.files:
@@ -55,14 +61,21 @@ def main(argv: list[str] | None = None) -> int:
 
     baseline_path = Path(args.baseline)
     known: set[str] = set() if args.no_baseline else baseline_mod.load(baseline_path)
+    excludes: set[str] = set()
+
+    for exclude_arg in args.exclude:
+        excludes |= set(Path.glob(exclude_arg))
 
     all_violations: list[tuple[str, Violation]] = []
     for file_arg in args.files:
-        path = Path(file_arg)
-        if not path.exists():
-            print(f"drf-lint: {file_arg}: file not found", file=sys.stderr)  # noqa: T201
+        paths = list(Path.glob(file_arg))
+        if not paths:
+            print(f"drf-lint: {file_arg}: file(s) not found", file=sys.stderr)  # noqa: T201
             continue
-        all_violations.extend((str(path), v) for v in check_file(path))
+        for path in paths:
+            if path in excludes:
+                continue
+            all_violations.extend((str(path), v) for v in check_file(path))
 
     if args.generate_baseline:
         baseline_mod.save_all(baseline_path, all_violations)

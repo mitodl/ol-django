@@ -59,7 +59,7 @@ def test_cli_nonexistent_file(tmp_path: Path, capsys):
     result = main([str(tmp_path / "missing.py"), "--no-baseline"])
     assert result == 0
     captured = capsys.readouterr()
-    assert "file not found" in captured.err
+    assert "file(s) not found" in captured.err
 
 
 def test_cli_generate_baseline(tmp_path: Path):
@@ -71,6 +71,46 @@ def test_cli_generate_baseline(tmp_path: Path):
     assert baseline_path.exists()
     keys = json.loads(baseline_path.read_text())
     assert len(keys) > 0
+
+
+def test_cli_generate_baseline_globs(tmp_path: Path):
+    """--generate-baseline writes violations to baseline.json and exits with 0."""
+    _write(tmp_path / "serializers.py", _BAD_SERIALIZER)
+    _write(tmp_path / "serializers_2.py", _BAD_SERIALIZER_ORM002)
+    baseline_path = tmp_path / "baseline.json"
+    result = main(
+        [
+            f"{tmp_path!s}/*.py",
+            "--generate-baseline",
+            "--baseline",
+            str(baseline_path),
+        ]
+    )
+    assert result == 0
+    assert baseline_path.exists()
+    keys = json.loads(baseline_path.read_text())
+    assert len(keys) == 2  # noqa: PLR2004
+
+
+def test_cli_generate_baseline_globs_exclude(tmp_path: Path):
+    """--generate-baseline writes violations to baseline.json and exits with 0."""
+    _write(tmp_path / "serializers.py", _BAD_SERIALIZER)
+    _write(tmp_path / "serializers_2.py", _BAD_SERIALIZER_ORM002)
+    baseline_path = tmp_path / "baseline.json"
+    result = main(
+        [
+            f"{tmp_path!s}/*.py",
+            "--generate-baseline",
+            "--baseline",
+            str(baseline_path),
+            "--exclude",
+            f"{tmp_path!s}/*_2.py",
+        ]
+    )
+    assert result == 0
+    assert baseline_path.exists()
+    keys = json.loads(baseline_path.read_text())
+    assert len(keys) == 1
 
 
 def test_cli_baseline_suppresses_known_violations(tmp_path: Path):
@@ -133,3 +173,30 @@ def test_cli_prints_violations(tmp_path: Path, capsys):
     main([str(f), "--no-baseline"])
     captured = capsys.readouterr()
     assert "ORM001" in captured.out
+
+
+def test_cli_prints_violations_globs(tmp_path: Path, capsys):
+    """Violations are printed to stdout with rule code and filename."""
+    _write(tmp_path / "serializers.py", _BAD_SERIALIZER)
+    _write(tmp_path / "serializers_2.py", _BAD_SERIALIZER_ORM002)
+    main([f"{tmp_path!s}/*.py", "--no-baseline"])
+    captured = capsys.readouterr()
+    assert "ORM001" in captured.out
+    assert "ORM002" in captured.out
+
+
+def test_cli_prints_violations_globs_exclude(tmp_path: Path, capsys):
+    """Violations are printed to stdout with rule code and filename."""
+    _write(tmp_path / "serializers.py", _BAD_SERIALIZER)
+    _write(tmp_path / "serializers_2.py", _BAD_SERIALIZER_ORM002)
+    main(
+        [
+            f"{tmp_path!s}/*.py",
+            "--no-baseline",
+            "--exclude",
+            f"{tmp_path!s}/*_2.py",
+        ]
+    )
+    captured = capsys.readouterr()
+    assert "ORM001" in captured.out
+    assert "ORM002" not in captured.out
