@@ -4,7 +4,7 @@ version = "2026.3.11"
 description = "MIT Open Learning Django plugin for OpenTelemetry, structured logging, and alerting"
 readme = "README.md"
 license = "BSD-3-Clause"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "django>=4.2",
     "mitol-django-common",
