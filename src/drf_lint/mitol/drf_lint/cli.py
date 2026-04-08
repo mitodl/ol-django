@@ -64,11 +64,11 @@ def main(argv: list[str] | None = None) -> int:
     excludes: set[str] = set()
 
     for exclude_arg in args.exclude:
-        excludes |= set(Path.glob(exclude_arg))
+        excludes |= set(Path().glob(exclude_arg))
 
     all_violations: list[tuple[str, Violation]] = []
     for file_arg in args.files:
-        paths = list(Path.glob(file_arg))
+        paths = list(Path().glob(file_arg))
         if not paths:
             print(f"drf-lint: {file_arg}: file(s) not found", file=sys.stderr)  # noqa: T201
             continue
