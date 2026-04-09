@@ -25,10 +25,10 @@ drf-lint path/to/serializers.py
 drf-lint $(find . -name "serializers.py" -not -path "*/migrations/*")
 
 # Generate a baseline to suppress existing violations (for gradual rollout)
-drf-lint --generate-baseline --baseline drf_lint_baseline.json path/to/serializers.py
+drf-lint --generate-baseline --baseline drf_lint_baseline.json --exclude '**/*_test.py' '*/serializers.py' '*/serializers/**/*.py'
 
 # Subsequent runs ignore violations present in the baseline
-drf-lint --baseline drf_lint_baseline.json path/to/serializers.py
+drf-lint --baseline drf_lint_baseline.json --exclude '**/*_test.py' '*/serializers.py' '*/serializers/**/*.py'
 ```
 
 Exit code is `0` when no new violations are found, `1` when violations are detected.
