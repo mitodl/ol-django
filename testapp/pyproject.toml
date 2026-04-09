@@ -23,5 +23,5 @@ dependencies = [
 ]
 readme = "README.md"
 license = "BSD-3-Clause"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = ["Private :: Do Not Upload"]

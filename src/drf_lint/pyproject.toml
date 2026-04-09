@@ -6,7 +6,7 @@ authors = [
     { name = "MIT Open Learning Engineering", email = "odl-devops@mit.edu" }
 ]
 license = "BSD-3-Clause"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 readme = "README.md"
 dependencies = [
     "libcst>=1.0,<2",

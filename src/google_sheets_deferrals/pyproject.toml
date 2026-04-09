@@ -11,7 +11,7 @@ dependencies = [
 ]
 readme = "README.md"
 license = "BSD-3-Clause"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 
 [tool.bumpver]
 current_version = "2026.4.2"
