@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -1428,7 +1428,6 @@ dependencies = [
     { name = "channels" },
     { name = "django" },
     { name = "django-stubs" },
-    { name = "edx-opaque-keys" },
 ]
 
 [package.metadata]
@@ -1436,7 +1435,6 @@ requires-dist = [
     { name = "channels", specifier = ">=4.2.0" },
     { name = "django", specifier = ">=3.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
-    { name = "edx-opaque-keys", specifier = "==3.1.0" },
 ]
 
 [[package]]
