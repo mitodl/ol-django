@@ -1,5 +1,5 @@
-# syntax=docker/dockerfile:1
-FROM ubuntu:latest as base
+# syntax=docker/dockerfile:1@sha256:2780b5c3bab67f1f76c781860de469442999ed1a0d7992a5efdf2cffc0e3d769
+FROM ubuntu:latest@sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194ebcc41c7b as base
 
 SHELL ["bash", "-l", "-c"]
 ENV SHELL=/bin/bash
@@ -17,7 +17,7 @@ WORKDIR /tmp
 COPY apt.txt /tmp/apt.txt
 RUN xargs apt-get install -y <apt.txt
 
-COPY --from=ghcr.io/astral-sh/uv:0.11.2 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.11.2@sha256:c4f5de312ee66d46810635ffc5df34a1973ba753e7241ce3a08ef979ddd7bea5 /uv /uvx /bin/
 
 RUN useradd -G ubuntu dev
 USER dev
