@@ -35,7 +35,7 @@ jobs:
     # Service containers to run
     services:
       postgres:
-        image: postgres
+        image: postgres@sha256:52e6ffd11fddd081ae63880b635b2a61c14008c17fc98cdc7ce5472265516dd0
         env:
           POSTGRES_PASSWORD: postgres
         # Set health checks to wait until postgres has started
@@ -100,7 +100,7 @@ jobs:
     - name: Build
       run: PYTHONPATH=build-support/bin uv build "src/${{steps.get-app-name.outputs.app-package}}"
 
-    - uses: pypa/gh-action-pypi-publish@release/v1
+    - uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
       with:
         user: __token__
         password: ${{ secrets.PYPI_TOKEN }}

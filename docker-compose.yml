@@ -2,7 +2,7 @@
 services:
 
   db:
-    image: postgres
+    image: postgres@sha256:52e6ffd11fddd081ae63880b635b2a61c14008c17fc98cdc7ce5472265516dd0
     environment:
       POSTGRES_DB: ol_django
       POSTGRES_PASSWORD: postgres
@@ -10,7 +10,7 @@ services:
     - "${POSTGRES_PORT:-55432}:5432"
 
   redis:
-    image: redis
+    image: redis@sha256:1f073813b641755b70b0200da64131bbeeb4ec5b633ca67772229b49820caafa
     ports:
     - "${REDIS_PORT:-36379}:6379"
 
