@@ -26,13 +26,13 @@ class ApisixUserMiddleware(RemoteUserMiddleware):
         log.debug("ApisixUserMiddleware.process_request: started")
 
         if settings.MITOL_APIGATEWAY_DISABLE_MIDDLEWARE:
-            return None
+            return
 
         if request.META.get(settings.MITOL_APIGATEWAY_USERINFO_HEADER_NAME):
             request.META["REMOTE_USER"] = get_user_id_from_userinfo_header(request)
 
         super().process_request(request)
-        return None
+        return
 
     def process_response(self, request, response):
         """Set redirect cookie on the outgoing response when next is provided."""
