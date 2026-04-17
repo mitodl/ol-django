@@ -24,7 +24,8 @@ jobs:
 
   tests:
     runs-on: ubuntu-24.04
-    name: Python tests (Python ${{ matrix.python-version}}, Django ${{ matrix.django-version }})
+    name: Python tests (Python ${{ matrix.python-version}}, Django ${{ matrix.django-version
+      }})
     strategy:
       matrix:
         python-version:
