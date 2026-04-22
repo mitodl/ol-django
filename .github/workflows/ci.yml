@@ -24,13 +24,23 @@ jobs:
 
   tests:
     runs-on: ubuntu-24.04
-    name: Python tests
+    name: Python tests (Python ${{ matrix.python-version}}, Django ${{ matrix.django-version
+      }})
     strategy:
       matrix:
         python-version:
         - "3.11"
         - "3.12"
         - "3.13"
+        django-version:
+        - "4.2"
+        - "5.0"
+        - "5.1"
+        exclude:
+        - python-version: "3.13"
+          django-version: "4.2"
+        - python-version: "3.13"
+          django-version: "5.0"
 
     # Service containers to run
     services:
@@ -65,11 +75,20 @@ jobs:
     - name: Pin python-version ${{ matrix.python-version }}
       run: uv python pin ${{ matrix.python-version }}
 
+    - name: Install tox
+      run: uv tool install tox --with tox-uv
+
     - name: Install dependencies
       run: uv sync
 
     - name: Tests
-      run: uv run pytest
+      env:
+        TOXENV: 'py${{ matrix.python-version }}-django${{ matrix.django-version }}'
+
+      run: |
+        TOXENV=${{ env.TOXENV }}
+        TOXENV=${TOXENV//.} # replace all dots
+        tox
 
       # - name: Upload coverage to CodeCov
       #   uses: codecov/codecov-action@v1

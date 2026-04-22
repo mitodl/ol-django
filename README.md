@@ -86,6 +86,15 @@ The management commands for each ol-django app should be available. If you need 
 
 Run `uv run pytest`. This should run all the tests. If you want to run a specific one, specify with a file path as per usual. Use the whole path (so `tests/mitol/<appname>/etc`).
 
+#### Testing with tox
+
+If you want ot run the full test suite of all supported python/django versions, you can install tox and run pytest with that:
+
+```shell
+uv tool install tox --with tox-uv
+tox
+```
+
 ### Changelogs
 
 We maintain changelogs in `changelog.d/` directories with each app. To create a new changelog for your changes, run:
