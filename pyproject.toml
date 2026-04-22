@@ -67,10 +67,10 @@ dev = [
     "mitol-drf-lint",
 ]
 django42 = [
-  "Django>=4.2,<4.3"
+  "Django>=5.1,<5.2"
 ]
 django50 = [
-  "Django>=5.0,<5.1"
+  "Django>=5.1,<5.2"
 ]
 django51 = [
   "Django>=5.1,<5.2"
