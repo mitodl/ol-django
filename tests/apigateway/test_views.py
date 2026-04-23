@@ -80,7 +80,8 @@ def test_logout(next_url, client, user, has_apisix_header):
         )
 
 
-def test_logout_preserves_next_cookie_for_apisix_round_trip(client, user, _apigateway_reqs):
+@pytest.mark.usefixtures("_apigateway_reqs")
+def test_logout_preserves_next_cookie_for_apisix_round_trip(client, user):
     """The next cookie should be re-set when APISIX logout is required."""
     header_str = b64encode(
         json.dumps(
