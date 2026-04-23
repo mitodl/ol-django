@@ -80,6 +80,31 @@ def test_logout(next_url, client, user, has_apisix_header):
         )
 
 
+def test_logout_preserves_next_cookie_for_apisix_round_trip(client, user):
+    """The next cookie should be re-set when APISIX logout is required."""
+    header_str = b64encode(
+        json.dumps(
+            {
+                "username": user.username,
+                "email": user.email,
+                "global_id": user.global_id,
+            }
+        ).encode()
+    )
+    client.force_login(user)
+    client.cookies["next"] = "/search"
+
+    response = client.get(
+        INTERNAL_LOGOUT_URL_PATH,
+        follow=False,
+        HTTP_X_USERINFO=header_str,
+    )
+
+    assert response.url == settings.MITOL_APIGATEWAY_LOGOUT_URL
+    assert response.cookies.get("next")
+    assert response.cookies["next"].value == "/search"
+
+
 @pytest.mark.parametrize("is_authenticated", [True])
 @pytest.mark.parametrize("has_next", [False])
 @pytest.mark.parametrize("next_host_is_invalid", [True, False])
