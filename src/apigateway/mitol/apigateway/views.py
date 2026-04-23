@@ -81,7 +81,11 @@ class ApiGatewayLogoutView(View):
         if request.META.get(settings.MITOL_APIGATEWAY_USERINFO_HEADER_NAME):
             # Still logged in via Apisix/Keycloak, so log out there as well
             log.debug("views.ApiGatewayLogoutView.get: Send to APISIX logout URL")
-            return redirect(settings.MITOL_APIGATEWAY_LOGOUT_URL)
+            response = redirect(settings.MITOL_APIGATEWAY_LOGOUT_URL)
+            if request.GET.get("next"):
+                # Preserve post-logout destination through the APISIX logout round-trip.
+                response.set_cookie("next", user_redirect_url, max_age=30, secure=False)
+            return response
         else:
             log.debug("views.ApiGatewayLogoutView.get: Send to %s", user_redirect_url)
             return redirect(user_redirect_url)
