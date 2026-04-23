@@ -96,7 +96,7 @@ def test_logout_preserves_next_cookie_for_apisix_round_trip(client, user):
     client.cookies["next"] = "/search"
 
     response = client.get(
-        INTERNAL_LOGOUT_URL_PATH,
+        f"{INTERNAL_LOGOUT_URL_PATH}/",
         follow=False,
         HTTP_X_USERINFO=header_str,
     )
