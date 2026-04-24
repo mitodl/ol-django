@@ -79,6 +79,7 @@ def test_logout(next_url, client, user, has_apisix_header):
             next_url if next_url else settings.MITOL_APIGATEWAY_DEFAULT_POST_LOGOUT_DEST
         )
 
+
 @pytest.mark.parametrize("is_authenticated", [True])
 @pytest.mark.parametrize("has_next", [False])
 @pytest.mark.parametrize("next_host_is_invalid", [True, False])
