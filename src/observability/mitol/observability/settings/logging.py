@@ -33,18 +33,32 @@ def _make_formatter():
     except Exception:  # noqa: BLE001
         debug = False
 
-    renderer = (
-        structlog.dev.ConsoleRenderer()
-        if debug
-        else structlog.processors.JSONRenderer()
+    from mitol.observability.logging import (  # noqa: PLC0415
+        _EXCEPTION_RENDERER,
+        _shared_processors,
     )
-    from mitol.observability.logging import _shared_processors  # noqa: PLC0415
 
-    return structlog.stdlib.ProcessorFormatter(
-        processors=[
+    if debug:
+        # ConsoleRenderer handles exc_info natively; no extra processor needed.
+        renderer: structlog.types.Processor = structlog.dev.ConsoleRenderer()
+        processors = [
             structlog.stdlib.ProcessorFormatter.remove_processors_meta,
             renderer,
-        ],
+        ]
+    else:
+        # _EXCEPTION_RENDERER must appear before JSONRenderer so that the
+        # exc_info field from foreign stdlib records (Django, third-party
+        # libraries) is converted to a structured ``exception`` dict instead
+        # of being serialised as a raw Python traceback object reference.
+        renderer = structlog.processors.JSONRenderer()
+        processors = [
+            structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+            _EXCEPTION_RENDERER,
+            renderer,
+        ]
+
+    return structlog.stdlib.ProcessorFormatter(
+        processors=processors,
         foreign_pre_chain=_shared_processors(),
     )
 
@@ -83,6 +97,24 @@ LOGGING = {
         "opensearch": {"handlers": ["console"], "level": "ERROR", "propagate": False},
         "nplusone": {"handlers": ["console"], "level": "ERROR", "propagate": False},
         "zeal": {"handlers": ["console"], "level": "ERROR", "propagate": False},
+        # Celery worker and task loggers
+        "celery": {"handlers": ["console"], "level": LOG_LEVEL, "propagate": False},
+        "celery.task": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "celery.worker": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        # django-structlog context propagation middleware
+        "django_structlog": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
     },
     "root": {"handlers": ["console"], "level": LOG_LEVEL},
 }
