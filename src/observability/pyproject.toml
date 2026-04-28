@@ -18,6 +18,14 @@ dependencies = [
 
 [project.optional-dependencies]
 sentry = ["structlog-sentry>=2.0.0"]
+celery = [
+    # django-structlog provides request-context propagation from web workers
+    # to Celery tasks (request_id, user_id, etc.).
+    "django-structlog[celery]>=4.0",
+    # OTel instrumentation for Celery tasks — auto-discovered by the
+    # observability app's entry-point-based auto-instrumentation.
+    "opentelemetry-instrumentation-celery>=0.50b0",
+]
 
 [tool.bumpver]
 current_version = "2026.3.11"

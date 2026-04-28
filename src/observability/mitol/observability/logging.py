@@ -14,6 +14,18 @@ from mitol.observability.processors import inject_k8s_context, inject_otel_conte
 # Idempotency guard prevents double-configuration under Django autoreload
 _configured = False
 
+# Structured exception renderer for production JSON logs.  show_locals=False
+# prevents local variable values from leaking into log output (security +
+# size), and max_frames=20 keeps payloads reasonable.  The dict format is
+# preferred over a flat string because Loki / Grafana can index individual
+# fields (exc_type, exc_value, frames[].filename, etc.) for rich querying.
+_EXCEPTION_RENDERER = structlog.processors.ExceptionRenderer(
+    structlog.processors.ExceptionDictTransformer(
+        show_locals=False,
+        max_frames=20,
+    )
+)
+
 
 def _get_log_level() -> str:
     return os.environ.get("LOG_LEVEL", "INFO").upper()
@@ -37,7 +49,7 @@ def _shared_processors() -> list[Any]:
     ]
 
 
-def configure_structlog(*, debug: bool | None = None) -> None:
+def configure_structlog(*, debug: bool | None = None, force: bool = False) -> None:
     """
     Configure structlog and route stdlib logging through it.
 
@@ -46,9 +58,12 @@ def configure_structlog(*, debug: bool | None = None) -> None:
 
     Args:
         debug: Override debug mode detection. If None, reads from Django settings.
+        force: Re-run configuration even if already configured.  Use this in
+            Celery worker processes via ``setup_celery_logging`` to ensure
+            structlog is active after Celery resets logging.
     """
     global _configured  # noqa: PLW0603
-    if _configured:
+    if _configured and not force:
         return
     _configured = True
 
@@ -61,11 +76,30 @@ def configure_structlog(*, debug: bool | None = None) -> None:
     shared = _shared_processors()
 
     if debug:
-        exc_processor = structlog.dev.set_exc_info
-        renderer = structlog.dev.ConsoleRenderer(colors=True)
+        # ConsoleRenderer handles exc_info tuples natively (including rich/
+        # better-exceptions rendering when those libraries are installed).
+        # set_exc_info ensures exc_info=True is resolved to the actual tuple
+        # at call-site so that ConsoleRenderer can render it later.
+        exc_processor: Any = structlog.dev.set_exc_info
+        renderer: Any = structlog.dev.ConsoleRenderer(colors=True)
+        formatter_processors: list[Any] = [
+            structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+            renderer,
+        ]
     else:
-        exc_processor = structlog.processors.format_exc_info
+        # _EXCEPTION_RENDERER converts exc_info (tuple, Exception, or True)
+        # into a structured ``exception`` dict before JSONRenderer serialises
+        # the event.  It must appear in BOTH the structlog pipeline (for
+        # structlog-native records) AND in ProcessorFormatter.processors
+        # (for foreign stdlib records, e.g. Django / third-party loggers,
+        # where exc_info is injected by ProcessorFormatter from LogRecord).
+        exc_processor = _EXCEPTION_RENDERER
         renderer = structlog.processors.JSONRenderer()
+        formatter_processors = [
+            structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+            _EXCEPTION_RENDERER,
+            renderer,
+        ]
 
     # structlog pipeline: ends with wrap_for_formatter so that stdlib records
     # routed through ProcessorFormatter share the same pre-chain processing.
@@ -84,10 +118,7 @@ def configure_structlog(*, debug: bool | None = None) -> None:
     # foreign stdlib records (via foreign_pre_chain).  The final processor
     # must be a renderer that returns a string.
     formatter = structlog.stdlib.ProcessorFormatter(
-        processors=[
-            structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-            renderer,
-        ],
+        processors=formatter_processors,
         foreign_pre_chain=shared,
     )
 
@@ -135,6 +166,28 @@ def configure_structlog(*, debug: bool | None = None) -> None:
                     "propagate": False,
                 },
                 "zeal": {"handlers": ["console"], "level": "ERROR", "propagate": False},
+                # Celery worker and task loggers
+                "celery": {
+                    "handlers": ["console"],
+                    "level": log_level,
+                    "propagate": False,
+                },
+                "celery.task": {
+                    "handlers": ["console"],
+                    "level": log_level,
+                    "propagate": False,
+                },
+                "celery.worker": {
+                    "handlers": ["console"],
+                    "level": log_level,
+                    "propagate": False,
+                },
+                # django-structlog context propagation middleware
+                "django_structlog": {
+                    "handlers": ["console"],
+                    "level": log_level,
+                    "propagate": False,
+                },
             },
             "root": {"handlers": ["console"], "level": log_level},
         }
