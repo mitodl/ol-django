@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -10,6 +10,7 @@ conflicts = [[
     { package = "ol-django", group = "django42" },
     { package = "ol-django", group = "django50" },
     { package = "ol-django", group = "django51" },
+    { package = "ol-django", group = "django52" },
 ]]
 
 [manifest]
@@ -256,7 +257,10 @@ version = "4.2.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asgiref" },
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/16/d6/049f93c3c96a88265a52f85da91d2635279261bbd4a924b45caa43b8822e/channels-4.2.2.tar.gz", hash = "sha256:8d7208e48ab8fdb972aaeae8311ce920637d97656ffc7ae5eca4f93f84bcd9a0", size = 26647, upload-time = "2025-03-30T14:59:20.35Z" }
 wheels = [
@@ -316,7 +320,7 @@ name = "click"
 version = "8.1.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b9/2e/0090cbf739cee7d23781ad4b89a9894a41538e4fcf4c31dcdd705b78eb8b/click-8.1.8.tar.gz", hash = "sha256:ed53c9d8990d83c2a27deae68e4ee337473f6330c040a31d4225c9574d16096a", size = 226593, upload-time = "2024-12-21T18:38:44.339Z" }
 wheels = [
@@ -494,7 +498,7 @@ wheels = [
 
 [package.optional-dependencies]
 toml = [
-    { name = "tomli", marker = "python_full_version <= '3.11' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "tomli", marker = "python_full_version <= '3.11' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
 ]
 
 [[package]]
@@ -502,7 +506,7 @@ name = "cryptography"
 version = "44.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "cffi", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cd/25/4ce80c78963834b8a9fd1cc1266be5ed8d1840785c0f2e1b73b8d128d505/cryptography-44.0.2.tar.gz", hash = "sha256:c63454aa261a0cf0c5b4718349629793e9e634993538db841165b3df74f37ec0", size = 710807, upload-time = "2025-03-02T00:01:37.692Z" }
 wheels = [
@@ -640,7 +644,10 @@ name = "dj-database-url"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/98/9f/fc9905758256af4f68a55da94ab78a13e7775074edfdcaddd757d4921686/dj_database_url-2.3.0.tar.gz", hash = "sha256:ae52e8e634186b57e5a45e445da5dc407a819c2ceed8a53d1fac004cc5288787", size = 10980, upload-time = "2024-10-23T10:05:19.953Z" }
@@ -650,12 +657,55 @@ wheels = [
 
 [[package]]
 name = "django"
+version = "4.2.30"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version == '3.13.*'",
+    "python_full_version < '3.13'",
+]
+dependencies = [
+    { name = "asgiref", marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "sqlparse", marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "tzdata", marker = "(sys_platform == 'win32' and extra == 'group-9-ol-django-django42') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/11/b5/f1a53dc68da6429d6e0345bb848161e2381a2e9f02700148911e8582c2b3/django-4.2.30.tar.gz", hash = "sha256:4ebc7a434e3819db6cf4b399fb5b3f536310a30e8486f08b66886840be84b37c", size = 10468707, upload-time = "2026-04-07T14:05:45.57Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/39/b7/a7c96f239cf91313a6589233fed55111c7063b26683b226802732c455dbc/django-4.2.30-py3-none-any.whl", hash = "sha256:4d07aaf1c62f9984842b67c2874ebbf7056a17be253860299b93ae1881faad65", size = 7997231, upload-time = "2026-04-07T14:05:38.241Z" },
+]
+
+[[package]]
+name = "django"
+version = "5.0.14"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version == '3.13.*'",
+    "python_full_version < '3.13'",
+]
+dependencies = [
+    { name = "asgiref", marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "sqlparse", marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "tzdata", marker = "(sys_platform == 'win32' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9d/a4/cc0205045386b5be8eecb15a95f290383d103f0db5f7e34f93dcc340d5b0/Django-5.0.14.tar.gz", hash = "sha256:29019a5763dbd48da1720d687c3522ef40d1c61be6fb2fad27ed79e9f655bc11", size = 10644306, upload-time = "2025-04-02T11:24:41.396Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c0/93/eabde8789f41910845567ebbff5aacd52fd80e54c934ce15b83d5f552d2c/Django-5.0.14-py3-none-any.whl", hash = "sha256:e762bef8629ee704de215ebbd32062b84f4e56327eed412e5544f6f6eb1dfd74", size = 8185934, upload-time = "2025-04-02T11:24:36.888Z" },
+]
+
+[[package]]
+name = "django"
 version = "5.1.15"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version == '3.13.*'",
+    "python_full_version < '3.13'",
+]
 dependencies = [
-    { name = "asgiref" },
-    { name = "sqlparse" },
-    { name = "tzdata", marker = "sys_platform == 'win32' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "asgiref", marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "sqlparse", marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "tzdata", marker = "(sys_platform == 'win32' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/10/45/1ac68964193cfcc0b0912a0f68025d5bdb54f71ba7b8716e85b959874bd0/django-5.1.15.tar.gz", hash = "sha256:46a356b5ff867bece73fc6365e081f21c569973403ee7e9b9a0316f27d0eb947", size = 10719662, upload-time = "2025-12-02T14:01:31.931Z" }
 wheels = [
@@ -663,11 +713,33 @@ wheels = [
 ]
 
 [[package]]
+name = "django"
+version = "5.2.13"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version == '3.13.*'",
+    "python_full_version < '3.13'",
+]
+dependencies = [
+    { name = "asgiref" },
+    { name = "sqlparse" },
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1f/c5/c69e338eb2959f641045802e5ea87ca4bf5ac90c5fd08953ca10742fad51/django-5.2.13.tar.gz", hash = "sha256:a31589db5188d074c63f0945c3888fad104627dfcc236fb2b97f71f89da33bc4", size = 10890368, upload-time = "2026-04-07T14:02:15.072Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/59/b1/51ab36b2eefcf8cdb9338c7188668a157e29e30306bfc98a379704c9e10d/django-5.2.13-py3-none-any.whl", hash = "sha256:5788fce61da23788a8ce6f02583765ab060d396720924789f97fa42119d37f7a", size = 8310982, upload-time = "2026-04-07T14:02:08.883Z" },
+]
+
+[[package]]
 name = "django-anymail"
 version = "12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "requests" },
     { name = "urllib3" },
 ]
@@ -681,7 +753,10 @@ name = "django-oauth-toolkit"
 version = "3.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "jwcrypto" },
     { name = "oauthlib" },
     { name = "requests" },
@@ -696,7 +771,10 @@ name = "django-redis"
 version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "redis" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/08/53/dbcfa1e528e0d6c39947092625b2c89274b5d88f14d357cee53c4d6dbbd4/django_redis-6.0.0.tar.gz", hash = "sha256:2d9cb12a20424a4c4dde082c6122f486628bae2d9c2bee4c0126a4de7fda00dd", size = 56904, upload-time = "2025-06-17T18:15:46.376Z" }
@@ -709,7 +787,10 @@ name = "django-scim2"
 version = "0.19.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "scim2-filter-parser" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/07/59/da3061607de7be41d7e5bf484acb13510d631f8fcfcecd9f5e02dc5bf4f1/django_scim2-0.19.1.tar.gz", hash = "sha256:8126111160e76a880f6699babc5259f0345c9316c8018ce5dcc3f7579ccb9e89", size = 26988, upload-time = "2023-05-18T01:13:04.017Z" }
@@ -723,7 +804,10 @@ version = "5.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asgiref" },
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-stubs-ext" },
     { name = "types-pyyaml" },
     { name = "typing-extensions" },
@@ -743,7 +827,10 @@ name = "django-stubs-ext"
 version = "5.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9f/06/7b210e0073c6cb8824bde82afc25f268e8c410a99d3621297f44fa3f6a6c/django_stubs_ext-5.1.3.tar.gz", hash = "sha256:3e60f82337f0d40a362f349bf15539144b96e4ceb4dbd0239be1cd71f6a74ad0", size = 9613, upload-time = "2025-02-07T09:56:22.543Z" }
@@ -765,7 +852,10 @@ name = "djangorestframework"
 version = "3.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7d/97/112c5a72e6917949b6d8a18ad6c6e72c46da4290c8f36ee5f1c1dcbc9901/djangorestframework-3.16.0.tar.gz", hash = "sha256:f022ff46613584de994c0c6a4aebbace5fd700555fbe9d33b865ebf173eba6c9", size = 1068408, upload-time = "2025-03-28T14:18:42.065Z" }
 wheels = [
@@ -777,7 +867,10 @@ name = "djangorestframework-simplejwt"
 version = "5.5.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "djangorestframework" },
     { name = "pyjwt" },
 ]
@@ -791,10 +884,14 @@ name = "djoser"
 version = "2.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "djangorestframework" },
     { name = "djangorestframework-simplejwt" },
-    { name = "social-auth-app-django" },
+    { name = "social-auth-app-django", version = "5.4.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "social-auth-app-django", version = "5.7.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/35/bc/8931752c12ddc987fc0c729e9b675e2f72e37ebd82f7ca31a10f287de045/djoser-2.3.3.tar.gz", hash = "sha256:6ceeea9898cbdd585f1daa1ee9d46270600c0401dcd2d1db6f7894782006f6a6", size = 35032, upload-time = "2025-07-13T14:36:03.38Z" }
 wheels = [
@@ -1116,17 +1213,17 @@ name = "ipython"
 version = "9.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
     { name = "decorator" },
     { name = "ipython-pygments-lexers" },
     { name = "jedi" },
     { name = "matplotlib-inline" },
-    { name = "pexpect", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (sys_platform == 'emscripten' and extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (sys_platform == 'emscripten' and extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (sys_platform == 'win32' and extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (sys_platform == 'win32' and extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (sys_platform == 'win32' and extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "pexpect", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (sys_platform == 'emscripten' and extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (sys_platform == 'emscripten' and extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (sys_platform == 'emscripten' and extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (sys_platform == 'emscripten' and extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (sys_platform == 'emscripten' and extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52') or (sys_platform == 'win32' and extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (sys_platform == 'win32' and extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (sys_platform == 'win32' and extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (sys_platform == 'win32' and extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (sys_platform == 'win32' and extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (sys_platform == 'win32' and extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
     { name = "prompt-toolkit" },
     { name = "pygments" },
     { name = "stack-data" },
     { name = "traitlets" },
-    { name = "typing-extensions", marker = "python_full_version < '3.12' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.12' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7d/ce/012a0f40ca58a966f87a6e894d6828e2817657cbdf522b02a5d3a87d92ce/ipython-9.0.2.tar.gz", hash = "sha256:ec7b479e3e5656bf4f58c652c120494df1820f4f28f522fb7ca09e213c2aab52", size = 4366102, upload-time = "2025-03-08T15:04:52.885Z" }
 wheels = [
@@ -1228,8 +1325,8 @@ name = "libcst"
 version = "1.8.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyyaml", marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
-    { name = "pyyaml-ft", marker = "python_full_version >= '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "pyyaml", marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "pyyaml-ft", marker = "python_full_version >= '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5c/55/ca4552d7fe79a91b2a7b4fa39991e8a45a17c8bfbcaf264597d95903c777/libcst-1.8.5.tar.gz", hash = "sha256:e72e1816eed63f530668e93a4c22ff1cf8b91ddce0ec53e597d3f6c53e103ec7", size = 884582, upload-time = "2025-09-26T05:29:44.101Z" }
 wheels = [
@@ -1429,7 +1526,10 @@ version = "2026.4.2"
 source = { editable = "src/apigateway" }
 dependencies = [
     { name = "channels" },
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-stubs" },
 ]
 
@@ -1445,20 +1545,24 @@ name = "mitol-django-authentication"
 version = "2026.4.2"
 source = { editable = "src/authentication" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-anymail" },
     { name = "django-stubs" },
     { name = "djangorestframework" },
     { name = "djoser" },
     { name = "mitol-django-common" },
     { name = "mitol-django-mail" },
-    { name = "social-auth-app-django" },
+    { name = "social-auth-app-django", version = "5.4.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "social-auth-app-django", version = "5.7.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50')" },
 ]
 
 [package.optional-dependencies]
 touchstone = [
-    { name = "python3-saml", marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
-    { name = "xmlsec", marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "python3-saml", marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "xmlsec", marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
 ]
 
 [package.metadata]
@@ -1481,7 +1585,10 @@ name = "mitol-django-common"
 version = "2026.4.2"
 source = { editable = "src/common" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-redis" },
     { name = "django-stubs" },
     { name = "django-webpack-loader" },
@@ -1525,7 +1632,10 @@ name = "mitol-django-digitalcredentials"
 version = "2026.4.2"
 source = { editable = "src/digitalcredentials" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-oauth-toolkit" },
     { name = "django-stubs" },
     { name = "djangorestframework" },
@@ -1550,7 +1660,10 @@ name = "mitol-django-geoip"
 version = "2026.4.2"
 source = { editable = "src/geoip" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-stubs" },
     { name = "factory-boy" },
     { name = "faker" },
@@ -1571,7 +1684,10 @@ name = "mitol-django-google-sheets"
 version = "2026.4.2"
 source = { editable = "src/google_sheets" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-stubs" },
     { name = "factory-boy" },
     { name = "google-api-python-client" },
@@ -1600,7 +1716,10 @@ name = "mitol-django-google-sheets-deferrals"
 version = "2026.4.2"
 source = { editable = "src/google_sheets_deferrals" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-stubs" },
     { name = "mitol-django-common" },
     { name = "mitol-django-google-sheets" },
@@ -1621,7 +1740,10 @@ name = "mitol-django-google-sheets-refunds"
 version = "2026.4.2"
 source = { editable = "src/google_sheets_refunds" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-stubs" },
     { name = "mitol-django-common" },
     { name = "mitol-django-google-sheets" },
@@ -1642,7 +1764,10 @@ name = "mitol-django-hubspot-api"
 version = "2026.4.2"
 source = { editable = "src/hubspot_api" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-stubs" },
     { name = "djangorestframework" },
     { name = "factory-boy" },
@@ -1670,7 +1795,10 @@ version = "2026.4.2"
 source = { editable = "src/mail" }
 dependencies = [
     { name = "beautifulsoup4" },
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-anymail" },
     { name = "django-stubs" },
     { name = "html5lib" },
@@ -1696,7 +1824,10 @@ name = "mitol-django-oauth-toolkit-extensions"
 version = "2026.4.2"
 source = { editable = "src/oauth_toolkit_extensions" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-oauth-toolkit" },
     { name = "django-stubs" },
     { name = "factory-boy" },
@@ -1721,7 +1852,10 @@ name = "mitol-django-observability"
 version = "2026.3.11"
 source = { editable = "src/observability" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "mitol-django-common" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-exporter-otlp-proto-grpc" },
@@ -1755,7 +1889,10 @@ name = "mitol-django-olposthog"
 version = "2026.4.2"
 source = { editable = "src/olposthog" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-stubs" },
     { name = "mitol-django-common" },
     { name = "posthog" },
@@ -1774,7 +1911,10 @@ name = "mitol-django-openedx"
 version = "2026.4.2"
 source = { editable = "src/openedx" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-stubs" },
     { name = "edx-opaque-keys" },
 ]
@@ -1792,7 +1932,10 @@ version = "2026.4.2"
 source = { editable = "src/payment_gateway" }
 dependencies = [
     { name = "cybersource-rest-client-python" },
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-stubs" },
     { name = "mitol-django-common" },
 ]
@@ -1810,7 +1953,10 @@ name = "mitol-django-scim"
 version = "2026.4.2"
 source = { editable = "src/scim" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-scim2" },
     { name = "django-stubs" },
     { name = "mitol-django-common" },
@@ -1844,7 +1990,10 @@ version = "2026.4.2"
 source = { editable = "src/transcoding" }
 dependencies = [
     { name = "boto3" },
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-stubs" },
     { name = "mitol-django-common" },
 ]
@@ -1862,7 +2011,10 @@ name = "mitol-django-uvtestapp"
 version = "2024.10.24"
 source = { editable = "src/uvtestapp" }
 dependencies = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "django-stubs" },
     { name = "edx-opaque-keys" },
 ]
@@ -1950,7 +2102,7 @@ source = { editable = "." }
 dependencies = [
     { name = "mitol-django-apigateway" },
     { name = "mitol-django-authentication" },
-    { name = "mitol-django-authentication", extra = ["touchstone"], marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "mitol-django-authentication", extra = ["touchstone"], marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
     { name = "mitol-django-common", extra = ["celery"] },
     { name = "mitol-django-digitalcredentials" },
     { name = "mitol-django-geoip" },
@@ -2007,13 +2159,16 @@ dev = [
     { name = "typing-extensions" },
 ]
 django42 = [
-    { name = "django" },
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" } },
 ]
 django50 = [
-    { name = "django" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" } },
 ]
 django51 = [
-    { name = "django" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" } },
+]
+django52 = [
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" } },
 ]
 
 [package.metadata]
@@ -2076,9 +2231,10 @@ dev = [
     { name = "toml" },
     { name = "typing-extensions" },
 ]
-django42 = [{ name = "django", specifier = ">=5.1,<5.2" }]
-django50 = [{ name = "django", specifier = ">=5.1,<5.2" }]
+django42 = [{ name = "django", specifier = ">=4.2,<5.0" }]
+django50 = [{ name = "django", specifier = ">=5.0,<5.1" }]
 django51 = [{ name = "django", specifier = ">=5.1,<5.2" }]
+django52 = [{ name = "django", specifier = ">=5.2,<5.3" }]
 
 [[package]]
 name = "opentelemetry-api"
@@ -2517,7 +2673,7 @@ name = "pytest"
 version = "9.0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
     { name = "iniconfig" },
     { name = "packaging" },
     { name = "pluggy" },
@@ -2534,7 +2690,7 @@ version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pytest" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/90/2c/8af215c0f776415f3590cac4f9086ccefd6fd463befeae41cd4d3f193e5a/pytest_asyncio-1.3.0.tar.gz", hash = "sha256:d7f52f36d231b80ee124cd216ffb19369aa168fc10095013c6b014a34d3ee9e5", size = 50087, upload-time = "2025-11-10T16:07:47.256Z" }
 wheels = [
@@ -2631,9 +2787,9 @@ name = "python3-saml"
 version = "1.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "isodate", marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
-    { name = "lxml", marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
-    { name = "xmlsec", marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "isodate" },
+    { name = "lxml" },
+    { name = "xmlsec" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5d/98/6e0268c3a9893af3d4c5cf670183e0314cd6b5cb034a612d6a7cc5060df8/python3-saml-1.16.0.tar.gz", hash = "sha256:97c9669aecabc283c6e5fb4eb264f446b6e006f5267d01c9734f9d8bffdac133", size = 83468, upload-time = "2023-10-09T10:37:43.128Z" }
 wheels = [
@@ -2713,7 +2869,7 @@ name = "redis"
 version = "5.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "async-timeout", marker = "python_full_version < '3.11.3' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "async-timeout", marker = "python_full_version < '3.11.3' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/47/da/d283a37303a995cd36f8b92db85135153dc4f7a8e4441aa827721b442cfb/redis-5.2.1.tar.gz", hash = "sha256:16f2e22dff21d5125e8481515e386711a34cbec50f0e44413dd7d9c060a54e0f", size = 4608355, upload-time = "2024-12-06T09:50:41.956Z" }
 wheels = [
@@ -2888,11 +3044,36 @@ wheels = [
 
 [[package]]
 name = "social-auth-app-django"
+version = "5.4.3"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version == '3.13.*'",
+    "python_full_version < '3.13'",
+]
+dependencies = [
+    { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.0.14", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "social-auth-core", marker = "extra == 'group-9-ol-django-django42' or extra == 'group-9-ol-django-django50' or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2a/07/bb2465e4116d4761b028bd07b99087009caa81c1511c886d74c4ccece3a2/social_auth_app_django-5.4.3.tar.gz", hash = "sha256:d1f4286d5ca1e512c9b2f686e7ecb2a0128148f1a33d853b69dc07b58508362e", size = 24860, upload-time = "2025-02-13T13:07:34.557Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e0/cd/43a25dabdf7689109b01ac866848c984594769ec3cbc5ce4c261b4895237/social_auth_app_django-5.4.3-py3-none-any.whl", hash = "sha256:db70b972faeb10ee1ec83d0dc7dbd0558d5f5830417bba317b712b10ff58d031", size = 26241, upload-time = "2025-02-13T13:07:32.787Z" },
+]
+
+[[package]]
+name = "social-auth-app-django"
 version = "5.7.0"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version == '3.13.*'",
+    "python_full_version < '3.13'",
+]
 dependencies = [
-    { name = "django" },
-    { name = "social-auth-core" },
+    { name = "django", version = "5.1.15", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django51' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "django", version = "5.2.13", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
+    { name = "social-auth-core", marker = "extra == 'group-9-ol-django-django51' or extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/eb/1d/50d9f85975f8aebec6fd353e815d260acada851004e0457fa53e346ed242/social_auth_app_django-5.7.0.tar.gz", hash = "sha256:c0cc118d1bb935dbf02acb8a57fabd7b07694452fce755a5956282c69f019c79", size = 29192, upload-time = "2025-12-18T19:00:26.209Z" }
 wheels = [
@@ -2998,7 +3179,7 @@ source = { virtual = "testapp" }
 dependencies = [
     { name = "mitol-django-apigateway" },
     { name = "mitol-django-authentication" },
-    { name = "mitol-django-authentication", extra = ["touchstone"], marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "mitol-django-authentication", extra = ["touchstone"], marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
     { name = "mitol-django-common", extra = ["celery"] },
     { name = "mitol-django-digitalcredentials" },
     { name = "mitol-django-geoip" },
@@ -3179,7 +3360,7 @@ name = "xmlsec"
 version = "1.3.14"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "lxml", marker = "python_full_version < '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51')" },
+    { name = "lxml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/25/5b/244459b51dfe91211c1d9ec68fb5307dfc51e014698f52de575d25f753e0/xmlsec-1.3.14.tar.gz", hash = "sha256:934f804f2f895bcdb86f1eaee236b661013560ee69ec108d29cdd6e5f292a2d9", size = 68854, upload-time = "2024-04-17T19:34:29.388Z" }
 wheels = [

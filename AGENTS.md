@@ -70,7 +70,7 @@ pyproject.toml          # Root: workspace config, pytest config, ruff config, de
 
 ## CI
 
-CI (`.github/workflows/ci.yml`) runs on every push across Python 3.10–3.13 with a PostgreSQL service container. It checks:
+CI (`.github/workflows/ci.yml`) runs on every push across Python 3.11–3.13 and Django 4.2, 5.0, 5.1, and 5.2 with a PostgreSQL service container. It checks:
 1. Changelog presence (`uv run scripts/changelog.py check`)
 2. Tests (`uv run pytest`)
 
