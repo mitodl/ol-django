@@ -8,30 +8,7 @@ from mitol.api_versioning.mixins import (
     transform_dict_backwards,
 )
 from mitol.api_versioning.transforms import Transform
-from mitol.api_versioning.versions import _registered_transforms, _transform_registry
 from rest_framework import serializers
-
-
-@pytest.fixture(autouse=True)
-def _clear_registry():
-    """Clear the transform registry before and after each test."""
-    saved_registry = dict(_transform_registry)
-    saved_registered = set(_registered_transforms)
-    _transform_registry.clear()
-    _registered_transforms.clear()
-    yield
-    _transform_registry.clear()
-    _registered_transforms.clear()
-    _transform_registry.update(saved_registry)
-    _registered_transforms.update(saved_registered)
-
-
-@pytest.fixture
-def _versions(settings):
-    settings.REST_FRAMEWORK = {
-        **getattr(settings, "REST_FRAMEWORK", {}),
-        "ALLOWED_VERSIONS": ["v0", "v1", "v2"],
-    }
 
 
 class SampleSerializer(VersionedSerializerMixin, serializers.Serializer):
@@ -39,6 +16,19 @@ class SampleSerializer(VersionedSerializerMixin, serializers.Serializer):
 
     name = serializers.CharField()
     value = serializers.IntegerField()
+
+
+SAMPLE_PATH = f"{SampleSerializer.__module__}.{SampleSerializer.__qualname__}"
+
+
+def _make_request(version):
+    """Create a mock request with a version attribute."""
+    return SimpleNamespace(version=version)
+
+
+@pytest.fixture
+def sample_instance():
+    return SimpleNamespace(name="test", value=42)
 
 
 def test_mro_enforcement_rejects_wrong_order():
@@ -49,211 +39,183 @@ def test_mro_enforcement_rejects_wrong_order():
             name = serializers.CharField()
 
 
-def _make_request(version):
-    """Create a mock request with a version attribute."""
-    return SimpleNamespace(version=version)
-
-
 @pytest.mark.usefixtures("_versions")
-def test_mixin_no_transforms():
+def test_mixin_no_transforms(sample_instance):
     """With no transforms, mixin should be a no-op."""
-    request = _make_request("v1")
-    context = {"request": request}
-    serializer = SampleSerializer(context=context)
-
-    instance = SimpleNamespace(name="test", value=42)
-    data = serializer.to_representation(instance)
-    assert data == {"name": "test", "value": 42}
+    serializer = SampleSerializer(context={"request": _make_request("v1")})
+    assert serializer.to_representation(sample_instance) == {
+        "name": "test",
+        "value": 42,
+    }
 
 
 @pytest.mark.usefixtures("_versions")
-def test_mixin_latest_version_no_transform():
+def test_mixin_latest_version_no_transform(sample_instance):
     """Requests at the latest version should not apply transforms."""
-    serializer_path = f"{SampleSerializer.__module__}.{SampleSerializer.__qualname__}"
 
     class RenameTransform(Transform):
         version = "v2"
         description = "Rename name to title"
-        serializer = serializer_path
+        serializer = SAMPLE_PATH
 
         def to_representation(self, data, request, instance):  # noqa: ARG002
             data["name_old"] = data.pop("name")
             return data
 
-    request = _make_request("v2")  # latest
-    context = {"request": request}
-    serializer = SampleSerializer(context=context)
-
-    instance = SimpleNamespace(name="test", value=42)
-    data = serializer.to_representation(instance)
-    assert data == {"name": "test", "value": 42}
+    serializer = SampleSerializer(context={"request": _make_request("v2")})
+    assert serializer.to_representation(sample_instance) == {
+        "name": "test",
+        "value": 42,
+    }
 
 
 @pytest.mark.usefixtures("_versions")
-def test_mixin_older_version_applies_transform():
+def test_mixin_older_version_applies_transform(sample_instance):
     """Requests at an older version should apply transforms backwards."""
-    serializer_path = f"{SampleSerializer.__module__}.{SampleSerializer.__qualname__}"
 
     class RenameTransform(Transform):
         version = "v2"
         description = "Rename name to title"
-        serializer = serializer_path
+        serializer = SAMPLE_PATH
 
         def to_representation(self, data, request, instance):  # noqa: ARG002
             if "name" in data:
                 data["title"] = data.pop("name")
             return data
 
-    request = _make_request("v1")
-    context = {"request": request}
-    serializer = SampleSerializer(context=context)
-
-    instance = SimpleNamespace(name="test", value=42)
-    data = serializer.to_representation(instance)
-    assert data == {"title": "test", "value": 42}
+    serializer = SampleSerializer(context={"request": _make_request("v1")})
+    assert serializer.to_representation(sample_instance) == {
+        "title": "test",
+        "value": 42,
+    }
 
 
 @pytest.mark.usefixtures("_versions")
 def test_mixin_to_internal_value_applies_forward_transform():
     """Incoming data from older version should be transformed forwards."""
-    serializer_path = f"{SampleSerializer.__module__}.{SampleSerializer.__qualname__}"
 
     class RenameTransform(Transform):
         version = "v2"
         description = "Rename title to name"
-        serializer = serializer_path
+        serializer = SAMPLE_PATH
 
         def to_internal_value(self, data, request):  # noqa: ARG002
             if "title" in data:
                 data["name"] = data.pop("title")
             return data
 
-    request = _make_request("v1")
-    context = {"request": request}
-    serializer = SampleSerializer(data={"title": "test", "value": 42}, context=context)
+    serializer = SampleSerializer(
+        data={"title": "test", "value": 42},
+        context={"request": _make_request("v1")},
+    )
 
     assert serializer.is_valid(), serializer.errors
     assert serializer.validated_data["name"] == "test"
 
 
 @pytest.mark.usefixtures("_versions")
-def test_mixin_to_representation_rejects_none_return():
+def test_mixin_to_representation_rejects_none_return(sample_instance):
     """to_representation should reject transforms that return None."""
-    serializer_path = f"{SampleSerializer.__module__}.{SampleSerializer.__qualname__}"
 
     class BadTransform(Transform):
         version = "v2"
         description = "Bad transform"
-        serializer = serializer_path
+        serializer = SAMPLE_PATH
 
         def to_representation(self, data, request, instance):  # noqa: ARG002
             return None
 
-    request = _make_request("v1")
-    serializer = SampleSerializer(context={"request": request})
-    instance = SimpleNamespace(name="test", value=42)
+    serializer = SampleSerializer(context={"request": _make_request("v1")})
 
     with pytest.raises(TypeError, match="to_representation"):
-        serializer.to_representation(instance)
+        serializer.to_representation(sample_instance)
 
 
 @pytest.mark.usefixtures("_versions")
-def test_mixin_to_representation_accepts_new_object_return():
+def test_mixin_to_representation_accepts_new_object_return(sample_instance):
     """to_representation should accept transforms that return a new dict."""
-    serializer_path = f"{SampleSerializer.__module__}.{SampleSerializer.__qualname__}"
 
     class FunctionalTransform(Transform):
         version = "v2"
         description = "Returns a new dict instead of mutating"
-        serializer = serializer_path
+        serializer = SAMPLE_PATH
 
         def to_representation(self, data, request, instance):  # noqa: ARG002
             return {**data, "name": data["name"].upper()}
 
-    request = _make_request("v1")
-    serializer = SampleSerializer(context={"request": request})
-    instance = SimpleNamespace(name="test", value=42)
-
-    result = serializer.to_representation(instance)
-    assert result == {"name": "TEST", "value": 42}
+    serializer = SampleSerializer(context={"request": _make_request("v1")})
+    assert serializer.to_representation(sample_instance) == {
+        "name": "TEST",
+        "value": 42,
+    }
 
 
 @pytest.mark.usefixtures("_versions")
 def test_mixin_to_internal_value_accepts_new_object_return():
     """to_internal_value should accept transforms that return a new dict."""
-    serializer_path = f"{SampleSerializer.__module__}.{SampleSerializer.__qualname__}"
 
     class FunctionalTransform(Transform):
         version = "v2"
         description = "Returns a new dict instead of mutating"
-        serializer = serializer_path
+        serializer = SAMPLE_PATH
 
         def to_internal_value(self, data, request):  # noqa: ARG002
             return {**data, "name": data["name"].lower()}
 
-    request = _make_request("v1")
-    serializer = SampleSerializer(context={"request": request})
+    serializer = SampleSerializer(context={"request": _make_request("v1")})
 
     result = serializer.to_internal_value({"name": "TEST", "value": 42})
     assert result == {"name": "test", "value": 42}
 
 
+@pytest.mark.parametrize(
+    "context",
+    [{}, {"request": SimpleNamespace()}],
+    ids=["no_request", "request_without_version"],
+)
 @pytest.mark.usefixtures("_versions")
-def test_mixin_no_request_context():
-    """Without a request in context, mixin should be a no-op."""
-    serializer = SampleSerializer(context={})
-
-    instance = SimpleNamespace(name="test", value=42)
-    data = serializer.to_representation(instance)
-    assert data == {"name": "test", "value": 42}
-
-
-@pytest.mark.usefixtures("_versions")
-def test_mixin_request_without_version():
-    """With a request that has no version, mixin should be a no-op."""
-    request = SimpleNamespace()
-    serializer = SampleSerializer(context={"request": request})
-
-    instance = SimpleNamespace(name="test", value=42)
-    data = serializer.to_representation(instance)
-    assert data == {"name": "test", "value": 42}
+def test_mixin_no_op_when_no_version(context, sample_instance):
+    """Mixin is a no-op when there is no resolvable request version."""
+    serializer = SampleSerializer(context=context)
+    assert serializer.to_representation(sample_instance) == {
+        "name": "test",
+        "value": 42,
+    }
 
 
 @pytest.mark.usefixtures("_versions")
 def test_transform_dict_backwards_applies_transforms():
     """transform_dict_backwards should apply transforms to a raw dict."""
-    serializer_path = f"{SampleSerializer.__module__}.{SampleSerializer.__qualname__}"
 
     class RenameTransform(Transform):
         version = "v2"
         description = "Rename name to title"
-        serializer = serializer_path
+        serializer = SAMPLE_PATH
 
         def to_representation(self, data, request, instance):  # noqa: ARG002
             if "name" in data:
                 data["title"] = data.pop("name")
             return data
 
-    request = _make_request("v1")
     data = {"name": "test", "value": 42}
-    result = transform_dict_backwards(data, SampleSerializer, request)
+    result = transform_dict_backwards(data, SampleSerializer, _make_request("v1"))
     assert result == {"title": "test", "value": 42}
 
 
-@pytest.mark.usefixtures("_versions")
-def test_transform_dict_backwards_no_op_for_latest():
-    """transform_dict_backwards should not transform at latest version."""
-    request = _make_request("v2")
+@pytest.mark.parametrize(
+    ("request_obj", "_versions"),
+    [
+        (SimpleNamespace(version="v2"), ["v0", "v1", "v2"]),
+        (None, ["v0", "v1", "v2"]),
+    ],
+    ids=["latest_version", "no_request"],
+    indirect=["_versions"],
+)
+def test_transform_dict_backwards_no_op(request_obj, _versions):
+    """transform_dict_backwards is a no-op at latest version or with no request."""
     data = {"name": "test", "value": 42}
-    result = transform_dict_backwards(data, SampleSerializer, request)
+    result = transform_dict_backwards(data, SampleSerializer, request_obj)
     assert result == {"name": "test", "value": 42}
-
-
-def test_transform_dict_backwards_no_request():
-    """transform_dict_backwards should be a no-op with no request."""
-    data = {"name": "test"}
-    result = transform_dict_backwards(data, SampleSerializer, None)
-    assert result == {"name": "test"}
 
 
 @pytest.mark.usefixtures("_versions")
@@ -283,9 +245,10 @@ def test_transform_dict_backwards_recursive():
                 data["colour"] = data.pop("color")
             return data
 
-    request = _make_request("v1")
     data = {"label": "test", "child": {"color": "red"}}
-    result = transform_dict_backwards(data, ParentSerializer, request, recursive=True)
+    result = transform_dict_backwards(
+        data, ParentSerializer, _make_request("v1"), recursive=True
+    )
     assert result["child"] == {"colour": "red"}
     assert result["label"] == "test"
 
@@ -316,7 +279,6 @@ def test_transform_dict_backwards_recursive_many():
             data.pop("score", None)
             return data
 
-    request = _make_request("v1")
     data = {
         "title": "container",
         "items": [
@@ -325,7 +287,7 @@ def test_transform_dict_backwards_recursive_many():
         ],
     }
     result = transform_dict_backwards(
-        data, ContainerSerializer, request, recursive=True
+        data, ContainerSerializer, _make_request("v1"), recursive=True
     )
     assert result["items"] == [{"name": "a"}, {"name": "b"}]
 
@@ -333,9 +295,10 @@ def test_transform_dict_backwards_recursive_many():
 @pytest.mark.usefixtures("_versions")
 def test_transform_dict_backwards_recursive_no_nested_transforms():
     """recursive=True with no child transforms should be a no-op."""
-    request = _make_request("v1")
     data = {"name": "test", "value": 42}
-    result = transform_dict_backwards(data, SampleSerializer, request, recursive=True)
+    result = transform_dict_backwards(
+        data, SampleSerializer, _make_request("v1"), recursive=True
+    )
     # SampleSerializer has no nested serializer fields, so no change
     assert result == {"name": "test", "value": 42}
 
@@ -369,7 +332,6 @@ def test_transform_dict_backwards_recursive_deep_nesting():
                 data["colour"] = data.pop("color")
             return data
 
-    request = _make_request("v1")
     data = {
         "title": "top",
         "child": {
@@ -377,7 +339,9 @@ def test_transform_dict_backwards_recursive_deep_nesting():
             "grandchild": {"color": "red"},
         },
     }
-    result = transform_dict_backwards(data, ParentSerializer, request, recursive=True)
+    result = transform_dict_backwards(
+        data, ParentSerializer, _make_request("v1"), recursive=True
+    )
     assert result["child"]["grandchild"] == {"colour": "red"}
     assert result["child"]["label"] == "mid"
     assert result["title"] == "top"
@@ -408,10 +372,10 @@ def test_transform_dict_backwards_recursive_accepts_new_object_return():
         def to_representation(self, data, request, instance):  # noqa: ARG002
             return {"colour": data.get("color")}
 
-    request = _make_request("v1")
     data = {"child": {"color": "red"}}
-
-    result = transform_dict_backwards(data, ParentSerializer, request, recursive=True)
+    result = transform_dict_backwards(
+        data, ParentSerializer, _make_request("v1"), recursive=True
+    )
     assert result["child"] == {"colour": "red"}
 
 
@@ -435,11 +399,9 @@ def test_transform_dict_backwards_recursive_many_accepts_new_object_return():
         def to_representation(self, data, request, instance):  # noqa: ARG002
             return {"label": data["name"].upper()}
 
-    request = _make_request("v1")
     data = {"items": [{"name": "a"}, {"name": "b"}]}
-
     result = transform_dict_backwards(
-        data, ContainerSerializer, request, recursive=True
+        data, ContainerSerializer, _make_request("v1"), recursive=True
     )
     assert result["items"] == [{"label": "A"}, {"label": "B"}]
 
@@ -465,8 +427,8 @@ def test_transform_dict_backwards_recursive_rejects_none_return():
             data["colour"] = data.pop("color")
             # missing return
 
-    request = _make_request("v1")
     data = {"child": {"color": "red"}}
-
     with pytest.raises(TypeError, match="returned None"):
-        transform_dict_backwards(data, ParentSerializer, request, recursive=True)
+        transform_dict_backwards(
+            data, ParentSerializer, _make_request("v1"), recursive=True
+        )

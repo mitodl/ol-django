@@ -9,54 +9,37 @@ from mitol.api_versioning.schema_hooks import (
     postprocess_versioned_schema,
 )
 from mitol.api_versioning.transforms import Transform
-from mitol.api_versioning.versions import _transform_registry, register_transform
-
-
-@pytest.fixture(autouse=True)
-def _clear_registry():
-    """Clear the transform registry before and after each test."""
-    saved = dict(_transform_registry)
-    _transform_registry.clear()
-    yield
-    _transform_registry.clear()
-    _transform_registry.update(saved)
+from mitol.api_versioning.versions import register_transform
 
 
 class TestResolveSchemaName:
     """Tests for _resolve_schema_name."""
 
-    def test_strips_serializer_suffix(self):
-        """Test stripping Serializer suffix."""
-        assert (
-            _resolve_schema_name("myapp.serializers.LearningResourceSerializer")
-            == "LearningResource"
-        )
+    class CourseSerializer:
+        pass
 
-    def test_no_serializer_suffix(self):
-        """Test name without Serializer suffix."""
-        assert _resolve_schema_name("myapp.serializers.LearningResource") == (
-            "LearningResource"
-        )
+    class Course:
+        pass
 
-    def test_simple_name(self):
-        """Test simple class name."""
-        assert _resolve_schema_name("CourseSerializer") == "Course"
-
-    def test_class_object_with_serializer_suffix(self):
-        """Test with an actual class object instead of a string."""
-
-        class CourseSerializer:
-            pass
-
-        assert _resolve_schema_name(CourseSerializer) == "Course"
-
-    def test_class_object_without_serializer_suffix(self):
-        """Test class object without Serializer suffix."""
-
-        class Course:
-            pass
-
-        assert _resolve_schema_name(Course) == "Course"
+    @pytest.mark.parametrize(
+        ("name", "expected"),
+        [
+            ("myapp.serializers.LearningResourceSerializer", "LearningResource"),
+            ("myapp.serializers.LearningResource", "LearningResource"),
+            ("CourseSerializer", "Course"),
+            (CourseSerializer, "Course"),
+            (Course, "Course"),
+        ],
+        ids=[
+            "dotted_with_suffix",
+            "dotted_without_suffix",
+            "simple_with_suffix",
+            "class_with_suffix",
+            "class_without_suffix",
+        ],
+    )
+    def test_resolves(self, name, expected):
+        assert _resolve_schema_name(name) == expected
 
 
 class TestGetAllSchemaVariants:
@@ -107,13 +90,6 @@ class TestGetAllSchemaVariants:
 
 class TestPostprocessVersionedSchema:
     """Tests for the drf-spectacular postprocessing hook."""
-
-    @pytest.fixture
-    def _versions(self, settings):
-        settings.REST_FRAMEWORK = {
-            **getattr(settings, "REST_FRAMEWORK", {}),
-            "ALLOWED_VERSIONS": ["v0", "v1", "v2"],
-        }
 
     @pytest.mark.usefixtures("_versions")
     def test_no_op_for_latest_version(self):
@@ -202,36 +178,32 @@ class TestPostprocessVersionedSchema:
         req = result["components"]["schemas"]["CourseRequest"]["properties"]
         assert "extra_field" not in req
 
-    @pytest.mark.usefixtures("_versions")
-    def test_no_transforms_returns_unchanged(self):
-        """With no transforms registered, hook returns schema unchanged."""
+    @pytest.mark.parametrize(
+        ("_versions", "schema"),
+        [
+            (
+                ["v0", "v1", "v2"],
+                {
+                    "components": {
+                        "schemas": {
+                            "Course": {"properties": {"name": {"type": "string"}}},
+                        }
+                    }
+                },
+            ),
+            (["v0", "v1", "v2"], {"info": {"title": "API"}}),
+            ([], {"components": {"schemas": {}}}),
+        ],
+        ids=[
+            "no_transforms_registered",
+            "schema_without_components",
+            "no_versions_configured",
+        ],
+        indirect=["_versions"],
+    )
+    def test_returns_unchanged(self, _versions, schema):
+        """Hook returns schema unchanged when there is nothing to transform."""
         generator = SimpleNamespace(api_version="v1")
-        schema = {
-            "components": {
-                "schemas": {
-                    "Course": {"properties": {"name": {"type": "string"}}},
-                }
-            }
-        }
-        result = postprocess_versioned_schema(schema, generator, None, public=False)
-        assert result == schema
-
-    @pytest.mark.usefixtures("_versions")
-    def test_no_components_returns_unchanged(self):
-        """Schema without components section should pass through."""
-        generator = SimpleNamespace(api_version="v1")
-        schema = {"info": {"title": "API"}}
-        result = postprocess_versioned_schema(schema, generator, None, public=False)
-        assert result == schema
-
-    def test_no_versions_configured(self, settings):
-        """With no allowed versions, hook should return unchanged."""
-        settings.REST_FRAMEWORK = {
-            **getattr(settings, "REST_FRAMEWORK", {}),
-            "ALLOWED_VERSIONS": [],
-        }
-        generator = SimpleNamespace(api_version="v1")
-        schema = {"components": {"schemas": {}}}
         result = postprocess_versioned_schema(schema, generator, None, public=False)
         assert result == schema
 
