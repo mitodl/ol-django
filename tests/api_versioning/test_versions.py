@@ -11,6 +11,7 @@ from mitol.api_versioning.versions import (
     get_transforms_between,
     get_transforms_for_version,
     get_transforms_forwards,
+    list_transforms_for_serializer,
     register_transform,
 )
 
@@ -150,6 +151,17 @@ def test_get_transforms_forwards_latest_returns_empty(settings):
 
     result = get_transforms_forwards(DummySerializer, "v1")
     assert result == []
+
+
+def test_list_transforms_for_serializer(settings):
+    """Test that list_transforms_for_serializer returns matching transforms."""
+    settings.REST_FRAMEWORK = {"ALLOWED_VERSIONS": ["v0", "v1", "v2", "v3"]}
+    t_v2 = _make_transform("v2", "myapp.serializers.DummySerializer")
+    t_v3 = _make_transform("v3", "myapp.serializers.DummySerializer")
+    _make_transform("v2", "myapp.serializers.OtherSerializer")
+
+    result = list_transforms_for_serializer(DummySerializer)
+    assert result == [t_v2, t_v3]
 
 
 def test_register_transform_is_idempotent(settings):

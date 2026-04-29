@@ -7,6 +7,8 @@ the version that introduced the change and the previous version.
 Transforms auto-register with the version registry via a metaclass.
 """
 
+from typing import Any
+
 from mitol.api_versioning.versions import register_transform
 
 
@@ -76,12 +78,17 @@ class Transform(metaclass=TransformMeta):
         - transform_schema: for OpenAPI schema transforms
     """
 
-    version: str = None
+    version: str | None = None
     description: str = ""
-    serializer: str = None
-    component_name: str = None
+    serializer: str | type | None = None
+    component_name: str | None = None
 
-    def to_representation(self, data, request, instance):  # noqa: ARG002
+    def to_representation(
+        self,
+        data: dict[str, Any],
+        request: Any,  # noqa: ARG002
+        instance: Any,  # noqa: ARG002
+    ) -> dict[str, Any]:
         """Transform response data backwards (latest version -> older version).
 
         Called when a client requests an older API version. Mutates `data`
@@ -97,7 +104,7 @@ class Transform(metaclass=TransformMeta):
         """
         return data
 
-    def to_internal_value(self, data, request):  # noqa: ARG002
+    def to_internal_value(self, data: dict[str, Any], request: Any) -> dict[str, Any]:  # noqa: ARG002
         """Transform request data forwards (older version -> latest version).
 
         Called when a client sends data using an older API version format.
@@ -112,7 +119,7 @@ class Transform(metaclass=TransformMeta):
         """
         return data
 
-    def transform_schema(self, schema, direction):  # noqa: ARG002
+    def transform_schema(self, schema: dict[str, Any]) -> dict[str, Any]:
         """Transform an OpenAPI schema component for version compatibility.
 
         Called during OpenAPI spec generation to produce correct schemas
@@ -121,7 +128,6 @@ class Transform(metaclass=TransformMeta):
 
         Args:
             schema: The OpenAPI schema dict for a component.
-            direction: "backwards" when generating schema for an older version.
 
         Returns:
             The transformed schema dict.

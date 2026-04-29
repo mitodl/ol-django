@@ -29,7 +29,7 @@ def test_transform_base_defaults():
     data = {"field": "value"}
     assert t.to_representation(data, None, None) == data
     assert t.to_internal_value(data, None) == data
-    assert t.transform_schema({"properties": {}}, "backwards") == {"properties": {}}
+    assert t.transform_schema({"properties": {}}) == {"properties": {}}
 
 
 def test_metaclass_auto_registration(settings):
@@ -102,9 +102,9 @@ def test_concrete_transform_field_rename(settings):
                 data["new_name"] = data.pop("old_name")
             return data
 
-        def transform_schema(self, schema, direction):
+        def transform_schema(self, schema):
             props = schema.get("properties", {})
-            if direction == "backwards" and "new_name" in props:
+            if "new_name" in props:
                 props["old_name"] = props.pop("new_name")
             return schema
 
@@ -124,7 +124,7 @@ def test_concrete_transform_field_rename(settings):
             "other": {"type": "int"},
         }
     }
-    result = t.transform_schema(schema, "backwards")
+    result = t.transform_schema(schema)
     assert "old_name" in result["properties"]
     assert "new_name" not in result["properties"]
 
@@ -142,12 +142,11 @@ def test_concrete_transform_field_added(settings):
             data.pop("new_field", None)
             return data
 
-        def transform_schema(self, schema, direction):
-            if direction == "backwards":
-                schema.get("properties", {}).pop("new_field", None)
-                required = schema.get("required", [])
-                if "new_field" in required:
-                    required.remove("new_field")
+        def transform_schema(self, schema):
+            schema.get("properties", {}).pop("new_field", None)
+            required = schema.get("required", [])
+            if "new_field" in required:
+                required.remove("new_field")
             return schema
 
     t = AddFieldTransform()
@@ -163,7 +162,7 @@ def test_concrete_transform_field_added(settings):
         },
         "required": ["existing", "new_field"],
     }
-    result = t.transform_schema(schema, "backwards")
+    result = t.transform_schema(schema)
     assert "new_field" not in result["properties"]
     assert "new_field" not in result["required"]
 
@@ -185,9 +184,8 @@ def test_concrete_transform_field_removed(settings):
             data.pop("legacy_field", None)
             return data
 
-        def transform_schema(self, schema, direction):
-            if direction == "backwards":
-                schema.setdefault("properties", {})["legacy_field"] = {"type": "string"}
+        def transform_schema(self, schema):
+            schema.setdefault("properties", {})["legacy_field"] = {"type": "string"}
             return schema
 
     t = RemoveFieldTransform()

@@ -11,6 +11,7 @@ Register this hook in SPECTACULAR_SETTINGS["POSTPROCESSING_HOOKS"].
 
 import logging
 import re
+from typing import Any
 
 from mitol.api_versioning.versions import (
     get_latest_version,
@@ -20,7 +21,7 @@ from mitol.api_versioning.versions import (
 log = logging.getLogger(__name__)
 
 
-def _resolve_schema_name(serializer_ref):
+def _resolve_schema_name(serializer_ref: Any) -> str:
     """Convert a serializer reference to the drf-spectacular schema name.
 
     Accepts either a dotted path string or a class object.
@@ -64,7 +65,12 @@ def _get_all_schema_variants(base_name, schemas):
     return [name for name in schemas if name in expected]
 
 
-def postprocess_versioned_schema(result, generator, request, public):  # noqa: ARG001
+def postprocess_versioned_schema(
+    result: dict[str, Any],
+    generator: Any,
+    request: Any,  # noqa: ARG001
+    public: bool,  # noqa: ARG001, FBT001
+) -> dict[str, Any]:
     """Postprocessing hook for drf-spectacular.
 
     When generating the schema for an older API version, applies all
@@ -112,7 +118,7 @@ def postprocess_versioned_schema(result, generator, request, public):  # noqa: A
 
         for schema_name in variant_names:
             schemas[schema_name] = transform_cls().transform_schema(
-                schemas[schema_name], direction="backwards"
+                schemas[schema_name]
             )
 
     return result

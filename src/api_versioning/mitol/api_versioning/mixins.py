@@ -20,6 +20,7 @@ When a request comes in for an older API version, the mixin:
 """
 
 import logging
+from typing import Any
 
 from mitol.api_versioning.versions import (
     get_latest_version,
@@ -61,10 +62,10 @@ class VersionedSerializerMixin:
             )
             raise TypeError(msg)
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: Any) -> dict[str, Any]:
         """Serialize instance, then apply backwards transforms for older versions."""
-        data = super().to_representation(instance)
-        request = self.context.get("request")
+        data = super().to_representation(instance)  # type: ignore[misc]
+        request = self.context.get("request")  # type: ignore[attr-defined]
         if not request or not hasattr(request, "version"):
             return data
 
@@ -72,7 +73,9 @@ class VersionedSerializerMixin:
         if not latest or request.version == latest:
             return data
 
-        transforms = get_transforms_backwards(self.__class__, request.version)
+        transforms = get_transforms_backwards(
+            self.__class__, request.version, latest=latest
+        )
         if transforms:
             log.debug(
                 "to_representation: %s version=%s -> %s, applying %d transform(s): %s",
@@ -87,14 +90,16 @@ class VersionedSerializerMixin:
 
         return data
 
-    def to_internal_value(self, data):
+    def to_internal_value(self, data: Any) -> dict[str, Any]:
         """Apply forwards transforms for older versions, then validate."""
-        request = self.context.get("request")
+        request = self.context.get("request")  # type: ignore[attr-defined]
         if request and hasattr(request, "version"):
             latest = get_latest_version()
             if latest and request.version != latest:
                 data = data.copy() if hasattr(data, "copy") else dict(data)
-                transforms = get_transforms_forwards(self.__class__, request.version)
+                transforms = get_transforms_forwards(
+                    self.__class__, request.version, latest=latest
+                )
                 if transforms:
                     log.debug(
                         (
@@ -110,10 +115,16 @@ class VersionedSerializerMixin:
                 for transform_cls in transforms:
                     data = transform_cls().to_internal_value(data, request)
 
-        return super().to_internal_value(data)
+        return super().to_internal_value(data)  # type: ignore[misc]
 
 
-def transform_dict_backwards(data, serializer_class, request, *, recursive=False):
+def transform_dict_backwards(
+    data: dict[str, Any],
+    serializer_class: type,
+    request: Any,
+    *,
+    recursive: bool = False,
+) -> dict[str, Any]:
     """Apply backwards transforms to a raw dict (no model instance).
 
     Use this for data that bypasses DRF serialization, such as
@@ -138,9 +149,11 @@ def transform_dict_backwards(data, serializer_class, request, *, recursive=False
         return data
 
     if recursive:
-        _transform_nested_fields(data, serializer_class, request)
+        _transform_nested_fields(data, serializer_class, request, latest=latest)
 
-    transforms = get_transforms_backwards(serializer_class, request.version)
+    transforms = get_transforms_backwards(
+        serializer_class, request.version, latest=latest
+    )
     if transforms:
         log.debug(
             "transform_dict_backwards: %s version=%s, applying %d transform(s): %s",
@@ -167,7 +180,7 @@ def _apply_transforms_to_data(transforms, data, request):
                     transform_cls().to_representation(item, request, instance=None)
 
 
-def _transform_nested_fields(data, serializer_class, request):
+def _transform_nested_fields(data, serializer_class, request, *, latest=None):
     """Recursively apply transforms to nested serializer fields.
 
     Introspects the serializer's declared fields. For each field that
@@ -196,14 +209,18 @@ def _transform_nested_fields(data, serializer_class, request):
 
         # Recurse first so deepest fields are transformed before their parents
         if isinstance(nested_data, dict):
-            _transform_nested_fields(nested_data, child_serializer_class, request)
+            _transform_nested_fields(
+                nested_data, child_serializer_class, request, latest=latest
+            )
         elif isinstance(nested_data, list):
             for item in nested_data:
                 if isinstance(item, dict):
-                    _transform_nested_fields(item, child_serializer_class, request)
+                    _transform_nested_fields(
+                        item, child_serializer_class, request, latest=latest
+                    )
 
         child_transforms = get_transforms_backwards(
-            child_serializer_class, request.version
+            child_serializer_class, request.version, latest=latest
         )
         if child_transforms:
             _apply_transforms_to_data(child_transforms, nested_data, request)

@@ -138,11 +138,10 @@ class TestPostprocessVersionedSchema:
             description = "Rename name to title"
             serializer = "myapp.serializers.CourseSerializer"
 
-            def transform_schema(self, schema, direction):
-                if direction == "backwards":
-                    props = schema.get("properties", {})
-                    if "name" in props:
-                        props["title"] = props.pop("name")
+            def transform_schema(self, schema):
+                props = schema.get("properties", {})
+                if "name" in props:
+                    props["title"] = props.pop("name")
                 return schema
 
         generator = SimpleNamespace(api_version="v1")
@@ -173,9 +172,8 @@ class TestPostprocessVersionedSchema:
             description = "Add extra_field in v2"
             serializer = "myapp.serializers.CourseSerializer"
 
-            def transform_schema(self, schema, direction):
-                if direction == "backwards":
-                    schema.get("properties", {}).pop("extra_field", None)
+            def transform_schema(self, schema):
+                schema.get("properties", {}).pop("extra_field", None)
                 return schema
 
         generator = SimpleNamespace(api_version="v1")
@@ -247,11 +245,10 @@ class TestPostprocessVersionedSchema:
             serializer = "myapp.serializers.WeirdlyNamedSerializer"
             component_name = "Course"
 
-            def transform_schema(self, schema, direction):
-                if direction == "backwards":
-                    props = schema.get("properties", {})
-                    if "new_field" in props:
-                        del props["new_field"]
+            def transform_schema(self, schema):
+                props = schema.get("properties", {})
+                if "new_field" in props:
+                    del props["new_field"]
                 return schema
 
         generator = SimpleNamespace(api_version="v1")
@@ -293,9 +290,8 @@ class TestPostprocessVersionedSchema:
             description = "Uses class ref"
             serializer = "myapp.serializers.MySerializer"
 
-            def transform_schema(self, schema, direction):
-                if direction == "backwards":
-                    schema.get("properties", {}).pop("added", None)
+            def transform_schema(self, schema):
+                schema.get("properties", {}).pop("added", None)
                 return schema
 
         # Register with class ref for serializer matching,
