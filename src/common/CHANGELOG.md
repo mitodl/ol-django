@@ -6,6 +6,26 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.4.29'></a>
+## [2026.4.29] - 2026-04-29
+
+### Removed
+
+- Removed support for Python 3.10
+
+### Added
+
+- Added `list_urls` management command for listing url paths in routing.
+
+- Added  support for django version to 5.2
+- Add tox and expand gh action test matrix
+
+### Changed
+
+- Moved `pytest` and `factory-boy` from main dependencies to a `[dependency-groups] dev` group per PEP 735. These are development-only tools and should not be installed in production environments.
+
+- Removed `pkg_resources.declare_namespace()` from the `mitol` namespace package declaration in favour of implicit namespace packages (PEP 420), eliminating the runtime dependency on `setuptools`/`pkg_resources`.
+
 <a id='changelog-2025.12.23.2'></a>
 ## [2025.12.23.2] - 2025-12-23
 
