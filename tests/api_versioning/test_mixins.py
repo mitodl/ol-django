@@ -137,6 +137,68 @@ def test_mixin_to_internal_value_applies_forward_transform():
 
 
 @pytest.mark.usefixtures("_versions")
+def test_mixin_to_representation_rejects_none_return():
+    """to_representation should reject transforms that return None."""
+    serializer_path = f"{SampleSerializer.__module__}.{SampleSerializer.__qualname__}"
+
+    class BadTransform(Transform):
+        version = "v2"
+        description = "Bad transform"
+        serializer = serializer_path
+
+        def to_representation(self, data, request, instance):  # noqa: ARG002
+            return None
+
+    request = _make_request("v1")
+    serializer = SampleSerializer(context={"request": request})
+    instance = SimpleNamespace(name="test", value=42)
+
+    with pytest.raises(TypeError, match="to_representation"):
+        serializer.to_representation(instance)
+
+
+@pytest.mark.usefixtures("_versions")
+def test_mixin_to_representation_accepts_new_object_return():
+    """to_representation should accept transforms that return a new dict."""
+    serializer_path = f"{SampleSerializer.__module__}.{SampleSerializer.__qualname__}"
+
+    class FunctionalTransform(Transform):
+        version = "v2"
+        description = "Returns a new dict instead of mutating"
+        serializer = serializer_path
+
+        def to_representation(self, data, request, instance):  # noqa: ARG002
+            return {**data, "name": data["name"].upper()}
+
+    request = _make_request("v1")
+    serializer = SampleSerializer(context={"request": request})
+    instance = SimpleNamespace(name="test", value=42)
+
+    result = serializer.to_representation(instance)
+    assert result == {"name": "TEST", "value": 42}
+
+
+@pytest.mark.usefixtures("_versions")
+def test_mixin_to_internal_value_accepts_new_object_return():
+    """to_internal_value should accept transforms that return a new dict."""
+    serializer_path = f"{SampleSerializer.__module__}.{SampleSerializer.__qualname__}"
+
+    class FunctionalTransform(Transform):
+        version = "v2"
+        description = "Returns a new dict instead of mutating"
+        serializer = serializer_path
+
+        def to_internal_value(self, data, request):  # noqa: ARG002
+            return {**data, "name": data["name"].lower()}
+
+    request = _make_request("v1")
+    serializer = SampleSerializer(context={"request": request})
+
+    result = serializer.to_internal_value({"name": "TEST", "value": 42})
+    assert result == {"name": "test", "value": 42}
+
+
+@pytest.mark.usefixtures("_versions")
 def test_mixin_no_request_context():
     """Without a request in context, mixin should be a no-op."""
     serializer = SampleSerializer(context={})
@@ -319,3 +381,92 @@ def test_transform_dict_backwards_recursive_deep_nesting():
     assert result["child"]["grandchild"] == {"colour": "red"}
     assert result["child"]["label"] == "mid"
     assert result["title"] == "top"
+
+
+@pytest.mark.usefixtures("_versions")
+def test_transform_dict_backwards_recursive_accepts_new_object_return():
+    """Nested transforms that return a new dict should be applied via parent rebind.
+
+    This is the exact reproducer that motivated relaxing the in-place contract:
+    a child transform that returns ``{**data, ...}`` instead of mutating must
+    still be reflected in the parent's nested field.
+    """
+
+    class ChildSerializer(VersionedSerializerMixin, serializers.Serializer):
+        color = serializers.CharField()
+
+    child_path = f"{ChildSerializer.__module__}.{ChildSerializer.__qualname__}"
+
+    class ParentSerializer(serializers.Serializer):
+        child = ChildSerializer()
+
+    class FunctionalChildTransform(Transform):
+        version = "v2"
+        description = "Returns a new dict instead of mutating"
+        serializer = child_path
+
+        def to_representation(self, data, request, instance):  # noqa: ARG002
+            return {"colour": data.get("color")}
+
+    request = _make_request("v1")
+    data = {"child": {"color": "red"}}
+
+    result = transform_dict_backwards(data, ParentSerializer, request, recursive=True)
+    assert result["child"] == {"colour": "red"}
+
+
+@pytest.mark.usefixtures("_versions")
+def test_transform_dict_backwards_recursive_many_accepts_new_object_return():
+    """List-of-dicts items returned as new dicts should be rebound by index."""
+
+    class ItemSerializer(VersionedSerializerMixin, serializers.Serializer):
+        name = serializers.CharField()
+
+    item_path = f"{ItemSerializer.__module__}.{ItemSerializer.__qualname__}"
+
+    class ContainerSerializer(serializers.Serializer):
+        items = ItemSerializer(many=True)
+
+    class FunctionalItemTransform(Transform):
+        version = "v2"
+        description = "Returns a new dict instead of mutating"
+        serializer = item_path
+
+        def to_representation(self, data, request, instance):  # noqa: ARG002
+            return {"label": data["name"].upper()}
+
+    request = _make_request("v1")
+    data = {"items": [{"name": "a"}, {"name": "b"}]}
+
+    result = transform_dict_backwards(
+        data, ContainerSerializer, request, recursive=True
+    )
+    assert result["items"] == [{"label": "A"}, {"label": "B"}]
+
+
+@pytest.mark.usefixtures("_versions")
+def test_transform_dict_backwards_recursive_rejects_none_return():
+    """Nested transforms that return None must still raise TypeError."""
+
+    class ChildSerializer(VersionedSerializerMixin, serializers.Serializer):
+        color = serializers.CharField()
+
+    child_path = f"{ChildSerializer.__module__}.{ChildSerializer.__qualname__}"
+
+    class ParentSerializer(serializers.Serializer):
+        child = ChildSerializer()
+
+    class NoneReturningTransform(Transform):
+        version = "v2"
+        description = "Forgets to return"
+        serializer = child_path
+
+        def to_representation(self, data, request, instance):  # noqa: ARG002
+            data["colour"] = data.pop("color")
+            # missing return
+
+    request = _make_request("v1")
+    data = {"child": {"color": "red"}}
+
+    with pytest.raises(TypeError, match="returned None"):
+        transform_dict_backwards(data, ParentSerializer, request, recursive=True)

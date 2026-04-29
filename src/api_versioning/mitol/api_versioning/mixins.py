@@ -86,7 +86,10 @@ class VersionedSerializerMixin:
                 " -> ".join(t.__name__ for t in transforms),
             )
         for transform_cls in transforms:
-            data = transform_cls().to_representation(data, request, instance)
+            result = transform_cls().to_representation(data, request, instance)
+            data = _check_not_none(
+                transform_cls, result, "VersionedSerializerMixin.to_representation"
+            )
 
         return data
 
@@ -113,7 +116,12 @@ class VersionedSerializerMixin:
                         " -> ".join(t.__name__ for t in transforms),
                     )
                 for transform_cls in transforms:
-                    data = transform_cls().to_internal_value(data, request)
+                    result = transform_cls().to_internal_value(data, request)
+                    data = _check_not_none(
+                        transform_cls,
+                        result,
+                        "VersionedSerializerMixin.to_internal_value",
+                    )
 
         return super().to_internal_value(data)  # type: ignore[misc]
 
@@ -163,21 +171,51 @@ def transform_dict_backwards(
             " -> ".join(t.__name__ for t in transforms),
         )
     for transform_cls in transforms:
-        data = transform_cls().to_representation(data, request, instance=None)
+        result = transform_cls().to_representation(data, request, instance=None)
+        data = _check_not_none(transform_cls, result, "transform_dict_backwards")
 
     return data
 
 
 def _apply_transforms_to_data(transforms, data, request):
-    """Apply a list of transform classes to a dict or list of dicts."""
+    """Apply a list of transform classes to a dict or list of dicts.
+
+    Returns the (possibly new) data. Each transform may either mutate the
+    input in place and return it, or return a new dict; both are supported.
+    For lists, each item is rebound by index so a transform that returns a
+    new dict for a list item replaces it in place.
+    """
     if isinstance(data, dict):
         for transform_cls in transforms:
-            transform_cls().to_representation(data, request, instance=None)
+            result = transform_cls().to_representation(data, request, instance=None)
+            data = _check_not_none(transform_cls, result, "_apply_transforms_to_data")
     elif isinstance(data, list):
-        for item in data:
-            if isinstance(item, dict):
-                for transform_cls in transforms:
-                    transform_cls().to_representation(item, request, instance=None)
+        for i, item in enumerate(data):
+            if not isinstance(item, dict):
+                continue
+            for transform_cls in transforms:
+                result = transform_cls().to_representation(item, request, instance=None)
+                item = _check_not_none(  # noqa: PLW2901
+                    transform_cls, result, "_apply_transforms_to_data[list-item]"
+                )
+            data[i] = item
+    return data
+
+
+def _check_not_none(transform_cls, result: Any, context: str) -> Any:
+    """Reject transforms that returned None; pass anything else through.
+
+    Transforms may either mutate-and-return or return a new dict, but they
+    must always return *something* — silently swapping data for ``None``
+    would hide bugs.
+    """
+    if result is None:
+        msg = (
+            f"Transform {transform_cls.__name__!r} in {context} returned None. "
+            "A transform must return the (possibly new) transformed dict."
+        )
+        raise TypeError(msg)
+    return result
 
 
 def _transform_nested_fields(data, serializer_class, request, *, latest=None):
@@ -223,7 +261,9 @@ def _transform_nested_fields(data, serializer_class, request, *, latest=None):
             child_serializer_class, request.version, latest=latest
         )
         if child_transforms:
-            _apply_transforms_to_data(child_transforms, nested_data, request)
+            data[field_name] = _apply_transforms_to_data(
+                child_transforms, nested_data, request
+            )
 
 
 def _get_field_serializer_class(field):

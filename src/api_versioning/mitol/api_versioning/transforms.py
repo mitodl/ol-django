@@ -76,6 +76,10 @@ class Transform(metaclass=TransformMeta):
         - to_representation: for response data transforms
         - to_internal_value: for request data transforms
         - transform_schema: for OpenAPI schema transforms
+
+    Data transform methods (``to_representation`` and ``to_internal_value``)
+    may either mutate ``data`` in place and return it, or return a new dict.
+    Both patterns are supported. The only invalid return value is ``None``.
     """
 
     version: str | None = None
@@ -91,8 +95,10 @@ class Transform(metaclass=TransformMeta):
     ) -> dict[str, Any]:
         """Transform response data backwards (latest version -> older version).
 
-        Called when a client requests an older API version. Mutates `data`
-        in place to match the older version's expected response shape.
+        Called when a client requests an older API version. Reshape ``data``
+        into the older version's expected response shape. You may either
+        mutate ``data`` in place and return it, or return a new dict; both
+        are supported.
 
         Args:
             data: The serialized response dict (latest version format).
@@ -100,7 +106,8 @@ class Transform(metaclass=TransformMeta):
             instance: The model instance being serialized.
 
         Returns:
-            The transformed data dict.
+            The transformed data dict (may be the same object as ``data`` or
+            a new one). Returning ``None`` raises ``TypeError``.
         """
         return data
 
@@ -108,14 +115,17 @@ class Transform(metaclass=TransformMeta):
         """Transform request data forwards (older version -> latest version).
 
         Called when a client sends data using an older API version format.
-        Mutates `data` in place to match the latest version's expected input.
+        Reshape ``data`` into the latest version's expected input. You may
+        either mutate ``data`` in place and return it, or return a new dict;
+        both are supported.
 
         Args:
             data: The incoming request data dict (older version format).
             request: The DRF request object.
 
         Returns:
-            The transformed data dict.
+            The transformed data dict (may be the same object as ``data`` or
+            a new one). Returning ``None`` raises ``TypeError``.
         """
         return data
 

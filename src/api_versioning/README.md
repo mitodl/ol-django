@@ -150,6 +150,11 @@ class RunAddEnrollmentUrl(Transform):
 metaclass auto-registers the class with the registry, so simply defining it
 is enough — no manual registration call.
 
+`to_representation` and `to_internal_value` may either mutate `data` in place
+and return it, or return a new dict — both patterns work, including for
+nested transforms applied via `transform_dict_backwards(..., recursive=True)`.
+The only invalid return is `None`, which raises `TypeError`.
+
 ### `component_name` override
 
 `transform_schema` finds the OpenAPI component to mutate by stripping
