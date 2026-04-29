@@ -5,28 +5,28 @@ from os import environ
 from pathlib import Path
 from types import SimpleNamespace
 
+import django
 import pytest
 from django.test.client import Client
 from mitol.common.utils import now_in_utc
-from pytest_django.fixtures import _set_suffix_to_test_databases
-from pytest_django.lazy_django import skip_if_no_django
 
 
-@pytest.fixture(scope="session")
-def django_db_modify_db_settings_pants_suffix() -> None:
-    skip_if_no_django()
+def pytest_configure(config):
+    """
+    This checks to be sure that we're running the expected version of django
+    """
+    if not environ.get("FACTOR_DJANGO"):
+        return
 
-    slot_id = environ.get("PANTS_EXECUTION_SLOT", None)
+    # we're running inside tox
+    major, minor, _, _, _ = django.VERSION
+    factor_major, factor_minor = list(environ["FACTOR_DJANGO"].removeprefix("django"))
 
-    if slot_id is not None:
-        _set_suffix_to_test_databases(suffix=slot_id)
-
-
-@pytest.fixture(scope="session")
-def django_db_modify_db_settings_parallel_suffix(
-    django_db_modify_db_settings_pants_suffix,  # noqa: ARG001
-) -> None:
-    skip_if_no_django()
+    actual = (major, minor)
+    expected = (factor_major, factor_minor)
+    if actual != expected:
+        msg = f"Expected django {expected}, got: {actual}"
+        raise Exception(msg)  # noqa: TRY002
 
 
 @pytest.fixture
