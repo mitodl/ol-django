@@ -2,5 +2,13 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>mitodl/.github:renovate-config"
-  ]
+  ],
+  "packageRules": [{
+    "matchDepName": "django",
+    "matchDepTypes": ["dependency-group"],
+    "matchJsonata": [
+      "$match(managerData.depGroup, /django[0-9]+/)"
+    ],
+    "matchUpdateTypes": ["patch"]
+  }]
 }

@@ -11,9 +11,9 @@ from django.test.client import Client
 from mitol.common.utils import now_in_utc
 
 
-def pytest_configure(config):
+def pytest_configure(config):  # noqa: ARG001
     """
-    This checks to be sure that we're running the expected version of django
+    Check to be sure that we're running the expected version of django
     """
     if not environ.get("FACTOR_DJANGO"):
         return
