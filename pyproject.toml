@@ -25,6 +25,7 @@ dependencies = [
   "mitol-django-scim[celery]",
   "mitol-django-apigateway",
   "mitol-django-observability",
+  "mitol-django-api_versioning",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
@@ -124,6 +125,7 @@ mitol-django-scim = { workspace = true }
 mitol-django-apigateway = { workspace = true }
 mitol-django-observability = { workspace = true }
 mitol-drf-lint = { workspace = true }
+mitol-django-api_versioning = { workspace = true }
 
 [tool.hatch.build.targets.sdist]
 include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]

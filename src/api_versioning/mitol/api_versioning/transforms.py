@@ -1,0 +1,129 @@
+"""Transform base class for API versioning.
+
+Each Transform represents a single breaking change introduced in a specific
+API version. Transforms define how to convert data and OpenAPI schemas between
+the version that introduced the change and the previous version.
+
+Transforms auto-register with the version registry via a metaclass.
+"""
+
+from mitol.api_versioning.versions import register_transform
+
+
+class TransformMeta(type):
+    """Metaclass that auto-registers Transform subclasses.
+
+    When a Transform subclass is defined with a `version` attribute, it is
+    automatically registered so the versioning system can discover it.
+    Validates required attributes at class definition time to catch errors early.
+    """
+
+    def __new__(cls, name, bases, dct):
+        """Create a Transform subclass and auto-register concrete transforms."""
+        subclass = super().__new__(cls, name, bases, dct)
+        if dct.get("version") is not None:
+            _validate_transform(subclass, name)
+            register_transform(subclass)
+        return subclass
+
+
+def _validate_transform(transform_cls, name):
+    """Validate a Transform subclass has correctly configured attributes.
+
+    Raises TypeError at class definition time for misconfiguration.
+    """
+    version = transform_cls.version
+    if not isinstance(version, str) or not version:
+        msg = (
+            f"Transform '{name}' has invalid version: {version!r}. "
+            f"Must be a non-empty string (e.g., 'v2')."
+        )
+        raise TypeError(msg)
+
+    serializer = transform_cls.serializer
+    if not serializer:
+        msg = (
+            f"Transform '{name}' must define a 'serializer' attribute "
+            f"(dotted path to the target serializer class)."
+        )
+        raise TypeError(msg)
+
+    if isinstance(serializer, str) and "." not in serializer:
+        msg = (
+            f"Transform '{name}' has serializer={serializer!r} which "
+            f"is not a dotted path. Use the full path like "
+            f"'myapp.serializers.MySerializer'."
+        )
+        raise TypeError(msg)
+
+
+class Transform(metaclass=TransformMeta):
+    """Base class for API version transforms.
+
+    Subclasses must define:
+        version (str): The API version that introduced this change (e.g., "v2").
+        description (str): Human-readable description of the breaking change.
+        serializer (str): Dotted path to the serializer class this applies to
+            (e.g., "myapp.serializers.MySerializer").
+        component_name (str, optional): Explicit drf-spectacular schema component
+            name to target. If not set, the name is derived from the serializer
+            by stripping the "Serializer" suffix. Use this when a serializer has
+            custom component naming via @extend_schema(component_name=...).
+
+    Subclasses implement whichever methods are relevant to the change:
+        - to_representation: for response data transforms
+        - to_internal_value: for request data transforms
+        - transform_schema: for OpenAPI schema transforms
+    """
+
+    version: str = None
+    description: str = ""
+    serializer: str = None
+    component_name: str = None
+
+    def to_representation(self, data, request, instance):  # noqa: ARG002
+        """Transform response data backwards (latest version -> older version).
+
+        Called when a client requests an older API version. Mutates `data`
+        in place to match the older version's expected response shape.
+
+        Args:
+            data: The serialized response dict (latest version format).
+            request: The DRF request object.
+            instance: The model instance being serialized.
+
+        Returns:
+            The transformed data dict.
+        """
+        return data
+
+    def to_internal_value(self, data, request):  # noqa: ARG002
+        """Transform request data forwards (older version -> latest version).
+
+        Called when a client sends data using an older API version format.
+        Mutates `data` in place to match the latest version's expected input.
+
+        Args:
+            data: The incoming request data dict (older version format).
+            request: The DRF request object.
+
+        Returns:
+            The transformed data dict.
+        """
+        return data
+
+    def transform_schema(self, schema, direction):  # noqa: ARG002
+        """Transform an OpenAPI schema component for version compatibility.
+
+        Called during OpenAPI spec generation to produce correct schemas
+        for older API versions. This ensures generated TypeScript clients
+        have accurate type definitions for each version.
+
+        Args:
+            schema: The OpenAPI schema dict for a component.
+            direction: "backwards" when generating schema for an older version.
+
+        Returns:
+            The transformed schema dict.
+        """
+        return schema
