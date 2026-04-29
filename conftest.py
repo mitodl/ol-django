@@ -23,7 +23,7 @@ def pytest_configure(config):  # noqa: ARG001
     factor_major, factor_minor = list(environ["FACTOR_DJANGO"].removeprefix("django"))
 
     actual = (major, minor)
-    expected = (factor_major, factor_minor)
+    expected = (int(factor_major), int(factor_minor))
     if actual != expected:
         msg = f"Expected django {expected}, got: {actual}"
         raise Exception(msg)  # noqa: TRY002
