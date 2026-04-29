@@ -23,6 +23,15 @@ Tests for OlPosthog and caching functionality
 """
 
 
+@pytest.fixture(autouse=True)
+def posthog_settings(settings):
+    """Apply common settings and clear the cache for all feature flag tests."""
+    settings.POSTHOG_ENABLED = True
+    settings.HOSTNAME = "fake_host_name"
+    settings.ENVIRONMENT = "prod"
+    caches["durable"].clear()
+
+
 def test_flags_from_cache(mocker, caplog, settings):
     """Test that flags are pulled from cache successfully."""
     get_feature_flag_mock = mocker.patch(
@@ -30,15 +39,11 @@ def test_flags_from_cache(mocker, caplog, settings):
     )
     durable_cache = caches["durable"]
     settings.FEATURES["testing_function"] = True
-    settings.POSTHOG_ENABLED = True
-    settings.ENVIRONMENT = "prod"
-    settings.HOSTNAME = "fake_host_name"
     cache_key = features._generate_cache_key(  # noqa: SLF001
         "testing_function",
         features.default_unique_id(),
         features._get_person_properties(features.default_unique_id()),  # noqa: SLF001
     )
-    durable_cache.clear()
 
     # Cache cleared, so we should hit Posthog.
 
@@ -81,16 +86,9 @@ def test_cache_population(mocker, settings):
         },
     )
 
-    durable_cache = caches["durable"]
-
     settings.FEATURES["testing_function_1"] = True
     settings.FEATURES["testing_function_2"] = True
     settings.FEATURES["testing_function_3"] = True
-    settings.POSTHOG_ENABLED = True
-    settings.ENVIRONMENT = "prod"
-    settings.HOSTNAME = "fake_host_name"
-
-    durable_cache.clear()
 
     all_flags = features.get_all_feature_flags()
 
@@ -109,14 +107,9 @@ def test_circuit_breaker_trips_on_slow_response(mocker, caplog, settings):
 
     mocker.patch("posthog.get_feature_flag", autospec=True, side_effect=slow_flag)
     durable_cache = caches["durable"]
-    settings.POSTHOG_ENABLED = True
-    settings.HOSTNAME = "fake_host_name"
-    settings.ENVIRONMENT = "prod"
     settings.FEATURES["testing_function"] = False
     settings.POSTHOG_CIRCUIT_BREAKER_COOLDOWN_SECONDS = 60
     settings.POSTHOG_CIRCUIT_BREAKER_TRIP_THRESHOLD_SECONDS = 0  # trip immediately
-
-    durable_cache.clear()
 
     with caplog.at_level(logging.DEBUG):
         result = features.is_enabled("testing_function")
@@ -132,15 +125,10 @@ def test_circuit_breaker_skips_posthog_when_open(mocker, caplog, settings):
     get_feature_flag_mock = mocker.patch(
         "posthog.get_feature_flag", side_effect=lambda *_, **__: time.sleep(0.1)
     )
-    durable_cache = caches["durable"]
-    settings.POSTHOG_ENABLED = True
-    settings.HOSTNAME = "fake_host_name"
-    settings.ENVIRONMENT = "prod"
     settings.FEATURES["testing_function"] = False
     settings.POSTHOG_CIRCUIT_BREAKER_COOLDOWN_SECONDS = 60
     settings.POSTHOG_CIRCUIT_BREAKER_TRIP_THRESHOLD_SECONDS = 0
 
-    durable_cache.clear()
     features.is_enabled("testing_function")  # trips the circuit
 
     # Reset and verify the open circuit skips PostHog entirely
@@ -156,19 +144,34 @@ def test_circuit_breaker_skips_posthog_when_open(mocker, caplog, settings):
     assert "circuit open" in caplog.text
 
 
+def test_circuit_breaker_trips_on_exception(mocker, caplog, settings):
+    """Test that an unexpected PostHog exception trips the circuit and falls back."""
+    mocker.patch(
+        "posthog.get_feature_flag",
+        autospec=True,
+        side_effect=RuntimeError("unexpected SDK error"),
+    )
+    durable_cache = caches["durable"]
+    settings.FEATURES["testing_function"] = False
+    settings.POSTHOG_CIRCUIT_BREAKER_COOLDOWN_SECONDS = 60
+    settings.POSTHOG_CIRCUIT_BREAKER_TRIP_THRESHOLD_SECONDS = 0
+
+    with caplog.at_level(logging.DEBUG):
+        result = features.is_enabled("testing_function")
+
+    assert result is False
+    assert durable_cache.get(features.CIRCUIT_BREAKER_CACHE_KEY) is not None
+
+
 def test_circuit_breaker_closes_after_cooldown(mocker, settings):
     """Test that the circuit closes after the cooldown period expires."""
     get_feature_flag_mock = mocker.patch(
         "posthog.get_feature_flag", autospec=True, return_value=True
     )
     durable_cache = caches["durable"]
-    settings.POSTHOG_ENABLED = True
-    settings.HOSTNAME = "fake_host_name"
-    settings.ENVIRONMENT = "prod"
     settings.FEATURES["testing_function"] = False
     settings.POSTHOG_CIRCUIT_BREAKER_COOLDOWN_SECONDS = 60
 
-    durable_cache.clear()
     durable_cache.set(features.CIRCUIT_BREAKER_CACHE_KEY, 1, 60)
 
     time_freezer = freeze_time(now_in_utc() + timedelta(seconds=61))
@@ -188,13 +191,7 @@ def test_posthog_flag_cache_timeout(mocker, settings):
     get_feature_flag_mock = mocker.patch(
         "posthog.get_feature_flag", autospec=True, return_value=True
     )
-    durable_cache = caches["durable"]
-    settings.POSTHOG_ENABLED = True
-    settings.HOSTNAME = "fake_host_name"
-    settings.ENVIRONMENT = "prod"
     settings.FEATURES["testing_function"] = True
-
-    durable_cache.clear()
 
     timeout = settings.CACHES["durable"].get("TIMEOUT", 300)
 
