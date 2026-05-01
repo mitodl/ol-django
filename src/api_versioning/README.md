@@ -121,7 +121,7 @@ relevant to the change — `to_representation` for response data,
 `to_internal_value` for request data, `transform_schema` for OpenAPI.
 
 ```python
-# learning_resources/transforms/v2.py
+# learning_resources/transforms.py
 
 from mitol.api_versioning.transforms import Transform
 
@@ -259,9 +259,19 @@ your client generator at it.
 
 When a transform doesn't fire, three things will tell you why:
 
-1. **`./manage.py check`** runs three system checks at startup
-   (`api_versioning.E001` / `W001` / `E002`). They flag misconfigured
-   `serializer` paths (typos, drift) and versions outside `ALLOWED_VERSIONS`.
+1. **`./manage.py check_api_transforms`** runs the bundled system checks for
+   every registered transform:
+   - `api_versioning.E001` — `serializer` dotted path doesn't resolve
+   - `api_versioning.W001` — path resolves but the resolved class's canonical
+     `__module__.__qualname__` differs (re-export drift; runtime lookup may
+     not match)
+   - `api_versioning.E002` — `version` is not in `ALLOWED_VERSIONS`
+
+   Defaults to `--fail-level WARNING` so drift fails the command; pass
+   `--fail-level ERROR` to allow warnings. The same checks also run inside
+   `./manage.py check` (and on `runserver`/`migrate`/etc), filterable via
+   `--tag api_versioning`. Add `./manage.py check_api_transforms` to CI to
+   catch misconfigured transforms before they ship.
 2. **`list_transforms_for_serializer(SerializerClass)`** returns every
    registered transform for that serializer, ordered oldest-first. Useful in
    a Python shell to confirm registration.

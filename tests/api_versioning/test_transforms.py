@@ -36,9 +36,15 @@ def test_metaclass_auto_registration():
     [
         ("v2", None, "must define a 'serializer'"),
         ("v2", "NotADottedPath", "not a dotted path"),
+        ("v2", 42, "of type int"),
         ("", SERIALIZER_PATH, "invalid version"),
     ],
-    ids=["missing_serializer", "non_dotted_serializer", "empty_version"],
+    ids=[
+        "missing_serializer",
+        "non_dotted_serializer",
+        "wrong_type_serializer",
+        "empty_version",
+    ],
 )
 def test_metaclass_validation_rejects_bad_config(version, serializer, match):
     """Metaclass validation rejects misconfigured Transform subclasses."""

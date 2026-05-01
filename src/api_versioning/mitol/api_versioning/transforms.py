@@ -50,6 +50,14 @@ def _validate_transform(transform_cls, name):
         )
         raise TypeError(msg)
 
+    if not isinstance(serializer, (str, type)):
+        msg = (
+            f"Transform '{name}' has serializer={serializer!r} of type "
+            f"{type(serializer).__name__}. Must be a dotted-path string or "
+            f"a serializer class."
+        )
+        raise TypeError(msg)
+
     if isinstance(serializer, str) and "." not in serializer:
         msg = (
             f"Transform '{name}' has serializer={serializer!r} which "

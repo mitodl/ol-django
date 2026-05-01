@@ -1,5 +1,5 @@
 [project]
-name = "mitol-django-api_versioning"
+name = "mitol-django-api-versioning"
 version = "2026.3.24"
 description = "MIT Open Learning Django API versioning framework with transform-based backwards compatibility"
 dependencies = [
@@ -8,7 +8,7 @@ dependencies = [
 ]
 readme = "README.md"
 license = "BSD-3-Clause"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 
 [tool.bumpver]
 current_version = "2026.3.24"

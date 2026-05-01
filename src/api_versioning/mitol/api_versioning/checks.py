@@ -17,7 +17,7 @@ from mitol.api_versioning.versions import (
 )
 
 
-@register()
+@register("api_versioning")
 def check_transform_serializer_paths(app_configs, **kwargs):  # noqa: ARG001
     """Validate every registered transform.
 

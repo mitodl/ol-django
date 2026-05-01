@@ -1,15 +1,12 @@
 """ApiVersioning app AppConfig."""
 
 import importlib
-import logging
 import os
 
 from django.apps import AppConfig, apps
 from django.utils.module_loading import module_has_submodule
 
 from . import checks  # noqa: F401  (registers Django system checks on import)
-
-log = logging.getLogger(__name__)
 
 
 class ApiVersioningApp(AppConfig):
