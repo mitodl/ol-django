@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -722,9 +722,9 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "asgiref" },
-    { name = "sqlparse" },
-    { name = "tzdata", marker = "sys_platform == 'win32'" },
+    { name = "asgiref", marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
+    { name = "sqlparse", marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
+    { name = "tzdata", marker = "(sys_platform == 'win32' and extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1f/c5/c69e338eb2959f641045802e5ea87ca4bf5ac90c5fd08953ca10742fad51/django-5.2.13.tar.gz", hash = "sha256:a31589db5188d074c63f0945c3888fad104627dfcc236fb2b97f71f89da33bc4", size = 10890368, upload-time = "2026-04-07T14:02:15.072Z" }
 wheels = [
@@ -944,16 +944,16 @@ wheels = [
 
 [[package]]
 name = "edx-opaque-keys"
-version = "3.1.0"
+version = "4.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pymongo" },
     { name = "stevedore" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ea/c5/d021457791640a9dd4284a8fe6b3e8b54ca130a9079c64f72b61df1d73fc/edx_opaque_keys-3.1.0.tar.gz", hash = "sha256:23f87d3bec2f5e0e27a443cea86e9266b2b4f2631136f23b3281b4af92f25336", size = 68186, upload-time = "2026-02-24T17:58:29.059Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/78/12/eeb5e5431f7e600875e620bd2592f77f04ee509f474f52cc6b0ab1f4312b/edx_opaque_keys-4.0.0.tar.gz", hash = "sha256:d9c06793cf99629836432f2a9f34b0bb24ad7a66a1e397ffa716f714aa43b269", size = 68222, upload-time = "2026-04-02T19:00:56.247Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/04/21/bac47541081f2f33b19b071d95482350809a0bed08450931e4cdd4281767/edx_opaque_keys-3.1.0-py3-none-any.whl", hash = "sha256:4779f2f9e188078252471b9c151b345656d34939a281d310e56a7d7a363fe69f", size = 77657, upload-time = "2026-02-24T17:58:28.157Z" },
+    { url = "https://files.pythonhosted.org/packages/39/1b/e9edebd12fd461b605691759a01c12e73a78cb50a4cd0b04ab58bb8303d9/edx_opaque_keys-4.0.0-py3-none-any.whl", hash = "sha256:dab0fd985b13d6d6515049606f93684d1eb284207b6d5e8da0721e29efdd0088", size = 77651, upload-time = "2026-04-02T19:00:55.259Z" },
 ]
 
 [[package]]
@@ -1796,7 +1796,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-hubspot-api"
-version = "2026.4.2"
+version = "2026.5.6"
 source = { editable = "src/hubspot_api" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
@@ -1964,7 +1964,7 @@ dependencies = [
 requires-dist = [
     { name = "django", specifier = ">=3.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
-    { name = "edx-opaque-keys", specifier = "==3.1.0" },
+    { name = "edx-opaque-keys", specifier = "==4.0.0" },
 ]
 
 [[package]]
@@ -2064,7 +2064,7 @@ dependencies = [
 requires-dist = [
     { name = "django", specifier = ">=3.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
-    { name = "edx-opaque-keys", specifier = "==3.1.0" },
+    { name = "edx-opaque-keys", specifier = "==4.0.0" },
 ]
 
 [[package]]
