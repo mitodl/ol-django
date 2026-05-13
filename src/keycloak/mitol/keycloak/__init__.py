@@ -1,0 +1,6 @@
+"""mitol.Keycloak"""
+
+default_app_config = "mitol.keycloak.apps.KeycloakApp"
+
+__version__ = "2026.4.29"
+__distributionname__ = "mitol-django-keycloak"
