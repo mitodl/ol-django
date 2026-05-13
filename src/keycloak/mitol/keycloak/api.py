@@ -15,6 +15,18 @@ def get_admin_client() -> KeycloakAdmin:
     return KeycloakAdmin(connection=connection)
 
 
+def is_admin_client_configured():
+    """
+    Return True if the admin client is configured
+    """
+    client = get_admin_client()
+
+    for prop in ("server_url", "realm_name", "client_id", "client_secret_key"):
+        if getattr(client, prop, None) is None:
+            return False
+    return True
+
+
 def update_user(uuid: str, *, attributes: UserAttributes):
     """
     Update a user
