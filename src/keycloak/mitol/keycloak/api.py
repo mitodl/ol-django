@@ -27,9 +27,11 @@ def is_admin_client_configured():
     return True
 
 
-def update_user(uuid: str, *, attributes: UserAttributes):
+def update_user(uuid: str, email: str, *, attributes: UserAttributes):
     """
     Update a user
     """
     client = get_admin_client()
-    client.update_user(uuid, {"attributes": attributes.model_dump(exclude_none=True)})
+    client.update_user(
+        uuid, {"email": email, "attributes": attributes.model_dump(exclude_none=True)}
+    )
