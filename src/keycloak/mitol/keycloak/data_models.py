@@ -14,4 +14,4 @@ class UserAttributes(BaseModel):
     def as_array(self, value: Any) -> list[Any]:
         return [value]
 
-    model_config = ConfigDict(serialize_by_alias=True)
+    model_config = ConfigDict(serialize_by_alias=True, frozen=True)
