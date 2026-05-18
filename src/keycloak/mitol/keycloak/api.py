@@ -27,11 +27,16 @@ def is_admin_client_configured():
     return True
 
 
-def update_user(uuid: str, email: str, *, attributes: UserAttributes):
+def update_user(uuid: str, *, attributes: UserAttributes):
     """
     Update a user
     """
     client = get_admin_client()
-    client.update_user(
-        uuid, {"email": email, "attributes": attributes.model_dump(exclude_none=True)}
-    )
+
+    # Keycloak doesn't support PATCH, instead it only has PUT which overwrites the user
+    # with whatever payload we send. So we mimic what would happen in a keycloak admin
+    # ui by loading the profile and then updating the attributes.
+    payload = client.get_user(uuid)
+    payload["attributes"].update(attributes.model_dump(exclude_none=True))
+
+    client.update_user(uuid, payload)
