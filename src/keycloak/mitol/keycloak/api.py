@@ -32,4 +32,4 @@ def update_user(uuid: str, *, attributes: UserAttributes):
     Update a user
     """
     client = get_admin_client()
-    client.update_user(uuid, {attributes: attributes.model_dump(exclude_none=True)})
+    client.update_user(uuid, {"attributes": attributes.model_dump(exclude_none=True)})
