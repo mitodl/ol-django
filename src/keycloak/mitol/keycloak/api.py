@@ -1,4 +1,5 @@
 from django.conf import settings
+from mitol.keycloak.constants import READONLY_USER_ATTRIBUTES
 from mitol.keycloak.data_models import UserAttributes
 
 from keycloak import KeycloakAdmin
@@ -37,6 +38,10 @@ def update_user(uuid: str, *, attributes: UserAttributes):
     # with whatever payload we send. So we mimic what would happen in a keycloak admin
     # ui by loading the profile and then updating the attributes.
     payload = client.get_user(uuid)
+
+    for attr in READONLY_USER_ATTRIBUTES:
+        payload.pop(attr, None)
+
     payload["attributes"].update(attributes.model_dump(exclude_none=True))
 
     client.update_user(uuid, payload)
