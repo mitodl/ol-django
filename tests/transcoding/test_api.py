@@ -257,3 +257,102 @@ def test_media_convert_job(mocker, exclude_mp4, exclude_thumbnail):
     )
 
     mock_client.create_job.assert_called_once_with(**mock_job_dict)
+
+
+def test_media_convert_job_forwards_template_path(mocker):
+    """media_convert_job should pass template_path through to make_media_convert_job."""
+    mocker.patch("boto3.client", return_value=mocker.MagicMock())
+    mock_make = mocker.patch(
+        "mitol.transcoding.api.make_media_convert_job", return_value={"job": "config"}
+    )
+    mocker.patch(
+        "django.conf.settings.VIDEO_S3_TRANSCODE_ENDPOINT",
+        "https://mediaconvert.us-east-1.amazonaws.com",
+    )
+    mocker.patch("django.conf.settings.AWS_REGION", "us-east-1")
+
+    media_convert_job(
+        "uploads/test-video.mp4",
+        template_path="config/portrait.json",
+    )
+
+    assert mock_make.call_args.kwargs["template_path"] == "config/portrait.json"
+
+
+def _write_template(path, marker):
+    """Write a minimal MediaConvert template and tag UserMetadata to identify it."""
+    path.write_text(
+        json.dumps(
+            {
+                "UserMetadata": {"filter": "", "template_marker": marker},
+                "Queue": "",
+                "Role": "",
+                "Settings": {
+                    "Inputs": [{"FileInput": ""}],
+                    "OutputGroups": [
+                        {
+                            "OutputGroupSettings": {
+                                "Type": GroupSettings.HLS_GROUP_SETTINGS,
+                                GroupSettings.HLS_GROUP_SETTINGS_KEY: {
+                                    "SegmentLength": 6,
+                                    "AdditionalManifests": [
+                                        {"ManifestNameModifier": ""}
+                                    ],
+                                },
+                                "Destination": "",
+                            },
+                            "Outputs": [
+                                {
+                                    "VideoDescription": {
+                                        "CodecSettings": {"Codec": "H_264"}
+                                    }
+                                }
+                            ],
+                        }
+                    ],
+                },
+            }
+        )
+    )
+
+
+def test_make_media_convert_job_uses_template_path_override(
+    mock_file_config, tmp_path, mocker
+):
+    """make_media_convert_job reads template_path when provided, ignoring settings."""
+    default_template = tmp_path / "default.json"
+    override_template = tmp_path / "portrait.json"
+    _write_template(default_template, "default")
+    _write_template(override_template, "portrait")
+
+    mocker.patch("django.conf.settings.TRANSCODE_JOB_TEMPLATE", str(default_template))
+    mocker.patch("django.conf.settings.VIDEO_TRANSCODE_QUEUE", "default")
+    mocker.patch("django.conf.settings.AWS_REGION", "us-east-1")
+    mocker.patch("django.conf.settings.AWS_ACCOUNT_ID", "123456789012")
+    mocker.patch("django.conf.settings.AWS_ROLE_NAME", "MediaConvertRole")
+    mocker.patch("pathlib.Path.cwd", return_value=Path("/"))
+
+    job_dict = make_media_convert_job(
+        mock_file_config, template_path=str(override_template)
+    )
+
+    assert job_dict["UserMetadata"]["template_marker"] == "portrait"
+
+
+def test_make_media_convert_job_falls_back_to_settings_template(
+    mock_file_config, tmp_path, mocker
+):
+    """make_media_convert_job falls back to settings.TRANSCODE_JOB_TEMPLATE."""
+    default_template = tmp_path / "default.json"
+    _write_template(default_template, "default")
+
+    mocker.patch("django.conf.settings.TRANSCODE_JOB_TEMPLATE", str(default_template))
+    mocker.patch("django.conf.settings.VIDEO_TRANSCODE_QUEUE", "default")
+    mocker.patch("django.conf.settings.AWS_REGION", "us-east-1")
+    mocker.patch("django.conf.settings.AWS_ACCOUNT_ID", "123456789012")
+    mocker.patch("django.conf.settings.AWS_ROLE_NAME", "MediaConvertRole")
+    mocker.patch("pathlib.Path.cwd", return_value=Path("/"))
+
+    job_dict = make_media_convert_job(mock_file_config)
+
+    assert job_dict["UserMetadata"]["template_marker"] == "default"
