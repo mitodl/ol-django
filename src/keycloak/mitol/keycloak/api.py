@@ -1,5 +1,5 @@
 from django.conf import settings
-from mitol.keycloak.constants import READONLY_USER_ATTRIBUTES
+from mitol.keycloak.constants import READONLY_USER_ATTRIBUTES, REQUIRED_CLIENT_SETTINGS
 from mitol.keycloak.data_models import UserAttributes
 
 from keycloak import KeycloakAdmin
@@ -16,13 +16,13 @@ def get_admin_client() -> KeycloakAdmin:
     return KeycloakAdmin(connection=connection)
 
 
-def is_admin_client_configured():
+def is_admin_client_configured() -> bool:
     """
     Return True if the admin client is configured
     """
     client = get_admin_client()
 
-    for prop in ("server_url", "realm_name", "client_id", "client_secret_key"):
+    for prop in REQUIRED_CLIENT_SETTINGS:
         if getattr(client, prop, None) is None:
             return False
     return True
