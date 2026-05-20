@@ -46,7 +46,7 @@ jobs:
     # Service containers to run
     services:
       postgres:
-        image: postgres@sha256:78481659c47e862334611ccdaf7c369c986b3046da9857112f3b309114a65fb4
+        image: postgres@sha256:7aba8c66107ee218ddbaacb30eae46d774bf5e34ab77a917be819b4e227493c4
         env:
           POSTGRES_PASSWORD: postgres
         # Set health checks to wait until postgres has started
