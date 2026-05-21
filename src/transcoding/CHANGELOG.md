@@ -6,6 +6,24 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.5.21.1'></a>
+## [2026.5.21.1] - 2026-05-21
+
+### Removed
+
+- Removed support for Python 3.10
+
+### Added
+
+- Added  support for django version to 5.2
+- Add tox and expand gh action test matrix
+
+- `media_convert_job()` and `make_media_convert_job()` now accept an optional `template_path` argument that overrides `settings.TRANSCODE_JOB_TEMPLATE` for a single call. This lets a project dispatch jobs through multiple templates (e.g. landscape vs. portrait pipelines) without mutating settings.
+
+### Changed
+
+- Removed `pkg_resources.declare_namespace()` from the `mitol` namespace package declaration in favour of implicit namespace packages (PEP 420), eliminating the runtime dependency on `setuptools`/`pkg_resources`.
+
 <a id='changelog-2026.5.21'></a>
 ## [2026.5.21] - 2026-05-21
 
