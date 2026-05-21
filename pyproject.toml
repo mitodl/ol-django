@@ -16,6 +16,7 @@ dependencies = [
   "mitol-django-google_sheets_deferrals",
   "mitol-django-google_sheets_refunds",
   "mitol-django-hubspot_api",
+  "mitol-django-keycloak",
   "mitol-django-oauth_toolkit_extensions",
   "mitol-django-olposthog",
   "mitol-django-openedx",
@@ -114,6 +115,7 @@ mitol-django-google_sheets = { workspace = true }
 mitol-django-google_sheets_deferrals = { workspace = true }
 mitol-django-google_sheets_refunds = { workspace = true }
 mitol-django-hubspot_api = { workspace = true }
+mitol-django-keycloak = { workspace = true }
 mitol-django-oauth_toolkit_extensions = { workspace = true }
 mitol-django-olposthog = { workspace = true }
 mitol-django-openedx = { workspace = true }

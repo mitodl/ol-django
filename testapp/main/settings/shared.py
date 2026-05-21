@@ -33,6 +33,7 @@ import_settings_modules(
     "mitol.apigateway.settings",
     "mitol.olposthog.settings.olposthog",
     "mitol.observability.settings.logging",
+    "mitol.keycloak.settings.keycloak",
 )
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
