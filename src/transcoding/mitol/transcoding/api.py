@@ -25,6 +25,7 @@ def media_convert_job(  # noqa: PLR0913
         settings.VIDEO_S3_TRANSCODE_BUCKET or settings.AWS_STORAGE_BUCKET_NAME
     ),
     group_settings: dict | None = None,
+    template_path: str | None = None,
 ) -> dict:
     """
     Create a MediaConvert job for a Video
@@ -36,6 +37,8 @@ def media_convert_job(  # noqa: PLR0913
         destination_prefix (str): Prefix for the destination video.
         destination_bucket (str): S3 bucket for the transcoded output
         group_settings (dict, optional): Settings for output groups.
+        template_path (str, optional): Path to a MediaConvert job template to
+            use instead of ``settings.TRANSCODE_JOB_TEMPLATE``.
 
     Returns:
         dict: MediaConvert job details.
@@ -51,7 +54,7 @@ def media_convert_job(  # noqa: PLR0913
     )
 
     # Make MediaConvert job
-    job_dict = make_media_convert_job(file_config)
+    job_dict = make_media_convert_job(file_config, template_path=template_path)
 
     client = boto3.client(
         "mediaconvert",
@@ -61,18 +64,23 @@ def media_convert_job(  # noqa: PLR0913
     return client.create_job(**job_dict)
 
 
-def make_media_convert_job(file_config: FileConfig) -> dict:
+def make_media_convert_job(
+    file_config: FileConfig, template_path: str | None = None
+) -> dict:
     """
     Create a MediaConvert job config.
 
     Args:
         file_config (FileConfig): Configuration for file paths and settings.
+        template_path (str, optional): Path to a MediaConvert job template to
+            use instead of ``settings.TRANSCODE_JOB_TEMPLATE``.
 
     Returns:
         dict: MediaConvert job details.
     """
 
-    with Path(Path.cwd() / settings.TRANSCODE_JOB_TEMPLATE).open(
+    job_template_path = template_path or settings.TRANSCODE_JOB_TEMPLATE
+    with Path(Path.cwd() / job_template_path).open(
         encoding="utf-8",
     ) as job_template:
         job_dict = json.loads(job_template.read())
