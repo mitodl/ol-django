@@ -95,6 +95,13 @@ conflicts = [
     ]
 ]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+managed = true
+
 [tool.hatch.metadata]
 allow-direct-references = true
 
