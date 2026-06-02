@@ -134,7 +134,7 @@ include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]
 exclude = ["BUILD", "pyproject.toml"]
 
 [tool.pytest.ini_options]
-addopts = "--cov . --cov-report term --cov-report html --cov-report xml --reuse-db"
+addopts = "--cov . --cov-report term --cov-report html --cov-report xml --reuse-db --color=yes"
 norecursedirs = ".git .tox .* CVS _darcs {arch} *.egg dist"
 DJANGO_SETTINGS_MODULE = "main.settings.test"
 # -- recommended but optional:
