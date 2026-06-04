@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     "mitol.scim.apps.ScimApp",
     "mitol.apigateway.apps.ApigatewayApp",
     "mitol.observability.apps.ObservabilityConfig",
+    "mitol.api_versioning.apps.ApiVersioningApp",
     # test app, integrates the reusable apps
     "main",
     "users",
