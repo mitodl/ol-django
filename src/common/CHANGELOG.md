@@ -6,6 +6,17 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.6.10'></a>
+## [2026.6.10] - 2026-06-10
+
+### Removed
+
+- Removed support for Python 3.10
+
+### Added
+
+- Added `mitol.common.serializers.BaseSerializer` which enforces required prefetches for a queryset being serialized.
+
 <a id='changelog-2026.4.29'></a>
 ## [2026.4.29] - 2026-04-29
 
