@@ -6,6 +6,17 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.6.12'></a>
+## [2026.6.12] - 2026-06-12
+
+### Removed
+
+- Removed support for Python 3.10
+
+### Added
+
+- Refactored prefetch checking logic into a `is_prefetched()` util.
+
 <a id='changelog-2026.6.10'></a>
 ## [2026.6.10] - 2026-06-10
 
