@@ -2,7 +2,7 @@
 services:
 
   db:
-    image: postgres@sha256:78481659c47e862334611ccdaf7c369c986b3046da9857112f3b309114a65fb4
+    image: postgres@sha256:29ee7bb30d804447dc9a91fd0d74322ae1dc3a4072cc6346f70a5ed6e783b565
     environment:
       POSTGRES_DB: ol_django
       POSTGRES_PASSWORD: postgres
