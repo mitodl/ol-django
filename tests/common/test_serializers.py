@@ -1,5 +1,8 @@
+import logging
+
 import pytest
 from main.models import FirstLevel1, FirstLevel2, SecondLevel1, SecondLevel2
+from mitol.common import serializers as serializers_module
 from mitol.common.exceptions import (
     RequiredPrefetchesNotDefinedError,
     RequiredPrefetchMissingError,
@@ -98,6 +101,61 @@ def test_serializer_asserts_missing_prefetch_related(django_assert_num_queries):
             }
             for first in qs
         ]
+
+
+@pytest.fixture
+def _simulate_production(settings, monkeypatch):
+    """
+    Make the serializer behave as it would in production: DEBUG off and not under
+    a (detected) pytest run, so the prefetch guardrail warns instead of raising.
+    """
+    settings.DEBUG = False
+    monkeypatch.setattr(serializers_module, "_running_under_pytest", lambda: False)
+
+
+@pytest.mark.usefixtures("_simulate_production")
+def test_serializer_warns_instead_of_raising_in_production(caplog):
+    """
+    Outside of development/CI/tests a missing required prefetch should not crash the
+    request. Instead it logs a structured warning and serializes lazily.
+    """
+    qs = FirstLevel1.objects.all()
+
+    with caplog.at_level(logging.WARNING):
+        data = _FirstLevel1Serializer(qs, many=True).data
+
+    assert data == [
+        {
+            "id": first.id,
+            "second_level": {"id": first.second_level.id},
+        }
+        for first in qs
+    ]
+
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert len(warnings) == len(qs)
+    assert "RequiredPrefetchMissing" in caplog.text
+    assert "serializer=_FirstLevel1Serializer" in caplog.text
+    assert "prefetch=second_level" in caplog.text
+    assert f"model={FirstLevel1._meta.label}" in caplog.text  # noqa: SLF001
+
+
+@pytest.mark.usefixtures("_simulate_production")
+def test_serializer_prefetched_field_does_not_warn(caplog):
+    """A properly prefetched field serializes without warning or raising in prod"""
+    qs = FirstLevel1.objects.select_related("second_level")
+
+    with caplog.at_level(logging.WARNING):
+        data = _FirstLevel1Serializer(qs, many=True).data
+
+    assert data == [
+        {
+            "id": first.id,
+            "second_level": {"id": first.second_level.id},
+        }
+        for first in qs
+    ]
+    assert "RequiredPrefetchMissing" not in caplog.text
 
 
 def test_serializer_asserts_escape_hatch(django_assert_num_queries):
