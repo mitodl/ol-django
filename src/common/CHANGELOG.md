@@ -6,6 +6,43 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.6.16.2'></a>
+## [2026.6.16.2] - 2026-06-16
+
+### Removed
+
+- Removed support for Python 3.10
+
+### Added
+
+- Tests that simulate a production environment and ensure that hard prefetch errors are not thrown at runtime, but are logged
+
+### Changed
+
+- The BaseSerializer's prefetch check was updated so that it does not actually raise RequiredPrefetchMissingError unless the log level is DEBUG or the code is being run in pytest
+
+<a id='changelog-2026.6.16.1'></a>
+## [2026.6.16.1] - 2026-06-16
+
+### Removed
+
+- Removed support for Python 3.10
+
+### Added
+
+- Tests that simulate a production environment and ensure that hard prefetch errors are not thrown at runtime, but are logged
+
+### Changed
+
+- The BaseSerializer's prefetch check was updated so that it does not actually raise RequiredPrefetchMissingError unless the log level is DEBUG or the code is being run in pytest
+
+<a id='changelog-2026.6.16'></a>
+## [2026.6.16] - 2026-06-16
+
+### Removed
+
+- Removed support for Python 3.10
+
 <a id='changelog-2026.6.12'></a>
 ## [2026.6.12] - 2026-06-12
 
