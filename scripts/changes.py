@@ -27,9 +27,11 @@ class Changes:
     def has_top_level_dependency_changes(self) -> bool:
         return len(self.top_level_dependency_changes) > 0
 
+    @cached_property
     def has_source_changes(self) -> bool:
         return len(self.source_changes) > 0
 
+    @cached_property
     def has_changelogd_changes(self) -> bool:
         return len(self.changelogd_changes) > 0
 
