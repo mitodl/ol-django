@@ -107,21 +107,21 @@ def test_serializer_asserts_missing_prefetch_related(django_assert_num_queries):
 def _simulate_production(settings, monkeypatch):
     """
     Make the serializer behave as it would in production: DEBUG off and not under
-    a (detected) pytest run, so the prefetch guardrail warns instead of raising.
+    a (detected) pytest run, so the prefetch guardrail logs instead of raising.
     """
     settings.DEBUG = False
     monkeypatch.setattr(serializers_module, "_running_under_pytest", lambda: False)
 
 
 @pytest.mark.usefixtures("_simulate_production")
-def test_serializer_warns_instead_of_raising_in_production(caplog):
+def test_serializer_logs_error_instead_of_raising_in_production(caplog):
     """
     Outside of development/CI/tests a missing required prefetch should not crash the
-    request. Instead it logs a structured warning and serializes lazily.
+    request. Instead it logs a structured error and serializes lazily.
     """
     qs = FirstLevel1.objects.all()
 
-    with caplog.at_level(logging.WARNING):
+    with caplog.at_level(logging.ERROR):
         data = _FirstLevel1Serializer(qs, many=True).data
 
     assert data == [
@@ -132,20 +132,21 @@ def test_serializer_warns_instead_of_raising_in_production(caplog):
         for first in qs
     ]
 
-    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
-    assert len(warnings) == len(qs)
-    assert "RequiredPrefetchMissing" in caplog.text
-    assert "serializer=_FirstLevel1Serializer" in caplog.text
-    assert "prefetch=second_level" in caplog.text
-    assert f"model={FirstLevel1._meta.label}" in caplog.text  # noqa: SLF001
+    expected_message = (
+        "RequiredPrefetchMissing: serializer=_FirstLevel1Serializer "
+        f"prefetch=second_level model={FirstLevel1._meta.label}"  # noqa: SLF001
+    )
+    assert [r.getMessage() for r in caplog.records if r.levelno == logging.ERROR] == [
+        expected_message
+    ] * len(qs)
 
 
 @pytest.mark.usefixtures("_simulate_production")
-def test_serializer_prefetched_field_does_not_warn(caplog):
-    """A properly prefetched field serializes without warning or raising in prod"""
+def test_serializer_prefetched_field_does_not_log_error(caplog):
+    """A properly prefetched field serializes without logging or raising in prod"""
     qs = FirstLevel1.objects.select_related("second_level")
 
-    with caplog.at_level(logging.WARNING):
+    with caplog.at_level(logging.ERROR):
         data = _FirstLevel1Serializer(qs, many=True).data
 
     assert data == [
