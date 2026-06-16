@@ -55,7 +55,7 @@ class BaseSerializer(serializers.ModelSerializer):
                     if settings.DEBUG or _running_under_pytest():
                         raise RequiredPrefetchMissingError(prefetch_name)
 
-                    log.warning(
+                    log.error(
                         "RequiredPrefetchMissing: serializer=%s prefetch=%s model=%s",
                         self.__class__.__name__,
                         prefetch_name,
