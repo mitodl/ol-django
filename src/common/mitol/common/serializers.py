@@ -7,6 +7,7 @@ from django.conf import settings
 from mitol.common.exceptions import (
     RequiredPrefetchesNotDefinedError,
     RequiredPrefetchMissingError,
+    SerializerTreePath,
 )
 from mitol.common.utils.queryset import is_prefetched
 from rest_framework import serializers
@@ -27,6 +28,23 @@ def _running_under_pytest() -> bool:
     each test, which is the most reliable signal available here.
     """
     return "PYTEST_CURRENT_TEST" in os.environ
+
+
+def get_serializer_tree_path(
+    serializer: serializers.Serializer, field_name: str | None = None
+) -> SerializerTreePath:
+    path = (
+        get_serializer_tree_path(serializer.parent, serializer.field_name)
+        if serializer.parent is not None
+        else []
+    )
+
+    if isinstance(serializer, serializers.ListSerializer):
+        path.append((f"{serializer.child.__class__.__name__}(many=True)", field_name))
+    else:
+        path.append((serializer.__class__.__name__, field_name))
+
+    return path
 
 
 class BaseSerializer(serializers.ModelSerializer):
@@ -53,7 +71,9 @@ class BaseSerializer(serializers.ModelSerializer):
                     # log a structured, greppable warning and fall through to serialize
                     # (lazily) instead.
                     if settings.DEBUG or _running_under_pytest():
-                        raise RequiredPrefetchMissingError(prefetch_name)
+                        raise RequiredPrefetchMissingError(
+                            prefetch_name, get_serializer_tree_path(self)
+                        )
 
                     log.error(
                         "RequiredPrefetchMissing: serializer=%s prefetch=%s model=%s",

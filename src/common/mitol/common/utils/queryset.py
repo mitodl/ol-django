@@ -1,5 +1,9 @@
+import logging
+
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Model
+
+log = logging.getLogger()
 
 
 def is_prefetched(instance: Model, prefetch_name: str) -> bool:
@@ -20,12 +24,26 @@ def is_prefetched(instance: Model, prefetch_name: str) -> bool:
     except FieldDoesNotExist:
         field_is_cached = False
 
+    prefetched_cache = getattr(instance, "_prefetched_objects_cache", {})
+
+    log.debug(
+        (
+            "is_prefetched(): instance=%s prefetch_name=%s is_cached=%s "
+            "prefetched_objects_cache=%s __dict__=%s"
+        ),
+        instance,
+        prefetch_name,
+        field_is_cached,
+        prefetched_cache,
+        instance.__dict__,
+    )
+
     return (
         # django's builtin select_related()
         field_is_cached
         or
         # django's builtin prefetch_related()
-        prefetch_name in getattr(instance, "_prefetched_objects_cache", {})
+        prefetch_name in prefetched_cache
         or
         # django-prefetch's prefetch()
         prefetch_name in instance.__dict__
