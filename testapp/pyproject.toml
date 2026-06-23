@@ -3,7 +3,7 @@ name = "testapp"
 description = "Test app for ol-django"
 version = "0.0.0"
 dependencies = [
-  "mitol-django-common[celery]",
+  "mitol-django-common[celery,drf-spectacular]",
   "mitol-django-mail",
   "mitol-django-authentication",
   "mitol-django-digitalcredentials",

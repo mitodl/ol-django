@@ -1,17 +1,20 @@
 """DRF serializers"""
 
-import logging
 import os
 
+import structlog
 from django.conf import settings
+from django.db.models import Model
 from mitol.common.exceptions import (
+    GenericObjectSerializerMissingError,
     RequiredPrefetchesNotDefinedError,
     RequiredPrefetchMissingError,
+    SerializerTreePath,
 )
 from mitol.common.utils.queryset import is_prefetched
 from rest_framework import serializers
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger(__name__)
 
 # sentinel object to indicate that you're disabling prefetch checks in non-API code
 THIS_IS_NOT_AN_API = object()
@@ -27,6 +30,23 @@ def _running_under_pytest() -> bool:
     each test, which is the most reliable signal available here.
     """
     return "PYTEST_CURRENT_TEST" in os.environ
+
+
+def get_serializer_tree_path(
+    serializer: serializers.Serializer, field_name: str | None = None
+) -> SerializerTreePath:
+    path = (
+        get_serializer_tree_path(serializer.parent, serializer.field_name)
+        if serializer.parent is not None
+        else []
+    )
+
+    if isinstance(serializer, serializers.ListSerializer):
+        path.append((f"{serializer.child.__class__.__name__}(many=True)", field_name))
+    else:
+        path.append((serializer.__class__.__name__, field_name))
+
+    return path
 
 
 class BaseSerializer(serializers.ModelSerializer):
@@ -53,13 +73,64 @@ class BaseSerializer(serializers.ModelSerializer):
                     # log a structured, greppable warning and fall through to serialize
                     # (lazily) instead.
                     if settings.DEBUG or _running_under_pytest():
-                        raise RequiredPrefetchMissingError(prefetch_name)
+                        raise RequiredPrefetchMissingError(
+                            prefetch_name, get_serializer_tree_path(self)
+                        )
 
                     log.error(
-                        "RequiredPrefetchMissing: serializer=%s prefetch=%s model=%s",
-                        self.__class__.__name__,
-                        prefetch_name,
-                        instance._meta.label,  # noqa: SLF001
+                        "A required prefetch is missing",
+                        serializers=self.__class__.__name__,
+                        prefetch=prefetch_name,
+                        model=instance._meta.label,  # noqa: SLF001
                     )
 
         return super().to_representation(instance)
+
+
+class GenericObjectField(serializers.Field):
+    """
+    Field for GenericObjectField
+
+    You can customize the object/serializer mapping by subclassing or
+    passing it as an arg:
+
+
+    class ProductDetailSerializer(GenericObjectField):
+        serializer_mapping = {
+           Program: ProgramSerializer(read_only=True),
+           Course: CourseSerializer(read_only=True),
+        }
+
+    class ProductSerializer(Serializer):
+
+        product = ProductDetailSerializer()
+
+        # is equivalent to
+
+        product = GenericObjectField(serializer_mapping={
+           Program: ProgramSerializer(read_only=True),
+           Course: CourseSerializer(read_only=True),
+        })
+    """
+
+    serializer_mapping: dict[type(Model), serializers.ModelSerializer] = {}
+
+    def __init__(self, *args, **kwargs):
+        self.serializer_mapping = kwargs.pop(
+            "serializer_mapping", self.serializer_mapping
+        )
+        super().__init__(*args, **kwargs)
+
+    def to_representation(self, value):
+        """Serialize the purchasable object using appropriate serializer"""
+        serializer = self.serializer_mapping.get(value.__class__, None)
+
+        if serializer is None:
+            error_message = (
+                f"No serializer defined for generic object of type: {value.__class__}"
+            )
+            raise GenericObjectSerializerMissingError(error_message)
+
+        serializer.bind(field_name=self.field_name, parent=self.parent)
+
+        return serializer.data

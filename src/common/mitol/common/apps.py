@@ -1,10 +1,17 @@
 """Common app AppConfigs"""
 
+import contextlib
 import os
 
 from django.apps import AppConfig
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.module_loading import import_string
+
+try:
+    import drf_spectacular
+except ImportError:
+    drf_spectacular = None
 
 
 class BaseApp(AppConfig):
@@ -32,9 +39,20 @@ class BaseApp(AppConfig):
                 )
             )
 
+    def load_drf_schema(self):
+        """
+        Try to load a schema.py from this app automatically
+        """
+        if drf_spectacular is None:
+            return
+
+        with contextlib.suppress(ImportError):
+            import_string(f"{self.name}.schema")
+
     def ready(self):
         """The application is ready"""  # noqa: D401
         self.validate_required_settings()
+        self.load_drf_schema()
 
 
 class CommonApp(AppConfig):

@@ -11,11 +11,7 @@ from mitol.common.exceptions import (
     RequiredPrefetchesNotDefinedError,
     RequiredPrefetchMissingError,
 )
-from mitol.common.serializers import THIS_IS_NOT_AN_API, BaseSerializer
-
-
-class _HasNoPrefetchesSerializer(BaseSerializer): ...
-
+from mitol.common.serializers import THIS_IS_NOT_AN_API
 
 pytestmark = pytest.mark.django_db
 
@@ -28,12 +24,46 @@ def test_data():
         book.topics.set([Topic.objects.create(name=f"Topic {i}-{t}") for t in range(5)])
 
 
+def test_serializer_get_serializer_tree_path_many_related():
+    """
+    Verify that get_serializer_tree_path() returns the correct data
+    """
+    serializer = FirstLevel2Serializer()
+    assert serializers_module.get_serializer_tree_path(serializer) == [
+        ("FirstLevel2Serializer", None)
+    ]
+    # Note: `fields` MUST be accessed for this test to pass as that causes
+    #       all the fields to get bound
+    fields = serializer.fields
+    assert serializers_module.get_serializer_tree_path(fields["second_levels"]) == [
+        ("FirstLevel2Serializer", "second_levels"),
+        ("SecondLevel2Serializer(many=True)", None),
+    ]
+
+
+def test_serializer_get_serializer_tree_path_fk():
+    """
+    Verify that get_serializer_tree_path() returns the correct data
+    """
+    serializer = FirstLevel1Serializer()
+    assert serializers_module.get_serializer_tree_path(serializer) == [
+        ("FirstLevel1Serializer", None)
+    ]
+    # Note: `fields` MUST be accessed for this test to pass as that causes
+    #       all the fields to get bound
+    fields = serializer.fields
+    assert serializers_module.get_serializer_tree_path(fields["second_level"]) == [
+        ("FirstLevel1Serializer", "second_level"),
+        ("SecondLevel1Serializer", None),
+    ]
+
+
 def test_serializer_defines_no_required_prefetches():
     """
     Verify the serializer errors on instantiation if required_prefetches not defined
     """
     with pytest.raises(RequiredPrefetchesNotDefinedError):
-        _HasNoPrefetchesSerializer()
+        HasNoPrefetchesSerializer()
 
 
 def test_serializer_asserts_missing_select_related(django_assert_num_queries):
