@@ -20,11 +20,11 @@ class SingletonModelAdmin(admin.ModelAdmin):
 
 class TimestampedModelAdmin(admin.ModelAdmin):
     """
-    A ModelAdmin that includes timestamp fields in the detail view and, optionally, in the list view
+    A ModelAdmin that includes timestamp fields in the detail view and, by default, in the list view
     """  # noqa: E501
 
-    include_timestamps_in_list = False
-    include_created_on_in_list = False
+    include_timestamps_in_list = True
+    include_created_on_in_list = True
 
     @staticmethod
     def _join_and_dedupe(existing_field_names, field_names_to_add):  # pragma: no cover

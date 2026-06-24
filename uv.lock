@@ -1617,7 +1617,7 @@ provides-extras = ["touchstone"]
 
 [[package]]
 name = "mitol-django-common"
-version = "2026.6.12"
+version = "2026.6.16.4"
 source = { editable = "src/common" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
