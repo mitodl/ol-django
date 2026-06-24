@@ -1629,6 +1629,7 @@ dependencies = [
     { name = "django-webpack-loader" },
     { name = "pytz" },
     { name = "requests" },
+    { name = "structlog" },
     { name = "typing-extensions" },
 ]
 
@@ -1652,6 +1653,7 @@ requires-dist = [
     { name = "django-webpack-loader", specifier = ">=0.7.0" },
     { name = "pytz", specifier = ">=2020.4" },
     { name = "requests", specifier = ">=2.20.0" },
+    { name = "structlog" },
     { name = "typing-extensions" },
 ]
 provides-extras = ["celery"]

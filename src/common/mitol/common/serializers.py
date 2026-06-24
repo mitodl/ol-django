@@ -1,8 +1,8 @@
 """DRF serializers"""
 
-import logging
 import os
 
+import structlog
 from django.conf import settings
 from mitol.common.exceptions import (
     RequiredPrefetchesNotDefinedError,
@@ -12,7 +12,7 @@ from mitol.common.exceptions import (
 from mitol.common.utils.queryset import is_prefetched
 from rest_framework import serializers
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger(__name__)
 
 # sentinel object to indicate that you're disabling prefetch checks in non-API code
 THIS_IS_NOT_AN_API = object()
@@ -76,10 +76,10 @@ class BaseSerializer(serializers.ModelSerializer):
                         )
 
                     log.error(
-                        "RequiredPrefetchMissing: serializer=%s prefetch=%s model=%s",
-                        self.__class__.__name__,
-                        prefetch_name,
-                        instance._meta.label,  # noqa: SLF001
+                        "A required prefetch is missing",
+                        serializers=self.__class__.__name__,
+                        prefetch=prefetch_name,
+                        model=instance._meta.label,  # noqa: SLF001
                     )
 
         return super().to_representation(instance)

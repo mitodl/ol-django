@@ -9,6 +9,7 @@ dependencies = [
   "django>=3.0",
   "pytz>=2020.4",
   "requests>=2.20.0",
+  "structlog",
   "typing-extensions",
 ]
 readme = "README.md"

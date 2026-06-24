@@ -1,9 +1,8 @@
-import logging
-
+import structlog
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Model
 
-log = logging.getLogger()
+log = structlog.get_logger(__name__)
 
 
 def is_prefetched(instance: Model, prefetch_name: str) -> bool:
@@ -27,15 +26,12 @@ def is_prefetched(instance: Model, prefetch_name: str) -> bool:
     prefetched_cache = getattr(instance, "_prefetched_objects_cache", {})
 
     log.debug(
-        (
-            "is_prefetched(): instance=%s prefetch_name=%s is_cached=%s "
-            "prefetched_objects_cache=%s __dict__=%s"
-        ),
-        instance,
-        prefetch_name,
-        field_is_cached,
-        prefetched_cache,
-        instance.__dict__,
+        "is_prefetched() check",
+        instnace=instance,
+        prefetch_name=prefetch_name,
+        field_is_cached=field_is_cached,
+        prefetched_cache=prefetched_cache.keys(),
+        instance_dict=instance.__dict__.keys(),
     )
 
     return (
