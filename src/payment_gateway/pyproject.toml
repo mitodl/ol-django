@@ -3,10 +3,11 @@ name = "mitol-django-payment-gateway"
 version = "2026.4.2"
 description = "Django application to handle payment processing"
 dependencies = [
-"cybersource-rest-client-python>=0.0.59",
-"django-stubs>=1.13.1",
-"django>=3.0",
-"mitol-django-common"
+    "cybersource-rest-client-python>=0.0.59",
+    "django-stubs>=1.13.1",
+    "django>=3.0",
+    "mitol-django-common",
+    "stripe>=15.3.0",
 ]
 readme = "README.md"
 license = "BSD-3-Clause"
