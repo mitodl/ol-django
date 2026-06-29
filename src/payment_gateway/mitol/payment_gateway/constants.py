@@ -1,6 +1,9 @@
 """Constants for the Payment Gateway."""
 
+ISO_8601_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+
 MITOL_PAYMENT_GATEWAY_CYBERSOURCE = "CyberSource"
+MITOL_PAYMENT_GATEWAY_STRIPE = "Stripe"
 
 CYBERSOURCE_DECISION_ACCEPT = "ACCEPT"
 CYBERSOURCE_DECISION_DECLINE = "DECLINE"
@@ -33,5 +36,3 @@ CYBERSOURCE_CARD_TYPES = {
     "061": "RuPay",
     "062": "China UnionPay",
 }
-
-ISO_8601_FORMAT = "%Y-%m-%dT%H:%M:%SZ"

@@ -7,9 +7,53 @@ from dataclasses import dataclass
 from decimal import Decimal
 from functools import wraps
 
+CART_ITEM_INLINE = "inline"
+CART_ITEM_DEFINED = "defined"
+CART_ITEM_UNKNOWN = "unknown"
+
 
 @dataclass
-class CartItem:
+class BaseCartItem:
+    """
+    Base fields for a cart item.
+
+    Fields:
+    - quantity: Item quantity
+    - unitprice: Item price, after any necessary coupon/discout calculations
+    - taxable: Taxable amount
+    """
+
+    unitprice: Decimal = Decimal(0)
+    quantity: int = 1
+    taxable: Decimal = Decimal(0)
+
+    @property
+    def item_type(self):
+        """Return what kind of item this is."""
+
+        return CART_ITEM_UNKNOWN
+
+
+@dataclass
+class LookupCartItem(BaseCartItem):
+    """
+    Represents an item in the cart that is also configured in the payment processor.
+
+    We can sometimes specify a cart item using an identifier. So, this is a cart
+    item with just that and pricing data.
+    """
+
+    product_id: str | None = None
+
+    @property
+    def item_type(self):
+        """Return what kind of item this is."""
+
+        return CART_ITEM_DEFINED
+
+
+@dataclass
+class CartItem(BaseCartItem):
     """
     Represents an item in the cart. The mappings for xPro below are meant as an
     example; the actual data passed should make sense for your application.
@@ -17,18 +61,18 @@ class CartItem:
     Fields:
     - code: Item code (in xPro, content_type)
     - name: Item name (in xPro, description)
-    - quantity: Item quantity; defaults to 1.
     - sku: Item SKU (in xPro, content_object.id)
-    - unitprice: Item price, after any necessary coupon/discout calculations
-    - taxable: Taxable amount; defaults to 0.
     """
 
-    code: str
-    name: str
-    sku: str
-    unitprice: Decimal
-    quantity: int = 1
-    taxable: Decimal = Decimal(0)
+    code: str | None = None
+    name: str | None = None
+    sku: str | None = None
+
+    @property
+    def item_type(self):
+        """Return what kind of item this is."""
+
+        return CART_ITEM_INLINE
 
 
 @dataclass
@@ -38,6 +82,7 @@ class Order:
 
     Fields:
     - username: Purchaser username
+    - email: Purchaser email (default None)
     - ip_address: Purchaser's IP address
     - reference: Order reference number
     - items: List of CartItems representing the items to be purchased
@@ -46,7 +91,8 @@ class Order:
     username: str
     ip_address: str
     reference: str
-    items: list[CartItem]
+    items: list[BaseCartItem]
+    email: str | None = None
 
 
 @dataclass
@@ -131,7 +177,7 @@ class PaymentGateway(abc.ABC):
 
     @abc.abstractmethod
     def prepare_checkout(
-        self, order, cart, receipt_url, cancel_url, backoffice_post_url, **kwargs
+        self, order, receipt_url, cancel_url, backoffice_post_url, **kwargs
     ):
         """
         This is the entrypoint to the payment gateway.
