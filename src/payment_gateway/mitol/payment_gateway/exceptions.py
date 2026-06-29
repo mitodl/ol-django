@@ -1,4 +1,17 @@
-"""Exceptions for CyberSource"""
+"""Exceptions for the Payment Gateway"""
+
+# Generic errors
+
+
+class ImproperCartItemError(Exception):
+    """Raised if the cart item is not configured correctly."""
+
+
+class ImproperlyConfiguredError(Exception):
+    """Raised if the gateway is missing settings."""
+
+
+# CyberSource-specific errors
 
 
 class RefundDuplicateException(Exception):  # noqa: N818

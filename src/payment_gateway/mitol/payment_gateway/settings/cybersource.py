@@ -1,5 +1,5 @@
 """
-Settings for CuberSource Secure Acceptance payments and REST APIs
+Settings for CyberSource Secure Acceptance payments and REST APIs
 """
 
 from mitol.common.envs import get_string
