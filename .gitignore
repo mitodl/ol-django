@@ -71,3 +71,6 @@ testapp/settings/dev.py
 
 # SSH keys/etc.
 ssh/*
+
+
+.claude/
