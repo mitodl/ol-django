@@ -147,7 +147,9 @@ class UserAdapter(SCIMUser):
             # user must be saved first due to FK Profile -> User
             self._save_user()
             self._save_related()
-            logger.info("User saved. User id %i", self.obj.id)
+            logger.info(
+                "User saved. User id=%i, global_id=%s", self.obj.id, self.obj.global_id
+            )
 
     def delete(self):
         """
