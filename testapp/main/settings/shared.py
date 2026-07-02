@@ -21,7 +21,7 @@ import_settings_modules(
     "mitol.common.settings.webpack",
     "mitol.mail.settings.email",
     "mitol.authentication.settings.djoser_settings",
-    "mitol.payment_gateway.settings.cybersource",
+    "mitol.payment_gateway.settings",
     "mitol.google_sheets.settings.google_sheets",
     "mitol.google_sheets_refunds.settings.google_sheets_refunds",
     "mitol.google_sheets_deferrals.settings.google_sheets_deferrals",

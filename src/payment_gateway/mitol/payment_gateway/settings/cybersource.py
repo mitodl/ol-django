@@ -3,14 +3,6 @@ Settings for CyberSource Secure Acceptance payments and REST APIs
 """
 
 from mitol.common.envs import get_string
-from mitol.payment_gateway.constants import MITOL_PAYMENT_GATEWAY_CYBERSOURCE
-
-ECOMMERCE_DEFAULT_PAYMENT_GATEWAY = get_string(
-    name="ECOMMERCE_DEFAULT_PAYMENT_GATEWAY",
-    default=MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
-    description="The default payment gateway to use. Must match the "
-    "value of the constant in the mitol.payment_gateway library.",
-)
 
 MITOL_PAYMENT_GATEWAY_CYBERSOURCE_PROFILE_ID = get_string(
     name="MITOL_PAYMENT_GATEWAY_CYBERSOURCE_PROFILE_ID",
