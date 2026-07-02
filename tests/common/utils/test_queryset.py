@@ -1,5 +1,5 @@
 import pytest
-from main.models import FirstLevel1, FirstLevel2, SecondLevel1, SecondLevel2
+from libraries.models import Author, Book, Topic
 from mitol.common.utils.queryset import is_prefetched
 
 pytestmark = pytest.mark.django_db
@@ -7,32 +7,18 @@ pytestmark = pytest.mark.django_db
 
 def test_is_prefetched_foreign_key():
     """Verify that is_prefetched() returns as expected"""
-    FirstLevel1.objects.create(second_level=SecondLevel1.objects.create())
+    Book.objects.create(title="B", author=Author.objects.create(name="A"))
 
-    assert is_prefetched(FirstLevel1.objects.all()[0], "second_level") is False
-    assert (
-        is_prefetched(
-            FirstLevel1.objects.select_related("second_level")[0], "second_level"
-        )
-        is True
-    )
-    assert (
-        is_prefetched(
-            FirstLevel1.objects.prefetch_related("second_level")[0], "second_level"
-        )
-        is True
-    )
+    assert is_prefetched(Book.objects.all()[0], "author") is False
+    assert is_prefetched(Book.objects.select_related("author")[0], "author") is True
+    assert is_prefetched(Book.objects.prefetch_related("author")[0], "author") is True
 
 
 def test_is_prefetched_many_to_many():
     """Verify that is_prefetched() returns as expected"""
-    first = FirstLevel2.objects.create()
-    first.second_levels.add(SecondLevel2.objects.create())
+    author = Author.objects.create(name="A")
+    book = Book.objects.create(title="B", author=author)
+    book.topics.add(Topic.objects.create(name="T"))
 
-    assert is_prefetched(FirstLevel2.objects.all()[0], "second_levels") is False
-    assert (
-        is_prefetched(
-            FirstLevel2.objects.prefetch_related("second_levels")[0], "second_levels"
-        )
-        is True
-    )
+    assert is_prefetched(Book.objects.all()[0], "topics") is False
+    assert is_prefetched(Book.objects.prefetch_related("topics")[0], "topics") is True

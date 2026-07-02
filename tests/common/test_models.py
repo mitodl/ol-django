@@ -6,14 +6,11 @@ from random import choice, randint, sample
 import pytest
 import pytz
 from freezegun import freeze_time
+from libraries.models import Author, Book, Media
 from main.models import (
     AuditableTestModel,
     AuditableTestModelAudit,
-    FirstLevel1,
-    FirstLevel2,
     Root,
-    SecondLevel1,
-    SecondLevel2,
     Updateable,
 )
 from mitol.common.factories import UserFactory
@@ -24,23 +21,23 @@ pytestmark = pytest.mark.django_db
 
 def test_prefetch_generic_related(django_assert_num_queries):
     """Test prefetch over a many-to-one relation"""
-    second_levels1 = [SecondLevel1.objects.create() for _ in range(5)]
-    first_levels1 = [
-        FirstLevel1.objects.create(second_level=choice(second_levels1))  # noqa: S311
-        for _ in range(10)
+    authors = [Author.objects.create(name=f"A{i}") for i in range(5)]
+    books = [
+        Book.objects.create(title=f"B{i}", author=choice(authors))  # noqa: S311
+        for i in range(10)
     ]
 
-    second_levels2 = [SecondLevel2.objects.create() for _ in range(5)]
-    first_levels2 = []
-    for _ in range(10):
-        first_level = FirstLevel2.objects.create()
-        first_level.second_levels.set(sample(second_levels2, randint(1, 3)))  # noqa: S311
-        first_levels2.append(first_level)
+    author_pool = [Author.objects.create(name=f"MA{i}") for i in range(5)]
+    medias = []
+    for i in range(10):
+        m = Media.objects.create(title=f"M{i}")
+        m.authors.set(sample(author_pool, randint(1, 3)))  # noqa: S311
+        medias.append(m)
 
     roots = [
-        Root.objects.create(content_object=choice(first_levels1))  # noqa: S311
+        Root.objects.create(content_object=choice(books))  # noqa: S311
         for _ in range(5)
-    ] + [Root.objects.create(content_object=choice(first_levels2)) for _ in range(5)]  # noqa: S311
+    ] + [Root.objects.create(content_object=choice(medias)) for _ in range(5)]  # noqa: S311
 
     with django_assert_num_queries(0):
         # verify the prefetch is lazy
@@ -49,20 +46,21 @@ def test_prefetch_generic_related(django_assert_num_queries):
         ).prefetch_generic_related(
             "content_type",
             {
-                FirstLevel1: ["content_object__second_level"],
-                FirstLevel2: ["content_object__second_levels"],
+                Book: ["content_object__author"],
+                Media: ["content_object__authors"],
             },
         )
 
-    # 1 query each for Root, ContentType, FirstLevel1, FirstLevel2, FirstLevel1, and SecondLevel2  # noqa: E501
+    # 1 query each for Root, ContentType, Book, Author (book.author FK),
+    # Media, and Author (media.authors M2M)
     with django_assert_num_queries(6):
         assert len(query) == len(roots)
         for item in query:
-            if isinstance(item.content_object, FirstLevel1):
-                assert item.content_object.second_level is not None
+            if isinstance(item.content_object, Book):
+                assert item.content_object.author is not None
             else:
-                # .all() shouldn't cause a reevaulation
-                assert len(item.content_object.second_levels.all()) > 0
+                # .all() shouldn't cause a re-evaluation
+                assert len(item.content_object.authors.all()) > 0
 
 
 @pytest.mark.parametrize("pass_updated_on", [True, False])
