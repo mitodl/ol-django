@@ -122,50 +122,50 @@ class MySerializer(serializers.ModelSerializer):
 # ------------------------------------------------------------------ #
 
 
-def test_orm001_noqa_specific_code():
-    """A line with '# noqa: ORM001' suppresses the ORM001 violation on that line."""
+def test_orm001_drf_lint_pragma_specific_code():
+    """A line with '# drf-lint: ORM001' suppresses the ORM001 violation on that line."""
     source = """
 from rest_framework import serializers
 
 class MySerializer(serializers.Serializer):
     def get_obj(self, instance):
-        return MyModel.objects.get(pk=instance.pk)  # noqa: ORM001
+        return MyModel.objects.get(pk=instance.pk)  # drf-lint: ORM001
 """
     assert not _violations(source)
 
 
-def test_orm001_noqa_with_trailing_explanation():
-    """'# noqa: ORM001 # some explanation' suppresses the violation."""
+def test_orm001_drf_lint_pragma_with_trailing_explanation():
+    """'# drf-lint: ORM001 # some explanation' suppresses the violation."""
     source = """
 from rest_framework import serializers
 
 class MySerializer(serializers.Serializer):
     def get_obj(self, instance):
-        return MyModel.objects.get(pk=instance.pk)  # noqa: ORM001 # intentional
+        return MyModel.objects.get(pk=instance.pk)  # drf-lint: ORM001 # intentional
 """
     assert not _violations(source)
 
 
-def test_orm001_noqa_bare():
-    """A bare '# noqa' suppresses all violations on that line."""
+def test_orm001_drf_lint_pragma_bare():
+    """A bare '# drf-lint' suppresses all violations on that line."""
     source = """
 from rest_framework import serializers
 
 class MySerializer(serializers.Serializer):
     def get_obj(self, instance):
-        return MyModel.objects.get(pk=instance.pk)  # noqa
+        return MyModel.objects.get(pk=instance.pk)  # drf-lint
 """
     assert not _violations(source)
 
 
-def test_orm001_noqa_different_code_does_not_suppress():
-    """A '# noqa: ORM002' does NOT suppress an ORM001 violation on the same line."""
+def test_orm001_drf_lint_pragma_different_code_does_not_suppress():
+    """A '# drf-lint: ORM002' does NOT suppress an ORM001 violation on the same line."""
     source = """
 from rest_framework import serializers
 
 class MySerializer(serializers.Serializer):
     def get_obj(self, instance):
-        return MyModel.objects.get(pk=instance.pk)  # noqa: ORM002
+        return MyModel.objects.get(pk=instance.pk)  # drf-lint: ORM002
 """
     violations = _violations(source)
     assert any(v.rule == "ORM001" for v in violations)

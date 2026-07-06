@@ -124,26 +124,26 @@ class MySerializer(serializers.Serializer):
     assert not _violations(source)
 
 
-def test_orm002_noqa_specific_code():
-    """A line with '# noqa: ORM002' suppresses the ORM002 violation on that line."""
+def test_orm002_drf_lint_pragma_specific_code():
+    """A line with '# drf-lint: ORM002' suppresses the ORM002 violation on that line."""
     source = """
 from rest_framework import serializers
 
 class MySerializer(serializers.Serializer):
     def get_prices(self, instance):
-        return list(instance.resource_prices.all())  # noqa: ORM002
+        return list(instance.resource_prices.all())  # drf-lint: ORM002
 """
     assert not _violations(source)
 
 
-def test_orm002_noqa_bare():
-    """A bare '# noqa' suppresses all violations on that line."""
+def test_orm002_drf_lint_pragma_bare():
+    """A bare '# drf-lint' suppresses all violations on that line."""
     source = """
 from rest_framework import serializers
 
 class MySerializer(serializers.Serializer):
     def get_prices(self, instance):
-        return list(instance.resource_prices.all())  # noqa
+        return list(instance.resource_prices.all())  # drf-lint
 """
     assert not _violations(source)
 

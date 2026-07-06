@@ -146,7 +146,10 @@ def _expr_contains_serializer(expr: cst.BaseExpression) -> bool:
 def check_source(
     source_code: str,
 ) -> list[Violation]:
-    """Parse *source_code* and return ORM violations, respecting ``# noqa`` comments."""
+    """Parse *source_code* and return ORM violations, respecting ``# drf-lint`` pragmas.
+
+    See :func:`_is_suppressed` for the pragma syntax.
+    """
     try:
         module = cst.parse_module(source_code)
     except cst.ParserSyntaxError:
@@ -157,7 +160,7 @@ def check_source(
     wrapper.visit(visitor)
 
     source_lines = source_code.splitlines()
-    return [v for v in visitor.violations if not _is_noqa(source_lines, v)]
+    return [v for v in visitor.violations if not _is_suppressed(source_lines, v)]
 
 
 def check_file(path: Path) -> list[Violation]:
@@ -165,18 +168,24 @@ def check_file(path: Path) -> list[Violation]:
     return check_source(path.read_text(encoding="utf-8"))
 
 
-def _is_noqa(source_lines: list[str], violation: Violation) -> bool:
-    """Return True if the violation's source line carries a ``# noqa`` suppression."""
+def _is_suppressed(source_lines: list[str], violation: Violation) -> bool:
+    """Return True if the violation's source line carries a ``# drf-lint`` suppression.
+
+    We use a dedicated ``# drf-lint`` pragma rather than ``# noqa`` because ruff
+    (run separately in this repo) treats unrecognized ``# noqa`` codes as unused
+    and strips them, which would silently remove these suppressions.
+    """
     if violation.line < 1 or violation.line > len(source_lines):
         return False
     line = source_lines[violation.line - 1]
-    if "# noqa" not in line:
+    if "# drf-lint" not in line:
         return False
-    # Bare noqa (no codes) suppresses everything on this line.
-    if "# noqa:" not in line:
+    # Bare pragma (no codes) suppresses everything on this line.
+    if "# drf-lint:" not in line:
         return True
-    # Specific rule codes, e.g. ``ORM001`` or ``ORM001,ORM002`` after "# noqa:"
+    # Specific rule codes, e.g. ``ORM001`` or ``ORM001,ORM002`` after "# drf-lint:"
     # Strip any trailing inline comment like ``# explanation``
-    noqa_part = line[line.index("# noqa:") + 7 :].split("#")[0].strip()
-    codes = {c.strip() for c in noqa_part.split(",")}
+    pragma_part = line[line.index("# drf-lint:") + len("# drf-lint:") :]
+    pragma_part = pragma_part.split("#")[0].strip()
+    codes = {c.strip() for c in pragma_part.split(",")}
     return violation.rule in codes

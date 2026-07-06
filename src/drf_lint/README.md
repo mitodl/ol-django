@@ -58,13 +58,17 @@ Exit code is `0` when no new violations are found, `1` when violations are detec
 
 ## Suppressing individual violations
 
-Add `# noqa: ORM001` or `# noqa: ORM002` at the end of the offending line, or
-`# noqa` to suppress all rules on that line:
+Add `# drf-lint: ORM001` or `# drf-lint: ORM002` at the end of the offending
+line, or `# drf-lint` to suppress all rules on that line:
 
 ```python
 def get_image(self, instance):
-    item = instance.children.order_by("position").first()  # noqa: ORM002
+    item = instance.children.order_by("position").first()  # drf-lint: ORM002
 ```
+
+A dedicated pragma is used instead of `# noqa` because ruff (run separately in
+this repo) strips `# noqa` codes it doesn't recognize, which would silently
+remove the suppression.
 
 ## How it works
 
