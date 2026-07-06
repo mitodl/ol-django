@@ -1,4 +1,5 @@
 import pytest
+from asgiref.sync import sync_to_async
 from django.contrib.auth import get_user_model
 from main.utils import generate_apisix_request, generate_fake_apisix_payload
 from mitol.apigateway.backends import ApisixRemoteUserBackend
@@ -44,3 +45,28 @@ def test_configure_user_updates_fields(settings, override, has_value):
     else:
         # If not overriding, the email should remain unchanged
         assert test_user.email == "updated@email.com"
+
+
+@pytest.mark.django_db
+@pytest.mark.asyncio
+async def test_aauthenticate_existing_user():
+    """Async authenticate should resolve an existing user, matching authenticate()."""
+    test_user = await sync_to_async(SsoUserFactory.create)()
+    payload, _ = generate_fake_apisix_payload(user=test_user)
+    request = await sync_to_async(generate_apisix_request)("request", payload)
+
+    backend = ApisixRemoteUserBackend()
+    result = await backend.aauthenticate(request, remote_user=test_user.global_id)
+
+    assert result is not None
+    assert result.global_id == test_user.global_id
+
+
+@pytest.mark.django_db
+@pytest.mark.asyncio
+async def test_aauthenticate_unknown_remote_user():
+    """Async authenticate should return None when there's no remote_user."""
+    backend = ApisixRemoteUserBackend()
+    result = await backend.aauthenticate(None, remote_user=None)
+
+    assert result is None
