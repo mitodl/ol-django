@@ -106,7 +106,11 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
         ``SynchronousOnlyOperation``), and the sync path is the one covered
         by tests.
         """
-        return await sync_to_async(self.authenticate)(request, remote_user)
+        if not remote_user:
+            return None
+        return await sync_to_async(self.authenticate, thread_sensitive=True)(
+            request, remote_user
+        )
 
     def configure_user(self, request, user, *, created=True):
         """

@@ -47,7 +47,7 @@ def test_configure_user_updates_fields(settings, override, has_value):
         assert test_user.email == "updated@email.com"
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
 async def test_aauthenticate_existing_user():
     """Async authenticate should resolve an existing user, matching authenticate()."""
@@ -62,7 +62,7 @@ async def test_aauthenticate_existing_user():
     assert result.global_id == test_user.global_id
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
 async def test_aauthenticate_unknown_remote_user():
     """Async authenticate should return None when there's no remote_user."""
