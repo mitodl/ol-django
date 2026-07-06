@@ -14,6 +14,8 @@ jobs:
 
     - name: Install uv
       uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      with:
+        version: "0.11.26"
 
     - name: Install dependencies
       run: uv sync
@@ -72,6 +74,8 @@ jobs:
 
     - name: Install uv
       uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      with:
+        version: "0.11.26"
 
     - name: Pin python-version ${{ matrix.python-version }}
       run: uv python pin ${{ matrix.python-version }}
@@ -107,6 +111,8 @@ jobs:
 
     - name: Install uv
       uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      with:
+        version: "0.11.26"
 
     # extract the app name out of the tag's ref value
     - id: get-app-name
