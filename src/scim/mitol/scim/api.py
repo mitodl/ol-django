@@ -1,8 +1,6 @@
 import http
 import logging
-from collections.abc import Generator
 from dataclasses import dataclass
-from typing import Any
 from urllib.parse import urlsplit
 
 import requests
@@ -12,7 +10,7 @@ from django_scim.adapters import SCIMUser
 from django_scim.utils import get_user_adapter
 from mitol.scim.constants import SchemaURI
 from mitol.scim.requests import InMemoryHttpRequest
-from more_itertools import chunked, first, partition
+from more_itertools import chunked, first
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
 
@@ -27,18 +25,6 @@ log = logging.getLogger()
 class UserState:
     user: "User"
     external_id: str
-
-
-@dataclass()
-class UserOperation:
-    user: "User"
-    bulk_id: str
-    operation: dict[str, Any]
-
-
-StateOrOperation = UserState | UserOperation
-StateOrOperationGenerator = Generator[StateOrOperation, Any, Any]
-StateGenerator = Generator[UserState, Any, Any]
 
 
 def realm_api_url(path: str) -> str:
@@ -84,23 +70,27 @@ def get_session() -> OAuth2Session:
 
 def sync_users_to_scim_remote(users: list["User"]):
     with get_session() as session:
-        found_users = _user_search_by_email(session, users)
-        state_or_operations = _get_sync_operations(users, found_users)
-        states = _perform_sync_operations(session, state_or_operations)
-        _update_users(states)
+        found_states = _user_search_by_email(session, users)
+        found_user_ids = {state.user.id for state in found_states}
+        missing_users = [user for user in users if user.id not in found_user_ids]
+        created_states = _create_users(session, missing_users)
+        _update_users(found_states + created_states)
 
 
 def _user_search_by_email(
     session: OAuth2Session, users: list["User"]
-) -> StateOrOperationGenerator:
+) -> list[UserState]:
+    states: list[UserState] = []
     for users_batch in chunked(users, settings.MITOL_SCIM_KEYCLOAK_SEARCH_BATCH_SIZE):
-        yield from _user_search_by_email_batch(session, users_batch)
+        states.extend(_user_search_by_email_batch(session, users_batch))
+    return states
 
 
 def _user_search_by_email_batch(
     session: OAuth2Session, users: list["User"]
-) -> StateOrOperationGenerator:
+) -> list[UserState]:
     """Perform a search for a set of users by email"""
+    states: list[UserState] = []
     users_by_email = {user.email.lower(): user for user in users}
 
     payload = {
@@ -145,12 +135,14 @@ def _user_search_by_email_batch(
                     "Received an email in search results that does not match: %s", email
                 )
             else:
-                yield UserState(users_by_email[email], resource["id"])
+                states.append(UserState(users_by_email[email], resource["id"]))
 
         if not resources:
             break
 
         start_index += len(resources)
+
+    return states
 
 
 def _parse_external_id_from_location(location: str) -> str:
@@ -159,71 +151,43 @@ def _parse_external_id_from_location(location: str) -> str:
     return path.split("/")[-1]
 
 
-def _get_sync_operations(
-    users: list["User"], found_users: StateOrOperationGenerator
-) -> StateOrOperationGenerator:
-    """Generate the operations we need to perform"""
-    missing_users = set(users)
+def _create_users(session: OAuth2Session, users: list["User"]) -> list[UserState]:
+    """Bulk-create users that don't already exist on the SCIM remote"""
+    states: list[UserState] = []
 
-    for user_resource in found_users:
-        user = user_resource.user
-
-        if user in missing_users:
-            missing_users.remove(user)
-
-        yield user_resource
-
-    for user in missing_users:
-        bulk_id = str(user.id)
-        adapter = UserAdapter(
-            # The request is only necessary because `SCIMUser.location` accesses
-            # `SCIMUser.request`, whch raises an exception if the request is
-            # `None` (yay side-effecting properties). However, the default
-            # location getter doesn't even use the request. We create an in-memory
-            # request that would be correct if it's ever used just in case.
-            user,
-            InMemoryHttpRequest.stub(),
-        )
-        yield UserOperation(
-            user,
-            bulk_id,
-            {
-                "method": "POST",
-                "path": "/Users",
-                "bulkId": bulk_id,
-                "data": {
-                    **adapter.to_dict(),
-                    "emailVerified": True,
-                },
-            },
-        )
-
-
-def _perform_sync_operations(
-    session: OAuth2Session,
-    generator: StateOrOperationGenerator,
-) -> StateGenerator:
-    user_states, sync_operations = partition(
-        lambda so: isinstance(so, UserOperation), generator
-    )
-
-    yield from user_states
-
-    for chunk in chunked(
-        sync_operations,
-        settings.MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT,
-    ):
-        operations = []
-        users_by_bulk_id: dict[int, User] = {}
-
-        for state_or_operation in chunk:
-            operations.append(state_or_operation.operation)
-            users_by_bulk_id[state_or_operation.bulk_id] = state_or_operation.user
-
-        if len(operations) == 0:
+    for chunk in chunked(users, settings.MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT):
+        if not chunk:
             # skip to the next chunk because this one had no operations
             # NOTE: this is not an indication we're at the end of chunks
             continue
+
+        operations = []
+        users_by_bulk_id: dict[str, User] = {}
+
+        for user in chunk:
+            bulk_id = str(user.id)
+            adapter = UserAdapter(
+                # The request is only necessary because `SCIMUser.location`
+                # accesses `SCIMUser.request`, whch raises an exception if
+                # the request is `None` (yay side-effecting properties).
+                # However, the default location getter doesn't even use the
+                # request. We create an in-memory request that would be
+                # correct if it's ever used just in case.
+                user,
+                InMemoryHttpRequest.stub(),
+            )
+            operations.append(
+                {
+                    "method": "POST",
+                    "path": "/Users",
+                    "bulkId": bulk_id,
+                    "data": {
+                        **adapter.to_dict(),
+                        "emailVerified": True,
+                    },
+                }
+            )
+            users_by_bulk_id[bulk_id] = user
 
         response = session.post(
             scim_api_url("/Users/Bulk"),
@@ -256,10 +220,12 @@ def _perform_sync_operations(
             location = operation["location"]
             external_id = _parse_external_id_from_location(location)
 
-            yield UserState(user, external_id)
+            states.append(UserState(user, external_id))
+
+    return states
 
 
-def _update_users(states: StateGenerator):
+def _update_users(states: list[UserState]):
     """Update the users to store the scim ids"""
     for batch in chunked(states, settings.MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT):
         updates = []
