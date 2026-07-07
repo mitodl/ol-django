@@ -20,7 +20,10 @@ def is_admin_client_configured() -> bool:
     """
     Return True if the admin client is configured
     """
-    client = get_admin_client()
+    try:
+        client = get_admin_client()
+    except ValueError:
+        return False
 
     for prop in REQUIRED_CLIENT_SETTINGS:
         if getattr(client.connection, prop, None) is None:

@@ -2,9 +2,48 @@ import json
 from http import HTTPStatus
 from uuid import uuid4
 
+import pytest
 from mitol.keycloak import api
 from mitol.keycloak.data_models import UserAttributes
 from responses import RequestsMock
+
+from keycloak import KeycloakAdmin
+
+
+@pytest.mark.usefixtures("keycloak_admin_settings")
+def test_get_admin_client():
+    """Returns a KeycloakAdmin whose connection reflects the configured settings"""
+    client = api.get_admin_client()
+
+    assert isinstance(client, KeycloakAdmin)
+    assert client.connection.server_url == "http://keycloak.example.com"
+    assert client.connection.realm_name == "test-realm"
+    assert client.connection.client_id == "admin-client"
+    assert client.connection.client_secret_key == "admin-secret"  # noqa: S105
+
+
+@pytest.mark.usefixtures("keycloak_admin_settings")
+def test_is_admin_client_configured_returns_true():
+    """Returns True when all required settings are configured"""
+    assert api.is_admin_client_configured() is True
+
+
+@pytest.mark.parametrize(
+    "missing_setting",
+    [
+        "MITOL_KEYCLOAK_BASE_URL",
+        "MITOL_KEYCLOAK_REALM_NAME",
+        "MITOL_KEYCLOAK_ADMIN_CLIENT_ID",
+        "MITOL_KEYCLOAK_ADMIN_CLIENT_SECRET",
+    ],
+)
+def test_is_admin_client_configured_returns_false_when_missing(
+    keycloak_admin_settings, missing_setting
+):
+    """Returns False when any required connection setting is None"""
+    setattr(keycloak_admin_settings, missing_setting, None)
+
+    assert api.is_admin_client_configured() is False
 
 
 def test_update_user(responses: RequestsMock, settings):
