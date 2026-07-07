@@ -406,14 +406,26 @@ def sync_object_property(object_type: str, property_dict: str) -> SimplePublicOb
         if property_dict[key] is None:
             property_dict[key] = ""
 
-    exists = object_property_exists(object_type, property_dict["name"])
+    try:
+        existing_property = get_object_property(object_type, property_dict["name"])
+    except PropertiesApiException:
+        existing_property = None
 
-    if exists:
-        return HubspotApi().crm.properties.core_api.update(
-            object_type, property_dict["name"], property_dict
-        )
-    else:
+    if existing_property is None:
         return HubspotApi().crm.properties.core_api.create(object_type, property_dict)
+
+    # Properties with a read-only definition (e.g. those created with
+    # hasUniqueValue=True) can't be mutated in Hubspot. Attempting to update
+    # them raises a 400, so return the existing property unchanged instead.
+    modification_metadata = getattr(existing_property, "modification_metadata", None)
+    if modification_metadata is not None and getattr(
+        modification_metadata, "read_only_definition", False
+    ):
+        return existing_property
+
+    return HubspotApi().crm.properties.core_api.update(
+        object_type, property_dict["name"], property_dict
+    )
 
 
 def get_object_property(object_type: str, property_name: str) -> SimplePublicObject:
