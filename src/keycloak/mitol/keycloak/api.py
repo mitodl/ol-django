@@ -23,7 +23,7 @@ def is_admin_client_configured() -> bool:
     client = get_admin_client()
 
     for prop in REQUIRED_CLIENT_SETTINGS:
-        if getattr(client, prop, None) is None:
+        if getattr(client.connection, prop, None) is None:
             return False
     return True
 
