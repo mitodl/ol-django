@@ -8,6 +8,7 @@ from http import HTTPStatus
 import pytest
 from django.contrib.auth import get_user_model
 from mitol.common.factories import UserFactory
+from mitol.common.factories.defaults import ScimUserFactory
 from mitol.scim import api
 from mitol.scim.adapters import UserAdapter
 from mitol.scim.constants import SchemaURI
@@ -250,3 +251,282 @@ def test_sync_users_to_scim_remote(users: Users):
         else:
             assert user.scim_external_id == users.external_ids_by_user_id[user.id]
             assert user.global_id == users.external_ids_by_user_id[user.id]
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("responses", "mock_client_init_requests")
+def test_sync_users_to_scim_remote_reconciles_known_users_by_id(
+    responses: RequestsMock,
+):
+    """
+    A user that was already synced (has a scim_external_id) must be
+    reconciled by that id, not by re-searching on email - email can change
+    or fail to match, which used to silently create a duplicate remote user.
+    """
+    known_user = ScimUserFactory()
+    unknown_user = UserFactory()
+    unknown_external_id = str(uuid.uuid4())
+
+    def _id_search_callback(request):
+        payload = json.loads(request.body)
+        return (
+            200,
+            {},
+            json.dumps(
+                {
+                    "schemas": [SchemaURI.LIST_RESPONSE],
+                    "Resources": (
+                        [
+                            {
+                                "id": known_user.scim_external_id,
+                                "emails": [
+                                    {
+                                        "value": known_user.email.lower(),
+                                        "primary": True,
+                                    }
+                                ],
+                            }
+                        ]
+                        if payload["startIndex"] == 1
+                        else []
+                    ),
+                    "itemsPerPage": 1,
+                    "totalResults": 1,
+                    "startIndex": payload["startIndex"],
+                }
+            ),
+        )
+
+    responses.add_callback(
+        responses.POST,
+        url="https://keycloak:8080/realms/ol-local/scim/v2/Users/.search",
+        callback=_id_search_callback,
+        match=[
+            matchers.json_params_matcher(
+                params={"filter": f'id EQ "{known_user.scim_external_id}"'},
+                strict_match=False,
+            )
+        ],
+    )
+
+    def _email_search_callback(request):
+        payload = json.loads(request.body)
+        return (
+            200,
+            {},
+            json.dumps(
+                {
+                    "schemas": [SchemaURI.LIST_RESPONSE],
+                    "Resources": (
+                        [
+                            {
+                                "id": unknown_external_id,
+                                "emails": [
+                                    {
+                                        "value": unknown_user.email.lower(),
+                                        "primary": True,
+                                    }
+                                ],
+                            }
+                        ]
+                        if payload["startIndex"] == 1
+                        else []
+                    ),
+                    "itemsPerPage": 1,
+                    "totalResults": 1,
+                    "startIndex": payload["startIndex"],
+                }
+            ),
+        )
+
+    responses.add_callback(
+        responses.POST,
+        url="https://keycloak:8080/realms/ol-local/scim/v2/Users/.search",
+        callback=_email_search_callback,
+        match=[
+            matchers.json_params_matcher(
+                params={"filter": f'emails.value EQ "{unknown_user.email.lower()}"'},
+                strict_match=False,
+            )
+        ],
+    )
+
+    failed_users = api.sync_users_to_scim_remote([known_user, unknown_user])
+
+    assert failed_users == []
+
+    known_user.refresh_from_db()
+    unknown_user.refresh_from_db()
+
+    # unchanged - reconciled by id, no create/update operation needed
+    assert known_user.global_id == known_user.scim_external_id
+    assert unknown_user.scim_external_id == unknown_external_id
+    assert unknown_user.global_id == unknown_external_id
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("responses", "mock_client_init_requests")
+def test_sync_users_to_scim_remote_isolates_bulk_chunk_failure(
+    settings, responses: RequestsMock
+):
+    """A failed bulk-create chunk must not lose users in other chunks"""
+    settings.MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT = 1
+    good_user_1, bad_user, good_user_2 = UserFactory.create_batch(3)
+    external_ids = {
+        good_user_1.id: str(uuid.uuid4()),
+        good_user_2.id: str(uuid.uuid4()),
+    }
+
+    responses.post(
+        "https://keycloak:8080/realms/ol-local/scim/v2/Users/.search",
+        json={
+            "schemas": [SchemaURI.LIST_RESPONSE],
+            "Resources": [],
+            "itemsPerPage": 0,
+            "totalResults": 0,
+            "startIndex": 1,
+        },
+    )
+
+    def _bulk_callback(request):
+        payload = json.loads(request.body)
+        bulk_id = int(payload["Operations"][0]["bulkId"])
+
+        if bulk_id == bad_user.id:
+            return (500, {}, json.dumps({"detail": "boom"}))
+
+        return (
+            200,
+            {},
+            json.dumps(
+                {
+                    "schemas": [SchemaURI.BULK_RESPONSE],
+                    "Operations": [
+                        {
+                            "location": f"https://keycloak:8080/realms/ol-local/scim/v2/Users/{external_ids[bulk_id]}",
+                            "bulkId": str(bulk_id),
+                            "method": "POST",
+                            "status": HTTPStatus.CREATED,
+                        }
+                    ],
+                }
+            ),
+        )
+
+    responses.add_callback(
+        responses.POST,
+        url="https://keycloak:8080/realms/ol-local/scim/v2/Users/Bulk",
+        callback=_bulk_callback,
+    )
+
+    failed_users = api.sync_users_to_scim_remote([good_user_1, bad_user, good_user_2])
+
+    assert failed_users == [bad_user]
+
+    bad_user.refresh_from_db()
+    good_user_1.refresh_from_db()
+    good_user_2.refresh_from_db()
+
+    assert bad_user.scim_external_id is None
+    assert good_user_1.scim_external_id == external_ids[good_user_1.id]
+    assert good_user_2.scim_external_id == external_ids[good_user_2.id]
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("responses", "mock_client_init_requests")
+def test_sync_users_to_scim_remote_isolates_search_batch_failure(
+    settings, responses: RequestsMock
+):
+    """A failed search batch must not abort the rest of the sync run"""
+    settings.MITOL_SCIM_KEYCLOAK_SEARCH_BATCH_SIZE = 1
+    good_user, bad_user = UserFactory.create_batch(2)
+    good_external_id = str(uuid.uuid4())
+
+    def _search_callback(request):
+        payload = json.loads(request.body)
+        if bad_user.email.lower() in payload["filter"]:
+            return (500, {}, json.dumps({"detail": "boom"}))
+
+        return (
+            200,
+            {},
+            json.dumps(
+                {
+                    "schemas": [SchemaURI.LIST_RESPONSE],
+                    "Resources": [],
+                    "itemsPerPage": 0,
+                    "totalResults": 0,
+                    "startIndex": payload["startIndex"],
+                }
+            ),
+        )
+
+    responses.add_callback(
+        responses.POST,
+        url="https://keycloak:8080/realms/ol-local/scim/v2/Users/.search",
+        callback=_search_callback,
+    )
+
+    def _bulk_callback(request):
+        payload = json.loads(request.body)
+        operation = payload["Operations"][0]
+        assert int(operation["bulkId"]) == good_user.id
+
+        return (
+            200,
+            {},
+            json.dumps(
+                {
+                    "schemas": [SchemaURI.BULK_RESPONSE],
+                    "Operations": [
+                        {
+                            "location": f"https://keycloak:8080/realms/ol-local/scim/v2/Users/{good_external_id}",
+                            "bulkId": str(good_user.id),
+                            "method": "POST",
+                            "status": HTTPStatus.CREATED,
+                        }
+                    ],
+                }
+            ),
+        )
+
+    responses.add_callback(
+        responses.POST,
+        url="https://keycloak:8080/realms/ol-local/scim/v2/Users/Bulk",
+        callback=_bulk_callback,
+    )
+
+    failed_users = api.sync_users_to_scim_remote([good_user, bad_user])
+
+    assert failed_users == [bad_user]
+
+    good_user.refresh_from_db()
+    bad_user.refresh_from_db()
+
+    assert good_user.scim_external_id == good_external_id
+    assert bad_user.scim_external_id is None
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("responses", "mock_client_init_requests")
+def test_sync_users_to_scim_remote_isolates_duplicate_match_key_batch():
+    """
+    Two local users that share a match key in the same search batch (e.g.
+    duplicate email data) can't be safely reconciled - matching either one
+    to a returned resource risks attaching it to the wrong local user, and
+    falling through to create risks a duplicate. The whole batch must be
+    reported as failed without making a search/create request at all.
+    """
+    dup_email = "duplicate@example.com"
+    dup_user_1 = UserFactory(email=dup_email, username="dup1")
+    dup_user_2 = UserFactory(email=dup_email, username="dup2")
+
+    failed_users = api.sync_users_to_scim_remote([dup_user_1, dup_user_2])
+
+    assert set(failed_users) == {dup_user_1, dup_user_2}
+
+    dup_user_1.refresh_from_db()
+    dup_user_2.refresh_from_db()
+
+    assert dup_user_1.scim_external_id is None
+    assert dup_user_2.scim_external_id is None
