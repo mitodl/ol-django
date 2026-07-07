@@ -183,6 +183,7 @@ def _get_sync_operations(
             # request that would be correct if it's ever used just in case.
             user,
             InMemoryHttpRequest.stub(),
+            lock_user=False,
         )
         yield UserOperation(
             user,

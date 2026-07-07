@@ -11,18 +11,16 @@ For top level release notes, leave all the headers commented out.
 - A bullet item for the Removed category.
 
 -->
-
+<!--
 ### Added
 
-- Added  support for django version to 5.2
-- Add tox and expand gh action test matrix
-
-<!--
-### Changed
-
-- A bullet item for the Changed category.
+- A bullet item for the Added category.
 
 -->
+### Changed
+
+- SCIM user operatiosn are now performed with a `select_for_update()`.
+
 <!--
 ### Deprecated
 

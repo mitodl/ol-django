@@ -7,6 +7,11 @@ ol_scim_urls = (
     [
         re_path(r"^Bulk$", views.BulkView.as_view(), name="bulk"),
         re_path(r"^Users/\.search$", views.SearchView.as_view(), name="users-search"),
+        re_path(
+            r"^Users(?:/(?P<uuid>[^/]+))?$",
+            views.UsersView.as_view(),
+            name="users",
+        ),
     ],
     "ol-scim",
 )
