@@ -1,6 +1,15 @@
 from mitol.common.serializers import BaseSerializer, GenericObjectField
 
-from libraries.models import Author, Book, Media, Periodical, RecommendationList, Topic
+from libraries.models import (
+    Author,
+    Book,
+    Library,
+    Media,
+    Periodical,
+    Recommendation,
+    RecommendationList,
+    Topic,
+)
 
 
 class AuthorSerializer(BaseSerializer):
@@ -52,15 +61,27 @@ class PeriodicalSerializer(BaseSerializer):
 
 class RecommendedObjectField(GenericObjectField):
     serializer_mapping = {
-        Book: BookSerializer,
-        Media: MediaSerializer,
-        Periodical: PeriodicalSerializer,
+        Book: BookSerializer(read_only=True),
+        Media: MediaSerializer(read_only=True),
+        Periodical: PeriodicalSerializer(read_only=True),
     }
 
 
 class RecommendationSerializer(BaseSerializer):
     required_prefetches = ["content_object"]
     recommended = RecommendedObjectField(source="content_object")
+
+    class Meta:
+        model = Recommendation
+        fields = ["id", "recommended"]
+
+
+class LibrarySerializer(BaseSerializer):
+    required_prefetches = []
+
+    class Meta:
+        model = Library
+        fields = ["id", "name"]
 
 
 class RecommendationListSerializer(BaseSerializer):

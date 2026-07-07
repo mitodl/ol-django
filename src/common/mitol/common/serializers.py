@@ -131,6 +131,9 @@ class GenericObjectField(serializers.Field):
             )
             raise GenericObjectSerializerMissingError(error_message)
 
-        serializer.bind(field_name=self.field_name, parent=self.parent)
+        # Propagate context without calling bind() so the same serializer instance
+        # can safely be reused across multiple to_representation() calls.
+        if self.parent is not None:
+            serializer._context = self.context
 
-        return serializer.data
+        return serializer.to_representation(value)
