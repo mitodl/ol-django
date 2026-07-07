@@ -140,7 +140,7 @@ norecursedirs = ".git .tox .* CVS _darcs {arch} *.egg dist"
 DJANGO_SETTINGS_MODULE = "main.settings.test"
 # -- recommended but optional:
 python_files = ["tests/**/test_*.py"]
-pythonpath = ["testapp", "src", "tests"]
+pythonpath = ["testapp", "src"]
 
 [tool.django-stubs]
 django_settings_module = "main.settings.test"
