@@ -1,6 +1,6 @@
-from mitol.common.serializers import BaseSerializer
+from mitol.common.serializers import BaseSerializer, GenericObjectField
 
-from libraries.models import Author, Book, Topic
+from libraries.models import Author, Book, Media, Periodical, RecommendationList, Topic
 
 
 class AuthorSerializer(BaseSerializer):
@@ -8,7 +8,7 @@ class AuthorSerializer(BaseSerializer):
 
     class Meta:
         model = Author
-        fields = ["id"]
+        fields = ["id", "name"]
 
 
 class TopicSerializer(BaseSerializer):
@@ -16,24 +16,58 @@ class TopicSerializer(BaseSerializer):
 
     class Meta:
         model = Topic
-        fields = ["id"]
+        fields = ["id", "name"]
 
 
-class BookWithAuthorSerializer(BaseSerializer):
-    required_prefetches = ["author"]
+class BookSerializer(BaseSerializer):
+    required_prefetches = ["author", "topics"]
 
     author = AuthorSerializer()
-
-    class Meta:
-        model = Book
-        fields = ["id", "author"]
-
-
-class BookWithTopicsSerializer(BaseSerializer):
-    required_prefetches = ["topics"]
-
     topics = TopicSerializer(many=True)
 
     class Meta:
         model = Book
-        fields = ["id", "topics"]
+        fields = ["id", "title", "author", "topics"]
+
+
+class MediaSerializer(BaseSerializer):
+    required_prefetches = ["authors"]
+
+    authors = AuthorSerializer(many=True)
+
+    class Meta:
+        model = Media
+        fields = ["id", "title", "authors"]
+
+
+class PeriodicalSerializer(BaseSerializer):
+    required_prefetches = ["authors"]
+
+    authors = AuthorSerializer(many=True)
+
+    class Meta:
+        model = Periodical
+        fields = ["id", "title", "authors"]
+
+
+class RecommendedObjectField(GenericObjectField):
+    serializer_mapping = {
+        Book: BookSerializer,
+        Media: MediaSerializer,
+        Periodical: PeriodicalSerializer,
+    }
+
+
+class RecommendationSerializer(BaseSerializer):
+    required_prefetches = ["content_object"]
+    recommended = RecommendedObjectField(source="content_object")
+
+
+class RecommendationListSerializer(BaseSerializer):
+    required_prefetches = ["recommendations"]
+
+    recommendations = RecommendationSerializer(many=True)
+
+    class Meta:
+        model = RecommendationList
+        fields = ["id", "title", "recommendations"]
