@@ -289,6 +289,7 @@ def _create_missing_users(
                 # correct if it's ever used just in case.
                 user,
                 InMemoryHttpRequest.stub(),
+                lock_user=False,
             )
             operations.append(
                 {

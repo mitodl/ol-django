@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
-import sys
 
 import dj_database_url
 from mitol.common.envs import get_string, import_settings_modules, init_app_settings
@@ -21,7 +20,6 @@ import_settings_modules(
     "mitol.common.settings.base",
     "mitol.common.settings.webpack",
     "mitol.mail.settings.email",
-    "mitol.authentication.settings.touchstone",
     "mitol.authentication.settings.djoser_settings",
     "mitol.payment_gateway.settings.cybersource",
     "mitol.google_sheets.settings.google_sheets",
@@ -85,6 +83,7 @@ INSTALLED_APPS = [
     # test app, integrates the reusable apps
     "main",
     "users",
+    "libraries",
 ]
 
 MIDDLEWARE = [
@@ -137,9 +136,6 @@ DEFAULT_DATABASE_CONFIG = dj_database_url.parse(
 DATABASES = {"default": DEFAULT_DATABASE_CONFIG}
 
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
-
-if sys.version_info < (3, 14):
-    AUTHENTICATION_BACKENDS += ("social_core.backends.saml.SAMLAuth",)
 
 
 # Password validation

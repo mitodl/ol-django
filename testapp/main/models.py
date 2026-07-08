@@ -13,26 +13,6 @@ from mitol.common.models import (
 from mitol.common.utils.serializers import serialize_model_object
 
 
-class SecondLevel1(models.Model):
-    """Test-only model"""
-
-
-class SecondLevel2(models.Model):
-    """Test-only model"""
-
-
-class FirstLevel1(models.Model):
-    """Test-only model"""
-
-    second_level = models.ForeignKey(SecondLevel1, on_delete=models.CASCADE)
-
-
-class FirstLevel2(models.Model):
-    """Test-only model"""
-
-    second_levels = models.ManyToManyField(SecondLevel2)
-
-
 class TestModelQuerySet(PrefetchGenericQuerySet):
     """Test-only QuerySet"""
 

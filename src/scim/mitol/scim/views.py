@@ -5,6 +5,7 @@ import logging
 from http import HTTPStatus
 from urllib.parse import urljoin, urlparse
 
+from django.db import transaction
 from django.http import HttpResponse
 from django.urls import Resolver404, resolve, reverse
 from django_scim import constants as djs_constants
@@ -15,6 +16,24 @@ from mitol.scim import constants
 from mitol.scim.requests import InMemoryHttpRequest
 
 log = logging.getLogger()
+
+
+class UsersView(djs_views.UsersView):
+    def post(self, request, *args, **kwargs):
+        with transaction.atomic():
+            return super().post(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        with transaction.atomic():
+            return super().put(request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        with transaction.atomic():
+            return super().patch(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        with transaction.atomic():
+            return super().delete(request, *args, **kwargs)
 
 
 class BulkView(djs_views.SCIMView):
@@ -79,12 +98,13 @@ class BulkView(djs_views.SCIMView):
         data = operation.get("data")
 
         try:
-            url_match = resolve(path, urlconf="django_scim.urls")
+            url_match = resolve(path, urlconf="mitol.scim.bulk_urls")
         except Resolver404:
             return self._operation_error(
+                method,
                 bulk_id,
                 HTTPStatus.NOT_IMPLEMENTED,
-                "Endpoint is not supported for /Bulk",
+                f"Endpoint {method} {path} is not supported for /Bulk",
             )
 
         # this is an ephemeral request not tied to the real request directly

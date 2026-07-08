@@ -47,6 +47,11 @@ class UserAdapter(SCIMUser):
         ("schemas", None, None),
     }
 
+    def __init__(self, obj, request=None, *, lock_user: bool = True):
+        super().__init__(obj, request=request)
+        if lock_user and self.obj.pk is not None:
+            self.obj = User.objects.select_for_update().get(pk=self.obj.pk)
+
     @property
     def is_new_user(self):
         """

@@ -1,3 +1,4 @@
+import contextlib
 import itertools
 import json
 import operator
@@ -16,6 +17,8 @@ from django.test import Client
 from django.urls import reverse
 from main.factories import UserFactory
 from mitol.scim import constants
+from mitol.scim.adapters import UserAdapter
+from mitol.scim.views import UsersView
 
 User = get_user_model()
 
@@ -34,161 +37,6 @@ def large_user_set(django_db_blocker):
     # per https://pytest-django.readthedocs.io/en/latest/database.html#populate-the-test-database-if-you-don-t-use-transactional-or-live-server
     with django_db_blocker.unblock():
         yield UserFactory.create_batch(1100)
-
-
-def test_scim_user_post(scim_client):
-    """Test that we can create a user via SCIM API"""
-    user_q = User.objects.filter(scim_external_id="1")
-    assert not user_q.exists()
-
-    resp = scim_client.post(
-        reverse("scim:users"),
-        content_type="application/scim+json",
-        data=json.dumps(
-            {
-                "schemas": [constants.SchemaURI.USER],
-                "emails": [{"value": "jdoe@example.com", "primary": True}],
-                "active": True,
-                "userName": "jdoe",
-                "externalId": "1",
-                "name": {
-                    "familyName": "Doe",
-                    "givenName": "John",
-                },
-            }
-        ),
-    )
-
-    assert resp.status_code == HTTPStatus.CREATED, f"Error response: {resp.content}"
-
-    user = user_q.first()
-
-    assert user is not None
-    assert user.email == "jdoe@example.com"
-    assert user.username == "jdoe"
-    assert user.first_name == "John"
-    assert user.last_name == "Doe"
-
-
-def test_scim_user_put(scim_client):
-    """Test that a user can be updated via PUT"""
-    user = UserFactory.create()
-
-    resp = scim_client.put(
-        f"{reverse('scim:users')}/{user.scim_id}",
-        content_type="application/scim+json",
-        data=json.dumps(
-            {
-                "schemas": [constants.SchemaURI.USER],
-                "emails": [{"value": "jsmith@example.com", "primary": True}],
-                "active": True,
-                "userName": "jsmith",
-                "externalId": "1",
-                "name": {
-                    "familyName": "Smith",
-                    "givenName": "Jimmy",
-                },
-                "fullName": "Jimmy Smith",
-                "emailOptIn": 0,
-            }
-        ),
-    )
-
-    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
-
-    user.refresh_from_db()
-
-    assert user.email == "jsmith@example.com"
-    assert user.username == "jsmith"
-    assert user.first_name == "Jimmy"
-    assert user.last_name == "Smith"
-
-
-def test_scim_user_put_missing_external_id_preserves_global_id(scim_client):
-    """A PUT with no externalId must not blank out a previously-set global_id"""
-    user = UserFactory.create(with_scim=True)
-    original_external_id = user.scim_external_id
-    original_global_id = user.global_id
-    assert original_global_id != ""
-
-    resp = scim_client.put(
-        f"{reverse('scim:users')}/{user.scim_id}",
-        content_type="application/scim+json",
-        data=json.dumps(
-            {
-                "schemas": [constants.SchemaURI.USER],
-                "emails": [{"value": "jsmith@example.com", "primary": True}],
-                "active": True,
-                "userName": "jsmith",
-                "name": {
-                    "familyName": "Smith",
-                    "givenName": "Jimmy",
-                },
-            }
-        ),
-    )
-
-    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
-
-    user.refresh_from_db()
-
-    assert user.scim_external_id == original_external_id
-    assert user.global_id == original_global_id
-
-
-def test_scim_user_patch(scim_client):
-    """Test that a user can be updated via PATCH"""
-    user = UserFactory.create()
-
-    resp = scim_client.patch(
-        f"{reverse('scim:users')}/{user.scim_id}",
-        content_type="application/scim+json",
-        data=json.dumps(
-            {
-                "schemas": [constants.SchemaURI.PATCH_OP],
-                "Operations": [
-                    {
-                        "op": "replace",
-                        # yes, the value we get from scim-for-keycloak is a JSON encoded
-                        # string...inside JSON...
-                        "value": json.dumps(
-                            {
-                                "schemas": [constants.SchemaURI.USER],
-                                "emailOptIn": 1,
-                                "fullName": "Billy Bob",
-                                "name": {
-                                    "givenName": "Billy",
-                                    "familyName": "Bob",
-                                },
-                            }
-                        ),
-                    }
-                ],
-            }
-        ),
-    )
-
-    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
-
-    user_updated = User.objects.get(pk=user.id)
-
-    assert user_updated.email == user.email
-    assert user_updated.username == user.username
-    assert user_updated.first_name == "Billy"
-    assert user_updated.last_name == "Bob"
-
-
-def _user_to_scim_payload(user):
-    """Test util to serialize a user to a SCIM representation"""
-    return {
-        "schemas": [constants.SchemaURI.USER],
-        "emails": [{"value": user.email, "primary": True}],
-        "userName": user.username,
-        "name": {
-            "givenName": user.first_name,
-            "familyName": user.last_name,
-        },
-    }
 
 
 USER_FIELD_TYPES: dict[str, type] = {
@@ -542,3 +390,387 @@ def test_user_search(large_user_set, scim_client, sort_by, sort_order, count):
                 for user in expected_in_resp
             ],
         }
+
+
+def test_scim_user_post(scim_client):
+    """Test that we can create a user via SCIM API"""
+    user_q = User.objects.filter(scim_external_id="1")
+    assert not user_q.exists()
+
+    resp = scim_client.post(
+        reverse("scim:users"),
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.USER],
+                "emails": [{"value": "jdoe@example.com", "primary": True}],
+                "active": True,
+                "userName": "jdoe",
+                "externalId": "1",
+                "name": {
+                    "familyName": "Doe",
+                    "givenName": "John",
+                },
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.CREATED, f"Error response: {resp.content}"
+
+    user = user_q.first()
+
+    assert user is not None
+    assert user.email == "jdoe@example.com"
+    assert user.username == "jdoe"
+    assert user.first_name == "John"
+    assert user.last_name == "Doe"
+
+
+def test_scim_user_put(scim_client):
+    """Test that a user can be updated via PUT"""
+    user = UserFactory.create()
+
+    resp = scim_client.put(
+        f"{reverse('scim:users')}/{user.scim_id}",
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.USER],
+                "emails": [{"value": "jsmith@example.com", "primary": True}],
+                "active": True,
+                "userName": "jsmith",
+                "externalId": "1",
+                "name": {
+                    "familyName": "Smith",
+                    "givenName": "Jimmy",
+                },
+                "fullName": "Jimmy Smith",
+                "emailOptIn": 0,
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert user.email == "jsmith@example.com"
+    assert user.username == "jsmith"
+    assert user.first_name == "Jimmy"
+    assert user.last_name == "Smith"
+
+
+def test_scim_user_put_missing_external_id_preserves_global_id(scim_client):
+    """A PUT with no externalId must not blank out a previously-set global_id"""
+    user = UserFactory.create(with_scim=True)
+    original_external_id = user.scim_external_id
+    original_global_id = user.global_id
+    assert original_global_id != ""
+
+    resp = scim_client.put(
+        f"{reverse('scim:users')}/{user.scim_id}",
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.USER],
+                "emails": [{"value": "jsmith@example.com", "primary": True}],
+                "active": True,
+                "userName": "jsmith",
+                "name": {
+                    "familyName": "Smith",
+                    "givenName": "Jimmy",
+                },
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert user.scim_external_id == original_external_id
+    assert user.global_id == original_global_id
+
+
+def test_scim_user_patch(scim_client):
+    """Test that a user can be updated via PATCH"""
+    user = UserFactory.create()
+
+    resp = scim_client.patch(
+        f"{reverse('scim:users')}/{user.scim_id}",
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.PATCH_OP],
+                "Operations": [
+                    {
+                        "op": "replace",
+                        # yes, the value we get from scim-for-keycloak is a JSON encoded
+                        # string...inside JSON...
+                        "value": json.dumps(
+                            {
+                                "schemas": [constants.SchemaURI.USER],
+                                "emailOptIn": 1,
+                                "fullName": "Billy Bob",
+                                "name": {
+                                    "givenName": "Billy",
+                                    "familyName": "Bob",
+                                },
+                            }
+                        ),
+                    }
+                ],
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+
+    user_updated = User.objects.get(pk=user.id)
+
+    assert user_updated.email == user.email
+    assert user_updated.username == user.username
+    assert user_updated.first_name == "Billy"
+    assert user_updated.last_name == "Bob"
+
+
+def test_scim_user_post_is_atomic(scim_client, mocker):
+    """A failed POST must not leave a partial user in the DB"""
+    user_count = User.objects.count()
+
+    mocker.patch(
+        "mitol.scim.adapters.UserAdapter._save_user",
+        side_effect=Exception("simulated failure"),
+    )
+    with contextlib.suppress(Exception):
+        scim_client.post(
+            reverse("scim:users"),
+            content_type="application/scim+json",
+            data=json.dumps(
+                {
+                    "schemas": [constants.SchemaURI.USER],
+                    "emails": [{"value": "atomic@example.com", "primary": True}],
+                    "active": True,
+                    "userName": "atomic_test_user",
+                    "externalId": "atomic-ext-1",
+                    "name": {"familyName": "Test", "givenName": "Atomic"},
+                }
+            ),
+        )
+
+    assert User.objects.count() == user_count
+
+
+def test_scim_user_put_acquires_row_lock(scim_client):
+    """PUT must acquire a select_for_update lock on the target user"""
+    user = UserFactory.create()
+    resp = scim_client.put(
+        f"{reverse('scim:users')}/{user.scim_id}",
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.USER],
+                "emails": [{"value": user.email, "primary": True}],
+                "active": True,
+                "userName": user.username,
+                "externalId": "lock-test-1",
+                "name": {
+                    "familyName": user.last_name,
+                    "givenName": user.first_name,
+                },
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK
+
+
+def _user_to_scim_payload(user):
+    """Test util to serialize a user to a SCIM representation"""
+    return {
+        "schemas": [constants.SchemaURI.USER],
+        "emails": [{"value": user.email, "primary": True}],
+        "userName": user.username,
+        "name": {
+            "givenName": user.first_name,
+            "familyName": user.last_name,
+        },
+    }
+
+
+@pytest.mark.django_db
+def test_user_adapter_init_locks_existing_user(mocker):
+    """UserAdapter acquires a row lock when instantiated with an existing user"""
+    user = UserFactory.create()
+    locked_qs = mocker.MagicMock()
+    locked_qs.get.return_value = user
+
+    mock_sfu = mocker.patch(
+        "mitol.scim.adapters.User.objects.select_for_update",
+        return_value=locked_qs,
+    )
+    UserAdapter(user)
+
+    mock_sfu.assert_called_once_with()
+    locked_qs.get.assert_called_once_with(pk=user.pk)
+
+
+@pytest.mark.django_db
+def test_user_adapter_init_no_lock_for_new_user(mocker):
+    """UserAdapter skips the row lock for a new (unsaved) user with no PK"""
+    user = UserFactory.build()
+
+    mock_sfu = mocker.patch("mitol.scim.adapters.User.objects.select_for_update")
+    UserAdapter(user)
+
+    mock_sfu.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_user_adapter_init_lock_user_false(mocker):
+    """UserAdapter skips the row lock when lock_user=False"""
+    user = UserFactory.create()
+
+    mock_sfu = mocker.patch("mitol.scim.adapters.User.objects.select_for_update")
+    UserAdapter(user, lock_user=False)
+
+    mock_sfu.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_bulk_post_dispatches_to_custom_users_view(scim_client, mocker):
+    """BulkView must route POST operations through our UsersView"""
+    mock_post = mocker.patch.object(
+        UsersView, "post", autospec=True, wraps=UsersView.post
+    )
+    resp = scim_client.post(
+        reverse("ol-scim:bulk"),
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.BULK_REQUEST],
+                "Operations": [
+                    {
+                        "method": "post",
+                        "bulkId": "bulk-dispatch-post",
+                        "path": "/Users",
+                        "data": {
+                            "schemas": [constants.SchemaURI.USER],
+                            "emails": [
+                                {
+                                    "value": "bulk-dispatch@example.com",
+                                    "primary": True,
+                                }
+                            ],
+                            "userName": "bulk_dispatch_user",
+                            "name": {"givenName": "Bulk", "familyName": "Dispatch"},
+                        },
+                    }
+                ],
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK
+    mock_post.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_bulk_put_dispatches_to_custom_users_view(scim_client, mocker):
+    """BulkView must route PUT operations through our UsersView"""
+    user = UserFactory.create()
+
+    mock_put = mocker.patch.object(UsersView, "put", autospec=True, wraps=UsersView.put)
+    resp = scim_client.post(
+        reverse("ol-scim:bulk"),
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.BULK_REQUEST],
+                "Operations": [
+                    {
+                        "method": "put",
+                        "bulkId": "bulk-dispatch-put",
+                        "path": f"/Users/{user.scim_id}",
+                        "data": _user_to_scim_payload(user),
+                    }
+                ],
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK
+    mock_put.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_bulk_patch_dispatches_to_custom_users_view(scim_client, mocker):
+    """BulkView must route PATCH operations through our UsersView"""
+    user = UserFactory.create()
+
+    mock_patch = mocker.patch.object(
+        UsersView, "patch", autospec=True, wraps=UsersView.patch
+    )
+    resp = scim_client.post(
+        reverse("ol-scim:bulk"),
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.BULK_REQUEST],
+                "Operations": [
+                    {
+                        "method": "patch",
+                        "bulkId": "bulk-dispatch-patch",
+                        "path": f"/Users/{user.scim_id}",
+                        "data": {
+                            "schemas": [constants.SchemaURI.PATCH_OP],
+                            "Operations": [
+                                {
+                                    "op": "replace",
+                                    "value": json.dumps(
+                                        {
+                                            "schemas": [constants.SchemaURI.USER],
+                                            "active": True,
+                                        }
+                                    ),
+                                }
+                            ],
+                        },
+                    }
+                ],
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK
+    mock_patch.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_bulk_delete_dispatches_to_custom_users_view(scim_client, mocker):
+    """BulkView must route DELETE operations through our UsersView"""
+    user = UserFactory.create()
+
+    mock_delete = mocker.patch.object(
+        UsersView, "delete", autospec=True, wraps=UsersView.delete
+    )
+    resp = scim_client.post(
+        reverse("ol-scim:bulk"),
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.BULK_REQUEST],
+                "Operations": [
+                    {
+                        "method": "delete",
+                        "bulkId": "bulk-dispatch-delete",
+                        "path": f"/Users/{user.scim_id}",
+                        "data": None,
+                    }
+                ],
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK
+    mock_delete.assert_called_once()

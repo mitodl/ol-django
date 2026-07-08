@@ -3,6 +3,7 @@
 import contextlib
 import logging
 
+from asgiref.sync import sync_to_async
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -96,13 +97,20 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
             return None
 
     async def aauthenticate(self, request, remote_user):
-        """See authenticate()."""
-        try:
-            with transaction.atomic():
-                return super().aauthenticate(request, remote_user)
-        except Exception:
-            log.exception("Unable to authenticate api gateway user")
+        """See authenticate().
+
+        Delegates to the sync ``authenticate()`` (via ``sync_to_async``)
+        rather than awaiting ``super().aauthenticate()`` directly: the
+        latter's async ORM calls can't be wrapped in a plain
+        ``transaction.atomic()`` block from an async context (Django raises
+        ``SynchronousOnlyOperation``), and the sync path is the one covered
+        by tests.
+        """
+        if not remote_user:
             return None
+        return await sync_to_async(self.authenticate, thread_sensitive=True)(
+            request, remote_user
+        )
 
     def configure_user(self, request, user, *, created=True):
         """
