@@ -1,14 +1,16 @@
-# Configuring Stripe for Payment Gateway
+# Stripe Integration for Payment Gateway
 
-Testing and using Stripe is relatively easy. Stripe makes available several developer tools, including a Web console and a command line client, that help with a lot of local development use cases.
+Stripe support requires some different setup and integration work, as their API is quite different in some ways to the CyberSource Secure Acceptance APIs. The general workflow is the same, but there are more options and different ways of doing things in the Stripe system.
 
-## Prerequisite setup
+Local development and testing is also quite a bit different. Stripe makes available several developer tools, including a Web console and a command line client, that help with a lot of local development use cases. There is also specific support for proxying webhook events to the local application using the CLI.
+
+## Prerequisite Setup
 
 **Create a Stripe account:** Sign up for a Stripe account at https://stripe.com . Accounts are free. You don't need to fully complete the onboarding process - once it starts offering you the option to skip steps or close out of setup modals, you can do so without issue, and the account will work in sandbox mode.
 
-**Retrieve API keys and use the Workbench:** Once you're logged into the Stripe dashboard, you should be able to see the Developers menu at the bottom left. This menu gives you access to various things within the Stripe Developer tools, including API keys. The Workbench is also available under this menu - of note is the Events and Logs tabs, which will show you data that is passing through the sandbox.
+**Retrieve API keys and use the Workbench:** Once you're logged into the Stripe dashboard, you should be able to see the Developers menu at the bottom left. This menu gives you access to various things within the Stripe Developer tools, including API keys. The Workbench is also available under this menu - of note is the Events and Logs tabs, which will show you data that is being passed through the sandbox.
 
-**Install the Stripe CLI:** The Stripe CLI provides a pretty useful way to access a lot of API features, and offers a "listen" feature that is specifically very helpful for webhook development. Install the CLI: https://docs.stripe.com/stripe-cli/install The CLI is optional but recommended for local development.
+**Install the Stripe CLI:** The Stripe CLI provides a pretty useful way to access a lot of API features, and offers a "listen" feature that is especially helpful for webhook development. Install the CLI: https://docs.stripe.com/stripe-cli/install The CLI is optional but recommended for local development.
 
 ## API Keys
 
@@ -38,3 +40,27 @@ When configuring webhooks, you will be prompted to specify what kind of data the
 In sandbox mode, the system will not generate actual charges. However, you should not use a real credit card number for testing. The Stripe documentation describes how to use a test card: https://docs.stripe.com/testing#use-test-cards They also provide an extensive list of test card numbers that cover a wide range of potential use cases, including numbers configured for international (non-US) payment and various different brands.
 
 The test card documentation also includes some documentation on what values to use in automated tests that use the Stripe API. However, the payment gateway does not support specifying the payment method as part of the checkout session setup at this point. Instead, mock the Stripe API if you are writing tests that involve processing responses from Stripe; our tests should generally not hit external APIs.
+
+## Integration Notes
+
+### Initiating Payment
+
+Stripe sends a URL that your app should use to redirect the user to start the payment process. There is no form building or submitting step.
+
+Payment Gateway returns the full detail of the checkout session in the `payload` key in the data returned from `start_payment`. It also pulls the target URL out and returns it in `url`. Within the session data, there is an `id` key - this contains the unique identifier for the checkout session, which can be used to retrieve status information about the checkout session or cancel it. Your app should ideally retain at least `url` and `payload["id"]` but the remaining data in `payload` specifically need not be retained.
+
+### Higher Reliance on Webhooks
+
+Stripe relies pretty heavily on webhooks for communicating event status back to the integrated application. When integrating, it's imperative that your app identify the events that it will need to care about and implement a webhook handler (or several of them) to handle these events.
+
+Note that certain operations in CyberSource also required a webhook to exist - notably, refunds initiated through the EBC.
+
+### Post-Transaction Landing Pages
+
+Like CyberSource, the Stripe integration allows you to define what the landing pages should be for the user once they've completed checkout. You can specify a URL for successful transactions and one for cancellations. Unlike CyberSource, Stripe sends nothing to these endpoints. It simply redirects the user to the URLs. No status information is automatically sent along with the redirect.
+
+The Stripe-recommended way to handle post-processing is through the webhook. However, the other way this can be handled is by customizing the landing page URLs to include the checkout session ID. Stripe has a tag that can be added to the URL that it will scan for and replace with this ID: `{CHECKOUT_SESSION_ID}`. An acceptable way to implement this would be to have an landing page route that accepts the ID as a `GET` parameter, and then specify that in `start_payment`. Ex: `https://mitxonline.odl.local:9080/checkout/complete/{CHECKOUT_SESSION_ID}/` or `https://mitxonline.odl.local:9080/checkout/complete/?sid={CHECKOUT_SESSION_ID}` See the Stripe documentation here: https://docs.stripe.com/payments/checkout/custom-success-page
+
+Alternatively, your app should receive the checkout session ID when it calls `start_payment` (see above). This can be stored in the user's Django session and retrieved from there when the user hits the landing page. Be careful storing the checkout session in a store (e.g. redis, postgres): the user may have _multiple_ active checkout sessions so you may end up needing to decide which checkout session is the correct one to process.
+
+Once the user hits the landing page, your app will need to retrieve the checkout session data to ascertain its status.

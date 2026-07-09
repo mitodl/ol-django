@@ -28,6 +28,7 @@ with warnings.catch_warnings():
     )
 import stripe
 from django.conf import settings
+from django.http import HttpRequest
 from mitol.common.utils.datetime import now_in_utc
 from mitol.payment_gateway.constants import (
     CART_ITEM_DEFINED,
@@ -38,10 +39,15 @@ from mitol.payment_gateway.constants import (
     MITOL_PAYMENT_GATEWAY_STRIPE,
 )
 from mitol.payment_gateway.exceptions import (
+    BadStripeWebhookSecretError,
     ImproperCartItemError,
+    ImproperlyConfiguredError,
+    ImproperStripeWebhookRequestError,
     InvalidTransactionException,
+    NoStripeWebhookSecretError,
     RefundDuplicateException,
 )
+from mitol.payment_gateway.models import StripeWebhookSecret
 from mitol.payment_gateway.payment_utils import (
     clean_request_data,
     quantize_decimal,
@@ -1010,7 +1016,7 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
     Relevant documentation: https://docs.stripe.com/api
     """
 
-    stripe_client = None
+    stripe_client: stripe.StripeClient | None = None
 
     @staticmethod
     def get_client_configuration():
@@ -1027,6 +1033,10 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
 
         config = StripePaymentGateway.get_client_configuration()
         self.stripe_client = stripe.StripeClient(config.get("api_key", None))
+
+        if not self.stripe_client:
+            msg = "Unable to instantiate Stripe client."
+            raise ImproperlyConfiguredError(msg)
 
     def _generate_product_data(self, item: BaseCartItem):
         """
@@ -1090,20 +1100,32 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
         order: Order,
         receipt_url: str | None = None,
         cancel_url: str | None = None,
-        backoffice_post_url: str | None = None,  # noqa: ARG002
+        backoffice_post_url: str | None = None,
         **kwargs,
     ):
         """
         Set up and return the Checkout Session.
 
-        Stripe doesn't support changing the backoffice URL or the receipt URL, so
-        passing these in will have no effect. Instead, configure these through
-        the Stripe dashboard.
+        Checkout Session is Stripe's payment workflow. These are created via an
+        API call, resulting in a Checkout Session object that includes a URL to
+        send the user to.
 
-        Unlike CyberSource SA, there's no form posting; send the user to the
-        provided URL. The full Stripe response is sent back in "payload" if the
-        app needs it, but it's not needed for the purchasing workflow.
+        The full session object is returned in the "payload" key. The session
+        object includes the ID for the session; this should be retained for
+        future processing (e.g. on the success page), but the remaining data is
+        not used by Payment Gateway.
+
+        Stripe can inject the session ID into the receipt and cancel URLs. Also,
+        the backoffice URL (webhook target URL) cannot be set here and will
+        generate a warning message in the log if set. For more information, see
+        README-Stripe.md.
         """
+
+        if backoffice_post_url:
+            log.warning(
+                "prepare_checkout: custom backoffice URL set for Stripe "
+                "transaction, ignoring"
+            )
 
         merchant_fields = kwargs.get("merchant_fields", {})
 
@@ -1132,17 +1154,108 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
 
         raise NotImplementedError
 
-    def perform_processor_response_validation(self, request):
-        """Validate the response from Stripe."""
+    def perform_processor_response_validation(self, request: HttpRequest):
+        """
+        Check for the signature header, and validate the signature against the store.
 
-        raise NotImplementedError
+        Stripe signs webhook requests with a shared key. This key is specific to
+        the configured webhook - there may be multiple valid keys configured for
+        different webhooks, and there may be different configured webhooks for
+        the same event type.
 
-    def decode_processor_response(self, request):
-        """Decode the response from Stripe."""
+        The key store includes a mapping of urlconf routes to keys. This checks
+        the provided signed signature against all of the applicable keys. If no
+        keys are found (at all), then NoStripeWebhookSecretError is raised. If
+        none of the keys are valid for the signature, then BadStripeWebhookSecretError
+        is raised.
 
-        raise NotImplementedError
+        If verification is successful, the event is returned.
+        """
+
+        payload = request.body
+
+        if len(payload) == 0:
+            msg = "Empty payload received."
+            raise ImproperStripeWebhookRequestError(msg)
+
+        try:
+            payload_json = json.loads(payload)
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            msg = "Improper JSON payload found."
+            raise ImproperStripeWebhookRequestError(msg) from exc
+
+        if "id" not in payload_json:
+            msg = "Improper JSON payload found (no 'id' prop)."
+            raise ImproperStripeWebhookRequestError(msg)
+
+        event_id = payload_json["id"]
+
+        if request.resolver_match:
+            route = request.resolver_match.route
+        else:
+            log.warning(
+                "StripePaymentGateway: could not get the route from the request,"
+                " using path_info instead"
+            )
+            route = request.path_info
+
+        key_qs = StripeWebhookSecret.objects.filter(routes__url_name=route)
+
+        if not key_qs.exists():
+            raise NoStripeWebhookSecretError(event_id=event_id, route=route)
+
+        signature_to_validate = request.headers.get("Stripe-Signature", False)
+        found_valid_key = False
+
+        for key in key_qs.all():
+            try:
+                event = self.stripe_client.construct_event(
+                    payload,
+                    signature_to_validate,
+                    key.webhook_secret,
+                )
+                found_valid_key = True
+                break
+            except ValueError as exc:
+                raise ImproperStripeWebhookRequestError from exc
+            except stripe.error.SignatureVerificationError:
+                # We expect this one - if there's >1 key, then only one will be valid.
+                pass
+
+        if not found_valid_key:
+            raise BadStripeWebhookSecretError(event_id=event_id, route=route)
+
+        return event
+
+    def decode_processor_response(self, request: HttpRequest):
+        """
+        Decode the response from Stripe.
+
+        The validation returns the event; the event object contains the data
+        associated with the event, so this strips the event parts out and returns
+        just the data. The data returned will depend on the event that was triggered.
+        """
+
+        return self.perform_processor_response_validation(request).data.object
 
     def perform_refund(self, refund):
         """Perform a refund for an order."""
 
         raise NotImplementedError
+
+    def retrieve_checkout(self, checkout_session_id):
+        """Retrieve the checkout session."""
+
+        response = self.stripe_client.v1.checkout.sessions.retrieve(checkout_session_id)
+
+        return ProcessorResponse(
+            state=(
+                ProcessorResponse.STATE_ACCEPTED
+                if response.payment_status != "unpaid"
+                else ProcessorResponse.STATE_PENDING
+            ),
+            message="",
+            response_code=response.payment_status,
+            transaction_id=response.id,
+            response_data=json.dumps(response),
+        )
