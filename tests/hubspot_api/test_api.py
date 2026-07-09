@@ -134,9 +134,19 @@ def test_get_object_property(mock_hubspot_api):
 @pytest.mark.parametrize("object_exists", [True, False])
 def test_sync_object_property(mocker, mock_hubspot_api, object_exists, is_valid):
     """sync_object_property should call send_hubspot_request with the correct arguments"""  # noqa: E501
-    mocker.patch(
-        "mitol.hubspot_api.api.object_property_exists", return_value=object_exists
-    )
+    if object_exists:
+        existing_property = mocker.Mock(
+            modification_metadata=mocker.Mock(read_only_definition=False)
+        )
+        mocker.patch(
+            "mitol.hubspot_api.api.get_object_property",
+            return_value=existing_property,
+        )
+    else:
+        mocker.patch(
+            "mitol.hubspot_api.api.get_object_property",
+            side_effect=api.PropertiesApiException(),
+        )
     mock_properties = {
         "name": "property_name",
         "label": "Property Label",
@@ -160,6 +170,31 @@ def test_sync_object_property(mocker, mock_hubspot_api, object_exists, is_valid)
             mock_hubspot_api.return_value.crm.properties.core_api.create.assert_called_once_with(
                 test_object_type, mock_properties
             )
+
+
+def test_sync_object_property_skips_read_only_definition(mocker, mock_hubspot_api):
+    """sync_object_property should skip updating properties with a read-only definition"""  # noqa: E501
+    existing_property = mocker.Mock(
+        modification_metadata=mocker.Mock(read_only_definition=True)
+    )
+    mocker.patch(
+        "mitol.hubspot_api.api.get_object_property", return_value=existing_property
+    )
+    mock_properties = {
+        "name": "unique_app_id",
+        "label": "Unique App ID",
+        "groupName": "Property Group",
+        "description": "The unique app ID",
+        "field_type": "text",
+        "type": "string",
+        "hasUniqueValue": True,
+    }
+
+    result = api.sync_object_property(test_object_type, mock_properties)
+
+    assert result is existing_property
+    mock_hubspot_api.return_value.crm.properties.core_api.update.assert_not_called()
+    mock_hubspot_api.return_value.crm.properties.core_api.create.assert_not_called()
 
 
 @pytest.mark.parametrize("object_exists", [True, False])
