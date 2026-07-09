@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.7.9'></a>
+## [2026.7.9] - 2026-07-09
+
+### Fixed
+
+- `sync_object_property` no longer attempts to update properties with a read-only definition (e.g. properties created with `hasUniqueValue=True`), which previously raised a 400 `PROPERTY_INVALID` error from Hubspot on re-runs.
+
 <a id='changelog-2026.5.6'></a>
 ## [2026.5.6] - 2026-05-06
 
