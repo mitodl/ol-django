@@ -1244,7 +1244,18 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
         raise NotImplementedError
 
     def retrieve_checkout(self, checkout_session_id):
-        """Retrieve the checkout session."""
+        """
+        Retrieve the Checkout Session.
+
+        The response data will be normalized into the ProcessorResponse object,
+        as that is designed to hold the data for a transaction. The Checkout
+        Session only really has a "paid" and "not paid" status, so those are
+        mapped to "accepted" and "pending". The full response is returned in
+        response_data as a JSON-encoded string.
+
+        This is most useful for the landing pages post-checkout - webhooks will
+        be presented with an event that includes the checkout data.
+        """
 
         response = self.stripe_client.v1.checkout.sessions.retrieve(checkout_session_id)
 
