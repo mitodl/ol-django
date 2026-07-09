@@ -92,12 +92,12 @@ def check(ctx: Context, project: Project, base: str, target: str):
         elif (
             not changes.has_source_changes
             and not changes.has_top_level_dependency_changes
-            and changes.has_changelogd_changes
+            and changes.has_new_changelogd_fragments
         ):
             echo(
                 f"Changelog(s) are present in {app.relative_path} but there are no source changes:"  # noqa: E501
             )
-            for change in changes.changelogd_changes:
+            for change in changes.new_changelogd_fragments:
                 _echo_change(change)
             is_error = True
             echo("")
