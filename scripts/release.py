@@ -66,11 +66,22 @@ def commit_and_tag(project: Project, app: App):
         ]
     )
 
-    repo.index.remove(
-        [
-            app.absolute_path / "changelog.d" / "*.md",
-        ]
-    )
+    # Remove all collected changelog fragments regardless of file extension.
+    # scriv is configured for Markdown, but historically some fragments were
+    # authored as .rst. Removing only "*.md" left those behind to be
+    # re-collected into every subsequent release, producing duplicate entries.
+    changelog_dir = app.absolute_path / "changelog.d"
+    fragment_paths = [
+        path
+        for path in sorted(changelog_dir.glob("*"))
+        if path.is_file()
+        and path.name != "scriv.ini"
+        and not path.name.startswith("README")
+        and not path.name.startswith(".")
+    ]
+
+    if fragment_paths:
+        repo.index.remove(fragment_paths, working_tree=True)
 
     repo.index.commit(f"Release {tag_name}")
 
