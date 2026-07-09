@@ -2,6 +2,7 @@ from ast import TypeAlias
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from functools import cached_property
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from git import Commit, Diff
@@ -34,6 +35,35 @@ class Changes:
     @cached_property
     def has_changelogd_changes(self) -> bool:
         return len(self.changelogd_changes) > 0
+
+    @cached_property
+    def new_changelogd_fragments(self) -> list[Diff]:
+        """
+        Changelog fragments that introduce genuinely new content.
+
+        Deletions and format migrations (e.g. renaming a ``.rst`` fragment to
+        ``.md``) are excluded, so that changelog maintenance does not require
+        an accompanying source change. A fragment is only considered "new" if
+        it is added and no fragment sharing its slug (filename without
+        extension) is removed in the same diff.
+        """
+        removed_slugs = {
+            Path(change.a_path).stem
+            for change in self.changelogd_changes
+            if change.change_type == "D" and change.a_path
+        }
+
+        return [
+            change
+            for change in self.changelogd_changes
+            if change.change_type == "A"
+            and change.b_path
+            and Path(change.b_path).stem not in removed_slugs
+        ]
+
+    @cached_property
+    def has_new_changelogd_fragments(self) -> bool:
+        return len(self.new_changelogd_fragments) > 0
 
     @classmethod
     def from_app_commits(cls, *, app: App, base_commit: Commit, target_commit: Commit):
