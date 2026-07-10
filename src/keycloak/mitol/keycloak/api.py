@@ -12,6 +12,7 @@ def get_admin_client() -> KeycloakAdmin:
         realm_name=settings.MITOL_KEYCLOAK_REALM_NAME,
         client_id=settings.MITOL_KEYCLOAK_ADMIN_CLIENT_ID,
         client_secret_key=settings.MITOL_KEYCLOAK_ADMIN_CLIENT_SECRET,
+        verify=not settings.MITOL_KEYCLOAK_ADMIN_CLIENT_NO_VERIFY_SSL,
     )
     return KeycloakAdmin(connection=connection)
 
@@ -45,6 +46,8 @@ def update_user(uuid: str, *, attributes: UserAttributes):
     for attr in READONLY_USER_ATTRIBUTES:
         payload.pop(attr, None)
 
-    payload["attributes"].update(attributes.model_dump(exclude_none=True))
+    payload.setdefault("attributes", {}).update(
+        attributes.model_dump(exclude_none=True)
+    )
 
     client.update_user(uuid, payload)
