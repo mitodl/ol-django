@@ -1,4 +1,4 @@
-import hashlib  # noqa: INP001
+import hashlib
 import json
 import random
 from collections import namedtuple

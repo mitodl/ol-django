@@ -1,4 +1,4 @@
-"""Tests for payment_gateway application utils"""  # noqa: INP001
+"""Tests for payment_gateway application utils"""
 
 from decimal import Decimal
 
