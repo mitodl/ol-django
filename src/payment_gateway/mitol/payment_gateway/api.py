@@ -1190,8 +1190,8 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
 
         event_id = payload_json["id"]
 
-        if request.resolver_match:
-            route = request.resolver_match.route
+        if request.resolver_match and request.resolver_match.url_name:
+            route = request.resolver_match.url_name
         else:
             log.warning(
                 "StripePaymentGateway: could not get the route from the request,"

@@ -43,10 +43,10 @@ class CartItemFactory(Factory):
     class Meta:
         model = CartItem
 
-    sku = fuzzy.FuzzyText()
     code = fuzzy.FuzzyText(length=6)
-    quantity = fuzzy.FuzzyInteger(1, 5, 1)
     name = FAKE.sentence(nb_words=3)
+    sku = fuzzy.FuzzyText()
+    quantity = fuzzy.FuzzyInteger(1, 5, 1)
     unitprice = fuzzy.FuzzyDecimal(1, 300, precision=2)
     taxable = LazyAttribute(
         lambda o: Decimal(o.unitprice * Decimal(FAKE.random_number(2) * 0.01)).quantize(
@@ -62,6 +62,7 @@ class OrderFactory(Factory):
     ip_address = FAKE.ipv4()
     reference = fuzzy.FuzzyText(length=6)
     username = FAKE.safe_email()
+    email = FAKE.safe_email()
     items = []
 
 
