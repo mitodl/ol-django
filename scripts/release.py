@@ -63,6 +63,7 @@ def commit_and_tag(project: Project, app: App):
             app.absolute_path / "mitol" / app.module_name / "__init__.py",
             app.absolute_path / "pyproject.toml",
             app.absolute_path / "CHANGELOG.md",
+            app.absolute_path / "uv.lock",
         ]
     )
 
