@@ -93,7 +93,7 @@ def test_update_user(responses: RequestsMock, settings):
         **initial,
         "attributes": {
             **initial["attributes"],
-            "emailOptIn": [True],
+            "emailOptIn": [1],
         },
     }
 
@@ -108,6 +108,6 @@ def test_update_user(responses: RequestsMock, settings):
         "attributes": {
             **initial["attributes"],
             "fullName": ["new_name"],
-            "emailOptIn": [False],
+            "emailOptIn": [0],
         },
     }

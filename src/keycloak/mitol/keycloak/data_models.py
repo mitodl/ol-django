@@ -22,4 +22,8 @@ class UserAttributes(BaseModel):
     def as_array(self, value: Any) -> list[Any]:
         return [value]
 
+    @field_serializer("email_optin", mode="plain")
+    def serialize_email_optin(self, value: bool) -> list[int]:  # noqa: FBT001
+        return [int(value)]
+
     model_config = ConfigDict(serialize_by_alias=True, frozen=True)
