@@ -22,7 +22,6 @@ services:
     - cache:/home/dev/.cache/
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
-    env_file: .env
     depends_on:
     - db
 
