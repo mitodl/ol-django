@@ -41,7 +41,6 @@ from mitol.payment_gateway.constants import (
 from mitol.payment_gateway.exceptions import (
     BadStripeWebhookSecretError,
     ImproperCartItemError,
-    ImproperlyConfiguredError,
     ImproperStripeWebhookRequestError,
     InvalidTransactionException,
     NoStripeWebhookSecretError,
@@ -1033,10 +1032,6 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
 
         config = StripePaymentGateway.get_client_configuration()
         self.stripe_client = stripe.StripeClient(config.get("api_key", None))
-
-        if not self.stripe_client:
-            msg = "Unable to instantiate Stripe client."
-            raise ImproperlyConfiguredError(msg)
 
     def _generate_product_data(self, item: BaseCartItem):
         """
