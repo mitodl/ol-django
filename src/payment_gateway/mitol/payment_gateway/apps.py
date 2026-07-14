@@ -8,6 +8,8 @@ from mitol.common.apps import BaseApp
 class PaymentGatewayApp(BaseApp):
     """Default configuration for the payment gateway app"""
 
+    default_auto_field = "django.db.models.BigAutoField"
+
     name = "mitol.payment_gateway"
     label = "payment_gateway"
     verbose_name = "Payment Gateway"
