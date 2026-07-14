@@ -1,7 +1,7 @@
 [project]
 name = "mitol-django-keycloak"
 description = "MIT Open Learning django app extensions for keycloak integration"
-version = "2026.7.13"
+version = "2026.7.14"
 dependencies = [
   "django>=4.2",
   "pydantic",
@@ -18,7 +18,7 @@ dev = [
 ]
 
 [tool.bumpver]
-current_version = "2026.7.13"
+current_version = "2026.7.14"
 version_pattern = "YYYY.MM.DD[.INC0]"
 
 [tool.bumpver.file_patterns]

@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.7.14'></a>
+## [2026.7.14] - 2026-07-14
+
+### Fixed
+
+- Fixed `UserAttributes.email_optin` serializing to a raw boolean instead of the int (0/1) Keycloak expects.
+
 <a id='changelog-2026.7.13'></a>
 ## [2026.7.13] - 2026-07-13
 
