@@ -6,10 +6,11 @@ import abc
 import hashlib
 import hmac
 import json
+import logging
 import uuid
 import warnings
 from base64 import b64encode
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from decimal import Decimal
 from functools import wraps
 
@@ -25,25 +26,78 @@ with warnings.catch_warnings():
         SearchTransactionsApi,
         TransactionDetailsApi,
     )
+import stripe
 from django.conf import settings
+from django.http import HttpRequest
 from mitol.common.utils.datetime import now_in_utc
 from mitol.payment_gateway.constants import (
+    CART_ITEM_DEFINED,
+    CART_ITEM_INLINE,
+    CART_ITEM_UNKNOWN,
     ISO_8601_FORMAT,
     MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
+    MITOL_PAYMENT_GATEWAY_STRIPE,
 )
 from mitol.payment_gateway.exceptions import (
+    BadStripeWebhookSecretError,
+    ImproperCartItemError,
+    ImproperStripeWebhookRequestError,
     InvalidTransactionException,
+    NoStripeWebhookSecretError,
     RefundDuplicateException,
 )
+from mitol.payment_gateway.models import StripeWebhookSecret
 from mitol.payment_gateway.payment_utils import (
     clean_request_data,
     quantize_decimal,
     strip_nones,
 )
 
+log = logging.getLogger(__name__)
+
 
 @dataclass
-class CartItem:
+class BaseCartItem:
+    """
+    Base fields for a cart item.
+
+    Fields:
+    - quantity: Item quantity
+    - unitprice: Item price, after any necessary coupon/discout calculations
+    - taxable: Taxable amount
+    """
+
+    unitprice: Decimal = Decimal(0)
+    quantity: int = 1
+    taxable: Decimal = Decimal(0)
+
+    @property
+    def item_type(self):
+        """Return what kind of item this is."""
+
+        return CART_ITEM_UNKNOWN
+
+
+@dataclass
+class LookupCartItem(BaseCartItem):
+    """
+    Represents an item in the cart that is also configured in the payment processor.
+
+    We can sometimes specify a cart item using an identifier. So, this is a cart
+    item with just that and pricing data.
+    """
+
+    product_id: str | None = None
+
+    @property
+    def item_type(self):
+        """Return what kind of item this is."""
+
+        return CART_ITEM_DEFINED
+
+
+@dataclass
+class CartItem(BaseCartItem):
     """
     Represents an item in the cart. The mappings for xPro below are meant as an
     example; the actual data passed should make sense for your application.
@@ -51,18 +105,18 @@ class CartItem:
     Fields:
     - code: Item code (in xPro, content_type)
     - name: Item name (in xPro, description)
-    - quantity: Item quantity; defaults to 1.
     - sku: Item SKU (in xPro, content_object.id)
-    - unitprice: Item price, after any necessary coupon/discout calculations
-    - taxable: Taxable amount; defaults to 0.
     """
 
-    code: str
-    name: str
-    sku: str
-    unitprice: Decimal
-    quantity: int = 1
-    taxable: Decimal = Decimal(0)
+    code: str | None = None
+    name: str | None = None
+    sku: str | None = None
+
+    @property
+    def item_type(self):
+        """Return what kind of item this is."""
+
+        return CART_ITEM_INLINE
 
 
 @dataclass
@@ -72,6 +126,7 @@ class Order:
 
     Fields:
     - username: Purchaser username
+    - email: Purchaser email (default None)
     - ip_address: Purchaser's IP address
     - reference: Order reference number
     - items: List of CartItems representing the items to be purchased
@@ -80,7 +135,8 @@ class Order:
     username: str
     ip_address: str
     reference: str
-    items: list[CartItem]
+    items: list[BaseCartItem]
+    email: str | None = None
 
 
 @dataclass
@@ -165,7 +221,7 @@ class PaymentGateway(abc.ABC):
 
     @abc.abstractmethod
     def prepare_checkout(
-        self, order, cart, receipt_url, cancel_url, backoffice_post_url, **kwargs
+        self, order, receipt_url, cancel_url, backoffice_post_url, **kwargs
     ):
         """
         This is the entrypoint to the payment gateway.
@@ -259,7 +315,7 @@ class PaymentGateway(abc.ABC):
         order: Order,
         receipt_url: str,
         cancel_url: str,
-        backoffice_post_url: str = None,  # noqa: RUF013
+        backoffice_post_url: str | None = None,
         **kwargs,
     ):
         """
@@ -436,7 +492,7 @@ class CyberSourcePaymentGateway(
         order: Order,
         receipt_url: str,
         cancel_url: str,
-        backoffice_post_url: str = None,  # noqa: RUF013
+        backoffice_post_url: str | None = None,
         **kwargs,
     ):
         """
@@ -950,3 +1006,262 @@ class CyberSourcePaymentGateway(
             results[order_id] = formatted_response
 
         return results
+
+
+class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_STRIPE):
+    """
+    The implementation of PaymentGateway for Stripe.
+
+    Relevant documentation: https://docs.stripe.com/api
+    """
+
+    stripe_client: stripe.StripeClient | None = None
+
+    @staticmethod
+    def get_client_configuration():
+        """
+        Get the Stripe client config.
+        """
+        configuration_dictionary = {
+            "api_key": settings.MITOL_PAYMENT_GATEWAY_STRIPE_API_KEY,
+        }
+        return configuration_dictionary  # noqa: RET504
+
+    def __init__(self):
+        """Initialize the gateway and bring up a Stripe client."""
+
+        config = StripePaymentGateway.get_client_configuration()
+        self.stripe_client = stripe.StripeClient(config.get("api_key", None))
+
+    def _generate_product_data(self, item: BaseCartItem):
+        """
+        Generate the Stripe product data for the line.
+
+        The shape of the data changes if the product is defined in-line or not.
+        """
+
+        if item.item_type == CART_ITEM_DEFINED:
+            return {"product": item.product_id}
+        elif item.item_type == CART_ITEM_INLINE:
+            return {
+                "product_data": {
+                    "name": item.name,
+                    "description": item.name,
+                    "metadata": asdict(item),
+                }
+            }
+
+        raise ImproperCartItemError(item)
+
+    def _generate_price_data(self, item: BaseCartItem):
+        """
+        Generate the price data for the item.
+
+        This is always defined inline for this iteration. If a taxable amount is
+        defined, then that amount is added to the unit price.
+
+        Stripe is able to calculate taxes. However, we have been historically
+        calculating this ourselves. So, this **always** sets the tax behavior to
+        "inclusive" so that ti does not try to re-calculate the tax. This decision
+        will need to be revisited if we opt to use Stripe's tax calculation
+        functionality in the future.
+
+        It's not entirely clear here from the docs but you actually have to pass
+        the price in cents (for USD).
+        """
+
+        return {
+            "price_data": {
+                "currency": "USD",
+                "unit_amount_decimal": (
+                    Decimal(item.unitprice + item.taxable).quantize(Decimal("1.00"))
+                    * 100
+                ),
+                "tax_behavior": "inclusive",
+                **self._generate_product_data(item),
+            }
+        }
+
+    def _generate_line_item(self, item: BaseCartItem):
+        """Generate a Stripe line item."""
+
+        return {
+            "quantity": item.quantity,
+            **self._generate_price_data(item),
+        }
+
+    def prepare_checkout(
+        self,
+        order: Order,
+        receipt_url: str | None = None,
+        cancel_url: str | None = None,
+        backoffice_post_url: str | None = None,
+        **kwargs,
+    ):
+        """
+        Set up and return the Checkout Session.
+
+        Checkout Session is Stripe's payment workflow. These are created via an
+        API call, resulting in a Checkout Session object that includes a URL to
+        send the user to.
+
+        The full session object is returned in the "payload" key. The session
+        object includes the ID for the session; this should be retained for
+        future processing (e.g. on the success page), but the remaining data is
+        not used by Payment Gateway.
+
+        Stripe can inject the session ID into the receipt and cancel URLs. Also,
+        the backoffice URL (webhook target URL) cannot be set here and will
+        generate a warning message in the log if set. For more information, see
+        README-Stripe.md.
+        """
+
+        if backoffice_post_url:
+            log.warning(
+                "prepare_checkout: custom backoffice URL set for Stripe "
+                "transaction, ignoring"
+            )
+
+        merchant_fields = kwargs.get("merchant_fields", {})
+
+        stripe_session_data = {
+            "client_reference_id": order.reference,
+            "customer_email": order.email,
+            "line_items": [self._generate_line_item(item) for item in order.items],
+            "mode": "payment",
+            "ui_mode": "hosted_page",
+            "success_url": receipt_url,
+            "cancel_url": cancel_url,
+            "metadata": merchant_fields if isinstance(merchant_fields, dict) else None,
+        }
+
+        response = self.stripe_client.v1.checkout.sessions.create(stripe_session_data)
+
+        return {
+            "payload": response,
+            "url": response.url,
+            "method": "GET",
+        }
+
+    @staticmethod
+    def get_refund_request(transaction_dict: dict):
+        """Set up and return a refund."""
+
+        raise NotImplementedError
+
+    def perform_processor_response_validation(self, request: HttpRequest):
+        """
+        Check for the signature header, and validate the signature against the store.
+
+        Stripe signs webhook requests with a shared key. This key is specific to
+        the configured webhook - there may be multiple valid keys configured for
+        different webhooks, and there may be different configured webhooks for
+        the same event type.
+
+        The key store includes a mapping of urlconf routes to keys. This checks
+        the provided signed signature against all of the applicable keys. If no
+        keys are found (at all), then NoStripeWebhookSecretError is raised. If
+        none of the keys are valid for the signature, then BadStripeWebhookSecretError
+        is raised.
+
+        If verification is successful, the event is returned.
+        """
+
+        payload = request.body
+
+        if len(payload) == 0:
+            msg = "Empty payload received."
+            raise ImproperStripeWebhookRequestError(msg)
+
+        try:
+            payload_json = json.loads(payload)
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            msg = "Improper JSON payload found."
+            raise ImproperStripeWebhookRequestError(msg) from exc
+
+        if "id" not in payload_json:
+            msg = "Improper JSON payload found (no 'id' prop)."
+            raise ImproperStripeWebhookRequestError(msg)
+
+        event_id = payload_json["id"]
+
+        if request.resolver_match and request.resolver_match.url_name:
+            route = request.resolver_match.url_name
+        else:
+            log.warning(
+                "StripePaymentGateway: could not get the route from the request,"
+                " using path_info instead"
+            )
+            route = request.path_info
+
+        key_qs = StripeWebhookSecret.objects.filter(routes__url_name=route)
+
+        if not key_qs.exists():
+            raise NoStripeWebhookSecretError(event_id=event_id, route=route)
+
+        signature_to_validate = request.headers.get("Stripe-Signature", False)
+        found_valid_key = False
+
+        for key in key_qs.all():
+            try:
+                event = self.stripe_client.construct_event(
+                    payload,
+                    signature_to_validate,
+                    key.webhook_secret,
+                )
+                found_valid_key = True
+                break
+            except ValueError as exc:
+                raise ImproperStripeWebhookRequestError from exc
+            except stripe.error.SignatureVerificationError:
+                # We expect this one - if there's >1 key, then only one will be valid.
+                pass
+
+        if not found_valid_key:
+            raise BadStripeWebhookSecretError(event_id=event_id, route=route)
+
+        return event
+
+    def decode_processor_response(self, request: HttpRequest):
+        """
+        Decode the response from Stripe.
+
+        The validation returns the event; the event object contains the data
+        associated with the event, so this strips the event parts out and returns
+        just the data. The data returned will depend on the event that was triggered.
+        """
+
+        return self.perform_processor_response_validation(request).data.object
+
+    def perform_refund(self, refund):
+        """Perform a refund for an order."""
+
+        raise NotImplementedError
+
+    def retrieve_checkout(self, checkout_session_id):
+        """
+        Retrieve the Checkout Session.
+
+        The response data will be normalized into the ProcessorResponse object,
+        as that is designed to hold the data for a transaction. The Checkout
+        Session only really has a "paid" and "not paid" status, so those are
+        mapped to "accepted" and "pending". The full response is returned in
+        response_data as a JSON-encoded string.
+
+        This is most useful for the landing pages post-checkout - webhooks will
+        be presented with an event that includes the checkout data.
+        """
+
+        response = self.stripe_client.v1.checkout.sessions.retrieve(checkout_session_id)
+
+        return ProcessorResponse(
+            state=(
+                ProcessorResponse.STATE_ACCEPTED
+                if response.payment_status != "unpaid"
+                else ProcessorResponse.STATE_PENDING
+            ),
+            message="",
+            response_code=response.payment_status,
+            transaction_id=response.id,
+            response_data=json.dumps(response.to_dict()),
+        )
