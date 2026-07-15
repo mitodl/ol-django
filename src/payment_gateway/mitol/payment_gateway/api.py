@@ -1263,5 +1263,5 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
             message="",
             response_code=response.payment_status,
             transaction_id=response.id,
-            response_data=json.dumps(response),
+            response_data=json.dumps(response.to_dict()),
         )
