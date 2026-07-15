@@ -6,6 +6,22 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.7.15'></a>
+## [2026.7.15] - 2026-07-15
+
+### Removed
+
+- Removed support for Python 3.10
+
+### Added
+
+- Added  support for django version to 5.2
+- Add tox and expand gh action test matrix
+
+### Changed
+
+- Removed `pkg_resources.declare_namespace()` from the `mitol` namespace package declaration in favour of implicit namespace packages (PEP 420), eliminating the runtime dependency on `setuptools`/`pkg_resources`.
+
 <a id='changelog-2025.3.17'></a>
 ## [2025.3.17] - 2025-03-17
 
