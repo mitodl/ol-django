@@ -4,11 +4,11 @@
     "local>mitodl/.github:renovate-config"
   ],
   "packageRules": [{
-    "matchDepName": "django",
-    "matchDepTypes": ["dependency-group"],
+    "matchDepNames": ["django"],
+    "matchDepTypes": ["dependency-groups"],
     "matchJsonata": [
-      "$match(managerData.depGroup, /django[0-9]+/)"
+      "$match(managerData.depGroup, /^django[0-9]+$/)"
     ],
-    "matchUpdateTypes": ["patch"]
+    "enabled": false
   }]
 }
