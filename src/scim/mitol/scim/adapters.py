@@ -135,8 +135,14 @@ class UserAdapter(SCIMUser):
         self.obj.first_name = d.get("name", {}).get("givenName", "")
         self.obj.last_name = d.get("name", {}).get("familyName", "")
         self.obj.scim_username = d.get("userName")
-        self.obj.scim_external_id = d.get("externalId")
-        self.obj.global_id = self.obj.scim_external_id or ""
+
+        # a SCIM replace with a missing/blank externalId must not blank out
+        # an already-known global_id - global_id is the join key APISIX auth
+        # relies on, so losing it here silently breaks login for the user
+        external_id = d.get("externalId")
+        if external_id:
+            self.obj.scim_external_id = external_id
+            self.obj.global_id = external_id
 
     def _save_user(self):
         self.obj.save()

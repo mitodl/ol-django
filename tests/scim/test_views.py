@@ -460,6 +460,38 @@ def test_scim_user_put(scim_client):
     assert user.last_name == "Smith"
 
 
+def test_scim_user_put_missing_external_id_preserves_global_id(scim_client):
+    """A PUT with no externalId must not blank out a previously-set global_id"""
+    user = UserFactory.create(with_scim=True)
+    original_external_id = user.scim_external_id
+    original_global_id = user.global_id
+    assert original_global_id != ""
+
+    resp = scim_client.put(
+        f"{reverse('scim:users')}/{user.scim_id}",
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.USER],
+                "emails": [{"value": "jsmith@example.com", "primary": True}],
+                "active": True,
+                "userName": "jsmith",
+                "name": {
+                    "familyName": "Smith",
+                    "givenName": "Jimmy",
+                },
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert user.scim_external_id == original_external_id
+    assert user.global_id == original_global_id
+
+
 def test_scim_user_patch(scim_client):
     """Test that a user can be updated via PATCH"""
     user = UserFactory.create()
