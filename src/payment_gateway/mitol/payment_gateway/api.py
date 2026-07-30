@@ -517,7 +517,10 @@ class CyberSourcePaymentGateway(
                     pass
 
             # Special case for request failure when DUPLICATE_REQUEST
-            if exception_body and exception_body.get("reason") == ProcessorResponse.STATE_DUPLICATE:
+            if (
+                exception_body
+                and exception_body.get("reason") == ProcessorResponse.STATE_DUPLICATE
+            ):
                 raise RefundDuplicateException(  # noqa: B904
                     exception_body["reason"],
                     transaction_id,
