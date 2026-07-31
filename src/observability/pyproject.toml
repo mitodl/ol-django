@@ -26,6 +26,20 @@ celery = [
     # observability app's entry-point-based auto-instrumentation.
     "opentelemetry-instrumentation-celery>=0.50b0",
 ]
+postgres = [
+    # OTel instrumentation for psycopg queries — auto-discovered by the
+    # observability app's entry-point-based auto-instrumentation.
+    "opentelemetry-instrumentation-psycopg>=0.50b0",
+    # The instrumentation targets psycopg 3, and Django's postgresql backend
+    # prefers psycopg 3 over psycopg2 whenever it is importable — so installing
+    # this extra decides the application's database driver. Pin the compiled
+    # binding rather than leaving that to a bare `psycopg`, which resolves to
+    # the pure-Python ctypes implementation upstream calls "much slower".
+    # Requires a C compiler, Python headers, libpq-dev, and pg_config at build
+    # time; ol-python-base provides all four. See README.md if you need
+    # psycopg[binary] instead.
+    "psycopg[c]>=3.2.4",
+]
 
 [tool.bumpver]
 current_version = "2026.3.11"
