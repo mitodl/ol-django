@@ -86,6 +86,7 @@ build-backend = "hatchling.build"
 [tool.uv]
 managed = true
 default-groups = ["dev"]
+exclude-newer = "7d"
 conflicts = [
     [
         { group = "django42" },
