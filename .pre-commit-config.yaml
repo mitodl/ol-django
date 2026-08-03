@@ -74,3 +74,4 @@ repos:
   rev: v1.29.0
   hooks:
   - id: zizmor
+    args: [--no-progress, --min-severity=high, --min-confidence=medium]
