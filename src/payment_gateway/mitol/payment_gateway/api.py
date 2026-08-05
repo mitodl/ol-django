@@ -3,6 +3,7 @@ API for the Payment Gateway
 """
 
 import abc
+import contextlib
 import hashlib
 import hmac
 import json
@@ -511,10 +512,8 @@ class CyberSourcePaymentGateway(
             # exception rather than masking the original error with a KeyError.
             exception_body = None
             if hasattr(ex, "body") and ex.body:
-                try:
+                with contextlib.suppress(ValueError, TypeError):
                     exception_body = json.loads(ex.body)
-                except (ValueError, TypeError):
-                    pass
 
             # Special case for request failure when DUPLICATE_REQUEST
             if (
