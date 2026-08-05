@@ -86,6 +86,8 @@ build-backend = "hatchling.build"
 [tool.uv]
 managed = true
 default-groups = ["dev"]
+exclude-newer = "7d"
+required-version = ">=0.9.17"
 conflicts = [
     [
         { group = "django42" },
@@ -94,6 +96,26 @@ conflicts = [
         { group = "django52" },
     ]
 ]
+
+[tool.uv.exclude-newer-package]
+mitol-django-apigateway = "0d"
+mitol-django-authentication = "0d"
+mitol-django-common = "0d"
+mitol-django-digitalcredentials = "0d"
+mitol-django-geoip = "0d"
+mitol-django-google-sheets = "0d"
+mitol-django-google-sheets-deferrals = "0d"
+mitol-django-google-sheets-refunds = "0d"
+mitol-django-hubspot-api = "0d"
+mitol-django-mail = "0d"
+mitol-django-oauth-toolkit-extensions = "0d"
+mitol-django-observability = "0d"
+mitol-django-olposthog = "0d"
+mitol-django-openedx = "0d"
+mitol-django-payment-gateway = "0d"
+mitol-django-scim = "0d"
+mitol-django-transcoding = "0d"
+mitol-drf-lint = "0d"
 
 [tool.hatch.metadata]
 allow-direct-references = true
