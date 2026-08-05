@@ -28,6 +28,7 @@ with warnings.catch_warnings():
     )
 import stripe
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest
 from mitol.common.utils.datetime import now_in_utc
 from mitol.payment_gateway.constants import (
@@ -1031,7 +1032,11 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
         """Initialize the gateway and bring up a Stripe client."""
 
         config = StripePaymentGateway.get_client_configuration()
-        self.stripe_client = stripe.StripeClient(config.get("api_key", None))
+        api_key = config.get("api_key", None)
+        if not api_key:
+            msg = "Stripe API key not set"
+            raise ImproperlyConfigured(msg)
+        self.stripe_client = stripe.StripeClient(api_key)
 
     def _generate_product_data(self, item: BaseCartItem):
         """
