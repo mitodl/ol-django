@@ -6,6 +6,21 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.8.5'></a>
+## [2026.8.5] - 2026-08-05
+
+### Added
+
+- Added dependency on stripe-python.
+- Added implementation of PaymentGateway for Stripe.
+- Minor adjustments made to settings - now, just import the root app-level settings
+
+### Changed
+
+- Made the Stripe API key setting optional
+- Added a check to the StripePaymentGateway to ensure it has an API key if it's being used
+- Added some constants for Stripe data
+
 <a id='changelog-2026.7.15'></a>
 ## [2026.7.15] - 2026-07-15
 
