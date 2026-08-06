@@ -10,7 +10,7 @@ services:
     - "${POSTGRES_PORT:-55432}:5432"
 
   redis:
-    image: redis@sha256:0b13f549ab871acafaa84b673c4e29bd7dce8d12526aaafe3b4ea3366c322daf
+    image: redis@sha256:c88d347edef6249a6d2293f926f1eeb48bd40c57cbcd02c07f52e7f1fd2cb46b
     ports:
     - "${REDIS_PORT:-36379}:6379"
 
