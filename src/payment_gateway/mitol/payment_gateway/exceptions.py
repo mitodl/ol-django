@@ -1,3 +1,4 @@
+# ruff: noqa: CPY001
 """Exceptions for the Payment Gateway"""
 
 # Generic errors
@@ -91,3 +92,19 @@ class BadStripeWebhookSecretError(Exception):
 
 class ImproperStripeWebhookRequestError(Exception):
     """Raised when validation encounters a request that isn't set up correctly."""
+
+
+class InvalidStripeCheckoutSessionError(Exception):
+    """Raised when a checkout session is missing necessary data."""
+
+    def __init__(
+        self,
+        message=None,
+    ):
+        if message is None:
+            message = (
+                "The provided dictionary is missing the data expected in a"
+                " CheckoutSession."
+            )
+
+        super().__init__(message)

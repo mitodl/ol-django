@@ -1,3 +1,4 @@
+# ruff: noqa: CPY001
 """Tests for the Stripe Payment Gateway"""
 
 import logging
@@ -20,6 +21,8 @@ from mitol.payment_gateway.exceptions import (
 )
 
 from tests.payment_gateway.factories import (
+    StripeCheckoutSessionEventFactory,
+    StripeSimpleCheckoutSessionFactory,
     StripeWebhookSecretRouteFactory,
 )
 
@@ -367,3 +370,28 @@ def test_webhook_validation_some_secret_match(mocker):
 
     mocked_construct_event.assert_called()
     assert result == event
+
+
+@pytest.mark.parametrize(
+    "transaction_dict_source",
+    [
+        "event",
+        "session",
+    ],
+)
+def test_get_refund_request(transaction_dict_source):
+    """Test that we are generating a refund request properly."""
+
+    if transaction_dict_source == "event":
+        transaction_dict = StripeCheckoutSessionEventFactory.create()
+    elif transaction_dict_source == "session":
+        transaction_dict = StripeSimpleCheckoutSessionFactory.create()
+
+    transaction_dict = transaction_dict.to_dict(for_json=True)
+
+    refund_request = api.PaymentGateway.create_refund_request(
+        MITOL_PAYMENT_GATEWAY_STRIPE, transaction_dict
+    )
+
+    assert refund_request.transaction_id
+    assert refund_request.transaction_id[:3] == "pi_"

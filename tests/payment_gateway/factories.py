@@ -1,7 +1,11 @@
+# ruff: noqa: CPY001
 """Test factories for Payment Gateway."""
 
 import faker
-from factory import LazyAttribute, SubFactory
+import pytz
+import stripe
+from django.conf import settings
+from factory import Factory, LazyAttribute, SubFactory
 from factory.django import DjangoModelFactory
 from mitol.payment_gateway.models import StripeWebhookSecret, StripeWebhookSecretRoute
 
@@ -33,3 +37,60 @@ class StripeWebhookSecretRouteFactory(DjangoModelFactory):
         """Factory meta opts"""
 
         model = StripeWebhookSecretRoute
+
+
+class StripeAbstractEventFactory(Factory):
+    """Abstract factory to set some defaults for Stripe events."""
+
+    created = FAKE.past_datetime("-1y", pytz.timezone(settings.TIME_ZONE))
+    id = FAKE.pystr(min_chars=24, max_chars=24, prefix="evt_")
+    object = "event"
+
+    class Meta:
+        """Factory meta opts"""
+
+        abstract = True
+
+
+class StripeSimpleCheckoutSessionFactory(Factory):
+    """Factory for CheckoutSessions, with a minimal amount of data"""
+
+    created = FAKE.past_datetime("-1y", pytz.timezone(settings.TIME_ZONE))
+    id = FAKE.pystr(min_chars=58, max_chars=58, prefix="cs_test_")
+    payment_intent = FAKE.pystr(min_chars=24, max_chars=24, prefix="pi_")
+    ui_mode = "hosted_page"
+    payment_status = "paid"
+    status = "complete"
+    # Stripe won't allow a transaction in USD under 50c.
+    amount_total = FAKE.pyint(min_value=50, max_value=9999)
+    amount_subtotal = LazyAttribute(lambda o: o.amount_total)
+    client_reference_id = LazyAttribute(lambda _: f"payment-gateway-{FAKE.uuid4()}")
+    success_url = FAKE.uri(
+        [
+            "https",
+        ]
+    )
+    cancel_url = FAKE.uri(
+        [
+            "https",
+        ]
+    )
+
+    class Meta:
+        """Factory meta opts"""
+
+        model = stripe.checkout.Session
+
+
+class StripeCheckoutSessionEventFactory(StripeAbstractEventFactory):
+    """Factory that returns a faked CheckoutSession event"""
+
+    data = LazyAttribute(
+        lambda _: {"object": StripeSimpleCheckoutSessionFactory.create()}
+    )
+    type = "checkout.session.completed"
+
+    class Meta:
+        """Factory meta opts"""
+
+        model = stripe.Event
