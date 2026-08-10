@@ -209,7 +209,7 @@ def _generate_random_username(max_length=USERNAME_MAX_LEN):
     return first_char + remaining_chars
 
 
-def create_user_with_generated_username(  # noqa: PLR0913
+def create_user_with_generated_username(  # noqa: PLR0913, PLR0917
     serializer,
     initial_username,
     username_field,

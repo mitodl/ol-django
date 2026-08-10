@@ -200,7 +200,7 @@ def handle_secondary_email_error(content_type: str, hubspot_id: str, email: str)
     return None
 
 
-def handle_create_api_error(  # noqa: C901, PLR0913
+def handle_create_api_error(  # noqa: C901, PLR0913, PLR0917
     error: ApiException,
     content_type: str,
     hubspot_type: str,

@@ -83,7 +83,7 @@ def test_logout(next_url, client, user, has_apisix_header):
 @pytest.mark.parametrize("is_authenticated", [True])
 @pytest.mark.parametrize("has_next", [False])
 @pytest.mark.parametrize("next_host_is_invalid", [True, False])
-def test_next_logout(  # noqa: PLR0913
+def test_next_logout(  # noqa: PLR0913, PLR0917
     mocker, client, user, is_authenticated, has_next, next_host_is_invalid
 ):
     """Test logout redirect cache assignment"""

@@ -18,7 +18,7 @@ from mitol.google_sheets_refunds.constants import (
 class RefundRequestRow:
     """Represents a row of the refund request sheet"""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(  # noqa: PLR0913, PLR0917
         self,
         row_index,
         response_id,
