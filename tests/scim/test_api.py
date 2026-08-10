@@ -280,6 +280,5 @@ def test_sync_users_to_scim_remote(users: Users):
             else:
                 assert state.response_body is not None
                 assert (
-                    state.response_body["id"]
-                    == users.external_ids_by_user_id[user.id]
+                    state.response_body["id"] == users.external_ids_by_user_id[user.id]
                 )
