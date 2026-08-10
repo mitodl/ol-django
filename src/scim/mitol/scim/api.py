@@ -26,7 +26,13 @@ log = logging.getLogger()
 @dataclass()
 class UserState:
     user: "User"
-    external_id: str
+    external_id: str | None = None
+    response_body: dict[str, Any] | None = None
+    error: dict[str, Any] | None = None
+
+    @property
+    def success(self) -> bool:
+        return self.external_id is not None
 
 
 @dataclass()
@@ -82,12 +88,13 @@ def get_session() -> OAuth2Session:
     return OAuth2Session(token=token)
 
 
-def sync_users_to_scim_remote(users: list["User"]):
+def sync_users_to_scim_remote(users: list["User"]) -> list[UserState]:
     with get_session() as session:
         found_users = _user_search_by_email(session, users)
         state_or_operations = _get_sync_operations(users, found_users)
-        states = _perform_sync_operations(session, state_or_operations)
+        states = list(_perform_sync_operations(session, state_or_operations))
         _update_users(states)
+        return states
 
 
 def _user_search_by_email(
@@ -252,17 +259,25 @@ def _perform_sync_operations(
                     str(user),
                     str(operation),
                 )
+                yield UserState(user, error=operation)
                 continue
 
             location = operation["location"]
             external_id = _parse_external_id_from_location(location)
 
-            yield UserState(user, external_id)
+            yield UserState(
+                user,
+                external_id=external_id,
+                response_body=operation.get("response"),
+            )
 
 
-def _update_users(states: StateGenerator):
+def _update_users(states: list[UserState]):
     """Update the users to store the scim ids"""
-    for batch in chunked(states, settings.MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT):
+    successful_states = [state for state in states if state.success]
+    for batch in chunked(
+        successful_states, settings.MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT
+    ):
         updates = []
         for state in batch:
             user = state.user
