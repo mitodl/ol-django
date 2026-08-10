@@ -14,7 +14,7 @@ from mitol.transcoding.utils import (
 )
 
 
-def media_convert_job(  # noqa: PLR0913
+def media_convert_job(  # noqa: PLR0913, PLR0917
     video_source_key: str,
     source_prefix: str = settings.VIDEO_S3_UPLOAD_PREFIX,
     source_bucket: str = settings.AWS_STORAGE_BUCKET_NAME,

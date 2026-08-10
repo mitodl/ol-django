@@ -77,7 +77,7 @@ def google_sheets_deferral_settings(settings):
 @pytest.mark.parametrize(
     "has_deferral_settings, ", [lazy_fixture("google_sheets_deferral_settings"), False]
 )
-def test_is_configured(  # noqa: PLR0913
+def test_is_configured(  # noqa: PLR0913, PLR0917
     db,  # noqa: ARG001
     settings,  # noqa: ARG001
     mocker,

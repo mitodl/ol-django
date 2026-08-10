@@ -305,7 +305,7 @@ def test_upsert_object_request_exists(mock_hubspot_api):
     ],
 )
 @pytest.mark.django_db
-def test_upsert_object_request_missing_id(  # noqa: PLR0913
+def test_upsert_object_request_missing_id(  # noqa: PLR0913, PLR0917
     mocker, mock_hubspot_api, content_type_obj, status, message, hs_type
 ):
     """If an object exists in Hubspot but missing a HubspotObject in Django, retry upsert w/patch instead of post"""  # noqa: E501
@@ -527,7 +527,7 @@ def test_find_contact(mock_hubspot_api):
         ["XPRO-ORDER-1", None, [], ["name", "amount"]],  # noqa: PT007
     ],
 )
-def test_find_objects(  # noqa: PLR0913
+def test_find_objects(  # noqa: PLR0913, PLR0917
     mocker, mock_hubspot_api, mock_search_object, query, filters, sorts, properties
 ):
     """The search API call should be made with correct parameters"""

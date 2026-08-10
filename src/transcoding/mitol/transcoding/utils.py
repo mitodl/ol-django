@@ -9,7 +9,7 @@ class FileConfig:
     Configuration for file path settings used in MediaConvert job creation.
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(  # noqa: PLR0913, PLR0917
         self,
         video_source_key: str,
         source_prefix: str = settings.VIDEO_S3_UPLOAD_PREFIX,

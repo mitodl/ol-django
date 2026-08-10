@@ -427,7 +427,7 @@ def build_multi_cell_update_request_body(
     }
 
 
-def build_protected_range_request_body(  # noqa: PLR0913
+def build_protected_range_request_body(  # noqa: PLR0913, PLR0917
     start_row_index,
     num_rows,
     start_col_index,
