@@ -38,11 +38,14 @@ from mitol.payment_gateway.constants import (
     ISO_8601_FORMAT,
     MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
     MITOL_PAYMENT_GATEWAY_STRIPE,
+    STRIPE_REFUND_REASON_CUSTOMER_REQUEST,
+    STRIPE_REFUND_REASONS,
 )
 from mitol.payment_gateway.exceptions import (
     BadStripeWebhookSecretError,
     ImproperCartItemError,
     ImproperStripeWebhookRequestError,
+    InvalidStripeCheckoutSessionError,
     InvalidTransactionException,
     NoStripeWebhookSecretError,
     RefundDuplicateException,
@@ -152,7 +155,7 @@ class Refund:
     """  # noqa: E501
 
     transaction_id: str
-    refund_amount: float
+    refund_amount: float | Decimal
     refund_currency: str
 
 
@@ -1149,10 +1152,64 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
         }
 
     @staticmethod
-    def get_refund_request(transaction_dict: dict):
-        """Set up and return a refund."""
+    def get_refund_request(transaction_dict: dict, *, amount: Decimal | None = None):
+        """
+        Set up a Refund object for processing through Stripe.
 
-        raise NotImplementedError
+        Stripe wants the PaymentIntent from the completed transaction to set up
+        a refund - this is included in the transaction data that should be stored
+        after the transaction succeeds, so this will scrape that out of there for
+        you. (Generally this will actually be an event payload, so this will
+        also strip off the event wrapper.)
+
+        You can optionally provide an amount to perform a partial refund.
+
+        Args:
+        - transaction_dict (dict): the stored Stripe transaction data
+        Keyword Args:
+        - amount (Decimal|None): amount to refund, if performing a partial refund
+        """
+
+        if transaction_dict.get("object") == "event":
+            ev_data = transaction_dict.get("data")
+
+            if not ev_data:
+                msg = "Transaction data passed says it's an event, but has no data."
+                raise InvalidStripeCheckoutSessionError(msg)
+
+            checkout_session = ev_data.get("object")
+        elif transaction_dict.get("object") == "checkout.session":
+            checkout_session = transaction_dict
+        else:
+            msg = (
+                "Transaction data passed either does not have an 'object' prop "
+                "or is not one of the supported object types ('event' or "
+                "'checkout.session')."
+            )
+            raise InvalidStripeCheckoutSessionError(msg)
+
+        payment_intent = checkout_session.get("payment_intent")
+        refund_obj = Refund(
+            transaction_id="",
+            refund_amount=(Decimal(checkout_session.get("amount_total", 0)) / 100),
+            refund_currency=checkout_session.get("currency", ""),
+        )
+
+        if amount:
+            refund_obj.refund_amount = amount
+
+        if not payment_intent:
+            raise InvalidStripeCheckoutSessionError
+
+        # The PaymentIntent that gets sent back may either be a string identifier
+        # or the full PaymentIntent object depending on whether or not expansion
+        # was turned on at the time of retrieval.
+        if isinstance(payment_intent, str):
+            refund_obj.transaction_id = payment_intent
+        else:
+            refund_obj.transaction_id = payment_intent.get("id")
+
+        return refund_obj
 
     def perform_processor_response_validation(self, request: HttpRequest):
         """
@@ -1238,10 +1295,51 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
 
         return self.perform_processor_response_validation(request).data.object
 
-    def perform_refund(self, refund):
-        """Perform a refund for an order."""
+    def perform_refund(
+        self,
+        refund: Refund,
+        *,
+        refund_reason: str = STRIPE_REFUND_REASON_CUSTOMER_REQUEST,
+    ):
+        """
+        Submit the refund request through Stripe.
 
-        raise NotImplementedError
+        Relevant API docs: https://docs.stripe.com/api/refunds
+
+        The Stripe refund API doesn't allow for specifying the refund currency.
+        It will use whatever currency is specified in the related PaymentIntent
+        object. If you need to do a partial refund, ensure the amount specified
+        is in *that* currency. (This is potentially *not* USD!)
+
+        Be careful setting refund_reason - "requested_by_customer" is the default
+        and should apply in almost all cases. Setting the reason to "fraudulent"
+        will block the card and may trigger some other fraud prevention-related
+        actions within Stripe.
+
+        An exception will be raised by the Stripe client if an API error occurs;
+        if there's simply a problem with the refund, this will not raise (unlike
+        the CyberSource implementation). Refund errors may require some additional
+        manual work so returning the payload makes more sense. Do not assume that
+        a response means the refund request was successful.
+
+        Args:
+        - refund (Refund): the Refund request, generated by get_refund_request
+        Keyword Args:
+        - refund_reason (str): the reason for the refund
+          (default to requested_by_customer)
+        """
+
+        if refund_reason not in STRIPE_REFUND_REASONS:
+            msg = f"Invalid refund reason {refund_reason}"
+            raise ValueError(msg)
+
+        stripe_refund = stripe.params.RefundCreateParams(
+            payment_intent=refund.transaction_id,
+            amount=int(Decimal(refund.refund_amount * 100).quantize(Decimal("1"))),
+            reason=refund_reason,
+        )
+
+        return self.stripe_client.v1.refunds.create(stripe_refund)
 
     def retrieve_checkout(self, checkout_session_id):
         """
