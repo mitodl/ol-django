@@ -1,4 +1,3 @@
-# ruff: noqa: CPY001
 """Test factories for Payment Gateway."""
 
 import dataclasses

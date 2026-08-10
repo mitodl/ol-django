@@ -1,4 +1,3 @@
-# ruff: noqa: CPY001
 """Exceptions for the Payment Gateway"""
 
 # Generic errors

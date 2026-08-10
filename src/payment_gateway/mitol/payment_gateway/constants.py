@@ -1,4 +1,3 @@
-# ruff: noqa: CPY001
 """Constants for the Payment Gateway."""
 
 ISO_8601_FORMAT = "%Y-%m-%dT%H:%M:%SZ"

@@ -1,4 +1,3 @@
-# ruff: noqa: CPY001
 """
 API for the Payment Gateway
 """

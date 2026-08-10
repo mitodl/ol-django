@@ -1,4 +1,3 @@
-# ruff: noqa: CPY001
 """Tests for the Stripe Payment Gateway"""
 
 import logging
