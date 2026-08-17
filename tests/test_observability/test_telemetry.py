@@ -28,12 +28,14 @@ def reset_otel():
 
 
 def _clear_otlp_env(monkeypatch):
-    """Remove both standard OTLP endpoint variables.
+    """Remove every OTLP endpoint variable configure_opentelemetry() consults.
 
-    Clearing only the base variable leaves the test at the mercy of whatever
-    OTEL_EXPORTER_OTLP_TRACES_ENDPOINT happens to be set in the environment.
+    Any one of these left set puts a test at the mercy of the ambient
+    environment, so this has to track the full set the guard checks -- traces
+    and metrics both, not just the base variable.
     """
     monkeypatch.delenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", raising=False)
+    monkeypatch.delenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", raising=False)
     monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
 
 
@@ -295,7 +297,6 @@ def test_metrics_stay_off_without_an_environment_endpoint(monkeypatch):
     It is a full traces URL, so borrowing it would POST metrics to /v1/traces.
     """
     _clear_otlp_env(monkeypatch)
-    monkeypatch.delenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", raising=False)
 
     with patch("mitol.observability.telemetry.MeterProvider") as mock_provider:
         assert configure_opentelemetry() is not None
@@ -307,7 +308,6 @@ def test_metrics_stay_off_without_an_environment_endpoint(monkeypatch):
 def test_base_endpoint_env_configures_metrics(monkeypatch):
     """A base OTLP URL turns on metrics as well as traces."""
     _clear_otlp_env(monkeypatch)
-    monkeypatch.delenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", raising=False)
     monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://collector:4318")
 
     with (
