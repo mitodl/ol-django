@@ -179,3 +179,75 @@ def test_auto_instrument_allowlist(monkeypatch):
 
     mock_instrumentor_instance.instrument.assert_called_once()
     blocked_ep.load.assert_not_called()
+
+
+def _clear_otlp_env(monkeypatch):
+    """Remove both standard OTLP endpoint variables."""
+    monkeypatch.delenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", raising=False)
+    monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
+
+
+@override_settings(DEBUG=False)
+def test_base_endpoint_env_is_left_for_the_sdk_to_resolve(monkeypatch):
+    """A base URL must not be handed to the exporter verbatim.
+
+    An endpoint passed explicitly is used as-is, so forwarding the base URL
+    would POST every batch to the collector root and 404.
+    """
+    _clear_otlp_env(monkeypatch)
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://collector:4318")
+
+    with patch("mitol.observability.telemetry.OTLPSpanExporter") as mock_exporter:
+        assert configure_opentelemetry() is not None
+
+    assert mock_exporter.call_args.kwargs["endpoint"] is None
+
+
+@override_settings(DEBUG=False)
+def test_signal_specific_endpoint_env_enables_tracing(monkeypatch):
+    """OTEL_EXPORTER_OTLP_TRACES_ENDPOINT alone is enough to configure tracing.
+
+    It previously fell through to the no-endpoint path and disabled tracing
+    silently.
+    """
+    _clear_otlp_env(monkeypatch)
+    monkeypatch.setenv(
+        "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "http://collector:4318/v1/traces"
+    )
+
+    with patch("mitol.observability.telemetry.OTLPSpanExporter") as mock_exporter:
+        assert configure_opentelemetry() is not None
+
+    assert mock_exporter.call_args.kwargs["endpoint"] is None
+
+
+@override_settings(
+    DEBUG=False,
+    OPENTELEMETRY_ENDPOINT="http://collector:4318/v1/traces",
+)
+def test_settings_endpoint_is_passed_verbatim(monkeypatch):
+    """A Django-settings endpoint is a full signal URL, so it is used as given."""
+    _clear_otlp_env(monkeypatch)
+
+    with patch("mitol.observability.telemetry.OTLPSpanExporter") as mock_exporter:
+        assert configure_opentelemetry() is not None
+
+    assert (
+        mock_exporter.call_args.kwargs["endpoint"] == "http://collector:4318/v1/traces"
+    )
+
+
+@override_settings(DEBUG=False)
+def test_sdk_appends_the_signal_path_to_a_base_endpoint(monkeypatch):
+    """Canary for the SDK behaviour the code above depends on.
+
+    Reaches into a private attribute deliberately: if the SDK stops appending
+    "/v1/traces" to OTEL_EXPORTER_OTLP_ENDPOINT, passing endpoint=None silently
+    stops working and this is what says so.
+    """
+    _clear_otlp_env(monkeypatch)
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://collector:4318")
+
+    exporter = telemetry_module.OTLPSpanExporter(endpoint=None)
+
+    assert exporter._endpoint == "http://collector:4318/v1/traces"  # noqa: SLF001
