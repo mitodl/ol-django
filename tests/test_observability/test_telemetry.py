@@ -284,3 +284,69 @@ def test_grpc_settings_endpoint_is_passed_verbatim(monkeypatch):
 
     assert mock_exporter.call_args.kwargs["endpoint"] == "http://collector:4317"
     assert mock_exporter.call_args.kwargs["insecure"] is True
+
+
+@override_settings(
+    DEBUG=False, OPENTELEMETRY_ENDPOINT="http://collector:4318/v1/traces"
+)
+def test_metrics_stay_off_without_an_environment_endpoint(monkeypatch):
+    """OPENTELEMETRY_ENDPOINT must not be reused for metrics.
+
+    It is a full traces URL, so borrowing it would POST metrics to /v1/traces.
+    """
+    _clear_otlp_env(monkeypatch)
+    monkeypatch.delenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", raising=False)
+
+    with patch("mitol.observability.telemetry.MeterProvider") as mock_provider:
+        assert configure_opentelemetry() is not None
+
+    mock_provider.assert_not_called()
+
+
+@override_settings(DEBUG=False)
+def test_base_endpoint_env_configures_metrics(monkeypatch):
+    """A base OTLP URL turns on metrics as well as traces."""
+    _clear_otlp_env(monkeypatch)
+    monkeypatch.delenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", raising=False)
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://collector:4318")
+
+    with (
+        patch("mitol.observability.telemetry.OTLPSpanExporter"),
+        patch("mitol.observability.telemetry.OTLPMetricExporter"),
+        patch("mitol.observability.telemetry.MeterProvider") as mock_provider,
+    ):
+        assert configure_opentelemetry() is not None
+
+    mock_provider.assert_called_once()
+
+
+@override_settings(DEBUG=False)
+def test_meter_provider_is_installed_before_instrumentors_run(monkeypatch):
+    """Pins the intended ordering, so instrumentors get real instruments.
+
+    Not a correctness requirement: get_meter() hands out proxy instruments that
+    rebind when a provider appears later, and they do forward records
+    afterwards (checked against opentelemetry-instrumentation-django 0.65b0 --
+    a late provider install still collected http.server.duration). Ordering it
+    this way just avoids depending on that rebinding.
+    """
+    _clear_otlp_env(monkeypatch)
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://collector:4318")
+
+    calls = []
+
+    with (
+        patch("mitol.observability.telemetry.OTLPSpanExporter"),
+        patch("mitol.observability.telemetry.OTLPMetricExporter"),
+        patch(
+            "mitol.observability.telemetry.metrics.set_meter_provider",
+            side_effect=lambda _p: calls.append("meter_provider"),
+        ),
+        patch(
+            "mitol.observability.telemetry._auto_instrument",
+            side_effect=lambda: calls.append("auto_instrument"),
+        ),
+    ):
+        configure_opentelemetry()
+
+    assert calls == ["meter_provider", "auto_instrument"]

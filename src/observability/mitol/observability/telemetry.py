@@ -7,14 +7,17 @@ import logging
 import os
 
 from django.conf import settings
-from opentelemetry import trace
+from opentelemetry import metrics, trace
 from opentelemetry.baggage.propagation import W3CBaggagePropagator
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter as GrpcExporter,
 )
+from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.propagate import set_global_textmap
 from opentelemetry.propagators.composite import CompositePropagator
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
@@ -84,28 +87,66 @@ def _auto_instrument() -> None:
             log.warning("Failed to auto-instrument %s", ep.name, exc_info=True)
 
 
-def _endpoint_from_env() -> str | None:
-    """Return the OTLP endpoint the environment configures, if any.
+def _endpoint_from_env(signal: str = "TRACES") -> str | None:
+    """Return the OTLP endpoint the environment configures for a signal, if any.
 
     Used only to decide *whether* the environment configures an endpoint, never
     to build the exporter. The SDK resolves these two variables correctly on its
-    own -- a signal-specific endpoint verbatim, a base endpoint with "/v1/traces"
-    appended -- and an endpoint passed explicitly to an exporter is always used
-    verbatim, which defeats that. Reading OTEL_EXPORTER_OTLP_ENDPOINT here and
-    handing the result to the exporter would turn a spec-correct base URL into
-    POSTs at the collector root: a 404 per batch, surfaced as nothing louder
-    than a BatchSpanProcessor warning.
+    own -- a signal-specific endpoint verbatim, a base endpoint with the signal
+    path appended -- and an endpoint passed explicitly to an exporter is always
+    used verbatim, which defeats that. Reading OTEL_EXPORTER_OTLP_ENDPOINT here
+    and handing the result to the exporter would turn a spec-correct base URL
+    into POSTs at the collector root: a 404 per batch, surfaced as nothing
+    louder than a BatchSpanProcessor warning.
 
     Checked in the SDK's own precedence order, most specific first.
+
+    :param signal: "TRACES" or "METRICS".
     """
     for env_var in (
-        "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+        f"OTEL_EXPORTER_OTLP_{signal}_ENDPOINT",
         "OTEL_EXPORTER_OTLP_ENDPOINT",
     ):
         value = os.environ.get(env_var)
         if value:
             return value
     return None
+
+
+def _configure_metrics(resource: Resource) -> MeterProvider | None:
+    """Install a MeterProvider so instrumentation emits unsampled RED metrics.
+
+    Nothing here defines a metric. Setting a global MeterProvider is enough:
+    DjangoInstrumentor builds http.server.duration and
+    http.server.active_requests from it, so rate, errors and duration come from
+    every request rather than from the fraction of traces that survive
+    sampling. That is the point -- the tail sampler keeps all errors and
+    everything slow on top of a probabilistic baseline, so metrics derived from
+    ingested traces over-represent both by construction.
+
+    Deliberately environment-only. OPENTELEMETRY_ENDPOINT is a full traces URL
+    (it ends in /v1/traces), so reusing it here would POST metrics to the traces
+    path. Metrics need OTEL_EXPORTER_OTLP_ENDPOINT (a base URL) or
+    OTEL_EXPORTER_OTLP_METRICS_ENDPOINT, and stay off until one is set.
+
+    The export interval comes from OTEL_METRIC_EXPORT_INTERVAL, which
+    PeriodicExportingMetricReader reads itself.
+    """
+    if not _endpoint_from_env("METRICS"):
+        log.info(
+            "OpenTelemetry: no OTLP metrics endpoint in the environment, "
+            "metrics disabled. Set OTEL_EXPORTER_OTLP_ENDPOINT to a base URL "
+            "to enable them."
+        )
+        return None
+
+    provider = MeterProvider(
+        resource=resource,
+        metric_readers=[PeriodicExportingMetricReader(OTLPMetricExporter())],
+    )
+    metrics.set_meter_provider(provider)
+    log.info("OpenTelemetry: MeterProvider configured")
+    return provider
 
 
 def configure_opentelemetry() -> TracerProvider | None:
@@ -145,8 +186,15 @@ def configure_opentelemetry() -> TracerProvider | None:
         CompositePropagator([TraceContextTextMapPropagator(), W3CBaggagePropagator()])
     )
 
-    provider = TracerProvider(resource=_get_resource())
+    resource = _get_resource()
+    provider = TracerProvider(resource=resource)
     trace.set_tracer_provider(provider)
+
+    # Before _auto_instrument(), so instrumentors get real instruments straight
+    # away. Not strictly required -- get_meter() hands out proxy instruments
+    # that rebind when a provider appears later, and they do forward -- but
+    # ordering it correctly avoids depending on that rebinding at all.
+    _configure_metrics(resource)
 
     # Console exporter is opt-in even in DEBUG to avoid slowdown during development
     enable_console = getattr(settings, "OPENTELEMETRY_CONSOLE_EXPORTER", False)
