@@ -62,18 +62,23 @@ def test_inject_otel_context_with_active_span(monkeypatch):
     assert len(result["span_id"]) == 16  # noqa: PLR2004
 
 
-def test_inject_otel_context_no_active_span(monkeypatch):
-    """Non-recording span adds no fields to event_dict."""
-    fake_span = FakeSpan(recording=False)
+def test_inject_otel_context_non_recording_span(monkeypatch):
+    """A non-recording span still carries real ids, so they are still emitted.
+
+    Skipping them blanked out trace_id on exactly the traffic the head sampler
+    declined, which at a ratio below 1.0 is most Celery task logs.
+    """
+    trace_id = 0xDEADBEEFCAFEBABE1234567890ABCDEF
+    span_id = 0xBEEFCAFEDEAD1234
+    fake_span = FakeSpan(recording=False, trace_id=trace_id, span_id=span_id)
 
     monkeypatch.setattr(otel_trace, "get_current_span", lambda: fake_span)
 
     event_dict = {"event": "test"}
     result = inject_otel_context(None, "info", event_dict)
 
-    assert "trace_id" not in result
-    assert "span_id" not in result
-    assert result == {"event": "test"}
+    assert result["trace_id"] == format_trace_id(trace_id)
+    assert result["span_id"] == format_span_id(span_id)
 
 
 def test_inject_otel_context_invalid_context(monkeypatch):
