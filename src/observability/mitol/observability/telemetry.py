@@ -166,16 +166,20 @@ def configure_opentelemetry() -> TracerProvider | None:
     env_endpoint = _endpoint_from_env()
     settings_endpoint = getattr(settings, "OPENTELEMETRY_ENDPOINT", None)
     endpoint = env_endpoint or settings_endpoint
+    # Checked separately: this function configures two signals now, so bailing
+    # out on the traces endpoint alone would skip _configure_metrics entirely
+    # for anyone who set only OTEL_EXPORTER_OTLP_METRICS_ENDPOINT.
+    metrics_endpoint = _endpoint_from_env("METRICS")
     is_debug = getattr(settings, "DEBUG", False)
 
-    if not endpoint and not is_debug:
+    if not endpoint and not metrics_endpoint and not is_debug:
         # Above debug, because a service that silently exports nothing looks
         # exactly like a healthy one until somebody goes looking in Tempo.
         log.info(
-            "OpenTelemetry: no endpoint configured and not DEBUG, tracing "
+            "OpenTelemetry: no endpoint configured and not DEBUG, telemetry "
             "disabled. Set OTEL_EXPORTER_OTLP_TRACES_ENDPOINT, "
-            "OTEL_EXPORTER_OTLP_ENDPOINT, or the OPENTELEMETRY_ENDPOINT Django "
-            "setting to enable it."
+            "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT, OTEL_EXPORTER_OTLP_ENDPOINT, "
+            "or the OPENTELEMETRY_ENDPOINT Django setting to enable it."
         )
         return None
 

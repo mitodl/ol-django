@@ -350,3 +350,24 @@ def test_meter_provider_is_installed_before_instrumentors_run(monkeypatch):
         configure_opentelemetry()
 
     assert calls == ["meter_provider", "auto_instrument"]
+
+
+@override_settings(DEBUG=False)
+def test_metrics_only_endpoint_still_configures_metrics(monkeypatch):
+    """A metrics-only endpoint must not be swallowed by the traces guard.
+
+    The early return keys off the traces endpoint, so before this it returned
+    before _configure_metrics ever ran.
+    """
+    _clear_otlp_env(monkeypatch)
+    monkeypatch.setenv(
+        "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "http://collector:4318/v1/metrics"
+    )
+
+    with (
+        patch("mitol.observability.telemetry.OTLPMetricExporter"),
+        patch("mitol.observability.telemetry.MeterProvider") as mock_provider,
+    ):
+        assert configure_opentelemetry() is not None
+
+    mock_provider.assert_called_once()
