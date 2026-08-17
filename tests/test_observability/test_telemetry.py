@@ -3,27 +3,44 @@
 from unittest.mock import MagicMock, patch
 
 import mitol.observability.telemetry as telemetry_module
+import opentelemetry.metrics._internal as metrics_internal
+import opentelemetry.trace as trace_internal
 import pytest
 from django.test import override_settings
 from mitol.observability.telemetry import (
     configure_opentelemetry,
     reset_configuration,
 )
-from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.util._once import Once
 
 
-def _reset_tracer_provider():
-    """Reset global tracer provider between tests."""
-    trace.set_tracer_provider(TracerProvider())
+def _reset_global_providers():
+    """Clear the SDK's global tracer and meter providers.
+
+    Reaching into private globals because there is no public way to do this:
+    set_tracer_provider/set_meter_provider are guarded by a ``Once`` and simply
+    log "Overriding of current X is not allowed" on a second call. Clearing the
+    provider alone is not enough either -- the Once has to be replaced as well,
+    or the next set is still swallowed.
+
+    Without this the first test to configure telemetry pins the provider for the
+    whole session and every later test silently gets that one instead of its
+    own, which makes outcomes depend on execution order.
+    """
+    trace_internal._TRACER_PROVIDER = None  # noqa: SLF001
+    trace_internal._TRACER_PROVIDER_SET_ONCE = Once()  # noqa: SLF001
+    metrics_internal._METER_PROVIDER = None  # noqa: SLF001
+    metrics_internal._METER_PROVIDER_SET_ONCE = Once()  # noqa: SLF001
 
 
 @pytest.fixture(autouse=True)
 def reset_otel():
     """Ensure a clean OTel state for each test."""
+    _reset_global_providers()
     reset_configuration()
     yield
-    _reset_tracer_provider()
+    _reset_global_providers()
     reset_configuration()
 
 
