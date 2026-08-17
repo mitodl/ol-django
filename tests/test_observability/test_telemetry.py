@@ -27,10 +27,20 @@ def reset_otel():
     reset_configuration()
 
 
+def _clear_otlp_env(monkeypatch):
+    """Remove both standard OTLP endpoint variables.
+
+    Clearing only the base variable leaves the test at the mercy of whatever
+    OTEL_EXPORTER_OTLP_TRACES_ENDPOINT happens to be set in the environment.
+    """
+    monkeypatch.delenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", raising=False)
+    monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
+
+
 @override_settings(DEBUG=False)
 def test_configure_opentelemetry_no_endpoint_no_debug(monkeypatch):
     """Returns None when no endpoint configured and not DEBUG."""
-    monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
+    _clear_otlp_env(monkeypatch)
 
     result = configure_opentelemetry()
     assert result is None
@@ -53,7 +63,7 @@ def test_configure_opentelemetry_with_endpoint(monkeypatch):
 @override_settings(DEBUG=True, OPENTELEMETRY_CONSOLE_EXPORTER=True)
 def test_configure_opentelemetry_debug_mode_with_console_exporter(monkeypatch):
     """In DEBUG mode with console exporter enabled, returns TracerProvider."""
-    monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
+    _clear_otlp_env(monkeypatch)
 
     result = configure_opentelemetry()
 
@@ -64,7 +74,7 @@ def test_configure_opentelemetry_debug_mode_with_console_exporter(monkeypatch):
 @override_settings(DEBUG=True, OPENTELEMETRY_CONSOLE_EXPORTER=False)
 def test_configure_opentelemetry_debug_mode_without_console_exporter(monkeypatch):
     """In DEBUG mode without console exporter, still returns TracerProvider."""
-    monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
+    _clear_otlp_env(monkeypatch)
 
     result = configure_opentelemetry()
 
@@ -179,12 +189,6 @@ def test_auto_instrument_allowlist(monkeypatch):
 
     mock_instrumentor_instance.instrument.assert_called_once()
     blocked_ep.load.assert_not_called()
-
-
-def _clear_otlp_env(monkeypatch):
-    """Remove both standard OTLP endpoint variables."""
-    monkeypatch.delenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", raising=False)
-    monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
 
 
 @override_settings(DEBUG=False)
