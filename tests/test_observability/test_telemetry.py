@@ -27,7 +27,20 @@ def _reset_global_providers():
     Without this the first test to configure telemetry pins the provider for the
     whole session and every later test silently gets that one instead of its
     own, which makes outcomes depend on execution order.
+
+    Providers are shut down before being dropped. Clearing the global alone
+    leaves the BatchSpanProcessor and PeriodicExportingMetricReader worker
+    threads running with nothing able to reach them, so they accumulate across
+    the suite and keep trying to export.
     """
+    for provider in (
+        trace_internal._TRACER_PROVIDER,  # noqa: SLF001
+        metrics_internal._METER_PROVIDER,  # noqa: SLF001
+    ):
+        shutdown = getattr(provider, "shutdown", None)
+        if shutdown is not None:
+            shutdown()
+
     trace_internal._TRACER_PROVIDER = None  # noqa: SLF001
     trace_internal._TRACER_PROVIDER_SET_ONCE = Once()  # noqa: SLF001
     metrics_internal._METER_PROVIDER = None  # noqa: SLF001
@@ -388,3 +401,39 @@ def test_metrics_only_endpoint_still_configures_metrics(monkeypatch):
         assert configure_opentelemetry() is not None
 
     mock_provider.assert_called_once()
+
+
+@override_settings(
+    DEBUG=False, OPENTELEMETRY_USE_GRPC=True, OPENTELEMETRY_INSECURE=True
+)
+def test_metrics_follow_the_grpc_transport_setting(monkeypatch):
+    """Sharing a base endpoint means an HTTP exporter would hit a gRPC port."""
+    _clear_otlp_env(monkeypatch)
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://collector:4317")
+
+    with (
+        patch("mitol.observability.telemetry.GrpcExporter"),
+        patch("mitol.observability.telemetry.OTLPMetricExporter") as http_exporter,
+        patch("mitol.observability.telemetry.GrpcMetricExporter") as grpc_exporter,
+        patch("mitol.observability.telemetry.MeterProvider"),
+    ):
+        assert configure_opentelemetry() is not None
+
+    grpc_exporter.assert_called_once()
+    http_exporter.assert_not_called()
+
+
+@override_settings(DEBUG=False)
+def test_metrics_failure_does_not_stop_the_service_starting(monkeypatch):
+    """This runs from AppConfig.ready(); raising here means the app will not boot."""
+    _clear_otlp_env(monkeypatch)
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://collector:4318")
+
+    with (
+        patch("mitol.observability.telemetry.OTLPSpanExporter"),
+        patch(
+            "mitol.observability.telemetry.OTLPMetricExporter",
+            side_effect=ValueError("bad metrics config"),
+        ),
+    ):
+        assert configure_opentelemetry() is not None

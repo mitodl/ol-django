@@ -9,6 +9,9 @@ import os
 from django.conf import settings
 from opentelemetry import metrics, trace
 from opentelemetry.baggage.propagation import W3CBaggagePropagator
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
+    OTLPMetricExporter as GrpcMetricExporter,
+)
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter as GrpcExporter,
 )
@@ -131,6 +134,9 @@ def _configure_metrics(resource: Resource) -> MeterProvider | None:
 
     The export interval comes from OTEL_METRIC_EXPORT_INTERVAL, which
     PeriodicExportingMetricReader reads itself.
+
+    Requires the ``django`` extra. The instrumentor is what creates the
+    instruments; a MeterProvider on its own has nothing feeding it.
     """
     if not _endpoint_from_env("METRICS"):
         log.info(
@@ -140,10 +146,32 @@ def _configure_metrics(resource: Resource) -> MeterProvider | None:
         )
         return None
 
-    provider = MeterProvider(
-        resource=resource,
-        metric_readers=[PeriodicExportingMetricReader(OTLPMetricExporter())],
-    )
+    try:
+        # Follow the transport tracing uses. Sharing OTEL_EXPORTER_OTLP_ENDPOINT
+        # between signals means an HTTP metric exporter would POST /v1/metrics
+        # at a gRPC-only port and silently deliver nothing.
+        if getattr(settings, "OPENTELEMETRY_USE_GRPC", False):
+            exporter = GrpcMetricExporter(
+                insecure=getattr(settings, "OPENTELEMETRY_INSECURE", True),
+            )
+        else:
+            exporter = OTLPMetricExporter()
+
+        provider = MeterProvider(
+            resource=resource,
+            metric_readers=[PeriodicExportingMetricReader(exporter)],
+        )
+    except Exception:
+        # Same contract as the trace exporter below: observability degrades, the
+        # service still starts. This runs from AppConfig.ready(), so raising
+        # here would turn a bad metrics endpoint or export interval into a
+        # service that will not boot.
+        log.warning(
+            "OpenTelemetry: failed to configure metrics, continuing without them",
+            exc_info=True,
+        )
+        return None
+
     metrics.set_meter_provider(provider)
     log.info("OpenTelemetry: MeterProvider configured")
     return provider

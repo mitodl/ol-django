@@ -26,6 +26,19 @@ celery = [
     # observability app's entry-point-based auto-instrumentation.
     "opentelemetry-instrumentation-celery>=0.50b0",
 ]
+django = [
+    # OTel instrumentation for Django requests — auto-discovered by the
+    # observability app's entry-point-based auto-instrumentation. This is what
+    # builds http.server.duration and http.server.active_requests, so without
+    # it configure_opentelemetry() installs a MeterProvider that nothing feeds.
+    #
+    # The [asgi] extra is not optional in practice. ASGI support in the Django
+    # instrumentation is gated behind it: without it _is_asgi_supported is
+    # False and _DjangoMiddleware returns immediately from both
+    # process_request and process_response on every ASGI request, emitting
+    # nothing and logging nothing.
+    "opentelemetry-instrumentation-django[asgi]>=0.50b0",
+]
 postgres = [
     # OTel instrumentation for psycopg queries — auto-discovered by the
     # observability app's entry-point-based auto-instrumentation.
