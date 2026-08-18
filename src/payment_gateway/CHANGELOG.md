@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.8.10'></a>
+## [2026.8.10] - 2026-08-10
+
+### Added
+
+- Added refund support to the Stripe payment gateway.
+
 <a id='changelog-2026.8.5'></a>
 ## [2026.8.5] - 2026-08-05
 

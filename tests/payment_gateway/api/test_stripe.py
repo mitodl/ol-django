@@ -16,10 +16,13 @@ from mitol.payment_gateway.constants import MITOL_PAYMENT_GATEWAY_STRIPE
 from mitol.payment_gateway.exceptions import (
     BadStripeWebhookSecretError,
     ImproperStripeWebhookRequestError,
+    InvalidStripeCheckoutSessionError,
     NoStripeWebhookSecretError,
 )
 
 from tests.payment_gateway.factories import (
+    StripeCheckoutSessionEventFactory,
+    StripeSimpleCheckoutSessionFactory,
     StripeWebhookSecretRouteFactory,
 )
 
@@ -367,3 +370,78 @@ def test_webhook_validation_some_secret_match(mocker):
 
     mocked_construct_event.assert_called()
     assert result == event
+
+
+@pytest.mark.parametrize(
+    "transaction_dict_source",
+    [
+        "event",
+        "session",
+    ],
+)
+@pytest.mark.parametrize(
+    "use_pi_object",
+    [
+        True,
+        False,
+    ],
+)
+def test_get_refund_request(transaction_dict_source, use_pi_object):
+    """Test that we are generating a refund request properly."""
+
+    if transaction_dict_source == "event":
+        transaction_dict = StripeCheckoutSessionEventFactory.create()
+
+        if use_pi_object:
+            transaction_dict.data["object"].payment_intent = {
+                "id": transaction_dict.data["object"].payment_intent
+            }
+    elif transaction_dict_source == "session":
+        transaction_dict = StripeSimpleCheckoutSessionFactory.create()
+
+        if use_pi_object:
+            transaction_dict.payment_intent = {"id": transaction_dict.payment_intent}
+
+    transaction_dict = transaction_dict.to_dict(for_json=True)
+
+    refund_request = api.PaymentGateway.create_refund_request(
+        MITOL_PAYMENT_GATEWAY_STRIPE, transaction_dict
+    )
+
+    assert refund_request.transaction_id
+    assert refund_request.transaction_id[:3] == "pi_"
+
+
+def test_get_refund_request_bad_data():
+    """Test that get_refund_request raises if bad data is passed."""
+
+    test_dict = {}
+
+    with pytest.raises(InvalidStripeCheckoutSessionError) as exc:
+        api.PaymentGateway.create_refund_request(
+            MITOL_PAYMENT_GATEWAY_STRIPE, test_dict
+        )
+
+    assert "supported object type" in str(exc)
+
+    test_dict = {
+        "object": "event",
+    }
+
+    with pytest.raises(InvalidStripeCheckoutSessionError) as exc:
+        api.PaymentGateway.create_refund_request(
+            MITOL_PAYMENT_GATEWAY_STRIPE, test_dict
+        )
+
+    assert "no data" in str(exc)
+
+    test_dict = {
+        "object": "checkout.session",
+        "amount_total": 1000,
+        "currency": "usd",
+    }
+
+    with pytest.raises(InvalidStripeCheckoutSessionError) as exc:
+        api.PaymentGateway.create_refund_request(
+            MITOL_PAYMENT_GATEWAY_STRIPE, test_dict
+        )
