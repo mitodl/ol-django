@@ -255,3 +255,32 @@ def test_sdk_appends_the_signal_path_to_a_base_endpoint(monkeypatch):
     exporter = telemetry_module.OTLPSpanExporter(endpoint=None)
 
     assert exporter._endpoint == "http://collector:4318/v1/traces"  # noqa: SLF001
+
+
+@override_settings(DEBUG=False, OPENTELEMETRY_USE_GRPC=True)
+def test_grpc_endpoint_env_is_left_for_the_sdk_to_resolve(monkeypatch):
+    """The gRPC exporter has the same verbatim-endpoint contract as HTTP."""
+    _clear_otlp_env(monkeypatch)
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://collector:4317")
+
+    with patch("mitol.observability.telemetry.GrpcExporter") as mock_exporter:
+        assert configure_opentelemetry() is not None
+
+    assert mock_exporter.call_args.kwargs["endpoint"] is None
+
+
+@override_settings(
+    DEBUG=False,
+    OPENTELEMETRY_USE_GRPC=True,
+    OPENTELEMETRY_ENDPOINT="http://collector:4317",
+    OPENTELEMETRY_INSECURE=True,
+)
+def test_grpc_settings_endpoint_is_passed_verbatim(monkeypatch):
+    """And a settings endpoint still reaches the gRPC exporter as given."""
+    _clear_otlp_env(monkeypatch)
+
+    with patch("mitol.observability.telemetry.GrpcExporter") as mock_exporter:
+        assert configure_opentelemetry() is not None
+
+    assert mock_exporter.call_args.kwargs["endpoint"] == "http://collector:4317"
+    assert mock_exporter.call_args.kwargs["insecure"] is True

@@ -131,8 +131,10 @@ def configure_opentelemetry() -> TracerProvider | None:
         # Above debug, because a service that silently exports nothing looks
         # exactly like a healthy one until somebody goes looking in Tempo.
         log.info(
-            "OpenTelemetry: no endpoint configured and not DEBUG, tracing disabled. "
-            "Set OTEL_EXPORTER_OTLP_ENDPOINT or OPENTELEMETRY_ENDPOINT to enable it."
+            "OpenTelemetry: no endpoint configured and not DEBUG, tracing "
+            "disabled. Set OTEL_EXPORTER_OTLP_TRACES_ENDPOINT, "
+            "OTEL_EXPORTER_OTLP_ENDPOINT, or the OPENTELEMETRY_ENDPOINT Django "
+            "setting to enable it."
         )
         return None
 
