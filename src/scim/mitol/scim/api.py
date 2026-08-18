@@ -259,7 +259,7 @@ def _perform_sync_operations(
                     str(user),
                     str(operation),
                 )
-                yield UserState(user, error=operation)
+                yield UserState(user, error=operation.get("response"))
                 continue
 
             location = operation["location"]

@@ -265,8 +265,11 @@ def test_sync_users_to_scim_remote(users: Users):
             assert state.success is False
             assert state.external_id is None
             assert state.response_body is None
-            assert state.error is not None
-            assert state.error["status"] == "400"
+            assert state.error == {
+                "schemas": [SchemaURI.ERROR],
+                "detail": "Bad data",
+                "status": str(HTTPStatus.BAD_REQUEST),
+            }
         else:
             assert user.scim_external_id == users.external_ids_by_user_id[user.id]
             assert user.global_id == users.external_ids_by_user_id[user.id]
