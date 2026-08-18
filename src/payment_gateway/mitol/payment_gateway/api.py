@@ -10,7 +10,7 @@ import logging
 import uuid
 import warnings
 from base64 import b64encode
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from decimal import Decimal
 from functools import wraps
 
@@ -29,17 +29,27 @@ with warnings.catch_warnings():
 import stripe
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.core.signing import Signer
 from django.http import HttpRequest
 from mitol.common.utils.datetime import now_in_utc
 from mitol.payment_gateway.constants import (
-    CART_ITEM_DEFINED,
-    CART_ITEM_INLINE,
-    CART_ITEM_UNKNOWN,
     ISO_8601_FORMAT,
     MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
+    MITOL_PAYMENT_GATEWAY_NONE,
+    MITOL_PAYMENT_GATEWAY_NONE_ACTION_APPROVE,
+    MITOL_PAYMENT_GATEWAY_NONE_ACTION_APPROVE_ZERO,
     MITOL_PAYMENT_GATEWAY_STRIPE,
+    STRIPE_EVENTS_CHECKOUT_SESSION,
     STRIPE_REFUND_REASON_CUSTOMER_REQUEST,
     STRIPE_REFUND_REASONS,
+)
+from mitol.payment_gateway.dataclasses import (
+    CartItem,
+    LookupCartItem,
+    Order,
+    ProcessorResponse,
+    Refund,
+    StripeCheckoutSessionStatus,
 )
 from mitol.payment_gateway.exceptions import (
     BadStripeWebhookSecretError,
@@ -56,142 +66,10 @@ from mitol.payment_gateway.payment_utils import (
     quantize_decimal,
     strip_nones,
 )
+from mitol.payment_gateway.serializers import OrderSerializer
+from stripe.checkout import Session as StripeCheckoutSession
 
 log = logging.getLogger(__name__)
-
-
-@dataclass
-class BaseCartItem:
-    """
-    Base fields for a cart item.
-
-    Fields:
-    - quantity: Item quantity
-    - unitprice: Item price, after any necessary coupon/discout calculations
-    - taxable: Taxable amount
-    """
-
-    unitprice: Decimal = Decimal(0)
-    quantity: int = 1
-    taxable: Decimal = Decimal(0)
-
-    @property
-    def item_type(self):
-        """Return what kind of item this is."""
-
-        return CART_ITEM_UNKNOWN
-
-
-@dataclass
-class LookupCartItem(BaseCartItem):
-    """
-    Represents an item in the cart that is also configured in the payment processor.
-
-    We can sometimes specify a cart item using an identifier. So, this is a cart
-    item with just that and pricing data.
-    """
-
-    product_id: str | None = None
-
-    @property
-    def item_type(self):
-        """Return what kind of item this is."""
-
-        return CART_ITEM_DEFINED
-
-
-@dataclass
-class CartItem(BaseCartItem):
-    """
-    Represents an item in the cart. The mappings for xPro below are meant as an
-    example; the actual data passed should make sense for your application.
-
-    Fields:
-    - code: Item code (in xPro, content_type)
-    - name: Item name (in xPro, description)
-    - sku: Item SKU (in xPro, content_object.id)
-    """
-
-    code: str | None = None
-    name: str | None = None
-    sku: str | None = None
-
-    @property
-    def item_type(self):
-        """Return what kind of item this is."""
-
-        return CART_ITEM_INLINE
-
-
-@dataclass
-class Order:
-    """
-    Represents an order, and is mostly metadata for an in-progress order.
-
-    Fields:
-    - username: Purchaser username
-    - email: Purchaser email (default None)
-    - ip_address: Purchaser's IP address
-    - reference: Order reference number
-    - items: List of CartItems representing the items to be purchased
-    """
-
-    username: str
-    ip_address: str
-    reference: str
-    items: list[BaseCartItem]
-    email: str | None = None
-
-
-@dataclass
-class Refund:
-    """
-    Represents a refund request data
-
-    Fields:
-    - transaction_id: transaction id of a successful payment
-    - refund_amount: Amount to be refunded
-    - refund_currency: Currency for refund amount (Ideally, this should be the currency used while payment)
-    """  # noqa: E501
-
-    transaction_id: str
-    refund_amount: float | Decimal
-    refund_currency: str
-
-
-@dataclass
-class ProcessorResponse:
-    """
-    Standardizes the salient parts of the response from the
-    payment gateway after a transaction has come back to the app.
-
-    Most of these fields are going to be processor-dependent, but each
-    processor should at least have a state and a message. State should
-    ideally be one of the ones that there are constants for here.
-
-    Fields:
-    - state: string, should be one of the constants
-    - message: string, human-readable response from the processor
-    - response_code: string, code representing more info about the transaction status
-    - transaction_id: string, processor-dependent ID for the transaction
-    """
-
-    state: str
-    message: str
-    response_code: str
-    transaction_id: str
-    # In some cases we would need this data as traceback (Can be saved in the Transaction entries in Database)  # noqa: E501
-    response_data: str
-
-    STATE_ACCEPTED = "ACCEPT"
-    STATE_DECLINED = "DECLINE"
-    STATE_ERROR = "ERROR"
-    STATE_CANCELLED = "CANCEL"
-    STATE_REVIEW = "REVIEW"
-    # It's more of a reason then state, but treating this as state keeps it bound with the overall architecture  # noqa: E501
-    STATE_DUPLICATE = "DUPLICATE_REQUEST"
-    # The possible state for a successful refund is always `PENDING`
-    STATE_PENDING = "PENDING"
 
 
 class PaymentGateway(abc.ABC):
@@ -411,6 +289,107 @@ class PaymentGateway(abc.ABC):
         Just returns the resolved payment gateway class.
         """
         return payment_type
+
+
+class NonePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_NONE):
+    """
+    A self-contained implementation of a payment gateway, without a real processor.
+
+    This gateway does not contact any payment processor. Instead, it acts according
+    to the default set in the config. This can be used for testing (no external
+    API access), zero-value orders, or to blanket allow/deny ecommerce transactions
+    (amongst other things, probably).
+    """
+
+    def __init__(self):
+        """Set up internal object data."""
+
+        if (
+            settings.MITOL_PAYMENT_GATEWAY_NONE_DEFAULT_ACTION
+            == MITOL_PAYMENT_GATEWAY_NONE_ACTION_APPROVE
+        ) and not settings.MITOL_PAYMENT_GATEWAY_NONE_SUPPRESS_APPROVE_WARNINGS:
+            log.warning("Warning: NonePaymentGateway is set to approve everything.")
+
+    @staticmethod
+    def get_client_configuration():
+        """Return the client configuration."""
+
+        return {
+            "default_action": settings.MITOL_PAYMENT_GATEWAY_NONE_DEFAULT_ACTION,
+        }
+
+    def prepare_checkout(
+        self,
+        order: Order,
+        receipt_url: str,
+        cancel_url: str,
+        backoffice_post_url: str | None = None,
+        **kwargs,
+    ):
+        """
+        Check the provided order and act according to the settings.
+
+        This will instruct your app to POST a form to the receipt_url specified.
+        The payload will be the order data, a UUID, and the result (approve or
+        deny). This is signed using the Django Signer interface, so it depends
+        on the app's secret key.
+        """
+
+        return_payload = {
+            "url": receipt_url,
+            "payload": {},
+            "method": "POST",
+        }
+        signer = Signer()
+
+        signable_payload = {
+            "order": OrderSerializer(order).data,
+        }
+
+        if (
+            settings.MITOL_PAYMENT_GATEWAY_NONE_DEFAULT_ACTION
+            == MITOL_PAYMENT_GATEWAY_NONE_ACTION_APPROVE
+        ):
+            signable_payload["status"] = "accept"
+        elif (
+            settings.MITOL_PAYMENT_GATEWAY_NONE_DEFAULT_ACTION
+            == MITOL_PAYMENT_GATEWAY_NONE_ACTION_APPROVE_ZERO
+        ):
+            order_total = Decimal(0)
+
+            for item in order.items:
+                order_total = order_total + Decimal(item.unitprice * item.quantity)
+
+            if order_total > Decimal(0):
+                signable_payload["status"] = "deny"
+            else:
+                signable_payload["status"] = "accept"
+        else:
+            signable_payload["status"] = "deny"
+
+        return_payload["payload"] = {
+            "signature": signer.sign_object(signable_payload),
+            "transaction": signable_payload,
+        }
+
+        return return_payload
+
+    @staticmethod
+    def get_refund_request(transaction_dict):
+        """Generate a payload for the refund process."""
+
+    def perform_refund(self, refund):
+        """Process the generated payload from get_refund_request."""
+
+    def perform_processor_response_validation(self, request):
+        """Process the "processor response"."""
+
+        raise NotImplementedError
+
+    def decode_processor_response(self, request):
+        """Decode the "processor response"."""
+
+        raise NotImplementedError
 
 
 class CyberSourcePaymentGateway(
@@ -1041,16 +1020,21 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
             raise ImproperlyConfigured(msg)
         self.stripe_client = stripe.StripeClient(api_key)
 
-    def _generate_product_data(self, item: BaseCartItem):
+    def _get_stripe_checkout_session_v1(self):
+        """Return the checkout session v1 client (mostly to make testing easier)."""
+
+        return self.stripe_client.v1.checkout.sessions
+
+    def _generate_product_data(self, item: CartItem | LookupCartItem):
         """
         Generate the Stripe product data for the line.
 
         The shape of the data changes if the product is defined in-line or not.
         """
 
-        if item.item_type == CART_ITEM_DEFINED:
+        if isinstance(item.item_type, LookupCartItem):
             return {"product": item.product_id}
-        elif item.item_type == CART_ITEM_INLINE:
+        elif isinstance(item.item_type, CartItem):
             return {
                 "product_data": {
                     "name": item.name,
@@ -1061,7 +1045,7 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
 
         raise ImproperCartItemError(item)
 
-    def _generate_price_data(self, item: BaseCartItem):
+    def _generate_price_data(self, item: CartItem | LookupCartItem):
         """
         Generate the price data for the item.
 
@@ -1090,7 +1074,7 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
             }
         }
 
-    def _generate_line_item(self, item: BaseCartItem):
+    def _generate_line_item(self, item: CartItem | LookupCartItem):
         """Generate a Stripe line item."""
 
         return {
@@ -1368,3 +1352,134 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
             transaction_id=response.id,
             response_data=json.dumps(response.to_dict()),
         )
+
+    def filter_stripe_event(
+        self,
+        event: stripe.Event,
+        valid_events: list[str] = STRIPE_EVENTS_CHECKOUT_SESSION,
+    ) -> object | None:
+        """
+        Check the event against a list of acceptable types and return the object.
+
+        Stripe has lots of event types that are all potentially reported through
+        a single webhook interface. A given bit of logic probably only cares about
+        a couple of types, though, so this filters the object according to the
+        supplied types. If it passes, you get the data object you were expecting;
+        if not, you get None and can quit out. This should happen after
+        perform_processor_response_validation.
+
+        Default event types are the checkout session ones since that's the most
+        relevant to current ecommerce implementations.
+        """
+
+        return event.data.object if event.type in valid_events else None
+
+    def check_checkout_session_status(
+        self, checkout_session: dict | str | StripeCheckoutSession
+    ) -> StripeCheckoutSessionStatus:
+        """
+        Process the provided Stripe CheckoutSession and provide its status.
+
+        The status of a Checkout Session requires calculation. The CheckoutSession
+        itself has two status fields, and (if it exists) its PaymentIntent has
+        another field that describes the state of the payment process. So, this
+        calculates the overall status using all these fields.
+
+        If a checkout session object is passed in, this will generate a new API
+        request for the checkout session details. This is both for ensuring that
+        the data being processed is fresh and to ensure that any Payment Intents
+        that may exist for the session are also loaded.
+
+        Args:
+        - checkout_session (dict|str|stripe.checkout.Session): a checkout session,
+          or the ID for one
+        Returns:
+        - StripeCheckoutSessionStatus; the overall status of the session
+        """
+
+        stripe_checkout_session_client = self._get_stripe_checkout_session_v1()
+
+        if isinstance(checkout_session, dict):
+            session_id = checkout_session.get("id")
+        elif isinstance(checkout_session, StripeCheckoutSession):
+            session_id = checkout_session.id
+        else:
+            session_id = checkout_session
+
+        if not session_id:
+            msg = "checkout session ID not found"
+            raise ValueError(msg)
+
+        # Call this directly so we can tell the client to expand payment_intent.
+
+        cs = stripe_checkout_session_client.retrieve(
+            session_id,
+            {
+                "expand": [
+                    "payment_intent",
+                ],
+            },
+        )
+
+        # The session itself has two status fields: status and payment_status
+        # status is the session status - open, complete, expired
+        # payment_status is payment with relation to the session - no_payment_required,
+        # paid, unpaid
+        # The PaymentIntent (if it exists) has the status of whatever actual payment
+        # was received. If cancelled, it also has a cancellation reason.
+
+        session_status = StripeCheckoutSessionStatus(
+            status=STRIPE_OVERALL_CHECKOUT_STATUS_PENDING,
+            checkout_session_id=cs.id,
+            transaction=cs.to_dict(for_json=True),
+            payment_intent_id=None,
+            cancel_reason=None,
+            action_reason=None,
+        )
+
+        if not cs.payment_intent:
+            if cs.status == STRIPE_CHECKOUT_SESSION_STATUS_OPEN or (
+                cs.status == STRIPE_CHECKOUT_SESSION_STATUS_COMPLETE
+                and cs.payment_status == STRIPE_PAYMENT_STATUS_UNPAID
+            ):
+                session_status["status"] = STRIPE_OVERALL_CHECKOUT_STATUS_PENDING
+            elif cs.status == STRIPE_CHECKOUT_SESSION_STATUS_COMPLETE and (
+                cs.payment_status in STRIPE_PAYMENT_STATUSES_GOOD
+            ):
+                # "complete" and "paid" is a weird state here
+                # - we should have a PaymentIntent to check
+                session_status["status"] = STRIPE_OVERALL_CHECKOUT_STATUS_PAID
+            elif (
+                cs.status == "expired"
+                and cs.payment_status == STRIPE_PAYMENT_STATUS_UNPAID
+            ):
+                session_status["status"] = STRIPE_OVERALL_CHECKOUT_STATUS_CANCELLED
+                session_status["cancel_reason"] = "expired-unpaid"
+            else:
+                # weird state again - expired and paid or expired and no-payment-required
+
+                log.warning(
+                    "Checkout session %s in weird state: state %s and payment_state %s",
+                    cs.id,
+                    cs.status,
+                    cs.payment_status,
+                )
+                session_status["status"] = STRIPE_OVERALL_CHECKOUT_STATUS_PENDING
+
+            return session_status
+
+        pi = cs.payment_intent
+        session_status["payment_intent_id"] = pi.id
+
+        if pi.status == STRIPE_PAYMENT_INTENT_STATUS_PROCESSING:
+            session_status["status"] = STRIPE_OVERALL_CHECKOUT_STATUS_PENDING
+        elif pi.status == STRIPE_PAYMENT_INTENT_STATUS_SUCCEEDED:
+            session_status["status"] = STRIPE_OVERALL_CHECKOUT_STATUS_PAID
+        elif pi.status == STRIPE_PAYMENT_INTENT_STATUS_CANCELLED:
+            session_status["status"] = STRIPE_OVERALL_CHECKOUT_STATUS_CANCELLED
+            session_status["cancel_reason"] = pi.cancellation_reason
+        else:
+            session_status["status"] = STRIPE_OVERALL_CHECKOUT_STATUS_PENDING_ACTION
+            session_status["action_reason"] = pi.status
+
+        return session_status
