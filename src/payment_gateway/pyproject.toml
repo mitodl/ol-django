@@ -3,7 +3,12 @@ name = "mitol-django-payment-gateway"
 version = "2026.8.10"
 description = "Django application to handle payment processing"
 dependencies = [
-    "cybersource-rest-client-python>=0.0.59",
+    # Capped below 0.0.64: 0.0.78 renames
+    # Ptsv2paymentsProcessingInformationAuthorizationOptionsInitiatorMerchantInitiatedTransaction
+    # to ProcessingInfoAuthorizationOptionsInitiatorMerchantInitiatedTransaction. The library
+    # source does not touch that class, but the SDK gives no deprecation window for such
+    # renames, so take the bump deliberately rather than via a lockfile refresh.
+    "cybersource-rest-client-python>=0.0.59,<0.0.64",
     "django-stubs>=1.13.1",
     "django>=3.0",
     "mitol-django-common",
