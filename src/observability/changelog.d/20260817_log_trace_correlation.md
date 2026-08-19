@@ -1,0 +1,3 @@
+### Fixed
+
+- Fixed `inject_otel_context()` dropping `trace_id`/`span_id` from logs whenever the current span was valid but not recording. It skipped exactly the traffic the head sampler declined — at a sampling ratio below 1.0 that is most Celery task logs, since a task starts a root span with no parent decision to inherit. The ids are now emitted for any valid span context, matching what OTel's own logging instrumentation does, so logs for one request stay correlatable across services even when the trace was never sampled into Tempo. The trade-off is that a Grafana logs-to-traces link can now point at a trace that was not kept.
