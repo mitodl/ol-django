@@ -75,7 +75,7 @@ def google_sheets_refunds_settings(settings):
     [lazy_fixture("google_sheets_client_creds_settings"), False],
 )
 @pytest.mark.parametrize(
-    "has_refunds_settings, ", [lazy_fixture("google_sheets_refunds_settings"), False]
+    "has_refunds_settings", [lazy_fixture("google_sheets_refunds_settings"), False]
 )
 def test_is_configured(  # noqa: PLR0913, PLR0917
     db,  # noqa: ARG001

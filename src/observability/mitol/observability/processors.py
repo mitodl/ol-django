@@ -26,10 +26,21 @@ def inject_otel_context(
 ) -> dict[str, Any]:
     """Inject OpenTelemetry trace context into structlog event dict.
 
+    The ids are emitted for any valid span context, recording or not. A
+    non-recording span still carries real ids, and skipping them blanks out
+    trace_id on exactly the traffic the head sampler declined -- for a Celery
+    worker at a 0.25 ratio that is most task logs, since a task starts a root
+    span with no parent decision to inherit. Emitting them keeps the logs for
+    one request correlatable with each other across services even when the
+    trace was never sampled into Tempo, which is what OTel's own logging
+    instrumentation does. The cost is that a Grafana logs-to-traces link can
+    point at a trace that was not kept.
+
     Performance notes:
     - Skips work if trace_id/span_id already present (e.g., bound via contextvars)
     - Uses OTel's built-in formatters (no lru_cache lock overhead)
-    - Checks is_valid before is_recording for faster invalid-context fast-path
+    - is_valid is the only check needed, and is the cheap fast-path for the
+      common case of no active span
     """
     if "trace_id" in event_dict and "span_id" in event_dict:
         return event_dict
@@ -38,9 +49,6 @@ def inject_otel_context(
     ctx = span.get_span_context()
 
     if not ctx.is_valid:
-        return event_dict
-
-    if not span.is_recording():
         return event_dict
 
     event_dict["trace_id"] = format_trace_id(ctx.trace_id)

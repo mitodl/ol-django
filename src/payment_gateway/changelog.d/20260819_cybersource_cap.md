@@ -1,0 +1,3 @@
+### Fixed
+
+- Capped `cybersource-rest-client-python` below `0.0.64`. The constraint was an open `>=0.0.59`, so a lockfile refresh moved it 0.0.63 → 0.0.78, and 0.0.78 renames `Ptsv2paymentsProcessingInformationAuthorizationOptionsInitiatorMerchantInitiatedTransaction` to `ProcessingInfoAuthorizationOptionsInitiatorMerchantInitiatedTransaction`. Nothing in the library source references that class — the three model classes it does import all survive the bump — so no consumer was broken at runtime, but the test suite failed with `AttributeError` on every matrix job. The cap is an upper bound rather than an exact pin so consuming applications are not handed a hard conflict; moving to a newer SDK should be a deliberate, reviewed change rather than a side effect of relocking.
