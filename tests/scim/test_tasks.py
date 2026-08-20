@@ -39,3 +39,26 @@ def test_sync_all_users_to_scim_remote(mocker, never_synced_only):
     user_ids = flatten([task.kwargs["user_ids"] for task in group.tasks])
 
     assert (set(user_ids) - existing_user_ids) == {user.id for user in expected_users}
+
+
+def test_sync_users_to_scim_remote_batch_drains_the_generator(mocker):
+    """sync_users_to_scim_remote is a generator - it does nothing until
+    iterated. sync_users_to_scim_remote_batch must actually drain it, not
+    just call it and discard the (unexecuted) generator object, or the
+    sync silently never runs.
+    """
+    users = UserFactory.create_batch(3)
+    consumed_ids = []
+
+    def _fake_sync(synced_users):
+        for user in synced_users:
+            consumed_ids.append(user.id)
+            yield mocker.Mock(user=user)
+
+    mocker.patch(
+        "mitol.scim.tasks.api.sync_users_to_scim_remote", side_effect=_fake_sync
+    )
+
+    tasks.sync_users_to_scim_remote_batch(user_ids=[user.id for user in users])
+
+    assert consumed_ids == [user.id for user in users]

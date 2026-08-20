@@ -251,7 +251,7 @@ def test_sync_users_to_scim_remote(users: Users):
         assert user.scim_external_id is None
         assert user.global_id == ""
 
-    states = api.sync_users_to_scim_remote(users.users)
+    states = list(api.sync_users_to_scim_remote(users.users))
     states_by_user_id = {state.user.id: state for state in states}
 
     assert len(states) == len(users.users)
