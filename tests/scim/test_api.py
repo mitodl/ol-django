@@ -202,6 +202,17 @@ def mock_bulk_requests(users: Users, responses: RequestsMock):
                                 "bulkId": str(user.id),
                                 "method": "POST",
                                 "status": HTTPStatus.CREATED,
+                                # the plugin echoes the created resource on
+                                # success, not just a bare location/status
+                                "response": {
+                                    **(
+                                        UserAdapter(
+                                            user, InMemoryHttpRequest.stub()
+                                        ).to_dict()
+                                    ),
+                                    "schemas": [SchemaURI.USER],
+                                    "id": users.external_ids_by_user_id[user.id],
+                                },
                             }
                         )
                         for user in req_users
@@ -240,13 +251,37 @@ def test_sync_users_to_scim_remote(users: Users):
         assert user.scim_external_id is None
         assert user.global_id == ""
 
-    api.sync_users_to_scim_remote(users.users)
+    states = list(api.sync_users_to_scim_remote(users.users))
+    states_by_user_id = {state.user.id: state for state in states}
+
+    assert len(states) == len(users.users)
 
     for user in users.users:
         user.refresh_from_db()
+        state = states_by_user_id[user.id]
 
         if user in users.users_to_error:
             assert user.scim_external_id is None
+            assert state.success is False
+            assert state.external_id is None
+            assert state.response_body is None
+            assert state.error == {
+                "schemas": [SchemaURI.ERROR],
+                "detail": "Bad data",
+                "status": str(HTTPStatus.BAD_REQUEST),
+            }
         else:
             assert user.scim_external_id == users.external_ids_by_user_id[user.id]
             assert user.global_id == users.external_ids_by_user_id[user.id]
+            assert state.success is True
+            assert state.external_id == users.external_ids_by_user_id[user.id]
+            assert state.error is None
+
+            if user in users.users_in_remote:
+                # matched via search, not a fresh create - no bulk response body
+                assert state.response_body is None
+            else:
+                assert state.response_body is not None
+                assert (
+                    state.response_body["id"] == users.external_ids_by_user_id[user.id]
+                )

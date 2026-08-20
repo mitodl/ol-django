@@ -1,4 +1,5 @@
 import logging
+from collections import deque
 
 import celery
 from django.contrib.auth import get_user_model
@@ -18,7 +19,11 @@ log = logging.getLogger()
 def sync_users_to_scim_remote_batch(*, user_ids: list[int]):
     """Sync a set of users to the scim remote"""
     users = User.objects.filter(id__in=user_ids).order_by("id")
-    api.sync_users_to_scim_remote(users)
+    # sync_users_to_scim_remote is a generator - it does nothing until
+    # iterated. This task doesn't need the results, but draining with
+    # deque(..., maxlen=0) still runs the sync without holding every
+    # UserState (and its full response body) in memory at once.
+    deque(api.sync_users_to_scim_remote(users), maxlen=0)
 
 
 @app.task(bind=True, acks_late=True)
