@@ -8,22 +8,16 @@ from mitol.digitalcredentials.models import (
 )
 
 
+@admin.register(DigitalCredentialRequest)
 class DigitalCredentialRequestAdmin(admin.ModelAdmin):
     """Admin for DigitalCredentialRequest"""
 
 
-admin.site.register(DigitalCredentialRequest, DigitalCredentialRequestAdmin)
-
-
+@admin.register(DigitalCredential)
 class DigitalCredentialAdmin(admin.ModelAdmin):
     """Admin for DigitalCredential"""
 
 
-admin.site.register(DigitalCredential, DigitalCredentialAdmin)
-
-
+@admin.register(LearnerDID)
 class LearnerDIDAdmin(admin.ModelAdmin):
     """Admin for LearnerDID"""
-
-
-admin.site.register(LearnerDID, LearnerDIDAdmin)
