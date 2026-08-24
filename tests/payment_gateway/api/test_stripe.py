@@ -11,20 +11,19 @@ from django.http import HttpResponse
 from django.test import RequestFactory, override_settings
 from django.urls import path, resolve
 from main.factories import CartItemFactory, OrderFactory
-from mitol.payment_gateway import api
-from mitol.payment_gateway.constants import MITOL_PAYMENT_GATEWAY_STRIPE
+from mitol.payment_gateway import api, constants
 from mitol.payment_gateway.exceptions import (
     BadStripeWebhookSecretError,
     ImproperStripeWebhookRequestError,
     InvalidStripeCheckoutSessionError,
     NoStripeWebhookSecretError,
 )
-
-from tests.payment_gateway.factories import (
-    StripeCheckoutSessionEventFactory,
+from mitol.payment_gateway.factories import (
+    StripeCheckoutSessionWithPIEventFactory,
     StripeSimpleCheckoutSessionFactory,
     StripeWebhookSecretRouteFactory,
 )
+from mitol.payment_gateway.fixtures import stripe_event
 
 FAKE = faker.Factory.create()
 pytestmark = [pytest.mark.django_db]
@@ -58,10 +57,17 @@ class MockStripeEvent:
 def stripe_settings_factory(settings):
     """Set the app to use the Stripe gateway."""
 
-    settings.ECOMMERCE_DEFAULT_PAYMENT_GATEWAY = MITOL_PAYMENT_GATEWAY_STRIPE
+    settings.ECOMMERCE_DEFAULT_PAYMENT_GATEWAY = constants.MITOL_PAYMENT_GATEWAY_STRIPE
     settings.MITOL_PAYMENT_GATEWAY_STRIPE_API_KEY = (
         f"sk_test_{FAKE.random_letters(length=32)}"
     )
+
+
+@pytest.fixture
+def stripe_gateway():
+    """Return the Stripe gateway."""
+
+    return api.PaymentGateway.get_gateway_class(constants.MITOL_PAYMENT_GATEWAY_STRIPE)
 
 
 def test_start_payment(mocker):
@@ -114,7 +120,7 @@ def test_start_payment(mocker):
     )
 
     result = api.PaymentGateway.start_payment(
-        MITOL_PAYMENT_GATEWAY_STRIPE, order, receipt_url, cancel_url
+        constants.MITOL_PAYMENT_GATEWAY_STRIPE, order, receipt_url, cancel_url
     )
 
     assert "method" in result
@@ -204,7 +210,7 @@ def test_webhook_validation(mocker, multimatch):
     )
 
     result = api.PaymentGateway.validate_processor_response(
-        MITOL_PAYMENT_GATEWAY_STRIPE, request
+        constants.MITOL_PAYMENT_GATEWAY_STRIPE, request
     )
 
     mocked_construct_event.assert_called()
@@ -249,7 +255,7 @@ def test_webhook_validation_setup_errors(mocker, error_type):
 
     with pytest.raises(ImproperStripeWebhookRequestError) as exc:
         api.PaymentGateway.validate_processor_response(
-            MITOL_PAYMENT_GATEWAY_STRIPE, request
+            constants.MITOL_PAYMENT_GATEWAY_STRIPE, request
         )
 
     assert exc_msg in str(exc.value)
@@ -272,7 +278,7 @@ def test_webhook_validation_bad_url_name(mocker, caplog):
 
     with caplog.at_level(logging.WARNING):
         api.PaymentGateway.validate_processor_response(
-            MITOL_PAYMENT_GATEWAY_STRIPE, request
+            constants.MITOL_PAYMENT_GATEWAY_STRIPE, request
         )
 
     assert "using path_info" in caplog.text
@@ -293,7 +299,7 @@ def test_webhook_validation_no_route_match(mocker):
 
     with pytest.raises(NoStripeWebhookSecretError):
         api.PaymentGateway.validate_processor_response(
-            MITOL_PAYMENT_GATEWAY_STRIPE, request
+            constants.MITOL_PAYMENT_GATEWAY_STRIPE, request
         )
 
 
@@ -315,7 +321,7 @@ def test_webhook_validation_no_secret_match(mocker):
 
     with pytest.raises(BadStripeWebhookSecretError):
         api.PaymentGateway.validate_processor_response(
-            MITOL_PAYMENT_GATEWAY_STRIPE, request
+            constants.MITOL_PAYMENT_GATEWAY_STRIPE, request
         )
 
 
@@ -334,7 +340,7 @@ def test_webhook_validation_stripe_payload_error(mocker):
 
     with pytest.raises(ImproperStripeWebhookRequestError):
         api.PaymentGateway.validate_processor_response(
-            MITOL_PAYMENT_GATEWAY_STRIPE, request
+            constants.MITOL_PAYMENT_GATEWAY_STRIPE, request
         )
 
 
@@ -365,7 +371,7 @@ def test_webhook_validation_some_secret_match(mocker):
     )
 
     result = api.PaymentGateway.validate_processor_response(
-        MITOL_PAYMENT_GATEWAY_STRIPE, request
+        constants.MITOL_PAYMENT_GATEWAY_STRIPE, request
     )
 
     mocked_construct_event.assert_called()
@@ -390,22 +396,22 @@ def test_get_refund_request(transaction_dict_source, use_pi_object):
     """Test that we are generating a refund request properly."""
 
     if transaction_dict_source == "event":
-        transaction_dict = StripeCheckoutSessionEventFactory.create()
-
-        if use_pi_object:
-            transaction_dict.data["object"].payment_intent = {
-                "id": transaction_dict.data["object"].payment_intent
-            }
+        transaction_dict = StripeCheckoutSessionWithPIEventFactory.create()
     elif transaction_dict_source == "session":
-        transaction_dict = StripeSimpleCheckoutSessionFactory.create()
+        transaction_dict = StripeSimpleCheckoutSessionFactory.create(expanded=True)
 
-        if use_pi_object:
-            transaction_dict.payment_intent = {"id": transaction_dict.payment_intent}
+    if not use_pi_object:
+        if transaction_dict_source == "event":
+            transaction_dict.data.object.payment_intent = (
+                transaction_dict.data.object.payment_intent.id
+            )
+        else:
+            transaction_dict.payment_intent = transaction_dict.payment_intent.id
 
     transaction_dict = transaction_dict.to_dict(for_json=True)
 
     refund_request = api.PaymentGateway.create_refund_request(
-        MITOL_PAYMENT_GATEWAY_STRIPE, transaction_dict
+        constants.MITOL_PAYMENT_GATEWAY_STRIPE, transaction_dict
     )
 
     assert refund_request.transaction_id
@@ -419,7 +425,7 @@ def test_get_refund_request_bad_data():
 
     with pytest.raises(InvalidStripeCheckoutSessionError) as exc:
         api.PaymentGateway.create_refund_request(
-            MITOL_PAYMENT_GATEWAY_STRIPE, test_dict
+            constants.MITOL_PAYMENT_GATEWAY_STRIPE, test_dict
         )
 
     assert "supported object type" in str(exc)
@@ -430,7 +436,7 @@ def test_get_refund_request_bad_data():
 
     with pytest.raises(InvalidStripeCheckoutSessionError) as exc:
         api.PaymentGateway.create_refund_request(
-            MITOL_PAYMENT_GATEWAY_STRIPE, test_dict
+            constants.MITOL_PAYMENT_GATEWAY_STRIPE, test_dict
         )
 
     assert "no data" in str(exc)
@@ -443,5 +449,161 @@ def test_get_refund_request_bad_data():
 
     with pytest.raises(InvalidStripeCheckoutSessionError) as exc:
         api.PaymentGateway.create_refund_request(
-            MITOL_PAYMENT_GATEWAY_STRIPE, test_dict
+            constants.MITOL_PAYMENT_GATEWAY_STRIPE, test_dict
         )
+
+
+@pytest.mark.parametrize(
+    "event_type",
+    [constants.STRIPE_EVENT_CHECKOUT_SESSION_COMPLETED, "some.other.event"],
+)
+def test_filter_event(event_type, stripe_gateway):
+    """Test that filter_event works as expected."""
+
+    event = stripe_event(type=event_type)
+
+    if event_type in constants.STRIPE_EVENTS_CHECKOUT_SESSION:
+        assert stripe_gateway.filter_event(event)
+    else:
+        assert not stripe_gateway.filter_event(event)
+
+
+@pytest.mark.parametrize(
+    (
+        "cs_status",
+        "cs_payment_status",
+        "pi_status",
+        "pi_cancel_reason",
+        "expected_status",
+    ),
+    [
+        (
+            constants.STRIPE_CHECKOUT_SESSION_STATUS_OPEN,
+            constants.STRIPE_PAYMENT_STATUS_UNPAID,
+            "",
+            None,
+            constants.STRIPE_OVERALL_CHECKOUT_STATUS_PENDING,
+        ),
+        (
+            constants.STRIPE_CHECKOUT_SESSION_STATUS_COMPLETE,
+            constants.STRIPE_PAYMENT_STATUS_PAID,
+            "",
+            None,
+            constants.STRIPE_OVERALL_CHECKOUT_STATUS_PAID,
+        ),
+        (
+            constants.STRIPE_CHECKOUT_SESSION_STATUS_COMPLETE,
+            constants.STRIPE_PAYMENT_STATUS_NPR,
+            "",
+            None,
+            constants.STRIPE_OVERALL_CHECKOUT_STATUS_PAID,
+        ),
+        (
+            constants.STRIPE_CHECKOUT_SESSION_STATUS_EXPIRED,
+            constants.STRIPE_PAYMENT_STATUS_UNPAID,
+            "",
+            None,
+            constants.STRIPE_OVERALL_CHECKOUT_STATUS_CANCELLED,
+        ),
+        (
+            constants.STRIPE_CHECKOUT_SESSION_STATUS_OPEN,
+            constants.STRIPE_PAYMENT_STATUS_UNPAID,
+            constants.STRIPE_PAYMENT_INTENT_STATUS_PROCESSING,
+            None,
+            constants.STRIPE_OVERALL_CHECKOUT_STATUS_PENDING,
+        ),
+        (
+            constants.STRIPE_CHECKOUT_SESSION_STATUS_COMPLETE,
+            constants.STRIPE_PAYMENT_STATUS_UNPAID,
+            constants.STRIPE_PAYMENT_INTENT_STATUS_PROCESSING,
+            None,
+            constants.STRIPE_OVERALL_CHECKOUT_STATUS_PENDING,
+        ),
+        (
+            constants.STRIPE_CHECKOUT_SESSION_STATUS_COMPLETE,
+            constants.STRIPE_PAYMENT_STATUS_UNPAID,
+            constants.STRIPE_PAYMENT_INTENT_STATUS_SUCCEEDED,
+            None,
+            constants.STRIPE_OVERALL_CHECKOUT_STATUS_PAID,
+        ),
+        (
+            constants.STRIPE_CHECKOUT_SESSION_STATUS_COMPLETE,
+            constants.STRIPE_PAYMENT_STATUS_PAID,
+            constants.STRIPE_PAYMENT_INTENT_STATUS_SUCCEEDED,
+            None,
+            constants.STRIPE_OVERALL_CHECKOUT_STATUS_PAID,
+        ),
+        (
+            constants.STRIPE_CHECKOUT_SESSION_STATUS_COMPLETE,
+            constants.STRIPE_PAYMENT_STATUS_UNPAID,
+            constants.STRIPE_PAYMENT_INTENT_STATUS_CANCELLED,
+            None,
+            constants.STRIPE_OVERALL_CHECKOUT_STATUS_CANCELLED,
+        ),
+        (
+            constants.STRIPE_CHECKOUT_SESSION_STATUS_COMPLETE,
+            constants.STRIPE_PAYMENT_STATUS_UNPAID,
+            constants.STRIPE_PAYMENT_INTENT_STATUS_REQUIRES_ACTION,
+            None,
+            constants.STRIPE_OVERALL_CHECKOUT_STATUS_PENDING_ACTION,
+        ),
+        (
+            constants.STRIPE_CHECKOUT_SESSION_STATUS_COMPLETE,
+            constants.STRIPE_PAYMENT_STATUS_UNPAID,
+            constants.STRIPE_PAYMENT_INTENT_STATUS_REQUIRES_CAPTURE,
+            None,
+            constants.STRIPE_OVERALL_CHECKOUT_STATUS_PENDING_ACTION,
+        ),
+        (
+            constants.STRIPE_CHECKOUT_SESSION_STATUS_COMPLETE,
+            constants.STRIPE_PAYMENT_STATUS_UNPAID,
+            constants.STRIPE_PAYMENT_INTENT_STATUS_REQUIRES_CONFIRMATION,
+            None,
+            constants.STRIPE_OVERALL_CHECKOUT_STATUS_PENDING_ACTION,
+        ),
+        (
+            constants.STRIPE_CHECKOUT_SESSION_STATUS_COMPLETE,
+            constants.STRIPE_PAYMENT_STATUS_UNPAID,
+            constants.STRIPE_PAYMENT_INTENT_STATUS_REQUIRES_PAYMENT_METHOD,
+            None,
+            constants.STRIPE_OVERALL_CHECKOUT_STATUS_PENDING_ACTION,
+        ),
+    ],
+)
+def test_checkout_session_status_calculation(  # noqa: PLR0913, PLR0917
+    mocker,
+    stripe_gateway,
+    cs_status,
+    cs_payment_status,
+    pi_status,
+    pi_cancel_reason,
+    expected_status,
+):
+    """Test that the checkout session status is being calculated properly."""
+
+    if not (pi_status or pi_cancel_reason):
+        checkout_session = StripeSimpleCheckoutSessionFactory(
+            status=cs_status,
+            payment_status=cs_payment_status,
+            payment_intent=None,
+        )
+    else:
+        checkout_session = StripeSimpleCheckoutSessionFactory(
+            status=cs_status,
+            payment_status=cs_payment_status,
+            expanded=True,
+        )
+        checkout_session.payment_intent.status = pi_status
+        checkout_session.payment_intent.cancellation_reason = pi_cancel_reason
+
+    mocked_cs_v1_retrieve = mocker.patch(
+        "stripe.checkout._session_service.SessionService.retrieve",
+        return_value=checkout_session,
+    )
+
+    calculated_status = stripe_gateway.calculate_checkout_session_status(
+        checkout_session
+    )
+
+    mocked_cs_v1_retrieve.assert_called()
+    assert calculated_status.status == expected_status
