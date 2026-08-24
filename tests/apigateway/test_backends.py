@@ -6,7 +6,10 @@ from asgiref.sync import sync_to_async
 from django.contrib.auth import get_user_model
 from django.db.models import QuerySet
 from main.utils import generate_apisix_request, generate_fake_apisix_payload
-from mitol.apigateway.backends import ApisixRemoteUserBackend
+from mitol.apigateway.backends import (
+    ApisixRemoteUserBackend,
+    RemoteUserCustomFieldBackend,
+)
 from mitol.common.factories.defaults import SsoUserFactory
 
 User = get_user_model()
@@ -288,3 +291,65 @@ def test_resolve_user_yields_to_a_concurrent_create(settings, mocker):
     assert created is False
     assert user.pk == winner.pk
     assert User.objects.filter(global_id=winner.global_id).count() == 1
+
+
+class _GlobalIdBackend(RemoteUserCustomFieldBackend):
+    """Concrete subclass, to exercise the base class's own aauthenticate."""
+
+    lookup_field = "global_id"
+    create_unknown_user = True
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio
+async def test_base_aauthenticate_configures_user():
+    """
+    RemoteUserCustomFieldBackend.aauthenticate works without an override.
+
+    Nothing exercised this before: ApisixRemoteUserBackend overrides
+    aauthenticate and delegates to the sync path, so the base class's async
+    path was dead in the test suite while remaining public API. It called
+    self.aconfigure_user, which RemoteUserBackend only grew in Django 5.2 -
+    an AttributeError on every version this package claims to support below
+    that.
+    """
+    test_user = await sync_to_async(SsoUserFactory.create)()
+    payload, _ = generate_fake_apisix_payload(user=test_user)
+    request = await sync_to_async(generate_apisix_request)("request", payload)
+
+    backend = _GlobalIdBackend()
+    result = await backend.aauthenticate(request, remote_user=test_user.global_id)
+
+    assert result is not None
+    assert result.global_id == test_user.global_id
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio
+async def test_aconfigure_user_shim_passes_created_as_a_keyword(settings):
+    """
+    The shim honours ApisixRemoteUserBackend's keyword-only `created`.
+
+    Django 5.2's own aconfigure_user passes created positionally, which that
+    signature rejects, so the shim is load-bearing on 5.2 too - not only on the
+    versions missing the method.
+    """
+    settings.MITOL_APIGATEWAY_USERINFO_MODEL_MAP = {
+        "user_fields": {"email": "email", "preferred_username": "username"},
+        "additional_models": {},
+    }
+    settings.MITOL_APIGATEWAY_USERINFO_UPDATE = True
+
+    test_user = await sync_to_async(SsoUserFactory.create)()
+    payload, user_info = generate_fake_apisix_payload(user=test_user)
+    request = await sync_to_async(generate_apisix_request)("request", payload)
+
+    await sync_to_async(User.objects.filter(pk=test_user.pk).update)(
+        email="stale@example.com"
+    )
+    test_user = await User.objects.aget(pk=test_user.pk)
+
+    backend = ApisixRemoteUserBackend()
+    result = await backend._aconfigure_user(request, test_user, created=False)  # noqa: SLF001
+
+    assert result.email == user_info["email"]

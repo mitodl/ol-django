@@ -164,8 +164,30 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
         )
         if user is None:
             return None
-        user = await self.aconfigure_user(request, user, created=created)
+        user = await self._aconfigure_user(request, user, created=created)
         return user if self.user_can_authenticate(user) else None
+
+    async def _aconfigure_user(self, request, user, *, created):
+        """
+        Django <5.2 compatibility shim for ``aconfigure_user``.
+
+        REMOVE once this package's Django floor is 5.2, replacing the call
+        above with ``await self.aconfigure_user(...)``. Two things have to hold
+        before that swap is safe, and today neither does:
+
+        - ``RemoteUserBackend`` has to have the method. Both it and
+          ``aauthenticate`` arrived in 5.2, while this package still declares
+          ``django>=3.0``, so on 4.2/5.0/5.1 the attribute is simply absent.
+        - ``configure_user``'s ``created`` has to stop being keyword-only.
+          5.2's ``aconfigure_user`` passes it positionally
+          (``sync_to_async(self.configure_user)(request, user, created)``),
+          which ``ApisixRemoteUserBackend.configure_user`` rejects.
+
+        Until then, do here what 5.2 does, spelling ``created`` as a keyword.
+        """
+        return await sync_to_async(self.configure_user, thread_sensitive=True)(
+            request, user, created=created
+        )
 
 
 class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
