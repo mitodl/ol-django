@@ -80,7 +80,9 @@ def get_username_from_userinfo_header(request: HttpRequest | dict) -> str | None
     if not user_id:
         return None
 
-    return User.objects.get(global_id=user_id).username
+    return User.objects.get(
+        **{settings.MITOL_APIGATEWAY_USER_LOOKUP_FIELD: user_id}
+    ).username
 
 
 def create_userinfo_header(user):

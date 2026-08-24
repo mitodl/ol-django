@@ -60,16 +60,29 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
         if not value:
             return None
 
-        # A record that predates the gateway carries no lookup-field value, and
-        # which empty it carries depends on the app's own column:
-        # UserGlobalIdMixin declares blank=True default="", other apps declare
-        # null=True. Both have to be matched separately - `__in=("", None)`
-        # cannot do it, because SQL never matches NULL through IN and Django
-        # drops the None from the list.
-        unset = Q(**{self.lookup_field: ""}) | Q(
-            **{f"{self.lookup_field}__isnull": True}
+        return self.unset_lookup_field_filter() & Q(
+            **{self.adopt_unlinked_user_by: value}
         )
-        return unset & Q(**{self.adopt_unlinked_user_by: value})
+
+    def unset_lookup_field_filter(self) -> Q:
+        """
+        Match a record carrying no lookup-field value.
+
+        Which empty that is depends on the app's own column: UserGlobalIdMixin
+        declares blank=True default="", others declare null=True. Both need
+        matching separately - `__in=("", None)` cannot do it, because SQL never
+        matches NULL through IN and Django drops the None from the list.
+
+        The empty-string branch is only built for a field that can actually
+        hold one. lookup_field is configurable and need not be textual; asking
+        a UUIDField or an IntegerField to compare against "" raises while the
+        query is being built, and authenticate()'s blanket except would turn
+        that into a rejected login for every user, linked or not.
+        """
+        unset = Q(**{f"{self.lookup_field}__isnull": True})
+        if User._meta.get_field(self.lookup_field).empty_strings_allowed:  # noqa: SLF001
+            unset |= Q(**{self.lookup_field: ""})
+        return unset
 
     def resolve_user(self, request, username):
         """
@@ -88,11 +101,25 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
         except User.MultipleObjectsReturned:
             # Refuse rather than guess: picking one of several matches would
             # silently attach this login to the wrong account.
-            log.exception(
-                "Ambiguous remote identity: %s=%s matches more than one user",
-                self.lookup_field,
-                username,
-            )
+            #
+            # Name both criteria when adoption is in play. The collision is
+            # usually two unlinked rows sharing an adoption value, and blaming
+            # the lookup field alone sends whoever reads this looking for
+            # duplicate global_ids that do not exist.
+            if unlinked is not None:
+                log.exception(
+                    "Ambiguous remote identity: %s=%s, or %s matching the "
+                    "header on an unlinked row, matches more than one user",
+                    self.lookup_field,
+                    username,
+                    self.adopt_unlinked_user_by,
+                )
+            else:
+                log.exception(
+                    "Ambiguous remote identity: %s=%s matches more than one user",
+                    self.lookup_field,
+                    username,
+                )
             return None, False
         except User.DoesNotExist:
             if not self.create_unknown_user:

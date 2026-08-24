@@ -353,3 +353,50 @@ async def test_aconfigure_user_shim_passes_created_as_a_keyword(settings):
     result = await backend._aconfigure_user(request, test_user, created=False)  # noqa: SLF001
 
     assert result.email == user_info["email"]
+
+
+@pytest.mark.django_db
+def test_unset_lookup_field_filter_skips_empty_string_for_non_text_fields():
+    """
+    The "" branch is only built for a field that can hold an empty string.
+
+    lookup_field is configurable and need not be textual. Comparing a
+    UUIDField or IntegerField against "" raises while the query is being
+    built, and authenticate()'s blanket except would turn that into a rejected
+    login for every user, adopted or already linked.
+    """
+    backend = ApisixRemoteUserBackend()
+
+    backend.lookup_field = "global_id"
+    assert User._meta.get_field("global_id").empty_strings_allowed  # noqa: SLF001
+    assert "global_id" in str(backend.unset_lookup_field_filter())
+
+    backend.lookup_field = "id"
+    assert not User._meta.get_field("id").empty_strings_allowed  # noqa: SLF001
+    # Would raise on a non-text field if the "" branch were built anyway.
+    assert User.objects.filter(backend.unset_lookup_field_filter()).count() == 0
+
+
+@pytest.mark.django_db
+def test_ambiguity_log_names_the_adoption_field(settings, caplog):
+    """The ambiguity log names the criterion that actually collided."""
+    settings.MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY = "email"
+
+    payload, user_info = generate_fake_apisix_payload()
+    global_id = user_info[settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD]
+
+    for _ in range(2):
+        clash = SsoUserFactory.create()
+        clash.global_id = ""
+        clash.email = user_info["email"]
+        clash.save()
+
+    request = generate_apisix_request("request", payload)
+    backend = ApisixRemoteUserBackend()
+    backend.adopt_unlinked_user_by = "email"
+
+    user, _ = backend.resolve_user(request, global_id)
+
+    assert user is None
+    assert "email" in caplog.text
+    assert "unlinked row" in caplog.text
