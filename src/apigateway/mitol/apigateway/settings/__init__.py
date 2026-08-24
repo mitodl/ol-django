@@ -53,6 +53,13 @@ MITOL_APIGATEWAY_USERINFO_UPDATE = True
 # This is the name of the field used to lookup the user
 MITOL_APIGATEWAY_USER_LOOKUP_FIELD = "global_id"
 
+# Field to match a pre-gateway account on when it carries no lookup-field value
+# yet, so the account is adopted rather than duplicated on its owner's first
+# login through the gateway. Set to None for apps that have never had users
+# outside the gateway - matching on a second field costs a wider query and only
+# pays for itself where unlinked accounts actually exist.
+MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY = None
+
 # URL configuation
 
 # Set to the URL that APISIX uses for logout.

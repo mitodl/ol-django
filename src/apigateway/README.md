@@ -59,6 +59,7 @@ Finally, import the settings:
 ```python
 # in your project's settings.py
 from mitol.common.envs import import_settings_modules
+
 import_settings_modules(globals(), "mitol.apigateway.settings")
 ```
 
@@ -70,6 +71,26 @@ OL applications have standardized on adding a field called `global_id` to the `U
 - Your app's user model should specify `global_id` as the `USERNAME_FIELD` - otherwise, the base Django RemoteUserBackend won't be able to find the user.
 
 You can use other fields, but you probably shouldn't. The immutable ID in Keycloak is the "Subscriber" field (sub) and it's a UUID that Keycloak generates when the user registers their account.
+
+Set `MITOL_APIGATEWAY_USER_LOOKUP_FIELD` if the field holding that ID isn't called `global_id`.
+
+If your app's `USERNAME_FIELD` is not the lookup field, use `ApisixUserMiddleware` (or the Persistent variant) rather than Django's `RemoteUserMiddleware` directly - the middleware here compares the signed-in user on the lookup field, which is what the gateway header carries.
+
+### Adopting accounts that predate the gateway
+
+An app that had users before it sat behind APISIX has accounts with no value in the lookup field. On their owners' first login through the gateway there is nothing to match them on, so the backend creates a second account for a person who already has one.
+
+Set `MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY` to the field to match those accounts on:
+
+```python
+MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY = "email"
+```
+
+The backend then also matches a user whose lookup field is empty and whose named field equals the value in the header, and stamps the lookup field onto it so later requests match directly. The field must appear in `MITOL_APIGATEWAY_USERINFO_MODEL_MAP["user_fields"]`; if the header carries no value for it, adoption is skipped for that request rather than matching every unlinked account.
+
+If more than one account matches, the backend refuses the login and logs the collision instead of picking one.
+
+Leave this at `None` for an app whose users have only ever existed behind the gateway.
 
 ### Channels Configuration
 

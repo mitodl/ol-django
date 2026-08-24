@@ -1,3 +1,6 @@
+import base64
+import json
+
 import pytest
 from asgiref.sync import sync_to_async
 from django.contrib.auth import get_user_model
@@ -70,3 +73,130 @@ async def test_aauthenticate_unknown_remote_user():
     result = await backend.aauthenticate(None, remote_user=None)
 
     assert result is None
+
+
+@pytest.mark.django_db
+def test_resolve_user_adopts_unlinked_account(settings):
+    """A pre-gateway account is adopted by email, not duplicated."""
+    settings.MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY = "email"
+
+    legacy = SsoUserFactory.create()
+    legacy.global_id = ""
+    legacy.save()
+
+    payload, user_info = generate_fake_apisix_payload()
+    user_info["email"] = legacy.email
+    payload = base64.b64encode(json.dumps(user_info).encode()).decode()
+    request = generate_apisix_request("request", payload)
+
+    backend = ApisixRemoteUserBackend()
+    backend.adopt_unlinked_user_by = "email"
+    user, created = backend.resolve_user(
+        request, user_info[settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD]
+    )
+
+    assert created is False
+    assert user.pk == legacy.pk
+    # The lookup field is stamped, so the next request matches directly.
+    assert user.global_id == user_info[settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD]
+    assert User.objects.filter(email=legacy.email).count() == 1
+
+
+@pytest.mark.django_db
+def test_resolve_user_creates_when_adoption_is_off(settings):
+    """With adoption off, an unmatched remote id creates a new account."""
+    settings.MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY = None
+
+    legacy = SsoUserFactory.create()
+    legacy.global_id = ""
+    legacy.save()
+
+    payload, user_info = generate_fake_apisix_payload()
+    user_info["email"] = legacy.email
+    payload = base64.b64encode(json.dumps(user_info).encode()).decode()
+    request = generate_apisix_request("request", payload)
+
+    backend = ApisixRemoteUserBackend()
+    backend.adopt_unlinked_user_by = None
+    user, created = backend.resolve_user(
+        request, user_info[settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD]
+    )
+
+    assert created is True
+    assert user.pk != legacy.pk
+
+
+@pytest.mark.django_db
+def test_resolve_user_refuses_ambiguous_identity(settings):
+    """More than one match returns None rather than picking one."""
+    settings.MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY = "email"
+
+    payload, user_info = generate_fake_apisix_payload()
+    global_id = user_info[settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD]
+
+    matches_by_global_id = SsoUserFactory.create()
+    matches_by_global_id.global_id = global_id
+    matches_by_global_id.save()
+
+    matches_by_email = SsoUserFactory.create()
+    matches_by_email.global_id = ""
+    matches_by_email.email = user_info["email"]
+    matches_by_email.save()
+
+    request = generate_apisix_request("request", payload)
+
+    backend = ApisixRemoteUserBackend()
+    backend.adopt_unlinked_user_by = "email"
+    user, created = backend.resolve_user(request, global_id)
+
+    assert user is None
+    assert created is False
+
+
+@pytest.mark.django_db
+def test_configure_user_skips_write_when_unchanged(settings, mocker):
+    """An already-current user row is not rewritten on every request."""
+    settings.MITOL_APIGATEWAY_USERINFO_MODEL_MAP = {
+        "user_fields": {
+            "email": "email",
+            "preferred_username": "username",
+        },
+        "additional_models": {},
+    }
+    settings.MITOL_APIGATEWAY_USERINFO_UPDATE = True
+
+    test_user = SsoUserFactory.create()
+    payload, _ = generate_fake_apisix_payload(user=test_user)
+    request = generate_apisix_request("request", payload)
+
+    save = mocker.patch.object(User, "save")
+
+    backend = ApisixRemoteUserBackend()
+    backend.configure_user(request, test_user, created=False)
+
+    save.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_configure_user_writes_only_changed_fields(settings, mocker):
+    """A changed field is saved, and only that field."""
+    settings.MITOL_APIGATEWAY_USERINFO_MODEL_MAP = {
+        "user_fields": {
+            "email": "email",
+            "preferred_username": "username",
+        },
+        "additional_models": {},
+    }
+    settings.MITOL_APIGATEWAY_USERINFO_UPDATE = True
+
+    test_user = SsoUserFactory.create()
+    payload, _ = generate_fake_apisix_payload(user=test_user)
+    request = generate_apisix_request("request", payload)
+
+    test_user.email = "stale@example.com"
+    save = mocker.patch.object(User, "save")
+
+    backend = ApisixRemoteUserBackend()
+    backend.configure_user(request, test_user, created=False)
+
+    save.assert_called_once_with(update_fields=["email"])

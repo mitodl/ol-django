@@ -77,3 +77,28 @@ def test_middleware_logs_out(new_user):
     assert no_header_request.user.is_anonymous
 
     settings.AUTHENTICATION_BACKENDS = backends
+
+
+def test_middleware_short_circuits_on_lookup_field(mocker):
+    """
+    An already-authenticated matching user must not be re-authenticated.
+
+    RemoteUserMiddleware compares REMOTE_USER against USERNAME_FIELD. REMOTE_USER
+    holds the gateway lookup field, so where the two differ that comparison never
+    matches and every request re-authenticates (and logs the session out first).
+    """
+    test_user = SsoUserFactory.create()
+    payload, user_info = generate_fake_apisix_payload(user=test_user)
+    request = generate_apisix_request("request", payload)
+    request.user = test_user
+
+    authenticate = mocker.patch("django.contrib.auth.authenticate")
+
+    middleware = ApisixUserMiddleware(lambda req: HttpResponse())  # noqa: ARG005
+    middleware.process_request(request)
+
+    assert request.META["REMOTE_USER"] == user_info.get(
+        settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD
+    )
+    authenticate.assert_not_called()
+    assert request.user == test_user
