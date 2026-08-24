@@ -4,6 +4,7 @@ import json
 import pytest
 from asgiref.sync import sync_to_async
 from django.contrib.auth import get_user_model
+from django.db.models import QuerySet
 from main.utils import generate_apisix_request, generate_fake_apisix_payload
 from mitol.apigateway.backends import ApisixRemoteUserBackend
 from mitol.common.factories.defaults import SsoUserFactory
@@ -248,3 +249,42 @@ def test_resolve_user_adopts_account_whose_lookup_field_is_null(settings):
     assert user.pk == legacy.pk
     assert user.scim_external_id == remote_id
     assert User.objects.filter(email=legacy.email).count() == 1
+
+
+@pytest.mark.django_db
+def test_resolve_user_yields_to_a_concurrent_create(settings, mocker):
+    """
+    A row that appears between our get and our insert is resolved, not duplicated.
+
+    resolve_user does its own get so it can offer the adoption branch, which
+    reopens the window get_or_create exists to close. Creation has to go back
+    through get_or_create: it retries the get inside a savepoint on
+    IntegrityError, so the loser of the race returns the winner's row instead
+    of duplicating it (no unique constraint) or raising (unique constraint).
+    """
+    settings.MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY = None
+
+    winner = SsoUserFactory.create()
+    payload, _ = generate_fake_apisix_payload(user=winner)
+    request = generate_apisix_request("request", payload)
+
+    # Miss on resolve_user's own get, as a concurrent insert landing just after
+    # it would look, then behave normally.
+    real_get = QuerySet.get
+    calls = {"n": 0}
+
+    def get_missing_once(self, *args, **kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise User.DoesNotExist
+        return real_get(self, *args, **kwargs)
+
+    mocker.patch.object(QuerySet, "get", get_missing_once)
+
+    backend = ApisixRemoteUserBackend()
+    backend.adopt_unlinked_user_by = None
+    user, created = backend.resolve_user(request, winner.global_id)
+
+    assert created is False
+    assert user.pk == winner.pk
+    assert User.objects.filter(global_id=winner.global_id).count() == 1

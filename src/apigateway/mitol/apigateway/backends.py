@@ -102,7 +102,15 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
                     username,
                 )
                 return None, False
-            return User.objects.create(**{self.lookup_field: username}), True
+            # get_or_create, not create: it re-runs the get inside a savepoint
+            # and falls back to it on IntegrityError, so a concurrent request
+            # that inserted this lookup value between our get and our insert
+            # resolves to that row. A bare create would instead duplicate the
+            # user where the column has no unique constraint, or raise where it
+            # does - and an IntegrityError raised with no savepoint inside
+            # authenticate()'s transaction.atomic() marks the whole transaction
+            # for rollback.
+            return User.objects.get_or_create(**{self.lookup_field: username})
 
         if getattr(user, self.lookup_field, None) != username:
             # Adopted a pre-gateway account: stamp it so the next request
