@@ -249,7 +249,7 @@ def mock_bulk_requests(users: Users, responses: RequestsMock):
 def test_sync_users_to_scim_remote(users: Users):
     for user in users.users:
         assert user.scim_external_id is None
-        assert user.global_id == ""
+        assert user.global_id is None
 
     states = list(api.sync_users_to_scim_remote(users.users))
     states_by_user_id = {state.user.id: state for state in states}

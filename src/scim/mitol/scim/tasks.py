@@ -33,7 +33,11 @@ def sync_all_users_to_scim_remote(self, *, never_synced_only: bool = False):
     )
 
     if never_synced_only:
-        user_q = user_q.filter(Q(global_id="") | Q(scim_external_id=None))
+        # Match both empties: global_id is NULL when unset, but a consumer
+        # overriding the field may still store "".
+        user_q = user_q.filter(
+            Q(global_id__isnull=True) | Q(global_id="") | Q(scim_external_id=None)
+        )
 
     msg = f"Syncing {user_q.count()} users to SCIM remote"
     log.info(msg)
