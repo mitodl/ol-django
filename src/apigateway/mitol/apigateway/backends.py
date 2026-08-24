@@ -15,12 +15,6 @@ log = logging.getLogger(__name__)
 User = get_user_model()
 
 
-# A user record that predates the gateway carries no lookup-field value. Which
-# empty it carries depends on the app's own column: UserGlobalIdMixin declares
-# blank=True default="", other apps declare null=True.
-UNLINKED_LOOKUP_VALUES = ("", None)
-
-
 class RemoteUserCustomFieldBackend(RemoteUserBackend):
     """
     RemoteUserBackend variant that allows the field for the lookup to be configured
@@ -66,12 +60,16 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
         if not value:
             return None
 
-        return Q(
-            **{
-                f"{self.lookup_field}__in": UNLINKED_LOOKUP_VALUES,
-                self.adopt_unlinked_user_by: value,
-            }
+        # A record that predates the gateway carries no lookup-field value, and
+        # which empty it carries depends on the app's own column:
+        # UserGlobalIdMixin declares blank=True default="", other apps declare
+        # null=True. Both have to be matched separately - `__in=("", None)`
+        # cannot do it, because SQL never matches NULL through IN and Django
+        # drops the None from the list.
+        unset = Q(**{self.lookup_field: ""}) | Q(
+            **{f"{self.lookup_field}__isnull": True}
         )
+        return unset & Q(**{self.adopt_unlinked_user_by: value})
 
     def resolve_user(self, request, username):
         """

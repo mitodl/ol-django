@@ -200,3 +200,51 @@ def test_configure_user_writes_only_changed_fields(settings, mocker):
     backend.configure_user(request, test_user, created=False)
 
     save.assert_called_once_with(update_fields=["email"])
+
+
+@pytest.mark.django_db
+def test_resolve_user_adopts_account_whose_lookup_field_is_null(settings):
+    """
+    Adoption matches a NULL lookup field, not only an empty string.
+
+    Apps differ on how "no value yet" is stored: UserGlobalIdMixin declares
+    blank=True default="", mit-learn and mitxonline declare null=True. A single
+    `__in=("", None)` cannot cover both - SQL never matches NULL through IN, and
+    Django drops the None, so the filter silently matched nothing for exactly
+    the nullable apps this feature exists to serve.
+
+    testapp's global_id is not nullable, so this drives the check through the
+    configurable lookup field on a column that is.
+    """
+    settings.MITOL_APIGATEWAY_USER_LOOKUP_FIELD = "scim_external_id"
+    settings.MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY = "email"
+    settings.MITOL_APIGATEWAY_USERINFO_MODEL_MAP = {
+        "user_fields": {
+            "email": "email",
+            "preferred_username": "username",
+            "sub": "scim_external_id",
+        },
+        "additional_models": {},
+    }
+
+    legacy = SsoUserFactory.create()
+    legacy.scim_external_id = None
+    legacy.save()
+    assert User.objects.filter(pk=legacy.pk, scim_external_id__isnull=True).exists()
+
+    payload, user_info = generate_fake_apisix_payload()
+    user_info["email"] = legacy.email
+    payload = base64.b64encode(json.dumps(user_info).encode()).decode()
+    request = generate_apisix_request("request", payload)
+
+    backend = ApisixRemoteUserBackend()
+    backend.lookup_field = "scim_external_id"
+    backend.adopt_unlinked_user_by = "email"
+
+    remote_id = user_info[settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD]
+    user, created = backend.resolve_user(request, remote_id)
+
+    assert created is False
+    assert user.pk == legacy.pk
+    assert user.scim_external_id == remote_id
+    assert User.objects.filter(email=legacy.email).count() == 1
