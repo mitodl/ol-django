@@ -60,9 +60,29 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
         if not value:
             return None
 
-        return self.unset_lookup_field_filter() & Q(
-            **{self.adopt_unlinked_user_by: value}
-        )
+        return self.unset_lookup_field_filter() & Q(**{self.adoption_lookup(): value})
+
+    def adoption_lookup(self) -> str:
+        """
+        Build the ORM lookup used to match the adoption value.
+
+        Case-insensitive for a textual field. An identity provider does not
+        preserve the case a user typed at signup, so matching an email exactly
+        misses the pre-gateway row and creates the duplicate adoption exists to
+        prevent. Where the app constrains the column case-insensitively (a
+        UniqueConstraint on Lower("email"), say) the exact match is worse than
+        a duplicate: the insert violates the constraint and the login is
+        refused.
+
+        Non-textual fields keep an exact match. adopt_unlinked_user_by is
+        configurable and need not be a string; __iexact against an IntegerField
+        or a UUIDField raises while the query is built, and authenticate()'s
+        blanket except would turn that into a rejected login for every user.
+        """
+        field = User._meta.get_field(self.adopt_unlinked_user_by)  # noqa: SLF001
+        if field.empty_strings_allowed:
+            return f"{self.adopt_unlinked_user_by}__iexact"
+        return self.adopt_unlinked_user_by
 
     def unset_lookup_field_filter(self) -> Q:
         """

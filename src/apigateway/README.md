@@ -92,6 +92,19 @@ If more than one account matches, the backend refuses the login and logs the col
 
 Leave this at `None` for an app whose users have only ever existed behind the gateway.
 
+#### Before you set it
+
+Matching is case-insensitive for a textual field, because an identity provider does not preserve the case a user typed at signup. Two things follow, and both need handling *before* the setting is turned on rather than after:
+
+- **Duplicate accounts become hard login failures, not duplicates.** The refusal above is the safe behaviour, but for a user who already has two accounts differing only in the adoption field (`user@x.com` and `User@X.com`, say) it means they cannot log in at all. An app whose adoption field has no unique constraint — a stock `AbstractUser.email`, for instance — should expect these to exist. Run a dedupe pass first.
+- **The match is unindexed by default.** `__iexact` compiles to `UPPER(field::text) = UPPER(%s)` on PostgreSQL. A plain B-tree index on the column does not serve that, and neither does a functional index on `Lower(field)` — a `UniqueConstraint(Lower("email"))` is a *lower* index and the planner will not use it for an `UPPER()` predicate. Without a matching expression index this is a sequential scan of the user table on every request that fails to match on the lookup field. Add one that matches the predicate:
+
+  ```python
+  models.Index(Upper("email"), name="user_email_upper_idx")
+  ```
+
+Neither of these applies while the setting is `None` — the adoption branch is not built at all.
+
 ### Channels Configuration
 
 If your app uses Django Channels, read the `README-channels.md` for additional considerations and setup. This is especially true if your app is _only_ Channels, or if that's the main way people access the app.

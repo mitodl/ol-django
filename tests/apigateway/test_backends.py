@@ -1,4 +1,5 @@
 import base64
+import importlib
 import json
 
 import pytest
@@ -6,6 +7,7 @@ from asgiref.sync import sync_to_async
 from django.contrib.auth import get_user_model
 from django.db.models import QuerySet
 from main.utils import generate_apisix_request, generate_fake_apisix_payload
+from mitol.apigateway import backends as backends_module
 from mitol.apigateway.backends import (
     ApisixRemoteUserBackend,
     RemoteUserCustomFieldBackend,
@@ -456,3 +458,76 @@ def test_resolve_user_loses_the_adoption_race_without_stealing_the_row(
     assert created is True
     assert user.pk != contested.pk
     assert getattr(user, backend.lookup_field) == loser_id
+
+
+@pytest.mark.django_db
+def test_resolve_user_adopts_unlinked_account_case_insensitively(settings):
+    """Adoption matches the unlinked account regardless of email case.
+
+    Identity providers do not preserve the case a user typed at signup, so a
+    pre-gateway row holding 'Legacy.User@Example.COM' must still be adopted by
+    a header carrying 'legacy.user@example.com'. Matching exactly creates the
+    duplicate this feature exists to prevent.
+    """
+    settings.MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY = "email"
+
+    legacy = SsoUserFactory.create(email="Legacy.User@Example.COM")
+    legacy.global_id = ""
+    legacy.save()
+
+    payload, user_info = generate_fake_apisix_payload()
+    user_info["email"] = "legacy.user@example.com"
+    payload = base64.b64encode(json.dumps(user_info).encode()).decode()
+    request = generate_apisix_request("request", payload)
+
+    backend = ApisixRemoteUserBackend()
+    backend.adopt_unlinked_user_by = "email"
+    user, created = backend.resolve_user(
+        request, user_info[settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD]
+    )
+
+    assert created is False
+    assert user.pk == legacy.pk
+    assert User.objects.count() == 1
+
+
+def test_backend_lookup_field_is_read_from_settings(settings):
+    """ApisixRemoteUserBackend.lookup_field comes from the setting, not a
+    hardcoded "global_id".
+
+    Asserting the attribute in place cannot catch a regression here: the class
+    body reads the setting at import, so under the test settings a hardcoded
+    "global_id" is indistinguishable from the configured value. Reloading the
+    module against a different setting is what actually pins it — revert the
+    class-body read to a literal and this is the test that fails.
+    """
+    settings.MITOL_APIGATEWAY_USER_LOOKUP_FIELD = "scim_external_id"
+    try:
+        reloaded = importlib.reload(backends_module)
+        assert reloaded.ApisixRemoteUserBackend.lookup_field == "scim_external_id"
+    finally:
+        # Restore the module other tests hold references into. The settings
+        # fixture has already rolled the setting back by the time this runs in
+        # a later test, but this module object is process-global.
+        settings.MITOL_APIGATEWAY_USER_LOOKUP_FIELD = "global_id"
+        importlib.reload(backends_module)
+
+
+@pytest.mark.django_db
+def test_adoption_lookup_stays_exact_for_non_text_fields():
+    """A non-textual adoption field keeps an exact match.
+
+    adopt_unlinked_user_by is configurable and need not be a string. __iexact
+    against an integer or UUID column raises while the query is built, and
+    authenticate()'s blanket except would turn that into a rejected login for
+    every user, linked or not.
+    """
+    backend = ApisixRemoteUserBackend()
+
+    backend.adopt_unlinked_user_by = "email"
+    assert backend.adoption_lookup() == "email__iexact"
+
+    backend.adopt_unlinked_user_by = "id"
+    assert backend.adoption_lookup() == "id"
+    # Building the query is the part that would raise.
+    assert User.objects.filter(**{backend.adoption_lookup(): 1}).count() == 0
