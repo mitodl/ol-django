@@ -400,3 +400,59 @@ def test_ambiguity_log_names_the_adoption_field(settings, caplog):
     assert user is None
     assert "email" in caplog.text
     assert "unlinked row" in caplog.text
+
+
+@pytest.mark.django_db
+def test_resolve_user_loses_the_adoption_race_without_stealing_the_row(
+    settings, mocker
+):
+    """
+    The loser of an adoption race creates its own user, it does not overwrite.
+
+    Two identities carrying the same adoption value both select the one
+    unlinked row. A blind save would let the second overwrite the first's
+    lookup id while both requests returned that same account. The conditional
+    update makes the claim atomic, so the loser matches nothing, re-resolves,
+    and ends up with its own user.
+    """
+    settings.MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY = "email"
+
+    contested = SsoUserFactory.create()
+    contested.global_id = ""
+    contested.save()
+
+    payload, user_info = generate_fake_apisix_payload()
+    user_info["email"] = contested.email
+    payload = base64.b64encode(json.dumps(user_info).encode()).decode()
+    request = generate_apisix_request("request", payload)
+    loser_id = user_info[settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD]
+
+    # The row as it looked when our get ran, before the winner claimed it.
+    stale = User.objects.get(pk=contested.pk)
+
+    winner_id = "winner-global-id"
+    User.objects.filter(pk=contested.pk).update(global_id=winner_id)
+
+    real_get = QuerySet.get
+    calls = {"n": 0}
+
+    def stale_get_once(self, *args, **kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return stale
+        return real_get(self, *args, **kwargs)
+
+    mocker.patch.object(QuerySet, "get", stale_get_once)
+
+    backend = ApisixRemoteUserBackend()
+    backend.adopt_unlinked_user_by = "email"
+    user, created = backend.resolve_user(request, loser_id)
+
+    # The winner keeps the row.
+    contested.refresh_from_db()
+    assert contested.global_id == winner_id
+
+    # The loser gets its own account rather than the winner's.
+    assert created is True
+    assert user.pk != contested.pk
+    assert getattr(user, backend.lookup_field) == loser_id

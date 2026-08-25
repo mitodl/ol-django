@@ -84,12 +84,16 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
             unset |= Q(**{self.lookup_field: ""})
         return unset
 
-    def resolve_user(self, request, username):
+    def resolve_user(self, request, username, *, retry_lost_adoption=True):
         """
         Find the user for this remote id, adopting or creating one if allowed.
 
         Returns an (user, created) pair. ``user`` is None when the identity is
         ambiguous, or unknown while create_unknown_user is off.
+
+        ``retry_lost_adoption`` is internal: it bounds the single re-resolve
+        that follows losing an adoption race, so a pathological interleaving
+        cannot recurse indefinitely.
         """
         candidates = Q(**{self.lookup_field: username})
         unlinked = self.unlinked_user_filter(request)
@@ -140,10 +144,44 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
             return User.objects.get_or_create(**{self.lookup_field: username})
 
         if getattr(user, self.lookup_field, None) != username:
-            # Adopted a pre-gateway account: stamp it so the next request
+            # Adopting a pre-gateway account: stamp it so the next request
             # matches on the lookup field directly.
+            #
+            # Claim it with a conditional update rather than a blind save. Two
+            # identities carrying the same adoption value both select this row,
+            # and a save would let the second overwrite the first's id while
+            # both requests returned the same account. Re-stating the unset
+            # predicate in the UPDATE makes the claim atomic: the row stops
+            # being unset the moment the winner lands, so the loser matches
+            # nothing and knows it lost. transaction.atomic() cannot do this -
+            # it gives atomicity, not isolation from a concurrent reader.
+            claimed = User.objects.filter(
+                Q(pk=user.pk) & self.unset_lookup_field_filter()
+            ).update(**{self.lookup_field: username})
+
+            if not claimed:
+                if not retry_lost_adoption:
+                    log.warning(
+                        "resolve_user: lost the adoption race for user %s twice, "
+                        "refusing rather than returning an account claimed by "
+                        "another identity",
+                        user.pk,
+                    )
+                    return None, False
+
+                # The row now belongs to someone else. Re-resolve: this id
+                # matches neither it nor the unset predicate, so it falls
+                # through to creating its own user.
+                log.info(
+                    "resolve_user: lost the adoption race for user %s, "
+                    "re-resolving %s=%s",
+                    user.pk,
+                    self.lookup_field,
+                    username,
+                )
+                return self.resolve_user(request, username, retry_lost_adoption=False)
+
             setattr(user, self.lookup_field, username)
-            user.save(update_fields=[self.lookup_field])
             log.info(
                 "resolve_user: adopted existing user %s by %s, set %s=%s",
                 user.pk,
