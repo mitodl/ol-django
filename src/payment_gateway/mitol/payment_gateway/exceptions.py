@@ -57,15 +57,10 @@ class NoStripeWebhookSecretError(Exception):
     def __init__(
         self,
         event_id: str,
-        route: str,
     ):
         self.event_id = event_id
-        self.route = route
 
-        message = (
-            f"Unable to find a Stripe webhook secret for event '{event_id}'"
-            f" received at route {route}."
-        )
+        message = f"Unable to find a Stripe webhook secret for event '{event_id}'"
 
         super().__init__(message)
 
@@ -76,15 +71,10 @@ class BadStripeWebhookSecretError(Exception):
     def __init__(
         self,
         event_id: str,
-        route: str,
     ):
         self.event_id = event_id
-        self.route = route
 
-        message = (
-            f"No valid stored Stripe webhook secret(s) for event '{event_id}'"
-            f" received at route {route}."
-        )
+        message = f"No valid stored Stripe webhook secret(s) for event '{event_id}'"
 
         super().__init__(message)
 
