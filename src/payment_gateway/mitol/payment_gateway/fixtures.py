@@ -16,51 +16,58 @@ contain IDs that look like secrets).
 """
 
 import json
+import logging
 
 from stripe import Event, PaymentIntent, convert_to_stripe_object
 from stripe.checkout import Session
+
+log = logging.getLogger(__name__)
+
+
+def _stripe_json_to_object(base_data: str, **kwargs):
+    """
+    Convert the given base_data to a Stripe object.
+
+    The base_data should be one of the sample objects from the Stripe docs. These
+    are pretty complete, other than props that can be expanded when fetching.
+    Supply keyword args to replace data in base_data - if the key exists in base_data,
+    this will drop your value in place. This is done pretty simply and so won't
+    figure out inner references (so no "payment_intent__id" type things).
+    """
+
+    loaded_data = json.loads(base_data)
+
+    for key, value in kwargs.items():
+        if key in loaded_data:
+            loaded_data[key] = value
+        else:
+            log.warning("key %s not in base_data", key)
+
+    return convert_to_stripe_object(loaded_data)
 
 
 def stripe_payment_intent(*args, **kwargs) -> PaymentIntent:  # noqa: ARG001
     """Return a fake PaymentIntent."""
 
     # From the example at https://docs.stripe.com/api/payment_intents/object
-    base_data = json.loads(
-        """{"id": "pi_3MtwBwLkdIwHu7ix28a3tqPa","object": "payment_intent","amount": 2000,"amount_capturable": 0,"amount_details": {"tip": {}},"amount_received": 0,"application": null,"application_fee_amount": null,"automatic_payment_methods": {"enabled": true},"canceled_at": null,"cancellation_reason": null,"capture_method": "automatic","client_secret": "pi_3MtwBwLkdIwHu7ix28a3tqPa_secret_YrKJUKribcBjcG8HVhfZluoGH","confirmation_method": "automatic","created": 1680800504,"currency": "usd","customer": null,"description": null,"last_payment_error": null,"latest_charge": null,"livemode": false,"metadata": {},"next_action": null,"on_behalf_of": null,"payment_method": null,"payment_method_options": {"card": {"installments": null,"mandate_options": null,"network": null,"request_three_d_secure": "automatic"},"link": {"persistent_token": null}},"payment_method_types": ["card","link"],"processing": null,"receipt_email": null,"review": null,"setup_future_usage": null,"shipping": null,"source": null,"statement_descriptor": null,"statement_descriptor_suffix": null,"status": "requires_payment_method","transfer_data": null,"transfer_group": null}"""  # pragma: allowlist secret
-    )
+    base_data = """{"id": "pi_3MtwBwLkdIwHu7ix28a3tqPa","object": "payment_intent","amount": 2000,"amount_capturable": 0,"amount_details": {"tip": {}},"amount_received": 0,"application": null,"application_fee_amount": null,"automatic_payment_methods": {"enabled": true},"canceled_at": null,"cancellation_reason": null,"capture_method": "automatic","client_secret": "pi_3MtwBwLkdIwHu7ix28a3tqPa_secret_YrKJUKribcBjcG8HVhfZluoGH","confirmation_method": "automatic","created": 1680800504,"currency": "usd","customer": null,"description": null,"last_payment_error": null,"latest_charge": null,"livemode": false,"metadata": {},"next_action": null,"on_behalf_of": null,"payment_method": null,"payment_method_options": {"card": {"installments": null,"mandate_options": null,"network": null,"request_three_d_secure": "automatic"},"link": {"persistent_token": null}},"payment_method_types": ["card","link"],"processing": null,"receipt_email": null,"review": null,"setup_future_usage": null,"shipping": null,"source": null,"statement_descriptor": null,"statement_descriptor_suffix": null,"status": "requires_payment_method","transfer_data": null,"transfer_group": null}"""  # pragma: allowlist secret
 
-    for key, value in kwargs.items():
-        if key in base_data:
-            base_data[key] = value
-
-    return convert_to_stripe_object(base_data)
+    return _stripe_json_to_object(base_data, **kwargs)
 
 
 def stripe_checkout_session(*args, **kwargs) -> Session:  # noqa: ARG001
     """Return a fake checkout session."""
 
     # From the sample at https://docs.stripe.com/api/checkout/sessions/object
-    base_data = json.loads(
-        """{"id": "cs_test_a11YYufWQzNY63zpQ6QSNRQhkUpVph4WRmzW0zWJO2znZKdVujZ0N0S22u","object": "checkout.session","after_expiration": null,"allow_promotion_codes": null,"amount_subtotal": 2198,"amount_total": 2198,"automatic_tax": {"enabled": false,"liability": null,"status": null},"billing_address_collection": null,"cancel_url": null,"client_reference_id": null,"consent": null,"consent_collection": null,"created": 1679600215,"currency": "usd","custom_fields": [],"custom_text": {"shipping_address": null,"submit": null},"customer": null,"customer_creation": "if_required","customer_details": null,"customer_email": null,"expires_at": 1679686615,"invoice": null,"invoice_creation": {"enabled": false,"invoice_data": {"account_tax_ids": null,"custom_fields": null,"description": null,"footer": null,"issuer": null,"metadata": {},"rendering_options": null}},"livemode": false,"locale": null,"metadata": {},"mode": "payment","payment_intent": null,"payment_link": null,"payment_method_collection": "always","payment_method_options": {},"payment_method_types": ["card"],"payment_status": "unpaid","phone_number_collection": {"enabled": false},"recovered_from": null,"setup_intent": null,"shipping_address_collection": null,"shipping_cost": null,"shipping_details": null,"shipping_options": [],"status": "open","submit_type": null,"subscription": null,"success_url": "https://example.com/success","total_details": {"amount_discount": 0,"amount_shipping": 0,"amount_tax": 0},"url": "https://checkout.stripe.com/c/pay/cs_test_a11YYufWQzNY63zpQ6QSNRQhkUpVph4WRmzW0zWJO2znZKdVujZ0N0S22u#fidkdWxOYHwnPyd1blpxYHZxWjA0SDdPUW5JbmFMck1wMmx9N2BLZjFEfGRUNWhqTmJ%2FM2F8bUA2SDRySkFdUV81T1BSV0YxcWJcTUJcYW5rSzN3dzBLPUE0TzRKTTxzNFBjPWZEX1NKSkxpNTVjRjN8VHE0YicpJ2N3amhWYHdzYHcnP3F3cGApJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl","return_url": null,"ui_mode": "hosted_page"}"""  # pragma: allowlist secret
-    )
+    base_data = """{"id": "cs_test_a11YYufWQzNY63zpQ6QSNRQhkUpVph4WRmzW0zWJO2znZKdVujZ0N0S22u","object": "checkout.session","after_expiration": null,"allow_promotion_codes": null,"amount_subtotal": 2198,"amount_total": 2198,"automatic_tax": {"enabled": false,"liability": null,"status": null},"billing_address_collection": null,"cancel_url": null,"client_reference_id": null,"consent": null,"consent_collection": null,"created": 1679600215,"currency": "usd","custom_fields": [],"custom_text": {"shipping_address": null,"submit": null},"customer": null,"customer_creation": "if_required","customer_details": null,"customer_email": null,"expires_at": 1679686615,"invoice": null,"invoice_creation": {"enabled": false,"invoice_data": {"account_tax_ids": null,"custom_fields": null,"description": null,"footer": null,"issuer": null,"metadata": {},"rendering_options": null}},"livemode": false,"locale": null,"metadata": {},"mode": "payment","payment_intent": null,"payment_link": null,"payment_method_collection": "always","payment_method_options": {},"payment_method_types": ["card"],"payment_status": "unpaid","phone_number_collection": {"enabled": false},"recovered_from": null,"setup_intent": null,"shipping_address_collection": null,"shipping_cost": null,"shipping_details": null,"shipping_options": [],"status": "open","submit_type": null,"subscription": null,"success_url": "https://example.com/success","total_details": {"amount_discount": 0,"amount_shipping": 0,"amount_tax": 0},"url": "https://checkout.stripe.com/c/pay/cs_test_a11YYufWQzNY63zpQ6QSNRQhkUpVph4WRmzW0zWJO2znZKdVujZ0N0S22u#fidkdWxOYHwnPyd1blpxYHZxWjA0SDdPUW5JbmFMck1wMmx9N2BLZjFEfGRUNWhqTmJ%2FM2F8bUA2SDRySkFdUV81T1BSV0YxcWJcTUJcYW5rSzN3dzBLPUE0TzRKTTxzNFBjPWZEX1NKSkxpNTVjRjN8VHE0YicpJ2N3amhWYHdzYHcnP3F3cGApJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl","return_url": null,"ui_mode": "hosted_page"}"""  # pragma: allowlist secret
 
-    for key, value in kwargs.items():
-        if key in base_data:
-            base_data[key] = value
-
-    return convert_to_stripe_object(base_data)
+    return _stripe_json_to_object(base_data, **kwargs)
 
 
 def stripe_event(*args, **kwargs) -> Event:  # noqa: ARG001
     """Return a fake Stripe event."""
 
     # From the sample at https://docs.stripe.com/api/events
-    base_data = json.loads(
-        """{"id": "evt_1NG8Du2eZvKYlo2CUI79vXWy","object": "event","api_version": "2019-02-19","created": 1686089970,"data": {"object": {"id": "seti_1NG8Du2eZvKYlo2C9XMqbR0x","object": "setup_intent","application": null,"automatic_payment_methods": null,"cancellation_reason": null,"client_secret": "seti_1NG8Du2eZvKYlo2C9XMqbR0x_secret_O2CdhLwGFh2Aej7bCY7qp8jlIuyR8DJ","created": 1686089970,"customer": null,"description": null,"flow_directions": null,"last_setup_error": null,"latest_attempt": null,"livemode": false,"mandate": null,"metadata": {},"next_action": null,"on_behalf_of": null,"payment_method": "pm_1NG8Du2eZvKYlo2CYzzldNr7","payment_method_options": {"acss_debit": {"currency": "cad","mandate_options": {"interval_description": "First day of every month","payment_schedule": "interval","transaction_type": "personal"},"verification_method": "automatic"}},"payment_method_types": ["acss_debit"],"single_use_mandate": null,"status": "requires_confirmation","usage": "off_session"}},"livemode": false,"pending_webhooks": 0,"request": {"id": null,"idempotency_key": null},"type": "setup_intent.created"}"""  # pragma: allowlist secret
-    )
+    base_data = """{"id": "evt_1NG8Du2eZvKYlo2CUI79vXWy","object": "event","api_version": "2019-02-19","created": 1686089970,"data": {"object": {"id": "seti_1NG8Du2eZvKYlo2C9XMqbR0x","object": "setup_intent","application": null,"automatic_payment_methods": null,"cancellation_reason": null,"client_secret": "seti_1NG8Du2eZvKYlo2C9XMqbR0x_secret_O2CdhLwGFh2Aej7bCY7qp8jlIuyR8DJ","created": 1686089970,"customer": null,"description": null,"flow_directions": null,"last_setup_error": null,"latest_attempt": null,"livemode": false,"mandate": null,"metadata": {},"next_action": null,"on_behalf_of": null,"payment_method": "pm_1NG8Du2eZvKYlo2CYzzldNr7","payment_method_options": {"acss_debit": {"currency": "cad","mandate_options": {"interval_description": "First day of every month","payment_schedule": "interval","transaction_type": "personal"},"verification_method": "automatic"}},"payment_method_types": ["acss_debit"],"single_use_mandate": null,"status": "requires_confirmation","usage": "off_session"}},"livemode": false,"pending_webhooks": 0,"request": {"id": null,"idempotency_key": null},"type": "setup_intent.created"}"""  # pragma: allowlist secret
 
-    for key, value in kwargs.items():
-        if key in base_data:
-            base_data[key] = value
-
-    return convert_to_stripe_object(base_data)
+    return _stripe_json_to_object(base_data, **kwargs)

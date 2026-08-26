@@ -1307,7 +1307,7 @@ class StripePaymentGateway(
 
         # Call this directly so we can tell the client to expand payment_intent.
 
-        cs = stripe_checkout_session_client.retrieve(
+        fetched_checkout_session = stripe_checkout_session_client.retrieve(
             session_id,
             {
                 "expand": [
@@ -1325,22 +1325,26 @@ class StripePaymentGateway(
 
         session_status = StripeCheckoutSessionStatus(
             status=constants.STRIPE_OVERALL_CHECKOUT_STATUS_PENDING,
-            checkout_session_id=cs.id,
-            transaction=cs.to_dict(for_json=True),
+            checkout_session_id=fetched_checkout_session.id,
+            transaction=fetched_checkout_session.to_dict(for_json=True),
             payment_intent_id=None,
             cancel_reason=None,
             action_reason=None,
         )
 
-        if not cs.payment_intent:
+        if not fetched_checkout_session.payment_intent:
             # No payment intent at all, so just use the session statuses.
-            return self._calculate_checkout_session_status(cs, session_status)
+            return self._calculate_checkout_session_status(
+                fetched_checkout_session, session_status
+            )
 
-        if not isinstance(cs.payment_intent, stripe.PaymentIntent):
+        if not isinstance(
+            fetched_checkout_session.payment_intent, stripe.PaymentIntent
+        ):
             msg = "Payment intent is of incorrect type."
             raise TypeError(msg)
 
-        pi = cs.payment_intent
+        pi = fetched_checkout_session.payment_intent
         session_status.payment_intent_id = pi.id
 
         if pi.status == constants.STRIPE_PAYMENT_INTENT_STATUS_PROCESSING:

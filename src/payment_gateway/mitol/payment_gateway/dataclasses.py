@@ -106,7 +106,7 @@ class Refund:
     Fields:
     - transaction_id: transaction id of a successful payment
     - refund_amount: Amount to be refunded
-    - refund_currency: Currency for refund amount (Ideally, this should be the currency used while payment)
+    - refund_currency: Currency for refund amount (Ideally, this should be the currency used for payment)
     """  # noqa: E501
 
     transaction_id: str
