@@ -11,6 +11,7 @@ ECOMMERCE_DEFAULT_PAYMENT_GATEWAY = get_string(
 )
 
 import_settings_modules(
+    "mitol.payment_gateway.settings.none_gateway",
     "mitol.payment_gateway.settings.cybersource",
     "mitol.payment_gateway.settings.stripe",
 )

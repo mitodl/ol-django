@@ -29,6 +29,7 @@ with warnings.catch_warnings():
 import stripe
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.core.signing import Signer
 from django.http import HttpRequest
 from mitol.common.utils.datetime import now_in_utc
 from mitol.payment_gateway import constants
@@ -55,6 +56,7 @@ from mitol.payment_gateway.payment_utils import (
     quantize_decimal,
     strip_nones,
 )
+from mitol.payment_gateway.serializers import OrderSerializer
 from stripe.checkout import Session as StripeCheckoutSession
 
 log = logging.getLogger(__name__)
@@ -277,6 +279,109 @@ class PaymentGateway(abc.ABC):
         Just returns the resolved payment gateway class.
         """
         return payment_type
+
+
+class NonePaymentGateway(
+    PaymentGateway, gateway_class=constants.MITOL_PAYMENT_GATEWAY_NONE
+):
+    """
+    A self-contained implementation of a payment gateway, without a real processor.
+
+    This gateway does not contact any payment processor. Instead, it acts according
+    to the default set in the config. This can be used for testing (no external
+    API access), zero-value orders, or to blanket allow/deny ecommerce transactions
+    (amongst other things, probably).
+    """
+
+    def __init__(self):
+        """Set up internal object data."""
+
+        if (
+            settings.MITOL_PAYMENT_GATEWAY_NONE_DEFAULT_ACTION
+            == constants.MITOL_PAYMENT_GATEWAY_NONE_ACTION_APPROVE
+        ) and not settings.MITOL_PAYMENT_GATEWAY_NONE_SUPPRESS_APPROVE_WARNINGS:
+            log.warning("Warning: NonePaymentGateway is set to approve everything.")
+
+    @staticmethod
+    def get_client_configuration():
+        """Return the client configuration."""
+
+        return {
+            "default_action": settings.MITOL_PAYMENT_GATEWAY_NONE_DEFAULT_ACTION,
+        }
+
+    def prepare_checkout(
+        self,
+        order: Order,
+        receipt_url: str,
+        cancel_url: str,
+        backoffice_post_url: str | None = None,
+        **kwargs,
+    ):
+        """
+        Check the provided order and act according to the settings.
+
+        This will instruct your app to POST a form to the receipt_url specified.
+        The payload will be the order data, a UUID, and the result (approve or
+        deny). This is signed using the Django Signer interface, so it depends
+        on the app's secret key.
+        """
+
+        return_payload = {
+            "url": receipt_url,
+            "payload": {},
+            "method": "POST",
+        }
+        signer = Signer()
+
+        signable_payload = {
+            "order": OrderSerializer(order).data,
+        }
+
+        if (
+            settings.MITOL_PAYMENT_GATEWAY_NONE_DEFAULT_ACTION
+            == constants.MITOL_PAYMENT_GATEWAY_NONE_ACTION_APPROVE
+        ):
+            signable_payload["status"] = "accept"
+        elif (
+            settings.MITOL_PAYMENT_GATEWAY_NONE_DEFAULT_ACTION
+            == constants.MITOL_PAYMENT_GATEWAY_NONE_ACTION_APPROVE_ZERO
+        ):
+            order_total = Decimal(0)
+
+            for item in order.items:
+                order_total = order_total + Decimal(item.unitprice * item.quantity)
+
+            if order_total > Decimal(0):
+                signable_payload["status"] = "deny"
+            else:
+                signable_payload["status"] = "accept"
+        else:
+            signable_payload["status"] = "deny"
+
+        return_payload["payload"] = {
+            "signature": signer.sign_object(signable_payload),
+            "transaction": signable_payload,
+        }
+
+        return return_payload
+
+    @staticmethod
+    def get_refund_request(transaction_dict):
+        """Generate a payload for the refund process."""
+
+    def perform_refund(self, refund):
+        """Process the generated payload from get_refund_request."""
+
+    def perform_processor_response_validation(self, request):
+        """Process the "processor response"."""
+
+        raise NotImplementedError
+
+    def decode_processor_response(self, request):
+        """Decode the "processor response"."""
+
+        raise NotImplementedError
 
 
 class CyberSourcePaymentGateway(
