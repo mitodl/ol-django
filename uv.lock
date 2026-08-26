@@ -2570,7 +2570,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-observability"
-version = "2026.3.11"
+version = "2026.8.19"
 source = { editable = "src/observability" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },

@@ -287,6 +287,19 @@ inline-quotes = "double"
 "tests/**" = ["S101"]
 "test_*.py" = ["S101"]
 "**/migrations/**" = ["ARG001", "D100", "D101", "E501"]
+# drf-lint's cross-file fixtures are inputs to the linter, not code that runs.
+# They deliberately contain undeclared relations, unused arguments and other
+# shapes a real project would flag.
+"tests/drf_lint/fixtures/**" = [
+  "ANN",
+  "ARG001",
+  "ARG002",
+  "D",
+  "INP001",
+  "N",
+  "RUF012",
+  "S101",
+]
 
 [tool.tox]
 requires = ["tox>=4.53"]
