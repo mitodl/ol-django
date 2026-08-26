@@ -39,6 +39,12 @@ repos:
     - --baseline
     - .secrets.baseline
     additional_dependencies: ["gibberish_detector"]
+- repo: https://github.com/adamchainz/django-upgrade
+  rev: 1.32.0
+  hooks:
+  - id: django-upgrade
+    # Keep in step with the `django>=` floor in every src/*/pyproject.toml.
+    args: [--target-version, '4.2']
 - repo: https://github.com/astral-sh/ruff-pre-commit
   # Ruff version.
   rev: 'v0.16.3'

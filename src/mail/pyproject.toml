@@ -6,7 +6,7 @@ dependencies = [
 "beautifulsoup4>=4.6.0",
 "django-anymail>=6.0",
 "django-stubs>=1.13.1",
-"django>=3.0",
+"django>=4.2",
 "html5lib>=1.1",
 "mitol-django-common",
 "premailer>=3.7.0",

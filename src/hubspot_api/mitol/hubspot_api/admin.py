@@ -4,6 +4,7 @@ from django.contrib import admin
 from mitol.hubspot_api.models import HubspotObject
 
 
+@admin.register(HubspotObject)
 class HubspotObjectAdmin(admin.ModelAdmin):
     """Admin for HubspotObject"""
 
@@ -13,6 +14,3 @@ class HubspotObjectAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):  # noqa: ARG002
         return False
-
-
-admin.site.register(HubspotObject, HubspotObjectAdmin)

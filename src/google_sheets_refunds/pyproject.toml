@@ -4,7 +4,7 @@ version = "2026.4.2"
 description="Library to handle Refund requests using Google Sheets integrations in Django"
 dependencies = [
 "django-stubs>=1.13.1",
-"django>=3.0",
+"django>=4.2",
 "mitol-django-common",
 "mitol-django-google-sheets",
 "pluggy>0.13.1",
