@@ -1,11 +1,10 @@
-"""Tests for the logout view."""
-
-import json
-from base64 import b64encode
+"""Tests for the apigateway login/logout views."""
 
 import pytest
 from django.urls import reverse
 from mitol.common.factories import UserFactory
+
+from testapp.main.utils import generate_fake_apisix_payload
 
 pytestmark = pytest.mark.django_db
 
@@ -48,87 +47,113 @@ def _apigateway_reqs(settings):
 @pytest.mark.parametrize("has_apisix_header", [True, False])
 @pytest.mark.parametrize("next_url", ["/search", None])
 def test_logout(settings, next_url, client, user, has_apisix_header):
-    """User should be properly redirected and logged out"""
-    header_str = b64encode(
-        json.dumps(
-            {
-                "username": user.username,
-                "email": user.email,
-                "global_id": user.global_id,
-            }
-        ).encode()
-    )
+    """User should be logged out of Django and properly redirected"""
+    payload, _ = generate_fake_apisix_payload(user=user)
     client.force_login(user)
+
     response = client.get(
-        f"{reverse('logout')}/?next={next_url or ''}",
+        f"{reverse('logout')}?next={next_url or ''}",
         follow=False,
-        HTTP_X_USERINFO=header_str if has_apisix_header else None,
+        HTTP_X_USERINFO=payload if has_apisix_header else None,
     )
+
+    assert response.status_code == 302  # noqa: PLR2004
+    assert "_auth_user_id" not in client.session
+
+    expected_next = next_url or settings.MITOL_DEFAULT_POST_LOGOUT_URL
+
     if has_apisix_header:
+        # bounced through the gateway logout, preserving next via cookie
         assert response.url == settings.MITOL_APIGATEWAY_LOGOUT_URL
-        if next_url:
-            assert response.cookies.get("next")
-            assert response.cookies["next"].value == (
-                next_url if next_url else settings.MITOL_DEFAULT_POST_LOGOUT_URL
-            )
+        cookie = response.cookies[settings.MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_NAME]
+        assert cookie.value == expected_next
+        assert cookie["max-age"] == settings.MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_TTL
     else:
-        assert response.url == (
-            next_url if next_url else settings.MITOL_DEFAULT_POST_LOGOUT_URL
-        )
+        assert response.url == expected_next
 
 
-@pytest.mark.parametrize("is_authenticated", [True])
-@pytest.mark.parametrize("has_next", [False])
-@pytest.mark.parametrize("next_host_is_invalid", [True, False])
-def test_next_logout(  # noqa: PLR0913, PLR0917
-    settings, mocker, client, user, is_authenticated, has_next, next_host_is_invalid
-):
-    """Test logout redirect cache assignment"""
-    next_url = "https://ocw.mit.edu"
-    mock_request = mocker.MagicMock(
-        GET={"next": next_url if has_next else None},
-    )
+def test_logout_return_hop(settings, client):
+    """The gateway-logout return hop should redirect to the cookie and clear it"""
+    cookie_name = settings.MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_NAME
+    client.cookies[cookie_name] = "/search"
+
+    response = client.get(reverse("logout"), follow=False)
+
+    assert response.url == "/search"
+    # cookie is deleted on the response
+    assert response.cookies[cookie_name].value == ""
+    assert response.cookies[cookie_name]["max-age"] == 0
+
+
+@pytest.mark.parametrize("next_host_is_valid", [True, False])
+def test_logout_next_host_validation(settings, client, next_host_is_valid):
+    """An absolute next URL is only honored if its host is allowed"""
     settings.MITOL_ALLOWED_REDIRECT_HOSTS = [
-        "testserver",
-        "invalid.com" if next_host_is_invalid else "ocw.mit.edu",
+        "ocw.mit.edu" if next_host_is_valid else "other.example.com",
     ]
-    if is_authenticated:
-        client.force_login(user)
-        mock_request.user = user
-        mock_request.META = {
-            "HTTP_X_USERINFO": b64encode(
-                json.dumps(
-                    {
-                        "username": user.username,
-                        "email": user.email,
-                        "global_id": user.global_id,
-                    }
-                ).encode()
-            ),
-        }
-    url_params = f"?next={next_url}" if has_next else ""
-    resp = client.get(
-        f"{reverse('logout')}/{url_params}",
-        request=mock_request,
-        follow=False,
-        HTTP_X_USERINFO=b64encode(
-            json.dumps(
-                {
-                    "username": user.username,
-                    "email": user.email,
-                    "global_id": user.global_id,
-                }
-            ).encode()
-        ),
-    )
-    assert resp.status_code == 302  # noqa: PLR2004
-    if is_authenticated:
-        # APISIX header is present, so user should be logged out there
-        assert resp.url == settings.MITOL_APIGATEWAY_LOGOUT_URL
-    elif next_host_is_invalid:
-        # If host isn't in the allow list, this should always go to the default.
-        assert resp.url.endswith(settings.MITOL_DEFAULT_POST_LOGOUT_URL)
+    next_url = "https://ocw.mit.edu"
+
+    response = client.get(f"{reverse('logout')}?next={next_url}", follow=False)
+
+    if next_host_is_valid:
+        assert response.url == next_url
     else:
-        assert resp.url.endswith(
-            next_url if has_next else settings.MITOL_DEFAULT_POST_LOGOUT_URL
-        )
+        assert response.url == settings.MITOL_DEFAULT_POST_LOGOUT_URL
+
+
+def test_logout_next_cookie_host_validation(settings, client):
+    """A disallowed host in the logout cookie falls back to the default"""
+    settings.MITOL_ALLOWED_REDIRECT_HOSTS = []
+    cookie_name = settings.MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_NAME
+    client.cookies[cookie_name] = "https://evil.example.com"
+
+    response = client.get(reverse("logout"), follow=False)
+
+    assert response.url == settings.MITOL_DEFAULT_POST_LOGOUT_URL
+
+
+def test_login_redirects_to_next_param(settings, client, user):
+    """Login redirects to the next param and writes the login cookie"""
+    payload, _ = generate_fake_apisix_payload(user=user)
+
+    response = client.get(
+        f"{reverse('login')}?next=/dashboard",
+        follow=False,
+        HTTP_X_USERINFO=payload,
+    )
+
+    assert response.url == "/dashboard"
+    # the middleware preserves the next param for the gateway login bounce
+    cookie = response.cookies[settings.MITOL_APIGATEWAY_LOGIN_NEXT_URL_COOKIE_NAME]
+    assert cookie.value == "/dashboard"
+    assert cookie["max-age"] == settings.MITOL_APIGATEWAY_LOGIN_NEXT_URL_COOKIE_TTL
+
+
+def test_login_redirects_to_cookie(settings, client, user):
+    """Without a next param, login falls back to the middleware-written cookie"""
+    payload, _ = generate_fake_apisix_payload(user=user)
+    cookie_name = settings.MITOL_APIGATEWAY_LOGIN_NEXT_URL_COOKIE_NAME
+    client.cookies[cookie_name] = "/dashboard"
+
+    response = client.get(reverse("login"), follow=False, HTTP_X_USERINFO=payload)
+
+    assert response.url == "/dashboard"
+    # consumed cookie is deleted on the response
+    assert response.cookies[cookie_name].value == ""
+    assert response.cookies[cookie_name]["max-age"] == 0
+
+
+def test_login_param_beats_cookie(settings, client):
+    """The next param takes precedence over the cookie"""
+    client.cookies[settings.MITOL_APIGATEWAY_LOGIN_NEXT_URL_COOKIE_NAME] = "/cookie"
+
+    response = client.get(f"{reverse('login')}?next=/param", follow=False)
+
+    assert response.url == "/param"
+
+
+def test_login_default_redirect(settings, client):
+    """With no next param or cookie, login redirects to the default"""
+    response = client.get(reverse("login"), follow=False)
+
+    assert response.url == settings.MITOL_DEFAULT_POST_LOGOUT_URL

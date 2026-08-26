@@ -33,4 +33,3 @@ CACHES = {
 FEATURES = {}
 
 MITOL_DEFAULT_POST_LOGOUT_URL = "/app-after-logout"
-MITOL_APIGATEWAY_LOGOUT_URL = "/logout"

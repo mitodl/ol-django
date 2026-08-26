@@ -59,6 +59,7 @@ Finally, import the settings:
 ```python
 # in your project's settings.py
 from mitol.common.envs import import_settings_modules
+
 import_settings_modules(globals(), "mitol.apigateway.settings")
 ```
 
@@ -81,18 +82,25 @@ Your application configuration will need some settings added to it. Reasonable d
 
 These settings are needed for your environment:
 
-- `MITOL_APIGATEWAY_LOGOUT_URL` - the URL that APISIX uses for logout. This needs to be set in your APISIX configuration; the corresponding setting is `logout_path`. Defaults to `/logout`.
-- `MITOL_APIGATEWAY_DEFAULT_POST_LOGOUT_URL` - the URL that the logout view should send users when they log out by default. (You can programmatically set a destination but you should also have a default.) Defaults to `/app`.
+- `MITOL_APIGATEWAY_LOGOUT_URL` - the URL that APISIX uses for logout. This needs to be set in your APISIX configuration; the corresponding setting is `logout_path`. Defaults to `/logout/oidc`.
+- `MITOL_DEFAULT_POST_LOGOUT_URL` - the URL that the logout view should send users when they log out by default. (You can programmatically set a destination but you should also have a default.) Defaults to `/app`. Env-configurable; provided by `mitol.authentication.settings.auth`, which this app's settings module re-exports.
+- `MITOL_ALLOWED_REDIRECT_HOSTS` - hosts that `next` redirect URLs are allowed to point at. Relative URLs are always allowed. Defaults to `[]`. Env-configurable (as a Python list literal).
+- `MITOL_NEW_USER_LOGIN_URL` - URL of the new-user onboarding flow used by the login view. Empty (the default) disables the onboarding redirect.
 
 These settings are likely to need adjustment for your environment:
 
 - `MITOL_APIGATEWAY_USERINFO_CREATE` - controls if the backend will create _new_ users or not. If set to False, users will have to be pre-created within the system before they can be authenticated.
 - `MITOL_APIGATEWAY_USERINFO_UPDATE` - controls if the backend will update _existing_ users or not.
+- `MITOL_APIGATEWAY_USERINFO_EMAIL_FALLBACK` - if True, users whose lookup field is unset (NULL or `""`) can also be matched by email; the lookup field is backfilled on first match. Use this when migrating a pre-SSO user base. Ambiguous matches fail closed (the request stays anonymous). Defaults to False.
+- `MITOL_APIGATEWAY_USERINFO_SYNC_HOOKS` - a list of dotted import paths of callables invoked after a user is created or synced. Each is called as `hook(request=..., user=..., decoded_headers=..., created=...)`, inside the sync transaction (an exception rolls the whole sync back and the request stays anonymous). Use this for project-specific side effects - profile syncing, analytics events, welcome emails - without adding dependencies to this package. Hooks should do their own dirty-checking. Defaults to `[]`.
 
 These settings are unlikely to need adjustment:
 
 - `MITOL_APIGATEWAY_USERINFO_HEADER_NAME` - the name of the header the API gateway will use to attach user data to the request. For APISIX's `openid-connect` plugin, this will be `HTTP_X_USERINFO` and it isn't changeable (at time of writing). **This should be formatted as it will be after Django normalizes the header names.**
 - `MITOL_APIGATEWAY_USERINFO_ID_FIELD` - the name of the field to use to identify the user. This will depend on your SSO provider; for Keycloak, this is usually `sub`. You should use whatever immutable ID is available for this - email and username are not good choices unless there's no other option.
+- `MITOL_APIGATEWAY_USERINFO_EMAIL_FIELD` - the userinfo field to read the email from for the email fallback lookup. Defaults to `email`.
+- `MITOL_APIGATEWAY_LOGIN_NEXT_URL_COOKIE_NAME` / `MITOL_APIGATEWAY_LOGIN_NEXT_URL_COOKIE_TTL` - the short-lived cookie the middleware writes so a `?next=` param survives the gateway's OIDC login redirect (which drops the query string). Defaults: `next`, 30 seconds. Disable the write entirely with `MITOL_APIGATEWAY_SET_NEXT_COOKIE = False`.
+- `MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_NAME` / `MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_TTL` - the short-lived cookie the logout view writes so a `?next=` param survives the gateway/Keycloak logout hop. Defaults: `logout-next`, 60 seconds.
 
 
 > ### Account management considerations
@@ -120,6 +128,8 @@ The `MITOL_APIGATEWAY_USERINFO_MODEL_MAP` is a dict with two root keys:
 
 At its core, this is the `RemoteUserMiddleware` that comes with Django, so you can use any of the normal methods to control access to routes or retrieve user information. The authenticated user will be attached to the request as per usual.
 
+A request whose session already belongs to the user in the gateway header is a no-op for authentication: the session is not cycled, `last_login` is not rewritten, and (when `MITOL_APIGATEWAY_USERINFO_UPDATE` is on) the user sync is dirty-checked so nothing is saved unless a mapped value actually changed.
+
 ### Logging Out and User Sessions
 
 By default, if the user's APISIX session disappears, it will stop putting the userinfo header in the request. When this happens, the middleware will log the user out. Your application should handle this gracefully.
@@ -128,6 +138,31 @@ If the user wishes to log out explictly, you'll need to set up a logout view tha
 
 The check for an APISIX session is important - APISIX will _always_ send the user through SSO to log them out in the identity provider, even if they don't have a session to log out. Keycloak will raise an error message if you try to log out with no active session.
 
-The view just needs to be added to your `urlconf` like any other view. It should not be set to the same URL that the APISIX logout URL is set to (but the APISIX logout URL can be a redirect to the Django logout URL).
+Include `mitol.apigateway.urls` in your `urlconf` to get `/logout` (`ApiGatewayLogoutView`) and `/login` (`ApiGatewayLoginView`) routes named `logout` and `login`. The app owns `/login` and `/logout`; APISIX owns the `logout_path` (`/logout/oidc` by default) and never routes it to Django. Don't also include `mitol.authentication.urls.auth` - the apigateway views subsume those.
+
+#### Next-URL cookies
+
+Two short-lived cookies carry the `next` URL across gateway redirects that would otherwise drop it:
+
+- The **login cookie** (`MITOL_APIGATEWAY_LOGIN_NEXT_URL_COOKIE_NAME`, default `next`) is written by the middleware whenever a request carries a `?next=` param, and read by `ApiGatewayLoginView` after the OIDC login bounce.
+- The **logout cookie** (`MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_NAME`, default `logout-next`) is written by `ApiGatewayLogoutView` before it bounces the user through the gateway logout, and read by the same view on the return hop (when the userinfo header is gone).
+
+Both views delete the cookie they consumed on the redirect response.
+
+#### Login and onboarding
+
+`ApiGatewayLoginView` is a plain redirect out of the box. To route first-time logins through an onboarding flow, set `MITOL_NEW_USER_LOGIN_URL` and subclass the view, overriding the hooks from `mitol.authentication.views.LoginRedirectView`:
+
+```python
+class MyLoginView(ApiGatewayLoginView):
+    def is_first_login(self, request):
+        return not request.user.profile.has_logged_in
+
+    def handle_first_login(self, request):
+        request.user.profile.has_logged_in = True
+        request.user.profile.save()
+```
+
+The view honors `?signup_next=` (falling back to `?next=`) for the post-onboarding destination and `?skip_onboarding=1` to bypass the onboarding redirect.
 
 > If your app uses Django Channels, make sure to read through the `README-channels.md` too.

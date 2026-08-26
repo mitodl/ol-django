@@ -4,6 +4,11 @@ Settings for the apigateway app. See the README.md for more detail.
 These should be reasonable defaults - override (or pull from env) as necessary.
 """
 
+# Redirect-related settings (MITOL_DEFAULT_POST_LOGOUT_URL,
+# MITOL_ALLOWED_REDIRECT_HOSTS, MITOL_NEW_USER_LOGIN_URL) come from the
+# authentication package so apps only need to import this module.
+from mitol.authentication.settings.auth import *  # noqa: F403
+
 # apigateway configuration
 
 # Disable middleware. For local testing - you can have the middleware in place
@@ -27,6 +32,8 @@ MITOL_APIGATEWAY_USERINFO_MODEL_MAP = {
         "email": "email",
         "sub": "global_id",
         "name": "name",
+        "given_name": "first_name",
+        "family_name": "last_name",
     },
     # Additional models to map in.
     # Key is the model name, then a list of tuples of header field name, model
@@ -53,11 +60,33 @@ MITOL_APIGATEWAY_USERINFO_UPDATE = True
 # This is the name of the field used to lookup the user
 MITOL_APIGATEWAY_USER_LOOKUP_FIELD = "global_id"
 
+# Set to True to also match users whose lookup field is unset (NULL or "") by
+# email, backfilling the lookup field on first match. For migrating pre-SSO
+# user bases. Fail-closed: an ambiguous match resolves to no user.
+MITOL_APIGATEWAY_USERINFO_EMAIL_FALLBACK = False
+
+# The header field to read the email from for the fallback lookup.
+MITOL_APIGATEWAY_USERINFO_EMAIL_FIELD = "email"
+
+# Dotted paths to callables invoked after a user is created or synced.
+# Signature: hook(*, request, user, decoded_headers, created)
+# Hooks run inside the sync transaction and own their own dirty-checking.
+MITOL_APIGATEWAY_USERINFO_SYNC_HOOKS = []
+
 # URL configuation
 
-# Set to the URL that APISIX uses for logout.
-MITOL_APIGATEWAY_LOGOUT_URL = "/logout"
-MITOL_APIGATEWAY_HEADER_NAME = "HTTP_X_USERINFO"
+# Set to the URL that APISIX uses for logout (its logout_path).
+MITOL_APIGATEWAY_LOGOUT_URL = "/logout/oidc"
 
-MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_TTL = 60
+# Cookie the middleware writes to preserve the "next" URL across the gateway's
+# OIDC login redirect (the gateway drops the query string).
+MITOL_APIGATEWAY_LOGIN_NEXT_URL_COOKIE_NAME = "next"
+MITOL_APIGATEWAY_LOGIN_NEXT_URL_COOKIE_TTL = 30
+
+# Cookie the logout view writes to preserve the "next" URL across the
+# gateway/Keycloak logout hop (the gateway won't pass a redirect URL through).
 MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_NAME = "logout-next"
+MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_TTL = 60
+
+# Set to False to stop the middleware from writing the login next-URL cookie.
+MITOL_APIGATEWAY_SET_NEXT_COOKIE = True

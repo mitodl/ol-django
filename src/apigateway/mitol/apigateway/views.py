@@ -1,12 +1,12 @@
-"""Custom logout view for the API Gateway."""
+"""Login/logout views for the API Gateway."""
 
 from django.conf import settings
 from django.http.request import HttpRequest
 from mitol.apigateway.utils import has_gateway_auth
-from mitol.authentication.views.auth import AuthRedirectView
+from mitol.authentication.views.auth import LoginRedirectView, LogoutRedirectView
 
 
-class ApiGatewayLogoutView(AuthRedirectView):
+class ApiGatewayLogoutView(LogoutRedirectView):
     """
     Log the user out.
 
@@ -22,7 +22,9 @@ class ApiGatewayLogoutView(AuthRedirectView):
     Keycloak will throw an error.)
     """
 
-    next_url_cookie_names = [settings.MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_NAME]
+    def get_next_url_cookie_names(self) -> list[str]:
+        """Get the cookie names to check for the redirect URL"""
+        return [settings.MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_NAME]
 
     def get_redirect_url(self, request: HttpRequest) -> tuple[str, bool]:
         """Get the redirect url"""
@@ -53,6 +55,24 @@ class ApiGatewayLogoutView(AuthRedirectView):
                 settings.MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_NAME,
                 value=next_url,
                 max_age=settings.MITOL_APIGATEWAY_LOGOUT_NEXT_URL_COOKIE_TTL,
+                secure=request.is_secure(),
+                samesite="Lax",
+                path="/",
             )
 
         return response
+
+
+class ApiGatewayLoginView(LoginRedirectView):
+    """
+    Redirect the user after an API gateway login.
+
+    Reads the next URL from the login cookie the middleware writes, since the
+    gateway drops the query string on the login bounce. Subclass and override
+    the LoginRedirectView hooks (is_first_login, handle_first_login, etc) for
+    onboarding behavior.
+    """
+
+    def get_next_url_cookie_names(self) -> list[str]:
+        """Get the cookie names to check for the redirect URL"""
+        return [settings.MITOL_APIGATEWAY_LOGIN_NEXT_URL_COOKIE_NAME]

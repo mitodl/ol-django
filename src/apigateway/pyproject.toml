@@ -6,6 +6,7 @@ dependencies = [
     "django-stubs>=1.13.1",
     "django>=4.2",
     "channels>=4.2.0",
+    "mitol-django-authentication",
 ]
 readme = "README.md"
 license = "BSD-3-Clause"

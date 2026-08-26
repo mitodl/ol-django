@@ -32,8 +32,13 @@ def set_request_session(request, session_dict):
     return request
 
 
-def generate_fake_apisix_payload(*, user=None):
-    """Generate a faked payload for the userinfo header."""
+def generate_fake_apisix_payload(*, user=None, extra=None):
+    """Generate a faked payload for the userinfo header.
+
+    Args:
+        user: base the payload on this user's data instead of faked values
+        extra: dict of header fields to add/override in the payload
+    """
 
     if user:
         user_info = {
@@ -41,6 +46,8 @@ def generate_fake_apisix_payload(*, user=None):
             "email": user.email,
             "preferred_username": user.username,
             "name": user.get_full_name(),
+            "given_name": user.first_name,
+            "family_name": user.last_name,
         }
     else:
         user_info = {
@@ -48,7 +55,11 @@ def generate_fake_apisix_payload(*, user=None):
             "email": FAKE.unique.email(),
             "preferred_username": FAKE.unique.user_name(),
             "name": FAKE.unique.name(),
+            "given_name": FAKE.first_name(),
+            "family_name": FAKE.last_name(),
         }
+
+    user_info.update(extra or {})
 
     return base64.b64encode(json.dumps(user_info).encode()).decode(), user_info
 

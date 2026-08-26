@@ -1,10 +1,12 @@
+"""Authentication utils"""
+
 import logging
 
 from django.conf import settings
 from django.http.request import HttpRequest
 from django.utils.http import url_has_allowed_host_and_scheme
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
 
 def get_redirect_url(
@@ -12,6 +14,7 @@ def get_redirect_url(
     *,
     param_names: list[str] | None = None,
     cookie_names: list[str] | None = None,
+    default: str | None = None,
 ) -> str:
     """
     Get the redirect URL from the request.
@@ -22,25 +25,23 @@ def get_redirect_url(
             first match will be used.
         cookie_names: Names of the cookies to look for the redirect URL;
             first match will be used.
+        default: Fallback URL if no valid redirect URL is found; defaults to
+            settings.MITOL_DEFAULT_POST_LOGOUT_URL.
 
     Returns:
         str: Redirect URL
     """
-    param_next_url = get_redirect_url_from_params(request, param_names)
-    cookie_next_url = get_redirect_url_from_cookies(request, cookie_names)
+    next_url = get_redirect_url_from_params(
+        request, param_names
+    ) or get_redirect_url_from_cookies(request, cookie_names)
 
-    log.debug("views.get_redirect_url: Request param is: %s", param_next_url)
-    log.debug("views.get_redirect_url: Request cookie is: %s", cookie_next_url)
+    log.debug("get_redirect_url: next_url='%s'", next_url)
 
-    next_url = param_next_url or cookie_next_url
-
-    log.debug("mitol.authentication.utils.get_redirect_url: next_url='%s'", next_url)
-
-    return next_url or settings.MITOL_DEFAULT_POST_LOGOUT_URL or "/"
+    return next_url or default or settings.MITOL_DEFAULT_POST_LOGOUT_URL or "/"
 
 
 def get_redirect_url_from_cookies(
-    request: HttpRequest, cookie_names: list[str]
+    request: HttpRequest, cookie_names: list[str] | None
 ) -> str | None:
     """
     Get the redirect URL from the request cookies.
@@ -57,7 +58,7 @@ def get_redirect_url_from_cookies(
 
 
 def get_redirect_url_from_params(
-    request: HttpRequest, param_names: list[str]
+    request: HttpRequest, param_names: list[str] | None
 ) -> str | None:
     """
     Get the redirect URL from the request params.
@@ -74,11 +75,11 @@ def get_redirect_url_from_params(
     return _get_redirect_url(request.GET, param_names)
 
 
-def _get_redirect_url(record: dict[str, str], keys: list[str]) -> str | None:
+def _get_redirect_url(record: dict[str, str], keys: list[str] | None) -> str | None:
     """
     Get a valid redirect
     """
-    for key in keys:
+    for key in keys or []:
         next_url = record.get(key)
         if next_url and url_has_allowed_host_and_scheme(
             next_url, allowed_hosts=settings.MITOL_ALLOWED_REDIRECT_HOSTS
