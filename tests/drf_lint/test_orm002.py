@@ -111,6 +111,18 @@ def build_queryset():
     assert not _violations(source)
 
 
+def test_orm002_no_false_positive_storage_exists_with_argument():
+    """`QuerySet.exists()` takes no arguments, so `storage.exists(name)` is not it."""
+    source = """
+from rest_framework import serializers
+
+class MySerializer(serializers.Serializer):
+    def get_stored(self, instance):
+        return instance.upload.storage.exists(instance.filename)
+"""
+    assert not _violations(source)
+
+
 def test_orm002_no_false_positive_single_level_attribute():
     """A single-name queryset call (not an attribute chain) is not flagged as ORM002."""
     source = """

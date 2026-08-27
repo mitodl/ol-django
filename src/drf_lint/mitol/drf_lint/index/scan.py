@@ -125,7 +125,9 @@ class _BodyVisitor(ast.NodeVisitor):
                 )
             )
             return
-        if patterns.is_queryset_method_call(chain):
+        if patterns.is_queryset_method_call(
+            chain, has_args=bool(node.args or node.keywords)
+        ):
             method = chain[-1]
             self.hits.append(
                 QueryHit(

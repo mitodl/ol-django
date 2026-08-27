@@ -31,17 +31,26 @@
 ### Changed
 
 - The query-detection vocabulary moved into `mitol.drf_lint.rules.patterns`, now
-  shared by the LibCST checker and the `ast`-based indexer. `ORM001` and
-  `ORM002` behave as before, except that `ORM001` also recognises
-  `_default_manager` and `_base_manager`.
+  shared by the LibCST checker and the `ast`-based indexer. Two changes come with
+  it: `ORM001` also recognises `_default_manager` and `_base_manager`, and
+  `ORM002` no longer flags `.exists()` calls that carry arguments, since
+  `QuerySet.exists()` takes none and `Storage.exists(name)` is not the ORM.
 - `check_source()` and `check_file()` take an optional `CheckContext`. Without
-  one there is no index, and both behave exactly as they did before.
+  one there is no index, so only `ORM001` and `ORM002` are reported. Not quite
+  the previous behaviour: `required_prefetches` is honoured whether or not there
+  is an index, so a declaration in the file under check can now silence an
+  `ORM002` that was previously reported.
 - The `drf-serializer-orm-check` pre-commit hook sets `require_serial: true`, so
   parallel invocations do not each build their own index.
 
 ### Notes
 
-- Upgrading will surface new violations in existing projects. Run
+- Upgrading will surface new violations in existing projects - `ORM003` through
+  `ORM009`, and also `ORM001` on any `_default_manager` / `_base_manager` access
+  that the narrower `.objects`-only check used to miss. Run
   `drf-lint --generate-baseline` once, or roll the new codes out with
   `--select`.
-- `--no-cross-file` restores the previous single-file behaviour exactly.
+- `--no-cross-file` turns off the index and `required_prefetches` awareness,
+  leaving `ORM001` and `ORM002` as the only rules in play. `ORM001` keeps its
+  widened manager vocabulary either way, so this is the previous set of rules
+  rather than the previous set of findings.

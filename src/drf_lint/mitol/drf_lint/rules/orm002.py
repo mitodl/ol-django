@@ -28,7 +28,7 @@ QUERYSET_METHODS = patterns.QUERYSET_METHODS
 def check(node: cst.Call, line: int, col: int) -> Violation | None:
     """Return a Violation if *node* is a related-manager queryset call, else None."""
     chain = patterns.flatten_cst_chain(node.func)
-    if patterns.is_queryset_method_call(chain):
+    if patterns.is_queryset_method_call(chain, has_args=bool(node.args)):
         return Violation(rule=RULE, message=MESSAGE, line=line, col=col)
     return None
 

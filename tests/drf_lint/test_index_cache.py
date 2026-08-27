@@ -9,6 +9,7 @@ from __future__ import annotations
 import mitol.drf_lint.index as index_pkg
 from mitol.drf_lint.index import build_index
 from mitol.drf_lint.index.cache import DEFAULT_CACHE_NAME, config_hash, load
+from mitol.drf_lint.rules import patterns
 
 _MODULE_COUNT = 12
 
@@ -92,6 +93,25 @@ def test_stale_config_hash_invalidates_everything(project):
     build_index(project.root, cache_path=cache)
     cache.write_text(cache.read_text().replace(config_hash(), "stale"))
     assert load(cache) == {}
+
+
+def test_config_hash_covers_every_vocabulary_set(monkeypatch):
+    """A vocabulary left out of the fingerprint would be served from a stale cache.
+
+    Asserted by reflection rather than by listing the sets, so adding one to
+    `patterns` cannot quietly go unfingerprinted.
+    """
+    baseline = config_hash()
+    names = [
+        name
+        for name, value in vars(patterns).items()
+        if name.isupper() and isinstance(value, frozenset)
+    ]
+    assert names, "no vocabulary sets found - reflection is looking in the wrong place"
+    for name in names:
+        monkeypatch.setattr(patterns, name, frozenset({"sentinel"}))
+        assert config_hash() != baseline, f"{name} is missing from config_hash()"
+        monkeypatch.undo()
 
 
 def test_cache_round_trips_every_field(project):

@@ -261,6 +261,67 @@ def test_dict_get_is_not_mistaken_for_a_query(project):
     assert not member.queries
 
 
+def test_json_field_values_is_not_mistaken_for_a_query(project):
+    """`dict.values()` is zero-argument too, so the name alone cannot decide.
+
+    Guarding this at the source matters more than the one line suggests: the
+    index closes over the call graph, so a single false hit propagates outwards
+    and arrives wearing an authoritative `via A -> B -> C` chain.
+    """
+    project.write(
+        "myapp/models.py",
+        """
+        from django.db import models
+
+
+        class Widget(models.Model):
+            name = models.CharField(max_length=50)
+            config = models.JSONField(default=dict)
+
+            def _summarize(self):
+                return sorted(self.config.values())
+
+            @property
+            def config_summary(self):
+                return self._summarize()
+
+            @property
+            def label(self):
+                return f"{self.name}: {self.config_summary}"
+        """,
+    )
+    index = project.index()
+    for name in ("_summarize", "config_summary", "label"):
+        _, member = _member(index, "myapp.models", "Widget", name)
+        assert not member.queries, f"Widget.{name} wrongly marked as querying"
+
+
+def test_storage_exists_needs_an_argument_to_be_excused(project):
+    """`Storage.exists(name)` is not the ORM; `self.runs.exists()` still is."""
+    project.write(
+        "myapp/models.py",
+        """
+        from django.db import models
+
+
+        class Widget(models.Model):
+            upload = models.FileField(upload_to="w/")
+
+            def has_upload(self, name):
+                return self.upload.storage.exists(name)
+
+            @property
+            def has_runs(self):
+                return self.runs.exists()
+        """,
+    )
+    index = project.index()
+    _, stored = _member(index, "myapp.models", "Widget", "has_upload")
+    assert not stored.queries
+    _, runs = _member(index, "myapp.models", "Widget", "has_runs")
+    assert runs.queries
+
+
 # ------------------------------------------------------------------ #
 # Overlaying unsaved source
 # ------------------------------------------------------------------ #

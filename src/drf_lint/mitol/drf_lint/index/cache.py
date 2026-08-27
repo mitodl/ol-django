@@ -31,15 +31,20 @@ DEFAULT_CACHE_NAME = ".drf_lint_cache.json"
 
 
 def config_hash() -> str:
-    """Fingerprint of the detection vocabulary, so an upgrade self-invalidates."""
-    parts = [
-        __version__,
-        *sorted(patterns.QUERYSET_METHODS),
-        *sorted(patterns.MANAGER_ATTRS),
-        *sorted(patterns.MODEL_QUERY_METHODS_NOARG),
-        *sorted(patterns.PREFETCH_SAFE_METHODS),
-        *sorted(patterns.RELATION_FIELD_TYPES),
-    ]
+    """Fingerprint of the detection vocabulary, so an upgrade self-invalidates.
+
+    Derived by reflection rather than a hand-maintained list, because a
+    vocabulary added to :mod:`~mitol.drf_lint.rules.patterns` and forgotten here
+    would serve stale results silently.  Naming each group also keeps two
+    different vocabularies from hashing alike.  Over-invalidating costs a
+    rebuild; under-invalidating is the bug.
+    """
+    parts = [__version__]
+    parts.extend(
+        f"{name}={','.join(sorted(value))}"
+        for name in sorted(vars(patterns))
+        if name.isupper() and isinstance(value := getattr(patterns, name), frozenset)
+    )
     return "|".join(parts)
 
 

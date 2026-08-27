@@ -80,7 +80,11 @@ class CheckContext:
     """Everything the cross-file rules need beyond the source under check.
 
     A ``None`` index (the default) disables every cross-file rule, so
-    ``check_source(src)`` behaves exactly as it did before the index existed.
+    ``check_source(src)`` reports only ORM001 and ORM002, as it did before the
+    index existed.  It is not byte-identical to that: :attr:`prefetch_aware`
+    defaults on independently of the index, so a ``required_prefetches``
+    declaration in the file under check can silence an ORM002 that used to be
+    reported.
     """
 
     index: ProjectIndex | None = None
@@ -559,7 +563,7 @@ class _SerializerORMVisitor(cst.CSTVisitor):
         if violation is not None:
             self._add(violation)
             return
-        if patterns.is_queryset_method_call(chain):
+        if patterns.is_queryset_method_call(chain, has_args=bool(node.args)):
             self._check_related_call(chain, line, col)
             return
         self._check_callable(chain, line, col)

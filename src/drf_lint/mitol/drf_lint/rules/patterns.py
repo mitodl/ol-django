@@ -57,10 +57,17 @@ MANY_RELATION_FIELD_TYPES: frozenset[str] = frozenset(
 # Query methods that are only safe to look for inside a *model* body, where a
 # `self.<relation>.<method>()` chain is unambiguous.  Callers must additionally
 # require a >=3 segment chain and zero arguments, which is what keeps
-# `self.data.get("k")` and `some_list.count(x)` out.
+# `self.data.get("k")` and `some_list.count(x)` out.  `.values()` cannot be here:
+# the zero-argument rule is exactly what `dict.values()` satisfies, so a
+# JSONField read would register as a query.
 MODEL_QUERY_METHODS_NOARG: frozenset[str] = frozenset(
-    {"count", "exists", "aggregate", "values", "get"}
+    {"count", "exists", "aggregate", "get"}
 )
+
+# Queryset methods that take no arguments, ever.  A call carrying arguments is
+# therefore some other API -- `FileSystemStorage.exists(name)` is the one that
+# turns up in practice -- and must not be read as a query.
+ARGLESS_QUERYSET_METHODS: frozenset[str] = frozenset({"exists"})
 
 # Methods that read Django's prefetch cache instead of issuing a fresh query.
 # Everything else in QUERYSET_METHODS re-queries even on a prefetched manager:
@@ -86,14 +93,21 @@ def chain_has_manager(chain: tuple[str, ...]) -> bool:
     return any(segment in MANAGER_ATTRS for segment in chain[1:])
 
 
-def is_queryset_method_call(chain: tuple[str, ...]) -> bool:
+def is_queryset_method_call(chain: tuple[str, ...], *, has_args: bool = False) -> bool:
     """Return True if *chain* is a queryset method on a related manager.
 
     At least three segments are required (``instance.children.all``) so that a
     bare local-variable queryset call (``qs.all()``) is not mistaken for
     related manager traversal.
+
+    *has_args* is part of the question because a name is not enough to identify
+    the ORM: ``exists`` is also Django's storage API, and
+    ``self.upload.storage.exists(name)`` shares its shape with
+    ``self.runs.exists()``.  The argument list is what separates them.
     """
-    return len(chain) >= _MIN_RELATED_CHAIN and chain[-1] in QUERYSET_METHODS
+    if len(chain) < _MIN_RELATED_CHAIN or chain[-1] not in QUERYSET_METHODS:
+        return False
+    return not (has_args and chain[-1] in ARGLESS_QUERYSET_METHODS)
 
 
 def relation_root(chain: tuple[str, ...]) -> str | None:
