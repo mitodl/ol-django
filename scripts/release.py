@@ -40,8 +40,10 @@ def prepare(ctx: Context, app: App):
 
     echo(
         f"\nPrepared {app.version_git_tag}.\n\n"
-        "Commit these changes, open a PR, and merge it. Publishing to PyPI and "
-        "tagging happen automatically once CI passes on main."
+        "Commit these changes and open a PR containing nothing else. CI rejects "
+        "a release PR that also changes code.\n"
+        "Publishing to PyPI and tagging happen automatically once CI passes on "
+        "main."
     )
 
 

@@ -90,7 +90,9 @@ We maintain changelogs in `changelog.d/` directories with each app. To create a 
 
 You will need to adjust permissions/ownership on the new file if you're using the Compose setup.
 
-Then fill out the new file that was generated with information about your changes. These fragments are folded into the app's `CHANGELOG.md` when you prepare a release. **Do this before you put up a PR for your changes.**
+Then fill out the new file that was generated with information about your changes. **Do this before you put up a PR for your changes.**
+
+A fragment ships in the same PR as the code it describes, and that PR must not touch the app's `CHANGELOG.md`. Folding fragments into `CHANGELOG.md` is what cutting a release does, and it happens in its own PR — see below. `uv run scripts/changelog.py check` enforces the split, so a reviewer reading a code PR only ever has to read the new fragments.
 
 ### Releases
 
@@ -101,31 +103,37 @@ Version tags follow `{package-name}/v{version}` and are created by CI.
 **A release is a version change merged to `main`.** There are no tags to push and
 no release commands to run against the remote.
 
-1. On a branch, prepare the release:
+Cutting a release is its own PR, containing nothing but the release. The
+fragments it collects were written earlier, each alongside the code change it
+describes.
+
+1. Start from an up-to-date `main` with no other work in progress.
+
+2. Prepare the release on a branch:
 
    ```shell
    uv run scripts/release.py prepare --app APPNAME
    ```
 
-   This bumps the app's version everywhere it is declared and folds its
-   `changelog.d/` fragments into `CHANGELOG.md`.
+   This bumps the app's version everywhere it is declared, folds its
+   `changelog.d/` fragments into `CHANGELOG.md`, deletes them, and refreshes
+   `uv.lock`.
 
-2. Commit the result, open a PR, and merge it once CI is green.
+3. Commit the result, open a PR, and merge it once CI is green.
 
-That is the whole process. Once the checks pass on `main`, the `publish` job in
+Once the checks pass on `main`, the `publish` job in
 [the CI workflow](.github/workflows/ci.yml) builds every package whose version
 is not yet on PyPI, uploads it, and then creates the version tag.
 
-If you would rather not use `prepare`, editing the version by hand works too —
-the workflow only reads `[project] version` from the app's `pyproject.toml`. Two
-checks still apply:
+Do not add code to a release PR. CI rejects a PR that rewrites an app's
+`CHANGELOG.md` while changing anything under that app other than the two files
+that declare its version.
 
-- Keep the other two declarations (`[tool.bumpver] current_version` and
-  `mitol/APPNAME/__init__.py`) in step, or `uv run scripts/version.py check`
-  fails CI.
-- Touching an app still requires a changelog change in the same PR, either a
-  new `changelog.d/` fragment or an edit to its `CHANGELOG.md`, or
-  `uv run scripts/changelog.py check` fails CI.
+If you would rather not use `prepare`, editing the version by hand works too —
+the workflow only reads `[project] version` from the app's `pyproject.toml`. Keep
+the other two declarations (`[tool.bumpver] current_version` and
+`mitol/APPNAME/__init__.py`) in step, or `uv run scripts/version.py check` fails
+CI.
 
 #### How the workflow decides what to publish
 
