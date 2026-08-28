@@ -251,14 +251,23 @@ class UserGlobalIdMixin(Model):
 
     The `global_id` field points to the SSO ID for the user (so, usually the Keycloak
     ID, which is a UUID). We store it as a string in case the SSO source changes.
-    We allow a blank value so we can have out-of-band users - we may want a
-     Django user that's not connected to an SSO user, for instance.
+
+    It is unique: it is the identity key an API gateway resolves users by, and
+    without the constraint a get-then-create under concurrency silently forks
+    an account in two.
+
+    Unset is NULL rather than "", so that out-of-band users - a Django user
+    with no SSO account behind it - can still exist in any number. SQL treats
+    NULLs as distinct under a unique constraint; empty strings it does not,
+    which would cap the estate at exactly one unlinked user.
     """
 
     global_id = CharField(
         max_length=36,
+        null=True,
         blank=True,
-        default="",
+        default=None,
+        unique=True,
         help_text="The SSO ID (usually a Keycloak UUID) for the user.",
     )
 
