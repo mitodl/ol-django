@@ -19,27 +19,13 @@ To run this app in local development mode, copy `testapp/main/settings/example.d
 
 #### Use the Docker Compose environment (recommended)
 
-The Compose environment includes a container for general use called `shell` and one specifically for building releases called `release`. In either case, you'll get a shell with `uv` already set up, and with a PostgreSQL database available.
+The Compose environment includes a container for general use called `shell`. You'll get a shell with `uv` already set up, and with a PostgreSQL database available.
 
 - Ensure that 'other' users can write to the repo directory: `chmod -R o+w .`
 - Build the containers: `docker compose build`
 - Get a shell in the `shell` container: `docker compose run --rm -ti shell bash`
 
 The database server is exposed on port 55432 locally - you can override this by setting `POSTGRES_PORT` in your environment.
-
-#### Using the `release` container
-
-The `release` container is special and is set up to run `build` commands, including generating releases. It's special because it _does not_ mount your local copy of the codebase (mainly because of file permission issues). So, it requires a bit more care before using.
-
-**One-time setup:**
-1. Copy the SSH private key you use for GitHub to the `ssh` folder and name it appropriately (e.g. `id_ed25519`, etc.)
-2. Set permissions on the key so that it is group-readable (`0640`).
-
-**Using:**
-1. Build the images, so the source code in the image is up to date: `docker compose build`
-2. Get a shell: `docker compose run --rm -ti release bash`
-3. Run your command: `uv run scripts/release.py create` etc. etc. etc.
-4. If you've done things that involve Git, make sure you `git pull` when you leave the session.
 
 ### Navigating this repository
 
@@ -102,21 +88,73 @@ We maintain changelogs in `changelog.d/` directories with each app. To create a 
 - `uv run scripts/changelog.py create --app APPNAME`
   - `APPNAME`: the name of an application directory
 
-Note warning above about `PYTHONPATH`. You will need to adjust permissions/ownership on the new file if you're using the Compose setup.
+You will need to adjust permissions/ownership on the new file if you're using the Compose setup.
 
-Then fill out the new file that was generated with information about your changes. These changes will all be merged down into `CHANGELOG.md` when a release is generated. **Do this before you put up a PR for your changes.**
+Then fill out the new file that was generated with information about your changes. These fragments are folded into the app's `CHANGELOG.md` when you prepare a release. **Do this before you put up a PR for your changes.**
 
 ### Releases
 
 Changelogs are maintained according to [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning uses a date-based versioning scheme with incremental builds on the same day.
-Version tags follow `{package-name}/v{version}`
-To perform a release, run:
-- `uv run scripts/release.py create --app APPNAME --push`:
-  - `APPNAME`: the name of an application directory
+Version tags follow `{package-name}/v{version}` and are created by CI.
 
-`release` expects to be run on the `main` branch and it expects you to not have changes pending.
+**A release is a version change merged to `main`.** There are no tags to push and
+no release commands to run against the remote.
 
-You should probably avoid running this within the `shell` container - Git will be pretty unhappy about the permissions of the `.git` folder and you may run into other permissions issues. Either run this on your local machine or use the `release` container for this as described above.
+1. On a branch, prepare the release:
 
-Supplying the `--push` flag will tag the release appropriately and push it, and a GitHub action should publish it to PyPI.
+   ```shell
+   uv run scripts/release.py prepare --app APPNAME
+   ```
+
+   This bumps the app's version everywhere it is declared and folds its
+   `changelog.d/` fragments into `CHANGELOG.md`.
+
+2. Commit the result, open a PR, and merge it once CI is green.
+
+That is the whole process. Once the checks pass on `main`, the `publish` job in
+[the CI workflow](.github/workflows/ci.yml) builds every package whose version
+is not yet on PyPI, uploads it, and then creates the version tag.
+
+If you would rather not use `prepare`, editing the version by hand works too —
+the workflow only reads `[project] version` from the app's `pyproject.toml`. Keep
+the other two declarations (`[tool.bumpver] current_version` and
+`mitol/APPNAME/__init__.py`) in step, or `uv run scripts/version.py check` will
+fail CI.
+
+#### How the workflow decides what to publish
+
+For each app it compares the version in `pyproject.toml` against PyPI, and
+publishes only what is missing there. PyPI is the source of truth rather than
+the tag history, because this repository contains published versions that were
+never tagged. Practical consequences:
+
+- Re-running the workflow is safe; already-published versions are skipped.
+- Bumping several apps in one PR releases all of them.
+- Editing a `pyproject.toml` without changing its version releases nothing.
+- The tag is created only after a successful upload, so a tag always means the
+  version really is on PyPI.
+
+#### PyPI Trusted Publishing
+
+Publishing uses [Trusted Publishing](https://docs.pypi.org/trusted-publishers/):
+GitHub mints a short-lived OIDC token for the job, so there is no PyPI API token
+in this repository.
+
+Each PyPI project must be told to trust this workflow once, under *Manage project
+→ Publishing*:
+
+| Field | Value |
+| --- | --- |
+| Owner | `mitodl` |
+| Repository | `ol-django` |
+| Workflow name | `ci.yml` |
+| Environment | `pypi` |
+
+The values are identical for every package. A package whose publisher is not yet
+configured simply fails its own matrix job, without affecting the others.
+
+When adding a **new** package, register it as a
+[pending publisher](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/)
+with the same values before its first release, since the PyPI project will not
+exist yet.

@@ -36,15 +36,3 @@ RUN mkdir -p .cache && chown dev:dev .cache
 
 VOLUME /home/dev/.cache
 WORKDIR /home/dev/src
-
-# ===================================================================
-FROM uv as release
-
-USER dev
-
-WORKDIR /home/dev
-RUN mkdir -m 0750 .ssh
-COPY --chown=dev:dev . /home/dev/src
-
-WORKDIR /home/dev/src
-RUN uv sync

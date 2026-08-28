@@ -28,6 +28,9 @@ uv run testapp/manage.py <command>
 
 # Create a changelog entry (required before every PR)
 uv run scripts/changelog.py create --app <appname>
+
+# Prepare a release (bumps the version, folds changelog.d into CHANGELOG.md)
+uv run scripts/release.py prepare --app <appname>
 ```
 
 ## Architecture
@@ -64,7 +67,9 @@ pyproject.toml          # Root: workspace config, pytest config, ruff config, de
 
 **Changelogs**: Each app has a `changelog.d/` directory. A new changelog entry is **required** before submitting a PR. Use `uv run scripts/changelog.py create --app <appname>`.
 
-**Versioning**: Date-based scheme `YYYY.MM.DD[.INC0]`. Tags follow `{package-name}/v{version}`.
+**Versioning**: Date-based scheme `YYYY.MM.DD[.INC0]`. Tags follow `{package-name}/v{version}` and are created by CI, never by hand. Each app declares its version in three places (`[project] version`, `[tool.bumpver] current_version`, and `mitol/<appname>/__init__.py`); `uv run scripts/release.py prepare` updates all three and `uv run scripts/version.py check` enforces that they agree.
+
+**Releases**: A release is a version change merged to `main`. The `detect-releases` and `publish` jobs in `.github/workflows/ci.yml` then build every app whose `pyproject.toml` version is not yet on PyPI, publish it via Trusted Publishing (OIDC, no API token), and create the tag. PyPI is the source of truth for what is already released, so re-runs are safe and multi-app bumps work. Never add a tag-triggered publish step, and keep publishing in `ci.yml` rather than a `workflow_run` workflow (zizmor rejects that trigger).
 
 **Adding a new app**: Copy `src/uvtestapp`, update names throughout, add to root `pyproject.toml` under `[project].dependencies` and `[tool.uv.sources]`, add to `testapp/main/settings/shared.py` (`INSTALLED_APPS` + `import_settings_modules`), and create `tests/<appname>/__init__.py`.
 
@@ -72,9 +77,10 @@ pyproject.toml          # Root: workspace config, pytest config, ruff config, de
 
 CI (`.github/workflows/ci.yml`) runs on every push across Python 3.11–3.13 and Django 4.2, 5.0, 5.1, and 5.2 with a PostgreSQL service container. It checks:
 1. Changelog presence (`uv run scripts/changelog.py check`)
-2. Tests (`uv run pytest`)
+2. Version consistency (`uv run scripts/version.py check`)
+3. Tests (`uv run pytest`)
 
-Releases to PyPI are triggered by version tags and run `uv build "src/<app-package>"` for the selected app.
+On `main`, the `detect-releases` and `publish` jobs then release any app whose version is not yet on PyPI, building with `uv build --package <pypi-name>`. Build by PyPI project name rather than directory: `mitol-drf-lint` does not follow the `mitol-django-<dir>` convention.
 
 ## Ruff Configuration
 

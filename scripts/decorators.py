@@ -52,38 +52,3 @@ def with_app(func):
 def app_option(func):
     """Configures a command with a contextual app"""  # noqa: D401
     return with_app(_apply_app_option(func))
-
-
-def _no_require_main_callback(ctx: Context, _param: str, value: bool) -> bool:  # noqa: FBT001
-    if not value:
-        project = ctx.ensure_object(Project)
-
-        if project.repo.active_branch.name != "main":
-            ctx.fail("Must be on main branch.")
-
-    return value
-
-
-no_require_main = option(
-    "--no-require-main",
-    help="Don't require the main branch to be checked out.",
-    callback=_no_require_main_callback,
-    flag_value=True,
-    default=False,
-    expose_value=False,
-)
-
-
-def require_no_changes(func):
-    @wraps(func)
-    @pass_project
-    @pass_context
-    def wrapper(ctx: Context, project: Project, *args, **kwargs):
-        if project.repo.is_dirty():
-            ctx.fail(
-                "Cannot proceed with local git changes present.\n\nCommit or remove them and try again."  # noqa: E501
-            )
-
-        return ctx.invoke(func, *args, **kwargs)
-
-    return wrapper

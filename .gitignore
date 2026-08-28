@@ -69,10 +69,6 @@ testapp/settings/dev.py
 /.pants.workdir.file_lock*
 *.pex
 
-# SSH keys/etc.
-ssh/*
-
-
 .claude/
 
 # drf-lint project index cache

@@ -1,14 +1,11 @@
-from click import echo, pass_context
-from cloup import Context, group, option
+import subprocess
+
+from click import echo
+from cloup import Context, group, pass_context
 
 from scripts import changelog, version
 from scripts.apps import App
-from scripts.decorators import (
-    app_option,
-    no_require_main,
-    pass_app,
-    pass_project,
-)
+from scripts.decorators import app_option, pass_app
 from scripts.project import Project
 
 
@@ -19,88 +16,46 @@ def release(ctx: Context):
 
 
 @release.command()
-# @require_no_changes
-@no_require_main
 @app_option
-@option(
-    "--push",
-    help="Push the release commit and tag.",
-    flag_value=True,
-    default=False,
-)
 @pass_app
-@pass_project
 @pass_context
-def create(ctx: Context, project: Project, app: App, push: bool):  # noqa: FBT001, ARG001
-    """Create a new release"""
+def prepare(ctx: Context, app: App):
+    """Bump an app's version and fold its changelog fragments into CHANGELOG.md"""
+    if not _fragment_paths(app):
+        echo(
+            f"No changelog fragments found in {app.module_name}/changelog.d.\n"
+            "CI requires a changelog entry for a release, so add one with:\n"
+            f"  uv run scripts/changelog.py create --app {app.module_name}"
+        )
+        raise SystemExit(1)
 
-    ctx.invoke(changelog.check)
     ctx.invoke(version.version.get_command(ctx, "update"))
-    # keep=True so we can remove these properly (i.e. in Git) later
-    ctx.invoke(changelog.collect, version=app.version, keep=True)
+    # keep=False lets scriv delete the fragments it consumed; they are then
+    # committed as ordinary deletions alongside the version bump.
+    ctx.invoke(changelog.collect, version=app.version, keep=False)
 
-    # copy and remove irrelevant params
-    params = ctx.params.copy()
-    params.pop("push", None)
+    # The lockfile pins every workspace member's version, so it moves with the
+    # bump and belongs in the same commit.
+    subprocess.run(["uv", "lock"], check=True, cwd=app.project.path)  # noqa: S607
 
-    ctx.invoke(commit_and_tag, **params)
-
-    if push:
-        ctx.invoke(push_to_remote, **params)
-
-
-@release.command()
-@app_option
-@pass_app
-@pass_project
-def commit_and_tag(project: Project, app: App):
-    """Commit outstanding changes and tag them as a release"""
-    repo = project.repo
-    tag_name = app.version_git_tag
-
-    repo.index.add(
-        [
-            app.absolute_path / "mitol" / app.module_name / "__init__.py",
-            app.absolute_path / "pyproject.toml",
-            app.absolute_path / "CHANGELOG.md",
-            project.path / "uv.lock",
-        ]
+    echo(
+        f"\nPrepared {app.version_git_tag}.\n\n"
+        "Commit these changes, open a PR, and merge it. Publishing to PyPI and "
+        "tagging happen automatically once CI passes on main."
     )
 
-    # Remove all collected changelog fragments regardless of file extension.
-    # scriv is configured for Markdown, but historically some fragments were
-    # authored as .rst. Removing only "*.md" left those behind to be
-    # re-collected into every subsequent release, producing duplicate entries.
+
+def _fragment_paths(app: App) -> list:
+    """List an app's uncollected changelog fragments"""
     changelog_dir = app.absolute_path / "changelog.d"
-    fragment_paths = [
+
+    return [
         path
         for path in sorted(changelog_dir.glob("*"))
         if path.is_file()
         and path.name != "scriv.ini"
-        and not path.name.startswith("README")
-        and not path.name.startswith(".")
+        and not path.name.startswith(("README", "."))
     ]
-
-    if fragment_paths:
-        repo.index.remove(fragment_paths, working_tree=True)
-
-    repo.index.commit(f"Release {tag_name}")
-
-    echo(f"Tagging {tag_name}")
-    repo.create_tag(tag_name)
-
-
-@release.command()
-@app_option
-@pass_app
-@pass_project
-def push_to_remote(project: Project, app: App):
-    """Push the latest release commit and tag to the remote"""
-    # git push origin --follow-tags {tag} HEAD
-    project.repo.remote("origin").push(
-        [app.version_git_tag, "HEAD"],
-        follow_tags=True,
-    )
 
 
 if __name__ == "__main__":
