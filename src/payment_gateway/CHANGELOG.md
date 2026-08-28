@@ -6,6 +6,31 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.8.28'></a>
+## [2026.8.28] - 2026-08-28
+
+### Removed
+
+- Removed the `default_app_config` module attribute. Django deprecated it in 3.2 and dropped support in 4.1, so it has been dead for every version this package now supports.
+
+### Added
+
+- Stripe: Additional constants for various Stripe and related values
+- Stripe: Event filtering helper
+- Stripe: Checkout session status calculation (including payment intent)
+- Stripe: Fixtures based on the sample data from the docs
+
+### Changed
+
+- Stripe: Updated factories to use the new "real-data" fixtures
+- Stripe: Moved test factories into the main app, so they can be used in dependent app
+
+- Raised the minimum supported Django to 4.2. The previous `django>=3.0` had not been true for some time: CI's lowest matrix leg is already 4.2, and the last 3.x release (3.2 LTS) reached end-of-life in April 2024.
+
+### Fixed
+
+- Capped `cybersource-rest-client-python` below `0.0.64`. The constraint was an open `>=0.0.59`, so a lockfile refresh moved it 0.0.63 → 0.0.78, and 0.0.78 renames `Ptsv2paymentsProcessingInformationAuthorizationOptionsInitiatorMerchantInitiatedTransaction` to `ProcessingInfoAuthorizationOptionsInitiatorMerchantInitiatedTransaction`. Nothing in the library source references that class — the three model classes it does import all survive the bump — so no consumer was broken at runtime, but the test suite failed with `AttributeError` on every matrix job. The cap is an upper bound rather than an exact pin so consuming applications are not handed a hard conflict; moving to a newer SDK should be a deliberate, reviewed change rather than a side effect of relocking.
+
 <a id='changelog-2026.8.10'></a>
 ## [2026.8.10] - 2026-08-10
 
