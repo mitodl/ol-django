@@ -23,6 +23,8 @@ class Changes:
     top_level_dependency_changes: list[Diff]
     source_changes: list[Diff]
     changelogd_changes: list[Diff]
+    changelog_md_changes: list[Diff]
+    code_changes: list[Diff]
 
     @cached_property
     def has_top_level_dependency_changes(self) -> bool:
@@ -35,6 +37,14 @@ class Changes:
     @cached_property
     def has_changelogd_changes(self) -> bool:
         return len(self.changelogd_changes) > 0
+
+    @cached_property
+    def has_changelog_md_changes(self) -> bool:
+        return len(self.changelog_md_changes) > 0
+
+    @cached_property
+    def has_code_changes(self) -> bool:
+        return len(self.code_changes) > 0
 
     @cached_property
     def new_changelogd_fragments(self) -> list[Diff]:
@@ -82,21 +92,32 @@ class Changes:
             and not _is_source_excluded(change.b_path)
         ]
 
-        # CHANGELOG.md counts alongside the fragments: preparing a release
-        # folds every fragment into it and deletes them, which nets out to no
-        # changelog.d diff when a fragment is added and collected on the same
-        # branch.
         changelogd_changes = [
             change
             for change in base_commit.diff(
-                target_commit,
-                paths=[
-                    app.relative_path / "changelog.d",
-                    app.relative_path / "CHANGELOG.md",
-                ],
+                target_commit, paths=[app.relative_path / "changelog.d"]
             )
             if not _is_changelog_excluded(change.a_path)
             and not _is_changelog_excluded(change.b_path)
+        ]
+
+        changelog_md_changes = base_commit.diff(
+            target_commit, paths=[app.relative_path / "CHANGELOG.md"]
+        )
+
+        # Collecting fragments into CHANGELOG.md is what cutting a release
+        # means, and a release may only touch the files that declare the
+        # version. Everything else under the app is code, and code ships in its
+        # own PR with its own changelog fragment.
+        version_declarations = {
+            str(app.relative_path / "pyproject.toml"),
+            str(app.relative_path / "mitol" / app.module_name / "__init__.py"),
+        }
+
+        code_changes = [
+            change
+            for change in source_changes
+            if not _is_version_declaration(change, version_declarations)
         ]
 
         return cls(
@@ -104,7 +125,16 @@ class Changes:
             top_level_dependency_changes,
             source_changes,
             changelogd_changes,
+            changelog_md_changes,
+            code_changes,
         )
+
+
+def _is_version_declaration(change: Diff, version_declarations: set[str]) -> bool:
+    """Return True if a change only touches files that declare the version"""
+    paths = {path for path in (change.a_path, change.b_path) if path is not None}
+
+    return bool(paths) and paths <= version_declarations
 
 
 def _is_source_excluded(path: str | None) -> bool:

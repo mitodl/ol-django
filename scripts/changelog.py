@@ -102,6 +102,24 @@ def check(ctx: Context, project: Project, base: str, target: str):
             is_error = True
             echo("")
 
+        if changes.has_changelog_md_changes and changes.has_code_changes:
+            echo(
+                f"CHANGELOG.md is being rewritten in {app.relative_path} alongside "
+                "code changes:"
+            )
+            for change in changes.code_changes:
+                _echo_change(change)
+            echo(
+                indent(
+                    "Cut the release in its own PR. Code changes ship with a\n"
+                    "changelog.d fragment; collecting those fragments into\n"
+                    "CHANGELOG.md is a separate change.",
+                    "\t",
+                )
+            )
+            is_error = True
+            echo("")
+
         # verify the fragments aren't empty
         with chdir(app.absolute_path):
             scriv = Scriv()
