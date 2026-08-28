@@ -209,7 +209,7 @@ def test_resolve_user_adopts_unlinked_account(settings):
     settings.MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY = "email"
 
     legacy = SsoUserFactory.create()
-    legacy.global_id = ""
+    legacy.global_id = None
     legacy.save()
 
     payload, user_info = generate_fake_apisix_payload()
@@ -236,7 +236,7 @@ def test_resolve_user_creates_when_adoption_is_off(settings):
     settings.MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY = None
 
     legacy = SsoUserFactory.create()
-    legacy.global_id = ""
+    legacy.global_id = None
     legacy.save()
 
     payload, user_info = generate_fake_apisix_payload()
@@ -267,7 +267,7 @@ def test_resolve_user_refuses_ambiguous_identity(settings):
     matches_by_global_id.save()
 
     matches_by_email = SsoUserFactory.create()
-    matches_by_email.global_id = ""
+    matches_by_email.global_id = None
     matches_by_email.email = user_info["email"]
     matches_by_email.save()
 
@@ -449,7 +449,7 @@ def test_ambiguity_log_names_the_adoption_field(settings, caplog):
 
     for _ in range(2):
         clash = SsoUserFactory.create()
-        clash.global_id = ""
+        clash.global_id = None
         clash.email = user_info["email"]
         clash.save()
 
@@ -480,7 +480,7 @@ def test_resolve_user_loses_the_adoption_race_without_stealing_the_row(
     settings.MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY = "email"
 
     contested = SsoUserFactory.create()
-    contested.global_id = ""
+    contested.global_id = None
     contested.save()
 
     payload, user_info = generate_fake_apisix_payload()
@@ -532,7 +532,7 @@ def test_resolve_user_adopts_unlinked_account_case_insensitively(settings):
     settings.MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY = "email"
 
     legacy = SsoUserFactory.create(email="Legacy.User@Example.COM")
-    legacy.global_id = ""
+    legacy.global_id = None
     legacy.save()
 
     payload, user_info = generate_fake_apisix_payload()
