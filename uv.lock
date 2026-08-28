@@ -2665,7 +2665,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-payment-gateway"
-version = "2026.8.10"
+version = "2026.8.28"
 source = { editable = "src/payment_gateway" }
 dependencies = [
     { name = "cybersource-rest-client-python" },
