@@ -9,7 +9,7 @@ dependencies = [
   "mitol-django-common[celery]",
   "mitol-django-mail",
   "mitol-django-authentication",
-  "mitol-django-digitalcredentials",
+  "mitol-django-digital-credentials",
   "mitol-django-geoip",
   "mitol-django-google_sheets",
   "mitol-django-google_sheets_deferrals",
@@ -101,7 +101,7 @@ conflicts = [
 mitol-django-apigateway = "0d"
 mitol-django-authentication = "0d"
 mitol-django-common = "0d"
-mitol-django-digitalcredentials = "0d"
+mitol-django-digital-credentials = "0d"
 mitol-django-geoip = "0d"
 mitol-django-google-sheets = "0d"
 mitol-django-google-sheets-deferrals = "0d"
@@ -130,7 +130,7 @@ no-binary = ["lxml"]
 mitol-django-common = { workspace = true }
 mitol-django-mail = { workspace = true }
 mitol-django-authentication = { workspace = true }
-mitol-django-digitalcredentials = { workspace = true }
+mitol-django-digital-credentials = { workspace = true }
 mitol-django-geoip = { workspace = true }
 mitol-django-google_sheets = { workspace = true }
 mitol-django-google_sheets_deferrals = { workspace = true }

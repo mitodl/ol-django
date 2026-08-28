@@ -6,7 +6,7 @@ dependencies = [
   "mitol-django-common[celery]",
   "mitol-django-mail",
   "mitol-django-authentication",
-  "mitol-django-digitalcredentials",
+  "mitol-django-digital-credentials",
   "mitol-django-geoip",
   "mitol-django-google_sheets",
   "mitol-django-google_sheets_deferrals",

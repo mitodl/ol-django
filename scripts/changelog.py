@@ -11,6 +11,7 @@ from scriv.create import create
 from scriv.scriv import Scriv
 
 from scripts.apps import App, list_apps
+from scripts.changes import Changes
 from scripts.contextlibs import chdir
 from scripts.decorators import app_option, pass_app, pass_project
 from scripts.project import Project
@@ -55,6 +56,57 @@ def _echo_change(change: Diff):
         line.extend(["->", change.b_path])
 
     echo(indent(" ".join(line), "\t"))
+
+
+def _report_empty_fragments(app: App) -> bool:
+    """Report an app's changelog fragments that have no content"""
+    with chdir(app.absolute_path):
+        scriv = Scriv()
+        fragments = scriv.fragments_to_combine()
+        for fragment in fragments:
+            fragment.read()
+
+    empty_fragments = [
+        fragment for fragment in fragments if not fragment.content.strip()
+    ]
+
+    if not empty_fragments:
+        return False
+
+    echo(f"Changelog(s) are present in {app.relative_path} but have no content:")
+
+    for fragment in empty_fragments:
+        echo(f"\t{fragment.path}")
+
+    echo("")
+
+    return True
+
+
+def _report_mixed_release(app: App, changes: Changes) -> bool:
+    """Report an app whose release is being cut in the same PR as code changes"""
+    if not (changes.has_changelog_md_changes and changes.has_code_changes):
+        return False
+
+    echo(
+        f"CHANGELOG.md is being rewritten in {app.relative_path} alongside "
+        "code changes:"
+    )
+
+    for change in changes.code_changes:
+        _echo_change(change)
+
+    echo(
+        indent(
+            "Cut the release in its own PR. Code changes ship with a\n"
+            "changelog.d fragment; collecting those fragments into\n"
+            "CHANGELOG.md is a separate change.",
+            "\t",
+        )
+    )
+    echo("")
+
+    return True
 
 
 @changelog.command()
@@ -102,23 +154,11 @@ def check(ctx: Context, project: Project, base: str, target: str):
             is_error = True
             echo("")
 
-        # verify the fragments aren't empty
-        with chdir(app.absolute_path):
-            scriv = Scriv()
-            fragments = scriv.fragments_to_combine()
-            for fragment in fragments:
-                fragment.read()
-
-        empty_fragments = list(filter(lambda frag: not frag.content.strip(), fragments))
-
-        if empty_fragments:
-            echo(
-                f"Changelog(s) are present in {app.relative_path} but have no content:"
-            )
-            for fragment in empty_fragments:
-                echo(f"\t{fragment.path}")
+        if _report_mixed_release(app, changes):
             is_error = True
-            echo("")
+
+        if _report_empty_fragments(app):
+            is_error = True
 
     if is_error:
         ctx.exit(1)
