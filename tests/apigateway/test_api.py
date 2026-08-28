@@ -77,7 +77,7 @@ def test_get_username_honours_the_configured_lookup_field(settings):
 
     test_user = SsoUserFactory.create()
     test_user.scim_external_id = test_user.global_id
-    test_user.global_id = ""
+    test_user.global_id = None
     test_user.save()
 
     payload, user_info = generate_fake_apisix_payload()
