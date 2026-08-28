@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.auth import get_user_model
+from factory import Faker
 from mitol.common.factories import UserFactory
 from mitol.common.factories.defaults import ScimUserFactory, SsoUserFactory
 from mitol.scim import tasks
@@ -17,10 +18,14 @@ def test_sync_all_users_to_scim_remote(mocker, never_synced_only):
     synced_users = ScimUserFactory.create_batch(10)
     unsynced_users = UserFactory.create_batch(10)
     sso_users = SsoUserFactory.create_batch(10)
+    # global_id=None with a populated scim_external_id: only the
+    # global_id__isnull=True clause selects these, not scim_external_id=None.
+    null_global_id_users = UserFactory.create_batch(10, scim_external_id=Faker("uuid4"))
 
     expected_users = [
         *sso_users,
         *unsynced_users,
+        *null_global_id_users,
     ]
 
     if not never_synced_only:
