@@ -51,12 +51,14 @@ MITOL_APIGATEWAY_USERINFO_CREATE = get_bool(
     description="Create users that we see but aren't aware of",
 )
 
-# Set to True to update users we've seen before. If you set this to False, make
-# sure there's a backchannel way to update the user data (SCIM, etc) or user
-# info will fall out of sync with the IdP pretty quickly.
+# Set to True to update users we've seen before. This defaults to False because
+# the userinfo the gateway attaches to a request is only refreshed when the user
+# logs in, so updating on every request will clobber newer data written by a
+# backchannel process (SCIM, etc). Only set this to True if there is no such
+# backchannel, otherwise user info will fall out of sync with the IdP.
 MITOL_APIGATEWAY_USERINFO_UPDATE = get_bool(
     name="MITOL_APIGATEWAY_USERINFO_UPDATE",
-    default=True,
+    default=False,
     description="Update users we've seen before",
 )
 
