@@ -36,6 +36,7 @@ class AnotherSerializer(serializers.Serializer):
 
 @pytest.fixture(autouse=True)
 def chdir_tmp_dir(tmp_path: Path):
+    """Run each CLI test from an empty directory, since paths are globbed."""
     with chdir(tmp_path):
         yield
 

@@ -74,3 +74,6 @@ ssh/*
 
 
 .claude/
+
+# drf-lint project index cache
+.drf_lint_cache.json

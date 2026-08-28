@@ -5,5 +5,8 @@
   entry: drf-lint
   language: python
   files: "serializers\\.py$"
+  # The checker builds one project-wide index per invocation, so parallel
+  # invocations would each build their own.
+  require_serial: true
   additional_dependencies:
   - mitol-drf-lint
