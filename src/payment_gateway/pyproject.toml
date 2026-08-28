@@ -10,7 +10,7 @@ dependencies = [
     # renames, so take the bump deliberately rather than via a lockfile refresh.
     "cybersource-rest-client-python>=0.0.59,<0.0.64",
     "django-stubs>=1.13.1",
-    "django>=3.0",
+    "django>=4.2",
     "mitol-django-common",
     "stripe>=15.3.0",
 ]

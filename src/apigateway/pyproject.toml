@@ -4,7 +4,7 @@ version = "2026.4.29"
 description = "MIT Open Learning Django app for API Gateway support"
 dependencies = [
     "django-stubs>=1.13.1",
-    "django>=3.0",
+    "django>=4.2",
     "channels>=4.2.0",
 ]
 readme = "README.md"

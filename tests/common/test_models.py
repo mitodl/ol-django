@@ -5,6 +5,8 @@ from random import choice, randint, sample
 
 import pytest
 import pytz
+from django.contrib.auth import get_user_model
+from django.db import IntegrityError, transaction
 from freezegun import freeze_time
 from libraries.models import Author, Book, Media
 from main.models import (
@@ -101,3 +103,30 @@ def test_auditable_model():
     # auditable_instance.status = FinancialAidStatus.AUTO_APPROVED  # noqa: ERA001
     auditable_instance.save_and_log(user)
     assert AuditableTestModelAudit.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_global_id_is_unique_but_allows_many_unset():
+    """
+    global_id refuses duplicates while leaving out-of-band users unconstrained.
+
+    This is the whole reason unset is NULL rather than "": SQL treats NULLs as
+    distinct under a unique constraint and empty strings as equal, so storing
+    "" would cap the estate at exactly one user without an SSO account.
+    """
+    User = get_user_model()
+
+    unset = [
+        User.objects.create(username=f"unset-{i}", email=f"unset-{i}@example.com")
+        for i in range(3)
+    ]
+    assert all(user.global_id is None for user in unset)
+
+    User.objects.create(
+        username="linked", email="linked@example.com", global_id="a-global-id"
+    )
+
+    with pytest.raises(IntegrityError), transaction.atomic():
+        User.objects.create(
+            username="fork", email="fork@example.com", global_id="a-global-id"
+        )

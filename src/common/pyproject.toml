@@ -6,7 +6,7 @@ dependencies = [
   "django-redis~=6.0",
   "django-stubs>=1.13.1",
   "django-webpack-loader>=0.7.0",
-  "django>=3.0",
+  "django>=4.2",
   "pytz>=2020.4",
   "requests>=2.20.0",
   "typing-extensions",

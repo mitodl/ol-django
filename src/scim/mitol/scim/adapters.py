@@ -136,7 +136,9 @@ class UserAdapter(SCIMUser):
         self.obj.last_name = d.get("name", {}).get("familyName", "")
         self.obj.scim_username = d.get("userName")
         self.obj.scim_external_id = d.get("externalId")
-        self.obj.global_id = self.obj.scim_external_id or ""
+        # None, not "": global_id is unique, and NULLs are distinct where
+        # empty strings are not - two users with no external id would collide.
+        self.obj.global_id = self.obj.scim_external_id or None
 
     def _save_user(self):
         self.obj.save()

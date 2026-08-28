@@ -4,7 +4,7 @@ version = "2026.4.2"
 description = "MIT Open Learning django app extensions for Posthog."
 dependencies = [
     "django-stubs>=1.13.1",
-    "django>=3.0",
+    "django>=4.2",
     "mitol-django-common",
     "posthog>=7.0.1,<8",
 ]

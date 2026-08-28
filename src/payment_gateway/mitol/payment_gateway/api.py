@@ -10,7 +10,7 @@ import logging
 import uuid
 import warnings
 from base64 import b64encode
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from decimal import Decimal
 from functools import wraps
 
@@ -31,15 +31,14 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest
 from mitol.common.utils.datetime import now_in_utc
-from mitol.payment_gateway.constants import (
-    CART_ITEM_DEFINED,
-    CART_ITEM_INLINE,
-    CART_ITEM_UNKNOWN,
-    ISO_8601_FORMAT,
-    MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
-    MITOL_PAYMENT_GATEWAY_STRIPE,
-    STRIPE_REFUND_REASON_CUSTOMER_REQUEST,
-    STRIPE_REFUND_REASONS,
+from mitol.payment_gateway import constants
+from mitol.payment_gateway.dataclasses import (
+    CartItem,
+    LookupCartItem,
+    Order,
+    ProcessorResponse,
+    Refund,
+    StripeCheckoutSessionStatus,
 )
 from mitol.payment_gateway.exceptions import (
     BadStripeWebhookSecretError,
@@ -56,142 +55,9 @@ from mitol.payment_gateway.payment_utils import (
     quantize_decimal,
     strip_nones,
 )
+from stripe.checkout import Session as StripeCheckoutSession
 
 log = logging.getLogger(__name__)
-
-
-@dataclass
-class BaseCartItem:
-    """
-    Base fields for a cart item.
-
-    Fields:
-    - quantity: Item quantity
-    - unitprice: Item price, after any necessary coupon/discout calculations
-    - taxable: Taxable amount
-    """
-
-    unitprice: Decimal = Decimal(0)
-    quantity: int = 1
-    taxable: Decimal = Decimal(0)
-
-    @property
-    def item_type(self):
-        """Return what kind of item this is."""
-
-        return CART_ITEM_UNKNOWN
-
-
-@dataclass
-class LookupCartItem(BaseCartItem):
-    """
-    Represents an item in the cart that is also configured in the payment processor.
-
-    We can sometimes specify a cart item using an identifier. So, this is a cart
-    item with just that and pricing data.
-    """
-
-    product_id: str | None = None
-
-    @property
-    def item_type(self):
-        """Return what kind of item this is."""
-
-        return CART_ITEM_DEFINED
-
-
-@dataclass
-class CartItem(BaseCartItem):
-    """
-    Represents an item in the cart. The mappings for xPro below are meant as an
-    example; the actual data passed should make sense for your application.
-
-    Fields:
-    - code: Item code (in xPro, content_type)
-    - name: Item name (in xPro, description)
-    - sku: Item SKU (in xPro, content_object.id)
-    """
-
-    code: str | None = None
-    name: str | None = None
-    sku: str | None = None
-
-    @property
-    def item_type(self):
-        """Return what kind of item this is."""
-
-        return CART_ITEM_INLINE
-
-
-@dataclass
-class Order:
-    """
-    Represents an order, and is mostly metadata for an in-progress order.
-
-    Fields:
-    - username: Purchaser username
-    - email: Purchaser email (default None)
-    - ip_address: Purchaser's IP address
-    - reference: Order reference number
-    - items: List of CartItems representing the items to be purchased
-    """
-
-    username: str
-    ip_address: str
-    reference: str
-    items: list[BaseCartItem]
-    email: str | None = None
-
-
-@dataclass
-class Refund:
-    """
-    Represents a refund request data
-
-    Fields:
-    - transaction_id: transaction id of a successful payment
-    - refund_amount: Amount to be refunded
-    - refund_currency: Currency for refund amount (Ideally, this should be the currency used while payment)
-    """  # noqa: E501
-
-    transaction_id: str
-    refund_amount: float | Decimal
-    refund_currency: str
-
-
-@dataclass
-class ProcessorResponse:
-    """
-    Standardizes the salient parts of the response from the
-    payment gateway after a transaction has come back to the app.
-
-    Most of these fields are going to be processor-dependent, but each
-    processor should at least have a state and a message. State should
-    ideally be one of the ones that there are constants for here.
-
-    Fields:
-    - state: string, should be one of the constants
-    - message: string, human-readable response from the processor
-    - response_code: string, code representing more info about the transaction status
-    - transaction_id: string, processor-dependent ID for the transaction
-    """
-
-    state: str
-    message: str
-    response_code: str
-    transaction_id: str
-    # In some cases we would need this data as traceback (Can be saved in the Transaction entries in Database)  # noqa: E501
-    response_data: str
-
-    STATE_ACCEPTED = "ACCEPT"
-    STATE_DECLINED = "DECLINE"
-    STATE_ERROR = "ERROR"
-    STATE_CANCELLED = "CANCEL"
-    STATE_REVIEW = "REVIEW"
-    # It's more of a reason then state, but treating this as state keeps it bound with the overall architecture  # noqa: E501
-    STATE_DUPLICATE = "DUPLICATE_REQUEST"
-    # The possible state for a successful refund is always `PENDING`
-    STATE_PENDING = "PENDING"
 
 
 class PaymentGateway(abc.ABC):
@@ -414,7 +280,7 @@ class PaymentGateway(abc.ABC):
 
 
 class CyberSourcePaymentGateway(
-    PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_CYBERSOURCE
+    PaymentGateway, gateway_class=constants.MITOL_PAYMENT_GATEWAY_CYBERSOURCE
 ):
     """
     The CyberSource implementation of Payment Gateway. This provides the data
@@ -536,7 +402,7 @@ class CyberSourcePaymentGateway(
             **formatted_merchant_fields,
             "reference_number": order.reference,
             "profile_id": settings.MITOL_PAYMENT_GATEWAY_CYBERSOURCE_PROFILE_ID,
-            "signed_date_time": now_in_utc().strftime(ISO_8601_FORMAT),
+            "signed_date_time": now_in_utc().strftime(constants.ISO_8601_FORMAT),
             "override_custom_receipt_page": receipt_url,
             "override_custom_cancel_page": cancel_url,
             "transaction_type": "sale",
@@ -1012,7 +878,9 @@ class CyberSourcePaymentGateway(
         return results
 
 
-class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_STRIPE):
+class StripePaymentGateway(
+    PaymentGateway, gateway_class=constants.MITOL_PAYMENT_GATEWAY_STRIPE
+):
     """
     The implementation of PaymentGateway for Stripe.
 
@@ -1041,16 +909,21 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
             raise ImproperlyConfigured(msg)
         self.stripe_client = stripe.StripeClient(api_key)
 
-    def _generate_product_data(self, item: BaseCartItem):
+    def _get_stripe_checkout_session_v1(self):
+        """Return the checkout session v1 client (mostly to make testing easier)."""
+
+        return self.stripe_client.v1.checkout.sessions
+
+    def _generate_product_data(self, item: CartItem | LookupCartItem):
         """
         Generate the Stripe product data for the line.
 
         The shape of the data changes if the product is defined in-line or not.
         """
 
-        if item.item_type == CART_ITEM_DEFINED:
+        if isinstance(item, LookupCartItem):
             return {"product": item.product_id}
-        elif item.item_type == CART_ITEM_INLINE:
+        elif isinstance(item, CartItem):
             return {
                 "product_data": {
                     "name": item.name,
@@ -1061,7 +934,7 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
 
         raise ImproperCartItemError(item)
 
-    def _generate_price_data(self, item: BaseCartItem):
+    def _generate_price_data(self, item: CartItem | LookupCartItem):
         """
         Generate the price data for the item.
 
@@ -1090,13 +963,34 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
             }
         }
 
-    def _generate_line_item(self, item: BaseCartItem):
+    def _generate_line_item(self, item: CartItem | LookupCartItem):
         """Generate a Stripe line item."""
 
         return {
             "quantity": item.quantity,
             **self._generate_price_data(item),
         }
+
+    def _validate_event_payload(self, request):
+        """Validate an event payload."""
+
+        payload = request.body
+
+        if len(payload) == 0:
+            msg = "Empty payload received."
+            raise ImproperStripeWebhookRequestError(msg)
+
+        try:
+            payload_json = json.loads(payload)
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            msg = "Improper JSON payload found."
+            raise ImproperStripeWebhookRequestError(msg) from exc
+
+        if "id" not in payload_json:
+            msg = "Improper JSON payload found (no 'id' prop)."
+            raise ImproperStripeWebhookRequestError(msg)
+
+        return payload_json["id"]
 
     def prepare_checkout(
         self,
@@ -1230,38 +1124,16 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
         """
 
         payload = request.body
-
-        if len(payload) == 0:
-            msg = "Empty payload received."
-            raise ImproperStripeWebhookRequestError(msg)
-
-        try:
-            payload_json = json.loads(payload)
-        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-            msg = "Improper JSON payload found."
-            raise ImproperStripeWebhookRequestError(msg) from exc
-
-        if "id" not in payload_json:
-            msg = "Improper JSON payload found (no 'id' prop)."
-            raise ImproperStripeWebhookRequestError(msg)
-
-        event_id = payload_json["id"]
-
-        if request.resolver_match and request.resolver_match.url_name:
-            route = request.resolver_match.url_name
-        else:
-            log.warning(
-                "StripePaymentGateway: could not get the route from the request,"
-                " using path_info instead"
-            )
-            route = request.path_info
-
-        key_qs = StripeWebhookSecret.objects.filter(routes__url_name=route)
-
-        if not key_qs.exists():
-            raise NoStripeWebhookSecretError(event_id=event_id, route=route)
+        event_id = self._validate_event_payload(request)
 
         signature_to_validate = request.headers.get("Stripe-Signature", False)
+        if not signature_to_validate:
+            raise ImproperStripeWebhookRequestError
+
+        key_qs = StripeWebhookSecret.get_secret_from_request_queryset(request)
+        if not key_qs.exists():
+            raise NoStripeWebhookSecretError(event_id=event_id)
+
         found_valid_key = False
 
         for key in key_qs.all():
@@ -1275,12 +1147,12 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
                 break
             except ValueError as exc:
                 raise ImproperStripeWebhookRequestError from exc
-            except stripe.error.SignatureVerificationError:
+            except stripe.SignatureVerificationError:
                 # We expect this one - if there's >1 key, then only one will be valid.
                 pass
 
         if not found_valid_key:
-            raise BadStripeWebhookSecretError(event_id=event_id, route=route)
+            raise BadStripeWebhookSecretError(event_id=event_id)
 
         return event
 
@@ -1299,7 +1171,7 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
         self,
         refund: Refund,
         *,
-        refund_reason: str = STRIPE_REFUND_REASON_CUSTOMER_REQUEST,
+        refund_reason: str = constants.STRIPE_REFUND_REASON_CUSTOMER_REQUEST,
     ):
         """
         Submit the refund request through Stripe.
@@ -1329,7 +1201,7 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
           (default to requested_by_customer)
         """
 
-        if refund_reason not in STRIPE_REFUND_REASONS:
+        if refund_reason not in constants.STRIPE_REFUND_REASONS:
             msg = f"Invalid refund reason {refund_reason}"
             raise ValueError(msg)
 
@@ -1341,30 +1213,151 @@ class StripePaymentGateway(PaymentGateway, gateway_class=MITOL_PAYMENT_GATEWAY_S
 
         return self.stripe_client.v1.refunds.create(stripe_refund)
 
-    def retrieve_checkout(self, checkout_session_id):
+    def filter_event(
+        self,
+        event: stripe.Event,
+        valid_events: list[str] = constants.STRIPE_EVENTS_CHECKOUT_SESSION,
+    ) -> object | None:
         """
-        Retrieve the Checkout Session.
+        Check the event against a list of acceptable types and return the object.
 
-        The response data will be normalized into the ProcessorResponse object,
-        as that is designed to hold the data for a transaction. The Checkout
-        Session only really has a "paid" and "not paid" status, so those are
-        mapped to "accepted" and "pending". The full response is returned in
-        response_data as a JSON-encoded string.
+        Stripe has lots of event types that are all potentially reported through
+        a single webhook interface. A given bit of logic probably only cares about
+        a couple of types, though, so this filters the object according to the
+        supplied types. If it passes, you get the data object you were expecting;
+        if not, you get None and can quit out. This should happen after
+        perform_processor_response_validation.
 
-        This is most useful for the landing pages post-checkout - webhooks will
-        be presented with an event that includes the checkout data.
+        Default event types are the checkout session ones since that's the most
+        relevant to current ecommerce implementations.
         """
 
-        response = self.stripe_client.v1.checkout.sessions.retrieve(checkout_session_id)
+        return event.data.object if event.type in valid_events else None
 
-        return ProcessorResponse(
-            state=(
-                ProcessorResponse.STATE_ACCEPTED
-                if response.payment_status != "unpaid"
-                else ProcessorResponse.STATE_PENDING
-            ),
-            message="",
-            response_code=response.payment_status,
-            transaction_id=response.id,
-            response_data=json.dumps(response.to_dict()),
+    def _calculate_checkout_session_status(
+        self, cs: StripeCheckoutSession, session_status: StripeCheckoutSessionStatus
+    ):
+        """Calculate status using only the checkout session status fields."""
+
+        if cs.status == constants.STRIPE_CHECKOUT_SESSION_STATUS_OPEN or (
+            cs.status == constants.STRIPE_CHECKOUT_SESSION_STATUS_COMPLETE
+            and cs.payment_status == constants.STRIPE_PAYMENT_STATUS_UNPAID
+        ):
+            session_status.status = constants.STRIPE_OVERALL_CHECKOUT_STATUS_PENDING
+        elif cs.status == constants.STRIPE_CHECKOUT_SESSION_STATUS_COMPLETE and (
+            cs.payment_status in constants.STRIPE_PAYMENT_STATUSES_GOOD
+        ):
+            # "complete" and "paid" is a weird state here
+            # - we should have a PaymentIntent to check
+            session_status.status = constants.STRIPE_OVERALL_CHECKOUT_STATUS_PAID
+        elif (
+            cs.status == "expired"
+            and cs.payment_status == constants.STRIPE_PAYMENT_STATUS_UNPAID
+        ):
+            session_status.status = constants.STRIPE_OVERALL_CHECKOUT_STATUS_CANCELLED
+            session_status.cancel_reason = "expired-unpaid"
+        else:
+            # weird state again - expired and paid or expired and no-payment-required
+
+            log.warning(
+                "Checkout session %s in weird state: state %s and payment_state %s",
+                cs.id,
+                cs.status,
+                cs.payment_status,
+            )
+            session_status.status = constants.STRIPE_OVERALL_CHECKOUT_STATUS_PENDING
+
+        return session_status
+
+    def calculate_checkout_session_status(
+        self, checkout_session: dict | str | StripeCheckoutSession
+    ) -> StripeCheckoutSessionStatus:
+        """
+        Process the provided Stripe CheckoutSession and provide its status.
+
+        The status of a Checkout Session requires calculation. The CheckoutSession
+        itself has two status fields, and (if it exists) its PaymentIntent has
+        another field that describes the state of the payment process. So, this
+        calculates the overall status using all these fields.
+
+        If a checkout session object is passed in, this will generate a new API
+        request for the checkout session details. This is both for ensuring that
+        the data being processed is fresh and to ensure that any Payment Intents
+        that may exist for the session are also loaded.
+
+        Args:
+        - checkout_session (dict|str|stripe.checkout.Session): a checkout session,
+          or the ID for one
+        Returns:
+        - StripeCheckoutSessionStatus; the overall status of the session
+        """
+
+        stripe_checkout_session_client = self._get_stripe_checkout_session_v1()
+
+        if isinstance(checkout_session, dict):
+            session_id = checkout_session.get("id")
+        elif isinstance(checkout_session, StripeCheckoutSession):
+            session_id = checkout_session.id
+        else:
+            session_id = checkout_session
+
+        if not session_id:
+            msg = "checkout session ID not found"
+            raise ValueError(msg)
+
+        # Call this directly so we can tell the client to expand payment_intent.
+
+        fetched_checkout_session = stripe_checkout_session_client.retrieve(
+            session_id,
+            {
+                "expand": [
+                    "payment_intent",
+                ],
+            },
         )
+
+        # The session itself has two status fields: status and payment_status
+        # status is the session status - open, complete, expired
+        # payment_status is payment with relation to the session - no_payment_required,
+        # paid, unpaid
+        # The PaymentIntent (if it exists) has the status of whatever actual payment
+        # was received. If cancelled, it also has a cancellation reason.
+
+        session_status = StripeCheckoutSessionStatus(
+            status=constants.STRIPE_OVERALL_CHECKOUT_STATUS_PENDING,
+            checkout_session_id=fetched_checkout_session.id,
+            transaction=fetched_checkout_session.to_dict(for_json=True),
+            payment_intent_id=None,
+            cancel_reason=None,
+            action_reason=None,
+        )
+
+        if not fetched_checkout_session.payment_intent:
+            # No payment intent at all, so just use the session statuses.
+            return self._calculate_checkout_session_status(
+                fetched_checkout_session, session_status
+            )
+
+        if not isinstance(
+            fetched_checkout_session.payment_intent, stripe.PaymentIntent
+        ):
+            msg = "Payment intent is of incorrect type."
+            raise TypeError(msg)
+
+        pi = fetched_checkout_session.payment_intent
+        session_status.payment_intent_id = pi.id
+
+        if pi.status == constants.STRIPE_PAYMENT_INTENT_STATUS_PROCESSING:
+            session_status.status = constants.STRIPE_OVERALL_CHECKOUT_STATUS_PENDING
+        elif pi.status == constants.STRIPE_PAYMENT_INTENT_STATUS_SUCCEEDED:
+            session_status.status = constants.STRIPE_OVERALL_CHECKOUT_STATUS_PAID
+        elif pi.status == constants.STRIPE_PAYMENT_INTENT_STATUS_CANCELLED:
+            session_status.status = constants.STRIPE_OVERALL_CHECKOUT_STATUS_CANCELLED
+            session_status.cancel_reason = pi.cancellation_reason
+        else:
+            session_status.status = (
+                constants.STRIPE_OVERALL_CHECKOUT_STATUS_PENDING_ACTION
+            )
+            session_status.action_reason = pi.status
+
+        return session_status
