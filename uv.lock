@@ -15,28 +15,28 @@ conflicts = [[
 ]]
 
 [options]
-exclude-newer = "2026-08-21T17:23:07.784091553Z"
+exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
-mitol-django-google-sheets = { timestamp = "2026-08-28T17:23:07.784110919Z", span = "PT0S" }
-mitol-django-hubspot-api = { timestamp = "2026-08-28T17:23:07.784112611Z", span = "PT0S" }
-mitol-django-common = { timestamp = "2026-08-28T17:23:07.784109213Z", span = "PT0S" }
-mitol-django-olposthog = { timestamp = "2026-08-28T17:23:07.784114457Z", span = "PT0S" }
-mitol-django-google-sheets-deferrals = { timestamp = "2026-08-28T17:23:07.784111473Z", span = "PT0S" }
-mitol-django-mail = { timestamp = "2026-08-28T17:23:07.784113057Z", span = "PT0S" }
-mitol-django-oauth-toolkit-extensions = { timestamp = "2026-08-28T17:23:07.784113552Z", span = "PT0S" }
-mitol-django-payment-gateway = { timestamp = "2026-08-28T17:23:07.784115357Z", span = "PT0S" }
-mitol-django-transcoding = { timestamp = "2026-08-28T17:23:07.784117425Z", span = "PT0S" }
-mitol-django-google-sheets-refunds = { timestamp = "2026-08-28T17:23:07.784111985Z", span = "PT0S" }
-mitol-django-apigateway = { timestamp = "2026-08-28T17:23:07.78410222Z", span = "PT0S" }
-mitol-drf-lint = { timestamp = "2026-08-28T17:23:07.784117894Z", span = "PT0S" }
-mitol-django-observability = { timestamp = "2026-08-28T17:23:07.784113999Z", span = "PT0S" }
-mitol-django-authentication = { timestamp = "2026-08-28T17:23:07.784108593Z", span = "PT0S" }
-mitol-django-openedx = { timestamp = "2026-08-28T17:23:07.7841149Z", span = "PT0S" }
-mitol-django-geoip = { timestamp = "2026-08-28T17:23:07.78411043Z", span = "PT0S" }
-mitol-django-digital-credentials = { timestamp = "2026-08-28T17:23:07.78410982Z", span = "PT0S" }
-mitol-django-scim = { timestamp = "2026-08-28T17:23:07.784116978Z", span = "PT0S" }
+mitol-django-google-sheets = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-hubspot-api = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-common = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-olposthog = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-google-sheets-deferrals = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-mail = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-oauth-toolkit-extensions = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-payment-gateway = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-transcoding = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-google-sheets-refunds = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-apigateway = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-drf-lint = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-observability = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-authentication = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-openedx = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-geoip = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-digital-credentials = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-scim = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 
 [manifest]
 members = [
@@ -2767,7 +2767,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-drf-lint"
-version = "2026.4.2"
+version = "2026.8.28"
 source = { editable = "src/drf_lint" }
 dependencies = [
     { name = "libcst" },
