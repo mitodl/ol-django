@@ -117,10 +117,15 @@ That is the whole process. Once the checks pass on `main`, the `publish` job in
 is not yet on PyPI, uploads it, and then creates the version tag.
 
 If you would rather not use `prepare`, editing the version by hand works too —
-the workflow only reads `[project] version` from the app's `pyproject.toml`. Keep
-the other two declarations (`[tool.bumpver] current_version` and
-`mitol/APPNAME/__init__.py`) in step, or `uv run scripts/version.py check` will
-fail CI.
+the workflow only reads `[project] version` from the app's `pyproject.toml`. Two
+checks still apply:
+
+- Keep the other two declarations (`[tool.bumpver] current_version` and
+  `mitol/APPNAME/__init__.py`) in step, or `uv run scripts/version.py check`
+  fails CI.
+- Touching an app still requires a changelog change in the same PR, either a
+  new `changelog.d/` fragment or an edit to its `CHANGELOG.md`, or
+  `uv run scripts/changelog.py check` fails CI.
 
 #### How the workflow decides what to publish
 

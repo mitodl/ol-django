@@ -82,10 +82,18 @@ class Changes:
             and not _is_source_excluded(change.b_path)
         ]
 
+        # CHANGELOG.md counts alongside the fragments: preparing a release
+        # folds every fragment into it and deletes them, which nets out to no
+        # changelog.d diff when a fragment is added and collected on the same
+        # branch.
         changelogd_changes = [
             change
             for change in base_commit.diff(
-                target_commit, paths=[app.relative_path / "changelog.d"]
+                target_commit,
+                paths=[
+                    app.relative_path / "changelog.d",
+                    app.relative_path / "CHANGELOG.md",
+                ],
             )
             if not _is_changelog_excluded(change.a_path)
             and not _is_changelog_excluded(change.b_path)

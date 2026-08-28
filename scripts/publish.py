@@ -1,6 +1,7 @@
 """Support for the automated PyPI publish workflow"""
 
 import json
+import time
 import urllib.error
 import urllib.request
 from http import HTTPStatus
@@ -13,6 +14,8 @@ from scripts.project import Project
 
 PYPI_RELEASE_URL = "https://pypi.org/pypi/{name}/{version}/json"
 REQUEST_TIMEOUT = 30
+ATTEMPTS = 3
+RETRY_WAIT = 5
 
 
 def is_published(name: str, version: str) -> bool:
@@ -22,21 +25,30 @@ def is_published(name: str, version: str) -> bool:
         headers={"Accept": "application/json"},
     )
 
-    try:
-        with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT) as response:  # noqa: S310
-            return response.status == HTTPStatus.OK
-    except urllib.error.HTTPError as error:
-        if error.code == HTTPStatus.NOT_FOUND:
-            return False
-        # Anything else (rate limiting, an outage) is unknown rather than
-        # unpublished. Raising keeps the workflow from republishing a release
-        # that already exists.
-        raise
+    for remaining in reversed(range(ATTEMPTS)):
+        try:
+            with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT) as response:  # noqa: S310
+                return response.status == HTTPStatus.OK
+        except urllib.error.HTTPError as error:
+            if error.code == HTTPStatus.NOT_FOUND:
+                return False
+            # Anything else (rate limiting, an outage) means the answer is
+            # unknown rather than "unpublished". Give up rather than guess, so
+            # a blip can never republish an existing release or skip a real one.
+            if not remaining:
+                raise
+        except urllib.error.URLError:
+            if not remaining:
+                raise
+
+        time.sleep(RETRY_WAIT)
+
+    message = f"Could not reach PyPI for {name} {version}"
+    raise RuntimeError(message)
 
 
 def _matrix_entry(app: App) -> dict[str, str]:
     return {
-        "app": app.module_name,
         "package": app.name,
         "version": app.version,
         "tag": app.version_git_tag,

@@ -143,7 +143,12 @@ jobs:
         printf '%s' "$matrix" | jq .
         echo "Packages to publish: ${count}"
 
-        echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
+        {
+          echo "matrix<<MATRIX_EOF"
+          printf '%s\n' "$matrix"
+          echo "MATRIX_EOF"
+        } >> "$GITHUB_OUTPUT"
+
         if [ "$count" -eq 0 ]; then
           echo "found=false" >> "$GITHUB_OUTPUT"
         else
@@ -159,6 +164,11 @@ jobs:
     permissions:
       contents: write   # create the release tag
       id-token: write   # PyPI Trusted Publishing
+    # Serialize releases so two overlapping pushes cannot both decide the same
+    # version is unpublished and race each other to upload it.
+    concurrency:
+      group: publish-${{ matrix.package }}
+      cancel-in-progress: false
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.detect-releases.outputs.matrix) }}
@@ -183,6 +193,8 @@ jobs:
       uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
       with:
         packages-dir: dist
+        # Tolerate a version that reached PyPI after this run's detect step.
+        skip-existing: true
 
     # Tagging last means a tag always records something that really reached
     # PyPI, instead of being left behind by a failed build or upload.
@@ -198,7 +210,22 @@ jobs:
           exit 0
         fi
 
-        gh api "repos/${REPOSITORY}/git/refs" \
-          --field "ref=refs/tags/${TAG}" \
-          --field "sha=${SHA}" \
-          --silent
+        # The package is already on PyPI by this point, and detect-releases
+        # will not select it again, so a re-run cannot create a missed tag.
+        # Retry rather than leave the release permanently untagged.
+        for remaining in 2 1 0; do
+          if gh api "repos/${REPOSITORY}/git/refs" \
+            --raw-field "ref=refs/tags/${TAG}" \
+            --raw-field "sha=${SHA}" \
+            --silent; then
+            exit 0
+          fi
+
+          if [ "$remaining" -eq 0 ]; then
+            echo "::error::Published ${TAG} but could not create the tag." \
+              "Create it with: git tag ${TAG} ${SHA} && git push origin ${TAG}"
+            exit 1
+          fi
+
+          sleep 5
+        done

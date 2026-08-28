@@ -1,5 +1,5 @@
 [project]
-name = "mitol-django-digitalcredentials"
+name = "mitol-django-digital-credentials"
 version = "2026.4.2"
 description = "Django application to support digital credentials"
 dependencies = [
