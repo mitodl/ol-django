@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 from mitol.keycloak import api
+from mitol.keycloak.constants import DEFAULT_ADMIN_TIMEOUT
 from mitol.keycloak.data_models import UserAttributes
 from responses import RequestsMock
 
@@ -20,6 +21,35 @@ def test_get_admin_client():
     assert client.connection.realm_name == "test-realm"
     assert client.connection.client_id == "admin-client"
     assert client.connection.client_secret_key == "admin-secret"  # noqa: S105
+
+
+@pytest.mark.usefixtures("keycloak_admin_settings")
+def test_get_admin_client_timeout_defaults_to_setting():
+    """The connection timeout comes from MITOL_KEYCLOAK_ADMIN_TIMEOUT"""
+    assert api.get_admin_client().connection.timeout == DEFAULT_ADMIN_TIMEOUT
+
+
+def test_get_admin_client_timeout_honours_setting(keycloak_admin_settings):
+    """Lowering the setting lowers the connection timeout"""
+    keycloak_admin_settings.MITOL_KEYCLOAK_ADMIN_TIMEOUT = 5
+
+    assert api.get_admin_client().connection.timeout == 5  # noqa: PLR2004
+
+
+@pytest.mark.usefixtures("keycloak_admin_settings")
+def test_get_admin_client_timeout_argument_wins():
+    """An explicit timeout argument overrides the setting"""
+    assert api.get_admin_client(timeout=1).connection.timeout == 1
+
+
+def test_get_admin_client_timeout_without_setting_configured(keycloak_admin_settings):
+    """
+    Falls back to the default when the app never pulled in this package's
+    settings module, rather than raising AttributeError.
+    """
+    del keycloak_admin_settings.MITOL_KEYCLOAK_ADMIN_TIMEOUT
+
+    assert api.get_admin_client().connection.timeout == DEFAULT_ADMIN_TIMEOUT
 
 
 @pytest.mark.usefixtures("keycloak_admin_settings")
