@@ -13,13 +13,13 @@ A wrapper is included that wraps the middleware in `CookieMiddleware` and `Sessi
 ```python
 from mitol.apigateway.middleware_channels import ApisixAuthMiddlewareStack
 
-application = ProtocolTypeRouter({
-    "websocket": AllowedHostsOriginValidator(
-            ApisixAuthMiddlewareStack(
-                URLRouter(urlpatterns)
-        )
-    ),
-})
+application = ProtocolTypeRouter(
+    {
+        "websocket": AllowedHostsOriginValidator(
+            ApisixAuthMiddlewareStack(URLRouter(urlpatterns))
+        ),
+    }
+)
 ```
 
 Your consumers should then see the user in the scope as `scope["user"]`. This will be an AnonymousUser if there's no header or the user isn't found, or the relevant user object otherwise. This will respect your settings for creating or updating users based on the APISIX headers - it uses the same backend as the regular middleware.

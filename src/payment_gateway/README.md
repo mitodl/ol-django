@@ -24,6 +24,7 @@ Add/Append this to your settings file:
 ```python
 # Imports the Payment Gateway settings
 from mitol.common.envs import import_settings_modules
+
 import_settings_modules(globals(), "mitol.payment_gateway.settings")
 ```
 
