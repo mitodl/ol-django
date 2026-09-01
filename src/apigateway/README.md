@@ -59,6 +59,7 @@ Finally, import the settings:
 ```python
 # in your project's settings.py
 from mitol.common.envs import import_settings_modules
+
 import_settings_modules(globals(), "mitol.apigateway.settings")
 ```
 
@@ -70,6 +71,39 @@ OL applications have standardized on adding a field called `global_id` to the `U
 - Your app's user model should specify `global_id` as the `USERNAME_FIELD` - otherwise, the base Django RemoteUserBackend won't be able to find the user.
 
 You can use other fields, but you probably shouldn't. The immutable ID in Keycloak is the "Subscriber" field (sub) and it's a UUID that Keycloak generates when the user registers their account.
+
+Set `MITOL_APIGATEWAY_USER_LOOKUP_FIELD` if the field holding that ID isn't called `global_id`.
+
+If your app's `USERNAME_FIELD` is not the lookup field, use `ApisixUserMiddleware` (or the Persistent variant) rather than Django's `RemoteUserMiddleware` directly - the middleware here compares the signed-in user on the lookup field, which is what the gateway header carries.
+
+### Adopting accounts that predate the gateway
+
+An app that had users before it sat behind APISIX has accounts with no value in the lookup field. On their owners' first login through the gateway there is nothing to match them on, so the backend creates a second account for a person who already has one.
+
+Set `MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY` to the field to match those accounts on:
+
+```python
+MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY = "email"
+```
+
+The backend then also matches a user whose lookup field is empty and whose named field equals the value in the header, and stamps the lookup field onto it so later requests match directly. The field must appear in `MITOL_APIGATEWAY_USERINFO_MODEL_MAP["user_fields"]`; if the header carries no value for it, adoption is skipped for that request rather than matching every unlinked account.
+
+If more than one account matches, the backend refuses the login and logs the collision instead of picking one.
+
+Leave this at `None` for an app whose users have only ever existed behind the gateway.
+
+#### Before you set it
+
+Matching is case-insensitive for a textual field, because an identity provider does not preserve the case a user typed at signup. Two things follow, and both need handling *before* the setting is turned on rather than after:
+
+- **Duplicate accounts become hard login failures, not duplicates.** The refusal above is the safe behaviour, but for a user who already has two accounts differing only in the adoption field (`user@x.com` and `User@X.com`, say) it means they cannot log in at all. An app whose adoption field has no unique constraint — a stock `AbstractUser.email`, for instance — should expect these to exist. Run a dedupe pass first.
+- **The match is unindexed by default.** `__iexact` compiles to `UPPER(field::text) = UPPER(%s)` on PostgreSQL. A plain B-tree index on the column does not serve that, and neither does a functional index on `Lower(field)` — a `UniqueConstraint(Lower("email"))` is a *lower* index and the planner will not use it for an `UPPER()` predicate. Without a matching expression index this is a sequential scan of the user table on every request that fails to match on the lookup field. Add one that matches the predicate:
+
+  ```python
+  models.Index(Upper("email"), name="user_email_upper_idx")
+  ```
+
+Neither of these applies while the setting is `None` — the adoption branch is not built at all.
 
 ### Channels Configuration
 

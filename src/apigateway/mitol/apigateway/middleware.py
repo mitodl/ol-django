@@ -54,6 +54,25 @@ class ApisixUserMiddleware(RemoteUserMiddleware):
             new_header = get_user_id_from_userinfo_header(request)
             request.META["REMOTE_USER"] = new_header
 
+            # RemoteUserMiddleware decides "same user, nothing to do" by
+            # comparing REMOTE_USER against USERNAME_FIELD. REMOTE_USER holds
+            # the gateway lookup field, so in an app where the two differ that
+            # comparison never matches: every request re-authenticates, and the
+            # mismatch branch logs the session out first. Compare on the field
+            # REMOTE_USER actually holds.
+            lookup_field = settings.MITOL_APIGATEWAY_USER_LOOKUP_FIELD
+            if (
+                new_header
+                and request.user.is_authenticated
+                and getattr(request.user, lookup_field, None) == new_header
+            ):
+                log.debug(
+                    "ApisixUserMiddleware.process_request: %s already matches %s",
+                    lookup_field,
+                    new_header,
+                )
+                return
+
         super().process_request(request)
 
 

@@ -1,6 +1,5 @@
 """Authentication backends for the API Gateway."""
 
-import contextlib
 import logging
 
 from asgiref.sync import sync_to_async
@@ -9,6 +8,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import RemoteUserBackend
 from django.db import transaction
+from django.db.models import Q
 from mitol.apigateway.api import decode_x_header
 
 log = logging.getLogger(__name__)
@@ -22,14 +22,202 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
 
     lookup_field: str
 
+    #: Field to match a pre-gateway account on when it has no lookup_field value
+    #: yet, so it is adopted rather than duplicated. None disables adoption.
+    adopt_unlinked_user_by: str | None = None
+
+    def unlinked_user_filter(self, request) -> Q | None:
+        """
+        Build the filter matching a pre-gateway account for this request.
+
+        Returns None when adoption is off, or when the request carries no value
+        for the adoption field — matching every unlinked account on an empty
+        value would hand the request an arbitrary stranger's account.
+        """
+        if not self.adopt_unlinked_user_by:
+            return None
+
+        infomap = settings.MITOL_APIGATEWAY_USERINFO_MODEL_MAP["user_fields"]
+        header_field = next(
+            (
+                header
+                for header, model_field in infomap.items()
+                # A tuple value is (field_name, override_flag).
+                if (model_field[0] if isinstance(model_field, tuple) else model_field)
+                == self.adopt_unlinked_user_by
+            ),
+            None,
+        )
+        if header_field is None:
+            log.error(
+                "adopt_unlinked_user_by=%s is not in MITOL_APIGATEWAY_USERINFO_"
+                "MODEL_MAP['user_fields']; adoption disabled",
+                self.adopt_unlinked_user_by,
+            )
+            return None
+
+        value = (decode_x_header(request) or {}).get(header_field)
+        if not value:
+            return None
+
+        return self.unset_lookup_field_filter() & Q(**{self.adoption_lookup(): value})
+
+    def adoption_lookup(self) -> str:
+        """
+        Build the ORM lookup used to match the adoption value.
+
+        Case-insensitive for a textual field. An identity provider does not
+        preserve the case a user typed at signup, so matching an email exactly
+        misses the pre-gateway row and creates the duplicate adoption exists to
+        prevent. Where the app constrains the column case-insensitively (a
+        UniqueConstraint on Lower("email"), say) the exact match is worse than
+        a duplicate: the insert violates the constraint and the login is
+        refused.
+
+        Non-textual fields keep an exact match. adopt_unlinked_user_by is
+        configurable and need not be a string; __iexact against an IntegerField
+        or a UUIDField raises while the query is built, and authenticate()'s
+        blanket except would turn that into a rejected login for every user.
+        """
+        field = User._meta.get_field(self.adopt_unlinked_user_by)  # noqa: SLF001
+        if field.empty_strings_allowed:
+            return f"{self.adopt_unlinked_user_by}__iexact"
+        return self.adopt_unlinked_user_by
+
+    def unset_lookup_field_filter(self) -> Q:
+        """
+        Match a record carrying no lookup-field value.
+
+        Which empty that is depends on the app's own column: UserGlobalIdMixin
+        declares blank=True default="", others declare null=True. Both need
+        matching separately - `__in=("", None)` cannot do it, because SQL never
+        matches NULL through IN and Django drops the None from the list.
+
+        The empty-string branch is only built for a field that can actually
+        hold one. lookup_field is configurable and need not be textual; asking
+        a UUIDField or an IntegerField to compare against "" raises while the
+        query is being built, and authenticate()'s blanket except would turn
+        that into a rejected login for every user, linked or not.
+        """
+        unset = Q(**{f"{self.lookup_field}__isnull": True})
+        if User._meta.get_field(self.lookup_field).empty_strings_allowed:  # noqa: SLF001
+            unset |= Q(**{self.lookup_field: ""})
+        return unset
+
+    def resolve_user(self, request, username, *, retry_lost_adoption=True):
+        """
+        Find the user for this remote id, adopting or creating one if allowed.
+
+        Returns an (user, created) pair. ``user`` is None when the identity is
+        ambiguous, or unknown while create_unknown_user is off.
+
+        ``retry_lost_adoption`` is internal: it bounds the single re-resolve
+        that follows losing an adoption race, so a pathological interleaving
+        cannot recurse indefinitely.
+        """
+        candidates = Q(**{self.lookup_field: username})
+        unlinked = self.unlinked_user_filter(request)
+        if unlinked is not None:
+            candidates |= unlinked
+
+        try:
+            user = User.objects.get(candidates)
+        except User.MultipleObjectsReturned:
+            # Refuse rather than guess: picking one of several matches would
+            # silently attach this login to the wrong account.
+            #
+            # Name both criteria when adoption is in play. The collision is
+            # usually two unlinked rows sharing an adoption value, and blaming
+            # the lookup field alone sends whoever reads this looking for
+            # duplicate global_ids that do not exist.
+            if unlinked is not None:
+                log.exception(
+                    "Ambiguous remote identity: %s=%s, or %s matching the "
+                    "header on an unlinked row, matches more than one user",
+                    self.lookup_field,
+                    username,
+                    self.adopt_unlinked_user_by,
+                )
+            else:
+                log.exception(
+                    "Ambiguous remote identity: %s=%s matches more than one user",
+                    self.lookup_field,
+                    username,
+                )
+            return None, False
+        except User.DoesNotExist:
+            if not self.create_unknown_user:
+                log.debug(
+                    "resolve_user: no user for %s=%s and creation is disabled",
+                    self.lookup_field,
+                    username,
+                )
+                return None, False
+            # get_or_create, not create: it re-runs the get inside a savepoint
+            # and falls back to it on IntegrityError, so a concurrent request
+            # that inserted this lookup value between our get and our insert
+            # resolves to that row. A bare create would instead duplicate the
+            # user where the column has no unique constraint, or raise where it
+            # does - and an IntegrityError raised with no savepoint inside
+            # authenticate()'s transaction.atomic() marks the whole transaction
+            # for rollback.
+            return User.objects.get_or_create(**{self.lookup_field: username})
+
+        if getattr(user, self.lookup_field, None) != username:
+            # Adopting a pre-gateway account: stamp it so the next request
+            # matches on the lookup field directly.
+            #
+            # Claim it with a conditional update rather than a blind save. Two
+            # identities carrying the same adoption value both select this row,
+            # and a save would let the second overwrite the first's id while
+            # both requests returned the same account. Re-stating the unset
+            # predicate in the UPDATE makes the claim atomic: the row stops
+            # being unset the moment the winner lands, so the loser matches
+            # nothing and knows it lost. transaction.atomic() cannot do this -
+            # it gives atomicity, not isolation from a concurrent reader.
+            claimed = User.objects.filter(
+                Q(pk=user.pk) & self.unset_lookup_field_filter()
+            ).update(**{self.lookup_field: username})
+
+            if not claimed:
+                if not retry_lost_adoption:
+                    log.warning(
+                        "resolve_user: lost the adoption race for user %s twice, "
+                        "refusing rather than returning an account claimed by "
+                        "another identity",
+                        user.pk,
+                    )
+                    return None, False
+
+                # The row now belongs to someone else. Re-resolve: this id
+                # matches neither it nor the unset predicate, so it falls
+                # through to creating its own user.
+                log.info(
+                    "resolve_user: lost the adoption race for user %s, "
+                    "re-resolving %s=%s",
+                    user.pk,
+                    self.lookup_field,
+                    username,
+                )
+                return self.resolve_user(request, username, retry_lost_adoption=False)
+
+            setattr(user, self.lookup_field, username)
+            log.info(
+                "resolve_user: adopted existing user %s by %s, set %s=%s",
+                user.pk,
+                self.adopt_unlinked_user_by,
+                self.lookup_field,
+                username,
+            )
+
+        return user, False
+
     def authenticate(self, request, remote_user):
         """
         Authenticate the user
         """
         if not remote_user:
             return None
-        created = False
-        user = None
         username = self.clean_username(remote_user)
 
         # if the current user and the user from the backend match
@@ -38,11 +226,9 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
             user = request.user
             return user if self.user_can_authenticate(user) else None
 
-        if self.create_unknown_user:
-            user, created = User.objects.get_or_create(**{self.lookup_field: username})
-        else:
-            with contextlib.suppress(User.DoesNotExist):
-                user = User.objects.get_by_natural_key(username)
+        user, created = self.resolve_user(request, username)
+        if user is None:
+            return None
         user = self.configure_user(request, user, created=created)
         return user if self.user_can_authenticate(user) else None
 
@@ -50,8 +236,6 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
         """See authenticate()."""
         if not remote_user:
             return None
-        created = False
-        user = None
         username = self.clean_username(remote_user)
 
         # if the current user and the user from the backend match
@@ -60,15 +244,35 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
             user = request.user
             return user if self.user_can_authenticate(user) else None
 
-        if self.create_unknown_user:
-            user, created = await User.objects.aget_or_create(
-                **{self.lookup_field: username}
-            )
-        else:
-            with contextlib.suppress(User.DoesNotExist):
-                user = await User.objects.aget_by_natural_key(username)
-        user = await self.aconfigure_user(request, user, created=created)
+        user, created = await sync_to_async(self.resolve_user, thread_sensitive=True)(
+            request, username
+        )
+        if user is None:
+            return None
+        user = await self._aconfigure_user(request, user, created=created)
         return user if self.user_can_authenticate(user) else None
+
+    async def _aconfigure_user(self, request, user, *, created):
+        """
+        Django <5.2 compatibility shim for ``aconfigure_user``.
+
+        REMOVE once this package's Django floor is 5.2, replacing the call
+        above with ``await self.aconfigure_user(...)``. Two things have to hold
+        before that swap is safe, and today neither does:
+
+        - ``RemoteUserBackend`` has to have the method. Both it and
+          ``aauthenticate`` arrived in 5.2, while this package still declares
+          ``django>=3.0``, so on 4.2/5.0/5.1 the attribute is simply absent.
+        - ``configure_user``'s ``created`` has to stop being keyword-only.
+          5.2's ``aconfigure_user`` passes it positionally
+          (``sync_to_async(self.configure_user)(request, user, created)``),
+          which ``ApisixRemoteUserBackend.configure_user`` rejects.
+
+        Until then, do here what 5.2 does, spelling ``created`` as a keyword.
+        """
+        return await sync_to_async(self.configure_user, thread_sensitive=True)(
+            request, user, created=created
+        )
 
 
 class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
@@ -80,10 +284,11 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
     we'll want to toggle the user creation code with a setting.
     """
 
-    lookup_field = "global_id"
+    lookup_field = settings.MITOL_APIGATEWAY_USER_LOOKUP_FIELD
 
     create_unknown_user = settings.MITOL_APIGATEWAY_USERINFO_CREATE
     update_known_user = settings.MITOL_APIGATEWAY_USERINFO_UPDATE
+    adopt_unlinked_user_by = settings.MITOL_APIGATEWAY_ADOPT_UNLINKED_USER_BY
 
     def authenticate(self, request, remote_user):
         """
@@ -131,7 +336,22 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
         infomap = settings.MITOL_APIGATEWAY_USERINFO_MODEL_MAP
         decoded_headers = decode_x_header(request)
 
-        for header_field, model_field in infomap["user_fields"].items():
+        self._sync_user_fields(user, infomap["user_fields"], decoded_headers)
+        self._sync_additional_models(
+            user, infomap["additional_models"], decoded_headers
+        )
+
+        return user
+
+    def _sync_user_fields(self, user, user_fields, decoded_headers):
+        """Copy the mapped header values onto the user, saving only if changed."""
+        # A mapped name need not be a concrete column - it can be a property
+        # with a setter, which update_fields cannot express.
+        concrete_fields = {f.name for f in User._meta.concrete_fields}  # noqa: SLF001
+        changed = []
+        changed_non_concrete = False
+
+        for header_field, model_field in user_fields.items():
             value = decoded_headers.get(header_field, None)
             if isinstance(model_field, tuple):
                 # If the model_field is a tuple, it means we have a flag for not
@@ -141,26 +361,42 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
                 field_not_set = getattr(user, model_field_name) == default_value
                 if not override and not field_not_set:
                     continue
-                setattr(user, model_field_name, value)
             else:
-                setattr(user, model_field, value)
+                model_field_name = model_field
 
-        user.save()
+            if getattr(user, model_field_name, None) == value:
+                continue
+            setattr(user, model_field_name, value)
+            if model_field_name in concrete_fields:
+                changed.append(model_field_name)
+            else:
+                changed_non_concrete = True
 
-        log.debug("configure_user: Updated user %s", user)
+        # This runs on every authenticated request. Writing a row whose columns
+        # already match the headers would put the whole request volume of the
+        # app onto the users table for nothing.
+        if changed_non_concrete:
+            user.save()
+            log.debug("configure_user: Updated user %s", user)
+        elif changed:
+            user.save(update_fields=changed)
+            log.debug("configure_user: Updated user %s fields %s", user, changed)
 
-        for model_name in infomap["additional_models"]:
+    def _sync_additional_models(self, user, additional_models, decoded_headers):
+        """Update the mapped related models, saving only those that changed."""
+        for model_name, field_specs in additional_models.items():
             AdditionalModel = apps.get_model(model_name)
             model_fields = {
-                "user": user,
+                model_field: decoded_headers.get(header_field, default_value)
+                for header_field, model_field, default_value in field_specs
             }
 
-            for header_field, model_field, default_value in infomap[
-                "additional_models"
-            ][model_name]:
-                model_fields[model_field] = decoded_headers.get(
-                    header_field, default_value
-                )
+            addl_model = AdditionalModel.objects.filter(user=user).first()
+            if addl_model is not None and all(
+                getattr(addl_model, field, None) == value
+                for field, value in model_fields.items()
+            ):
+                continue
 
             addl_model, _ = AdditionalModel.objects.update_or_create(
                 user=user,
@@ -168,5 +404,3 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
             )
 
             log.debug("configure_user: Updated model %s: %s", model_name, addl_model)
-
-        return user
