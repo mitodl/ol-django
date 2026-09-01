@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.9.1'></a>
+## [2026.9.1] - 2026-09-01
+
+### Fixed
+
+- Parse 401 Cybersource responses without breaking
+
 <a id='changelog-2026.8.28'></a>
 ## [2026.8.28] - 2026-08-28
 
