@@ -4,6 +4,8 @@ Settings for the apigateway app. See the README.md for more detail.
 These should be reasonable defaults - override (or pull from env) as necessary.
 """
 
+from mitol.common.envs import get_bool
+
 # apigateway configuration
 
 # Disable middleware. For local testing - you can have the middleware in place
@@ -43,12 +45,22 @@ MITOL_APIGATEWAY_USERINFO_MODEL_MAP = {
 
 # Set to True to create users that we see but aren't aware of.
 # Set to False if you're managing that elsewhere (like with social-auth).
-MITOL_APIGATEWAY_USERINFO_CREATE = True
+MITOL_APIGATEWAY_USERINFO_CREATE = get_bool(
+    name="MITOL_APIGATEWAY_USERINFO_CREATE",
+    default=True,
+    description="Create users that we see but aren't aware of",
+)
 
-# Set to True to update users we've seen before. If you set this to False, make
-# sure there's a backchannel way to update the user data (SCIM, etc) or user
-# info will fall out of sync with the IdP pretty quickly.
-MITOL_APIGATEWAY_USERINFO_UPDATE = True
+# Set to True to update users we've seen before. This defaults to False because
+# the userinfo the gateway attaches to a request is only refreshed when the user
+# logs in, so updating on every request will clobber newer data written by a
+# backchannel process (SCIM, etc). Only set this to True if there is no such
+# backchannel, otherwise user info will fall out of sync with the IdP.
+MITOL_APIGATEWAY_USERINFO_UPDATE = get_bool(
+    name="MITOL_APIGATEWAY_USERINFO_UPDATE",
+    default=False,
+    description="Update users we've seen before",
+)
 
 # This is the name of the field used to lookup the user
 MITOL_APIGATEWAY_USER_LOOKUP_FIELD = "global_id"
