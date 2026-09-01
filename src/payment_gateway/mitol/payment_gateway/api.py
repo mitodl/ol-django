@@ -3,6 +3,7 @@ API for the Payment Gateway
 """
 
 import abc
+import contextlib
 import hashlib
 import hmac
 import json
@@ -505,10 +506,20 @@ class CyberSourcePaymentGateway(
             return response  # noqa: RET504, TRY300
 
         except Exception as ex:
-            exception_body = json.loads(ex.body)
+            # Some error responses (e.g. 401 Unauthorized) use a different body
+            # schema that does not contain a top-level "reason" key.  Guard
+            # against missing attributes/keys so we always re-raise a useful
+            # exception rather than masking the original error with a KeyError.
+            exception_body = None
+            if hasattr(ex, "body") and ex.body:
+                with contextlib.suppress(ValueError, TypeError):
+                    exception_body = json.loads(ex.body)
 
             # Special case for request failure when DUPLICATE_REQUEST
-            if exception_body["reason"] == ProcessorResponse.STATE_DUPLICATE:
+            if (
+                exception_body
+                and exception_body.get("reason") == ProcessorResponse.STATE_DUPLICATE
+            ):
                 raise RefundDuplicateException(  # noqa: B904
                     exception_body["reason"],
                     transaction_id,
