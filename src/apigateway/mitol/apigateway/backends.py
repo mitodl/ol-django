@@ -82,8 +82,16 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
 
     lookup_field = "global_id"
 
-    create_unknown_user = settings.MITOL_APIGATEWAY_USERINFO_CREATE
-    update_known_user = settings.MITOL_APIGATEWAY_USERINFO_UPDATE
+    def __init__(self, *args, **kwargs):
+        """
+        Read the create/update flags per-instance.
+
+        These are read here rather than bound as class attributes so that a
+        change to the settings takes effect without re-importing the module.
+        """
+        super().__init__(*args, **kwargs)
+        self.create_unknown_user = settings.MITOL_APIGATEWAY_USERINFO_CREATE
+        self.update_known_user = settings.MITOL_APIGATEWAY_USERINFO_UPDATE
 
     def authenticate(self, request, remote_user):
         """

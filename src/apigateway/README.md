@@ -86,8 +86,10 @@ These settings are needed for your environment:
 
 These settings are likely to need adjustment for your environment:
 
-- `MITOL_APIGATEWAY_USERINFO_CREATE` - controls if the backend will create _new_ users or not. If set to False, users will have to be pre-created within the system before they can be authenticated.
-- `MITOL_APIGATEWAY_USERINFO_UPDATE` - controls if the backend will update _existing_ users or not.
+- `MITOL_APIGATEWAY_USERINFO_CREATE` - controls if the backend will create _new_ users or not. If set to False, users will have to be pre-created within the system before they can be authenticated. Defaults to True.
+- `MITOL_APIGATEWAY_USERINFO_UPDATE` - controls if the backend will update _existing_ users or not. Defaults to False, since the userinfo attached to a request is only refreshed at login and will otherwise clobber newer data written by a backchannel process. Set this to True only if your app has no backchannel (SCIM, etc) keeping users in sync.
+
+Both of these can also be set from the environment - they're read via `get_bool`, so `MITOL_APIGATEWAY_USERINFO_CREATE` / `MITOL_APIGATEWAY_USERINFO_UPDATE` in the environment will override the defaults above.
 
 These settings are unlikely to need adjustment:
 
