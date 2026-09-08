@@ -2218,7 +2218,7 @@ wheels = [
 
 [[package]]
 name = "mitol-django-apigateway"
-version = "2026.4.29"
+version = "2026.9.8"
 source = { editable = "src/apigateway" }
 dependencies = [
     { name = "channels" },
