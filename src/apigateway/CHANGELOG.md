@@ -6,6 +6,24 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.9.8'></a>
+## [2026.9.8] - 2026-09-08
+
+### Removed
+
+- Removed the `default_app_config` module attribute. Django deprecated it in 3.2 and dropped support in 4.1, so it has been dead for every version this package now supports.
+
+### Changed
+
+- `MITOL_APIGATEWAY_USERINFO_CREATE` and `MITOL_APIGATEWAY_USERINFO_UPDATE` are now read from the environment, so they can be configured per-deployment without a settings override.
+- **Breaking:** `MITOL_APIGATEWAY_USERINFO_UPDATE` now defaults to `False`. The userinfo the gateway attaches to a request is only refreshed at login, so updating on every request clobbers newer user data written by a backchannel process (SCIM, etc). Apps that rely on the middleware to keep users in sync must now set `MITOL_APIGATEWAY_USERINFO_UPDATE=True` explicitly.
+
+- Raised the minimum supported Django to 4.2. The previous `django>=3.0` had not been true for some time: CI's lowest matrix leg is already 4.2, and the last 3.x release (3.2 LTS) reached end-of-life in April 2024.
+
+### Fixed
+
+- Fixed `ApisixRemoteUserBackend.aauthenticate` always returning `None`: it awaited nothing (missing `await`) and wrapped async ORM calls in a sync `transaction.atomic()`, which raises `SynchronousOnlyOperation` under a real event loop. Now delegates to the tested sync `authenticate()` via `sync_to_async`.
+
 <a id='changelog-2026.4.29'></a>
 ## [2026.4.29] - 2026-04-29
 
