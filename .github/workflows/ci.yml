@@ -106,6 +106,38 @@ jobs:
       #     directory: ${{ matrix.app-name }}/coverage/
       #     flags: ${{ matrix.app-name }}
 
+  # Requiring `ci-gate` keeps the list of what must pass in the same file as the jobs it
+  # names. `needs` on a matrix job aggregates every shard, so no shard count appears
+  # anywhere. `detect-releases`/`publish` are excluded: both only run on a push to main
+  # (`if: github.ref == 'refs/heads/main'`), so they contribute nothing to gating a PR.
+  ci-gate:
+    needs: [changelog, tests]
+    # Without this the gate is skipped when a dependency fails, and GitHub treats a
+    # skipped required job as successful, allowing the PR to merge despite the failure.
+    if: always()
+    runs-on: ubuntu-24.04
+    permissions: {}
+    steps:
+    - name: Evaluate CI result
+      env:
+        NEEDS: ${{ toJSON(needs) }}
+      run: |
+        set -euo pipefail
+        echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+        # Read from `needs` rather than naming each job again: adding a job to the list
+        # above is then the only edit, which is the entire point of this job. `skipped`
+        # passes so that a job legitimately gated behind an `if:` does not wedge the
+        # branch; `failure` and `cancelled` do not.
+        failed=$(echo "$NEEDS" | jq -r '
+          to_entries[]
+          | select(.value.result != "success" and .value.result != "skipped")
+          | .key')
+        if [ -n "$failed" ]; then
+          echo "::error::CI did not succeed: $(echo "$failed" | paste -sd, -)"
+          exit 1
+        fi
+        echo "All CI jobs succeeded."
+
   # A release is a version change landing on main: once the checks above pass,
   # every package whose pyproject.toml version is not yet on PyPI is built,
   # published with Trusted Publishing, and tagged.
