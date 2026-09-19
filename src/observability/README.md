@@ -6,7 +6,7 @@ MIT Open Learning Django plugin for OpenTelemetry tracing, structured logging (s
 
 Add to `INSTALLED_APPS`:
 ```python
-"mitol.observability.apps.ObservabilityConfig",
+("mitol.observability.apps.ObservabilityConfig",)
 ```
 
 See the [RFC](https://github.com/mitodl/hq/discussions/10361) for full documentation.
@@ -45,10 +45,12 @@ from mitol.observability.celery import setup_celery_logging
 
 app = Celery("yourproject")
 
+
 @setup_logging.connect
 def on_setup_logging(**kwargs):
     # Prevent Celery from overriding structlog's logging config in workers.
     setup_celery_logging(**kwargs)
+
 
 # Propagate web-request context into task execution.
 app.steps["worker"].add(DjangoStructLogInitStep)
