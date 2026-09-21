@@ -744,24 +744,32 @@ def test_bulk_delete_dispatches_to_custom_users_view(scim_client, mocker):
     mock_delete.assert_called_once()
 
 
-def _patch_replace(scim_client, user, value):
-    """Send a scim-for-keycloak style PATCH replace for a single user"""
+def _patch_ops(scim_client, user, operations):
+    """Send a PATCH with the given operations for a single user"""
     return scim_client.patch(
         f"{reverse('scim:users')}/{user.scim_id}",
         content_type="application/scim+json",
         data=json.dumps(
             {
                 "schemas": [constants.SchemaURI.PATCH_OP],
-                "Operations": [
-                    {
-                        "op": "replace",
-                        "value": json.dumps(
-                            {"schemas": [constants.SchemaURI.USER], **value}
-                        ),
-                    }
-                ],
+                "Operations": operations,
             }
         ),
+    )
+
+
+def _patch_replace(scim_client, user, value):
+    """Send a scim-for-keycloak style PATCH replace for a single user"""
+    return _patch_ops(
+        scim_client,
+        user,
+        [
+            {
+                "op": "replace",
+                # no `path`, and the value is a JSON-encoded string inside JSON
+                "value": json.dumps({"schemas": [constants.SchemaURI.USER], **value}),
+            }
+        ],
     )
 
 
@@ -802,6 +810,64 @@ def test_scim_user_patch_null_does_not_block_other_attrs(scim_client):
 
     assert user.first_name == first_name
     assert user.last_name == "Bob"
+
+
+@pytest.mark.parametrize(
+    ("path", "attname", "value"),
+    [
+        ("userName", "username", "renamed"),
+        ("name.givenName", "first_name", "Billy"),
+        ("name.familyName", "last_name", "Bob"),
+    ],
+)
+def test_scim_user_patch_with_path_replaces_value(scim_client, path, attname, value):
+    """The spec-compliant form, a path plus a bare value, has to work"""
+    user = UserFactory.create()
+
+    resp = _patch_ops(
+        scim_client, user, [{"op": "replace", "path": path, "value": value}]
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert getattr(user, attname) == value
+
+
+@pytest.mark.parametrize(
+    ("path", "attname"),
+    [
+        ("userName", "username"),
+        ("name.givenName", "first_name"),
+        ("name.familyName", "last_name"),
+    ],
+)
+def test_scim_user_patch_with_path_null_leaves_non_nullable_field(
+    scim_client, path, attname
+):
+    """A null against an explicit path must not blank a NOT NULL column"""
+    user = UserFactory.create()
+    original = getattr(user, attname)
+
+    resp = _patch_ops(
+        scim_client, user, [{"op": "replace", "path": path, "value": None}]
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert getattr(user, attname) == original
+
+
+def test_scim_user_patch_without_path_needs_an_object_value(scim_client):
+    """A bare value and no path names no attribute, so it is a client error"""
+    user = UserFactory.create()
+
+    resp = _patch_ops(scim_client, user, [{"op": "replace", "value": None}])
+
+    assert resp.status_code == HTTPStatus.BAD_REQUEST, f"Response: {resp.content}"
 
 
 def test_scim_user_patch_null_active_is_bad_request(scim_client):
@@ -886,6 +952,7 @@ def test_scim_user_put_null_name_clears_names(scim_client):
 def test_scim_user_put_without_username_is_bad_request(scim_client, username):
     """A PUT missing the required userName is a client error, not a 500"""
     user = UserFactory.create()
+    original = user.username
 
     resp = scim_client.put(
         f"{reverse('scim:users')}/{user.scim_id}",
@@ -905,7 +972,7 @@ def test_scim_user_put_without_username_is_bad_request(scim_client, username):
 
     user.refresh_from_db()
 
-    assert user.username != ""
+    assert user.username == original
 
 
 @pytest.mark.django_db
