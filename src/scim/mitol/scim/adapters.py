@@ -171,8 +171,9 @@ class UserAdapter(SCIMUser):
 
         if not username:
             # userName is REQUIRED per RFC 7643 section 4.1.1. Without this the
-            # write fails on the NOT NULL column and the client sees a 500,
-            # which it retries.
+            # write fails on the NOT NULL column and django_scim answers with a
+            # 409 carrying the raw database error, which tells the client
+            # nothing about what in its payload was wrong.
             msg = "userName is required and may not be null"
             raise exceptions.BadRequestError(msg)
 
@@ -258,19 +259,27 @@ class UserAdapter(SCIMUser):
         self, path: str | None, value: Union[str, list, dict]
     ) -> list:
         """Parse the incoming value(s)"""
-        if isinstance(value, str):
-            # scim-for-keycloak sends this as a noncompliant JSON-encoded string
+        no_path_msg = "A PATCH operation with no path must carry an object value"
+
+        if isinstance(value, str) and path is None:
+            # scim-for-keycloak sends the whole resource as a noncompliant
+            # JSON-encoded string with no path at all
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError as exc:
+                raise exceptions.BadRequestError(no_path_msg) from exc
+
+        if not isinstance(value, dict):
+            # a spec-compliant client names the attribute in `path` and sends the
+            # bare value, which may be a scalar, a list or an explicit null
             if path is None:
-                val = json.loads(value)
-            else:
-                msg = "Called with a non-null path and a str value"
-                raise ValueError(msg)
-        else:
-            val = value
+                raise exceptions.BadRequestError(no_path_msg)
+
+            return [(self.split_path(path), value)]
 
         results = []
 
-        for attr_path, attr_value in val.items():
+        for attr_path, attr_value in value.items():
             if isinstance(attr_value, dict):
                 # nested object, we want to recursively flatten it to `first.second`
                 results.extend(self.parse_path_and_values(attr_path, attr_value))
@@ -278,9 +287,7 @@ class UserAdapter(SCIMUser):
                 flattened_path = (
                     f"{path}.{attr_path}" if path is not None else attr_path
                 )
-                new_path = self.split_path(flattened_path)
-                new_value = attr_value
-                results.append((new_path, new_value))
+                results.append((self.split_path(flattened_path), attr_value))
 
         return results
 
@@ -293,10 +300,13 @@ class UserAdapter(SCIMUser):
         ``operation["path"]``, so an invalid value raises a KeyError there and
         the client gets a retryable 500 in place of the intended 400.
         """
-        if path is not None and "path" not in operation:
+        if path is not None and not operation.get("path"):
+            # first_path is (attr_name, sub_attr, schema_uri); the URI is not
+            # part of the name the client sent
+            attr_name, sub_attr, _ = path.first_path
             operation = {
                 **operation,
-                "path": ".".join(part for part in path.first_path if part),
+                "path": ".".join(part for part in (attr_name, sub_attr) if part),
             }
 
         super()._default_validate_op(path, value, operation)
