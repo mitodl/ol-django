@@ -1,6 +1,7 @@
 import contextlib
 import itertools
 import json
+import logging
 import operator
 import random
 from collections.abc import Callable
@@ -13,12 +14,15 @@ import pytest
 from anys import ANY_STR
 from deepmerge import always_merger
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from django.db.utils import IntegrityError
 from django.test import Client
 from django.urls import reverse
+from django_scim.settings import scim_settings
 from main.factories import UserFactory
 from mitol.scim import constants
 from mitol.scim.adapters import UserAdapter
-from mitol.scim.views import UsersView
+from mitol.scim.views import INTEGRITY_ERROR_DETAIL, UsersView
 
 User = get_user_model()
 
@@ -996,3 +1000,207 @@ def test_scim_user_post_without_username_is_bad_request(scim_client):
 
     assert resp.status_code == HTTPStatus.BAD_REQUEST, f"Response: {resp.content}"
     assert User.objects.count() == user_count
+
+
+def _post_user(scim_client, username, email):
+    """POST a new user carrying the given userName"""
+    return scim_client.post(
+        reverse("scim:users"),
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.USER],
+                "emails": [{"value": email, "primary": True}],
+                "active": True,
+                "userName": username,
+                "name": {"givenName": "Dupe", "familyName": "User"},
+            }
+        ),
+    )
+
+
+def test_scim_user_post_duplicate_is_redacted_conflict(scim_client):
+    """A POST that fails a unique constraint answers 409 without the row"""
+    existing = UserFactory.create()
+    user_count = User.objects.count()
+
+    resp = _post_user(scim_client, existing.username, "duplicate@example.com")
+
+    assert resp.status_code == HTTPStatus.CONFLICT, f"Response: {resp.content}"
+    assert resp.json()["detail"] == INTEGRITY_ERROR_DETAIL
+    assert User.objects.count() == user_count
+
+
+def test_scim_user_put_duplicate_is_redacted_conflict(scim_client):
+    """A PUT that fails a unique constraint answers 409 without the row"""
+    user = UserFactory.create()
+    other = UserFactory.create()
+
+    resp = scim_client.put(
+        f"{reverse('scim:users')}/{user.scim_id}",
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.USER],
+                "emails": [{"value": user.email, "primary": True}],
+                "active": True,
+                "userName": other.username,
+                "name": {"givenName": "Jimmy", "familyName": "Smith"},
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.CONFLICT, f"Response: {resp.content}"
+    assert resp.json()["detail"] == INTEGRITY_ERROR_DETAIL
+
+    user.refresh_from_db()
+
+    assert user.username != other.username
+
+
+def test_scim_user_patch_duplicate_is_conflict_not_server_error(scim_client):
+    """
+    A PATCH that fails a unique constraint answers 409, not 500.
+
+    django_scim's PatchView has no IntegrityError handling at all, so this
+    reached dispatch as an unhandled exception. A duplicate userName never
+    succeeds on a retry, and a client that treats 500 as retryable will keep
+    sending it.
+    """
+    user = UserFactory.create()
+    other = UserFactory.create()
+
+    resp = _patch_replace(scim_client, user, {"userName": other.username})
+
+    assert resp.status_code == HTTPStatus.CONFLICT, f"Response: {resp.content}"
+    assert resp.json()["detail"] == INTEGRITY_ERROR_DETAIL
+
+    user.refresh_from_db()
+
+    assert user.username != other.username
+
+
+def test_scim_integrity_error_logs_what_it_withholds(scim_client, caplog):
+    """The database text belongs in the application log, not the response"""
+    existing = UserFactory.create()
+
+    with caplog.at_level(logging.ERROR):
+        resp = _post_user(scim_client, existing.username, "duplicate@example.com")
+
+    body = resp.content.decode("utf-8")
+
+    assert "DETAIL" not in body
+    assert existing.username not in body
+    assert "users_user" not in body
+
+    assert "violates unique constraint" in caplog.text
+
+
+def test_scim_integrity_error_honors_expose_scim_exceptions(scim_client, mocker):
+    """
+    EXPOSE_SCIM_EXCEPTIONS decides whether internal exception text reaches the
+    client, and it now covers integrity errors like every other exception.
+    """
+    existing = UserFactory.create()
+
+    mocker.patch.object(scim_settings, "EXPOSE_SCIM_EXCEPTIONS", new=True)
+
+    resp = _post_user(scim_client, existing.username, "duplicate@example.com")
+
+    assert resp.status_code == HTTPStatus.CONFLICT, f"Response: {resp.content}"
+    assert "violates unique constraint" in resp.json()["detail"]
+
+
+# The shape the issue was filed over: a NOT NULL violation, where Postgres puts
+# the whole failing row in DETAIL rather than just the colliding key. Both known
+# routes to one are closed upstream of the write, so the error is injected here.
+NOT_NULL_VIOLATION = (
+    'null value in column "name" of relation "users_user" '
+    "violates not-null constraint\n"
+    "DETAIL:  Failing row contains (1863408, , 2026-08-07 18:38:14.503726+00, "
+    "f, victim@example.com, victim@example.com, null, f, t).\n"
+)
+
+
+def test_scim_integrity_error_does_not_echo_the_failing_row(scim_client, mocker):
+    """A NOT NULL violation must not put the row it failed on in the body"""
+    mocker.patch.object(
+        UserAdapter, "save", side_effect=IntegrityError(NOT_NULL_VIOLATION)
+    )
+
+    resp = _post_user(scim_client, "rowecho@example.com", "rowecho@example.com")
+
+    body = resp.content.decode("utf-8")
+
+    assert resp.status_code == HTTPStatus.CONFLICT, f"Response: {body}"
+    assert resp.json()["detail"] == INTEGRITY_ERROR_DETAIL
+    assert "victim@example.com" not in body
+    assert "Failing row contains" not in body
+
+
+def test_scim_group_post_duplicate_is_redacted_conflict(scim_client):
+    """
+    Groups is served by django_scim's stock view unless we shadow it.
+
+    `mitol.scim.urls` mounts `django_scim.urls` alongside its own patterns, so
+    the endpoint is live on the default adapter and `auth.Group`, and leaked
+    the driver text exactly as Users did.
+    """
+    Group.objects.create(name="dupegroup")
+
+    resp = scim_client.post(
+        reverse("scim:groups"),
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.GROUP],
+                "displayName": "dupegroup",
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.CONFLICT, f"Response: {resp.content}"
+    assert resp.json()["detail"] == INTEGRITY_ERROR_DETAIL
+    assert "auth_group" not in resp.content.decode("utf-8")
+    assert Group.objects.filter(name="dupegroup").count() == 1
+
+
+def test_scim_bulk_integrity_error_is_redacted(scim_client):
+    """A per-operation 409 inside a Bulk response carries the fixed detail too"""
+    existing = UserFactory.create()
+
+    resp = scim_client.post(
+        reverse("ol-scim:bulk"),
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.BULK_REQUEST],
+                "Operations": [
+                    {
+                        "method": "post",
+                        "bulkId": "bulk-duplicate",
+                        "path": "/Users",
+                        "data": {
+                            "schemas": [constants.SchemaURI.USER],
+                            "emails": [
+                                {"value": "duplicate@example.com", "primary": True}
+                            ],
+                            "active": True,
+                            "userName": existing.username,
+                            "name": {"givenName": "Dupe", "familyName": "User"},
+                        },
+                    }
+                ],
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Response: {resp.content}"
+
+    body = resp.content.decode("utf-8")
+    operation = resp.json()["Operations"][0]
+
+    assert operation["status"] == str(HTTPStatus.CONFLICT.value)
+    assert operation["response"]["detail"] == INTEGRITY_ERROR_DETAIL
+    assert "DETAIL" not in body
+    assert existing.username not in body
