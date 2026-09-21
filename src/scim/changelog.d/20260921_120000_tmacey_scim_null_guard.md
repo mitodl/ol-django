@@ -1,0 +1,5 @@
+### Fixed
+
+- A SCIM `PATCH` replace carrying `null` for an attribute in `ATTR_MAP` wrote `None` straight onto the model. Where the target field is `NOT NULL` that raised an `IntegrityError`, which `django_scim` returns as a 500, and a client that treats 500 as retryable resends the same payload forever. The new `UserAdapter.set_mapped_attr` leaves the existing value in place when the incoming value is `null` and the field does not accept `NULL`.
+- `UserAdapter.from_dict` wrote `None` into `username`, `first_name` and `last_name` when the PUT/POST payload carried an explicit `null`, and raised `AttributeError` on a `null` `name` object. A `null` `name` now clears the name fields, as an absent one already did, and a missing or `null` `userName` raises a 400 instead of failing on the column constraint.
+- An invalid value in a `PATCH` operation with no `path` key (what `scim-for-keycloak` sends) raised `KeyError` while `django_scim` built its validation error message, turning the intended 400 into a 500.
