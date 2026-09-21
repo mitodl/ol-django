@@ -3,7 +3,9 @@ import logging
 from typing import Union
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import FieldDoesNotExist
 from django.db import transaction
+from django_scim import exceptions
 from django_scim.adapters import SCIMUser
 from mitol.scim.constants import SchemaURI
 from scim2_filter_parser.attr_paths import AttrPath
@@ -116,6 +118,41 @@ class UserAdapter(SCIMUser):
             "meta": self.meta,
         }
 
+    def is_nullable(self, attname: str) -> bool:
+        """
+        Return whether a model field accepts NULL.
+
+        Anything that isn't a concrete field is reported as nullable, since
+        there is no column constraint to reason about.
+
+        :param attname: name of the field on the model
+        :returns: True if the field accepts NULL
+        :rtype: bool
+        """
+        try:
+            return self.obj._meta.get_field(attname).null  # noqa: SLF001
+        except FieldDoesNotExist:
+            return True
+
+    def set_mapped_attr(self, attname: str, value) -> None:
+        """
+        Assign a value from a SCIM payload to a field on the user.
+
+        A SCIM client can send an explicit ``null`` for an attribute it has no
+        value for. Writing that to a NOT NULL column raises an IntegrityError,
+        which django_scim turns into a 500, and a client that treats 500 as
+        retryable will resend the same payload forever. Leave the existing
+        value in place instead.
+
+        :param attname: name of the field on the model
+        :param value: value from the SCIM payload
+        """
+        if value is None and not self.is_nullable(attname):
+            logger.debug("Ignoring null SCIM value for %s", attname)
+            return
+
+        setattr(self.obj, attname, value)
+
     def from_dict(self, d):
         """
         Consume a ``dict`` conforming to the SCIM User Schema, updating the
@@ -130,11 +167,23 @@ class UserAdapter(SCIMUser):
         """
         self.parse_emails(d.get("emails"))
 
+        username = d.get("userName")
+
+        if not username:
+            # userName is REQUIRED per RFC 7643 section 4.1.1. Without this the
+            # write fails on the NOT NULL column and the client sees a 500,
+            # which it retries.
+            msg = "userName is required and may not be null"
+            raise exceptions.BadRequestError(msg)
+
+        # a null `name` is equivalent to an absent one: both clear the fields
+        name = d.get("name") or {}
+
         self.obj.is_active = d.get("active", True)
-        self.obj.username = d.get("userName")
-        self.obj.first_name = d.get("name", {}).get("givenName", "")
-        self.obj.last_name = d.get("name", {}).get("familyName", "")
-        self.obj.scim_username = d.get("userName")
+        self.obj.username = username
+        self.obj.first_name = name.get("givenName") or ""
+        self.obj.last_name = name.get("familyName") or ""
+        self.obj.scim_username = username
         self.obj.scim_external_id = d.get("externalId")
         # None, not "": global_id is unique, and NULLs are distinct where
         # empty strings are not - two users with no external id would collide.
@@ -235,10 +284,27 @@ class UserAdapter(SCIMUser):
 
         return results
 
+    def _default_validate_op(self, path, value, operation):
+        """
+        Validate an operation before it is handled.
+
+        scim-for-keycloak omits ``path`` and carries the attribute names in
+        ``value``. django_scim builds its validation error message from
+        ``operation["path"]``, so an invalid value raises a KeyError there and
+        the client gets a retryable 500 in place of the intended 400.
+        """
+        if path is not None and "path" not in operation:
+            operation = {
+                **operation,
+                "path": ".".join(part for part in path.first_path if part),
+            }
+
+        super()._default_validate_op(path, value, operation)
+
     def _handle_resplace_nested_path(self, nested_path, nested_value):
         """Handle processing a nested path"""
         if nested_path.first_path in self.ATTR_MAP:
-            setattr(self.obj, self.ATTR_MAP[nested_path.first_path], nested_value)
+            self.set_mapped_attr(self.ATTR_MAP[nested_path.first_path], nested_value)
         elif nested_path.first_path == ("emails", None, None):
             self.parse_emails(nested_value)
         else:
