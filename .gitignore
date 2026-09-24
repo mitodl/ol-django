@@ -73,3 +73,7 @@ testapp/settings/dev.py
 
 # drf-lint project index cache
 .drf_lint_cache.json
+
+# mitol-django-benchmark
+.bench/
+benchmarks/benchmark.local.toml

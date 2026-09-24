@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     "mitol.transcoding.apps.Transcoding",
     "mitol.scim.apps.ScimApp",
     "mitol.apigateway.apps.ApigatewayApp",
+    "mitol.benchmark.apps.BenchmarkApp",
     "mitol.observability.apps.ObservabilityConfig",
     # test app, integrates the reusable apps
     "main",

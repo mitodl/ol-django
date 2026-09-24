@@ -1,0 +1,26 @@
+# Project-wide benchmark configuration for ol-django's own testapp. Committed.
+#
+# Everything here is the same for every benchmark in this repository. Nothing
+# about a particular benchmark belongs in this file, and nothing about a
+# particular developer's machine does either — that is benchmark.local.toml,
+# which is gitignored.
+
+[django]
+# Deliberately not main.settings.test: test settings enable coverage and
+# profilers whose cost scales with the work under test, which is the fastest
+# way to manufacture a result. main.settings.bench is the testapp's nearest
+# equivalent to production settings.
+settings_module = "main.settings.bench"
+pythonpath = ["testapp", "src"]
+chdir = "."
+
+[database]
+name_prefix = "bench_"
+url_template = "${BENCH_DATABASE_URL_TEMPLATE:-postgres://postgres:postgres@localhost:5432/{name}}"
+admin_url = "${BENCH_ADMIN_DATABASE_URL:-postgres://postgres:postgres@localhost:5432/postgres}"
+analyze = true
+
+[defaults.measure]
+warmup = 3
+iterations = 15
+trace_repeats = 7
