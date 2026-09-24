@@ -1,0 +1,119 @@
+# The worked example: ol-django's own libraries list endpoint.
+#
+# This benchmark exists to exercise the harness rather than to prove anything
+# about the testapp, so its shape is a plausible invention rather than
+# production evidence. A real benchmark records, against each knob, whether it
+# is OBSERVED (from a production trace or a sample API response) or a GUESS,
+# because the write-up has to distinguish the two.
+#
+# Run it against itself to check the harness measures nothing of its own:
+#
+#     ol-benchmark run benchmarks/testapp_libraries.toml --base-ref HEAD
+
+[benchmark]
+name = "testapp-libraries"
+description = "GET /api/libraries/ — libraries with nested books, authors and topics"
+
+[knobs]
+# GUESS, all of them: there is no production behind this endpoint.
+libraries = 25
+books_per_library = 12
+authors = 40
+topics = 30
+topics_per_book = 4
+noise_libraries = 150
+
+[[seed.step]]
+name = "user"
+factory = "mitol.common.factories:UserFactory"
+count = 1
+
+[[seed.step]]
+name = "authors"
+factory = "libraries.factories:AuthorFactory"
+count = "$knob:authors"
+
+[[seed.step]]
+name = "topics"
+factory = "libraries.factories:TopicFactory"
+count = "$knob:topics"
+
+# Books spread across authors, so the author prefetch has real fan-out rather
+# than resolving to one row. Structure matters more than sizing.
+[[seed.step]]
+name = "books"
+factory = "libraries.factories:BookFactory"
+count = 300
+kwargs = { author = "$cycle:authors", title = "Book {index}" }
+m2m = { topics = { source = "topics", per = "$knob:topics_per_book", strategy = "cycle" } }
+
+[[seed.step]]
+name = "libraries"
+factory = "libraries.factories:LibraryFactory"
+count = "$knob:libraries"
+m2m = { books = { source = "books", per = "$knob:books_per_library", strategy = "cycle" } }
+
+# Rows the page does not return but the table still holds, so the main query is
+# not scanning a toy table.
+[[seed.step]]
+name = "noise"
+factory = "libraries.factories:LibraryFactory"
+count = "$knob:noise_libraries"
+
+[seed.export]
+user_id = "user.pk"
+
+[target]
+path = "/api/libraries/"
+params = { page_size = 25 }
+expect_status = 200
+# A serializer change can keep the row count identical while dropping what is
+# inside each row. Comparing nested lengths is what catches that.
+nested_keys = ["books"]
+
+[auth]
+user_id = "$ids:user_id"
+
+# Most specific first: a broad pattern placed early swallows the ones after it.
+# The per_req column in the output is the check on that.
+[[trace.classify]]
+label = "COUNT(*) paginator"
+pattern = "COUNT\\(\\*\\)"
+
+# The query a change to this endpoint would most likely target. Marking it
+# excludes it from the seed-drift check, which only makes sense for queries
+# the change is not supposed to move.
+[[trace.classify]]
+label = "topics prefetch"
+pattern = "libraries_book_topics"
+targeted = true
+
+[[trace.classify]]
+label = "books prefetch"
+pattern = "libraries_library_books"
+
+[[trace.classify]]
+label = "author prefetch"
+pattern = "FROM \"libraries_author\""
+
+[[trace.classify]]
+label = "library page query"
+pattern = "FROM \"libraries_library\""
+
+[[calibration.observable]]
+name = "rows per page"
+source = "invented — this endpoint has no production behind it"
+production = 25
+
+# A committed baseline distilled from OTel traces, holding per-query medians
+# keyed by the classifier labels above and nothing else. Generated with:
+#
+#     ol-benchmark baseline benchmarks/testapp_libraries.toml traces/*.json
+#
+# SYNTHETIC. There is no production behind this endpoint, so this one was
+# reshaped from a local run purely to exercise the mechanism. A real baseline
+# comes from exported production traces, which are never committed — see
+# src/benchmark/AGENTS.md.
+[calibration]
+baseline = "testapp_libraries.baseline.json"
+drift_factor = 5
