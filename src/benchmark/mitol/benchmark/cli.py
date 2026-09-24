@@ -17,39 +17,78 @@ because the harness drives the application environment from outside it, and
 that environment may be a container with no shared filesystem: a step is
 handed its configuration as JSON on the environment and answers with one
 prefixed JSON line on stdout.
+
+Exit codes are part of the contract, not a nicety: the backends run these
+commands as subprocesses and treat any non-zero exit as a failure of the step.
+``2`` is a configuration problem, ``1`` is everything else that is known to go
+wrong, including a comparison whose two arms disagree.
 """
 
 from __future__ import annotations
 
-import argparse
 import json
-import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
+import click
+import cloup
+from cloup.constraints import RequireExactly
 from mitol.benchmark import __version__, scaffold
 from mitol.benchmark import config as config_module
 from mitol.benchmark.config import ConfigError
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable, Sequence
+
     from mitol.benchmark.config import BenchmarkConfig
 
 DEFAULT_BENCHMARK_DIR = "benchmarks"
 
-
-def out(message: str = "") -> None:
-    """Write a line to stdout."""
-    sys.stdout.write(f"{message}\n")
-
-
-def err(message: str) -> None:
-    """Write a line to stderr."""
-    sys.stderr.write(f"{message}\n")
+CONTEXT = cloup.Context.settings(
+    help_option_names=["-h", "--help"],
+    show_default=True,
+)
 
 
-def _knob_pairs(values: list[str] | None) -> dict[str, str]:
+class ConfigurationError(click.ClickException):
+    """A benchmark configuration is wrong, as distinct from a run failing."""
+
+    exit_code = 2
+
+    def format_message(self) -> str:
+        """Mark the message as being about configuration, not execution."""
+        return f"configuration error: {self.message}"
+
+
+class BenchmarkCLI(cloup.Group):
+    """A group that turns the harness's own exceptions into exit codes."""
+
+    def invoke(self, ctx: click.Context) -> Any:
+        """
+        Run the subcommand, translating known failures into clean exits.
+
+        Every failure mode the harness raises deliberately becomes one line on
+        stderr and a non-zero exit, because a backend only ever sees the exit
+        code and the captured output. An unexpected exception is left alone so
+        its traceback survives.
+        """
+        try:
+            return super().invoke(ctx)
+        except (click.ClickException, click.exceptions.Exit, click.Abort):
+            # click's own control flow, including ctx.exit() and --help.
+            # Both Exit and Abort subclass RuntimeError, so they have to be
+            # let through before the catch-all below sees them.
+            raise
+        except ConfigError as exc:
+            raise ConfigurationError(str(exc)) from exc
+        except (OSError, RuntimeError, ValueError) as exc:
+            msg = f"{type(exc).__name__}: {exc}"
+            raise click.ClickException(msg) from exc
+
+
+def _knob_pairs(values: Sequence[str]) -> dict[str, str]:
     knobs = {}
-    for entry in values or []:
+    for entry in values:
         name, separator, value = entry.partition("=")
         if not separator:
             msg = f"--knob expects name=value, got {entry!r}"
@@ -58,223 +97,237 @@ def _knob_pairs(values: list[str] | None) -> dict[str, str]:
     return knobs
 
 
-def load_config(args: argparse.Namespace) -> BenchmarkConfig:
+def load_config(
+    config: Path,
+    project_config: Path | None,
+    local_config: Path | None,
+    knob: Sequence[str],
+) -> BenchmarkConfig:
     """Load the three layers named or discovered for this invocation."""
     return config_module.load(
-        args.config,
-        project_path=args.project_config,
-        local_path=args.local_config,
-        knob_overrides=_knob_pairs(getattr(args, "knob", None)),
+        config,
+        project_path=project_config,
+        local_path=local_config,
+        knob_overrides=_knob_pairs(knob),
     )
 
 
-# --------------------------------------------------------------------------
-# subcommands
-# --------------------------------------------------------------------------
+def config_options(func: Callable) -> Callable:
+    """
+    Declare the benchmark file and the overrides every reading command takes.
+
+    The path is deliberately not ``exists=True``: a missing file has to reach
+    the loader so the failure is the domain one, naming the layer that was
+    looked for, rather than a generic usage error.
+    """
+    return cloup.option_group(
+        "Configuration layers",
+        cloup.option(
+            "--project-config",
+            type=click.Path(dir_okay=False, path_type=Path),
+            help=(
+                f"override discovery of {config_module.PROJECT_CONFIG_NAME} "
+                f"(searched for at or above the benchmark file)"
+            ),
+        ),
+        cloup.option(
+            "--local-config",
+            type=click.Path(dir_okay=False, path_type=Path),
+            help=f"override discovery of {config_module.LOCAL_CONFIG_NAME}",
+        ),
+        cloup.option(
+            "--knob",
+            multiple=True,
+            metavar="NAME=VALUE",
+            help="override a shape knob; repeatable",
+        ),
+    )(
+        cloup.argument(
+            "config",
+            type=click.Path(dir_okay=False, path_type=Path),
+        )(func)
+    )
 
 
-def cmd_init(args: argparse.Namespace) -> int:
+@cloup.group(cls=BenchmarkCLI, context_settings=CONTEXT)
+@cloup.version_option(__version__, prog_name="ol-benchmark")
+def cli() -> None:
+    """
+    A/B a Django endpoint across two git refs.
+
+    Seeds one production-shaped scratch database, runs the same request on
+    both refs against identical rows, and attributes the difference query by
+    query.
+    """
+
+
+@cli.command()
+@cloup.option_group(
+    "Which layer to scaffold",
+    cloup.option("--project", is_flag=True, help="the committed project-wide layer"),
+    cloup.option("--local", is_flag=True, help="the uncommitted per-developer layer"),
+    cloup.option("--benchmark", metavar="NAME", help="a new benchmark"),
+    constraint=RequireExactly(1),
+)
+@cloup.option(
+    "--path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="write here instead of the default path",
+)
+@cloup.option(
+    "--dir",
+    "directory",
+    type=click.Path(file_okay=False, path_type=Path),
+    default=DEFAULT_BENCHMARK_DIR,
+    help="directory for the default path",
+)
+@cloup.option("--force", is_flag=True, help="overwrite an existing file")
+@click.pass_context
+def init(  # noqa: PLR0913
+    ctx: click.Context,
+    *,
+    project: bool,
+    local: bool,
+    benchmark: str | None,
+    path: Path | None,
+    directory: Path,
+    force: bool,
+) -> None:
     """Write a commented scaffold for one configuration layer."""
-    directory = Path(args.dir)
-    if args.project:
-        path = Path(args.path or directory / config_module.PROJECT_CONFIG_NAME)
+    if project:
+        target = path or directory / config_module.PROJECT_CONFIG_NAME
         content = scaffold.PROJECT_TEMPLATE
-    elif args.local:
-        path = Path(args.path or directory / config_module.LOCAL_CONFIG_NAME)
+    elif local:
+        target = path or directory / config_module.LOCAL_CONFIG_NAME
         content = scaffold.LOCAL_TEMPLATE
     else:
-        name = args.benchmark
-        path = Path(args.path or directory / f"{config_module.slugify(name)}.toml")
-        content = scaffold.benchmark_template(name)
+        target = path or directory / f"{config_module.slugify(benchmark)}.toml"
+        content = scaffold.benchmark_template(benchmark)
 
-    if path.exists() and not args.force:
-        err(f"{path} already exists; pass --force to overwrite it")
-        return 1
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content)
-    out(f"wrote {path}")
-    if args.local:
-        out(
+    if target.exists() and not force:
+        click.echo(f"{target} already exists; pass --force to overwrite it", err=True)
+        ctx.exit(1)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(content)
+    click.echo(f"wrote {target}")
+    if local:
+        click.echo(
             f"add this to .gitignore — it holds your machine's connection "
-            f"strings:\n    {path}"
+            f"strings:\n    {target}"
         )
-    return 0
 
 
-def cmd_validate(args: argparse.Namespace) -> int:
-    """Parse and merge every layer without touching a database."""
-    config = load_config(args)
-    out(f"{config.name}: configuration is valid")
-    out(f"  database      {config.database.name}")
-    out(f"  settings      {config.django.settings_module}")
-    out(f"  backend       {config.backend.kind}")
-    out(f"  seed steps    {len(config.seed.steps)}")
-    out(f"  knobs         {json.dumps(dict(config.knobs))}")
-    return 0
+@cli.command()
+@config_options
+def validate(
+    *,
+    config: Path,
+    project_config: Path | None,
+    local_config: Path | None,
+    knob: Sequence[str],
+) -> None:
+    """Parse and merge every layer, touching no database."""
+    resolved = load_config(config, project_config, local_config, knob)
+    click.echo(f"{resolved.name}: configuration is valid")
+    click.echo(f"  database      {resolved.database.name}")
+    click.echo(f"  settings      {resolved.django.settings_module}")
+    click.echo(f"  backend       {resolved.backend.kind}")
+    click.echo(f"  seed steps    {len(resolved.seed.steps)}")
+    click.echo(f"  knobs         {json.dumps(dict(resolved.knobs))}")
 
 
-def cmd_show(args: argparse.Namespace) -> int:
+@cli.command()
+@config_options
+def show(
+    *,
+    config: Path,
+    project_config: Path | None,
+    local_config: Path | None,
+    knob: Sequence[str],
+) -> None:
     """Print the merged configuration and where each section came from."""
-    config = load_config(args)
-    out(json.dumps(config.redacted_dict(), indent=2, default=str))
-    return 0
+    resolved = load_config(config, project_config, local_config, knob)
+    click.echo(json.dumps(resolved.redacted_dict(), indent=2, default=str))
 
 
-def cmd_run(args: argparse.Namespace) -> int:
+@cli.command()
+@config_options
+@cloup.option("--base-ref", default="main", help="the ref to compare against")
+@cloup.option(
+    "--out-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    help="where to write results  [default: .bench/out/<benchmark>]",
+)
+@cloup.option(
+    "--skip-seed",
+    is_flag=True,
+    help="reuse the database and seed from the previous run",
+)
+@click.pass_context
+def run(  # noqa: PLR0913
+    ctx: click.Context,
+    *,
+    config: Path,
+    project_config: Path | None,
+    local_config: Path | None,
+    knob: Sequence[str],
+    base_ref: str,
+    out_dir: Path | None,
+    skip_seed: bool,
+) -> None:
     """Run both arms and write the comparison."""
     from mitol.benchmark.runner import Runner  # noqa: PLC0415
 
-    config = load_config(args)
-    runner = Runner(
-        config,
-        base_ref=args.base_ref,
-        out_dir=args.out_dir,
-        skip_seed=args.skip_seed,
-    )
-    comparison = runner.run()
-    out(json.dumps(comparison["metrics"], indent=2))
+    resolved = load_config(config, project_config, local_config, knob)
+    comparison = Runner(
+        resolved, base_ref=base_ref, out_dir=out_dir, skip_seed=skip_seed
+    ).run()
+    click.echo(json.dumps(comparison["metrics"], indent=2))
     # A void comparison is a failure: something differed between the arms and
     # no delta may be quoted from it.
-    return 1 if comparison["verdict"] == "void" else 0
+    if comparison["verdict"] == "void":
+        ctx.exit(1)
 
 
-def cmd_report(args: argparse.Namespace) -> int:
+@cli.command()
+@config_options
+@cloup.option(
+    "--out-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    help="where the previous run wrote its results",
+)
+@click.pass_context
+def report(  # noqa: PLR0913
+    ctx: click.Context,
+    *,
+    config: Path,
+    project_config: Path | None,
+    local_config: Path | None,
+    knob: Sequence[str],
+    out_dir: Path | None,
+) -> None:
     """Recompute the comparison from a previous run's JSON."""
     from mitol.benchmark.runner import rebuild_report  # noqa: PLC0415
 
-    config = load_config(args)
-    out_dir = args.out_dir or Path(".bench", "out", config.slug)
-    comparison = rebuild_report(config, out_dir)
-    out(json.dumps(comparison, indent=2, default=str))
-    return 1 if comparison["verdict"] == "void" else 0
+    resolved = load_config(config, project_config, local_config, knob)
+    directory = out_dir or Path(".bench", "out", resolved.slug)
+    comparison = rebuild_report(resolved, directory)
+    click.echo(json.dumps(comparison, indent=2, default=str))
+    if comparison["verdict"] == "void":
+        ctx.exit(1)
 
 
-def cmd_step(args: argparse.Namespace) -> int:
-    """Run one in-process step against the scratch database."""
+@cli.command()
+@cloup.argument("step", type=click.Choice(["migrate", "seed", "bench", "trace"]))
+def step(*, step: str) -> None:
+    """Run one in-process step; invoked by 'run', not usually by hand."""
     from mitol.benchmark import steps  # noqa: PLC0415
     from mitol.benchmark.django_env import bootstrap  # noqa: PLC0415
 
     config = steps.config_from_environment()
     bootstrap(config)
-    steps.run(args.step, config, steps.label_from_environment())
-    return 0
-
-
-# --------------------------------------------------------------------------
-# parser
-# --------------------------------------------------------------------------
-
-
-def _add_config_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("config", help="path to the benchmark's TOML file")
-    parser.add_argument(
-        "--project-config",
-        metavar="PATH",
-        help=(
-            f"override discovery of {config_module.PROJECT_CONFIG_NAME} "
-            f"(searched for at or above the benchmark file)"
-        ),
-    )
-    parser.add_argument(
-        "--local-config",
-        metavar="PATH",
-        help=f"override discovery of {config_module.LOCAL_CONFIG_NAME}",
-    )
-    parser.add_argument(
-        "--knob",
-        action="append",
-        metavar="NAME=VALUE",
-        help="override a shape knob; repeatable",
-    )
-
-
-def build_parser() -> argparse.ArgumentParser:
-    """Build the ``ol-benchmark`` argument parser."""
-    parser = argparse.ArgumentParser(
-        prog="ol-benchmark",
-        description=(
-            "A/B a Django endpoint across two git refs against one "
-            "production-shaped scratch database."
-        ),
-    )
-    parser.add_argument("--version", action="version", version=__version__)
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    initialize = subparsers.add_parser(
-        "init", help="write a commented scaffold for one configuration layer"
-    )
-    layer = initialize.add_mutually_exclusive_group(required=True)
-    layer.add_argument(
-        "--project", action="store_true", help="the committed project-wide layer"
-    )
-    layer.add_argument(
-        "--local", action="store_true", help="the uncommitted per-developer layer"
-    )
-    layer.add_argument("--benchmark", metavar="NAME", help="a new benchmark")
-    initialize.add_argument("--path", help="write here instead of the default path")
-    initialize.add_argument(
-        "--dir",
-        default=DEFAULT_BENCHMARK_DIR,
-        help=f"directory for the default path (default: {DEFAULT_BENCHMARK_DIR})",
-    )
-    initialize.add_argument("--force", action="store_true", help="overwrite")
-    initialize.set_defaults(handler=cmd_init)
-
-    validate = subparsers.add_parser(
-        "validate", help="parse and merge every layer, touching no database"
-    )
-    _add_config_arguments(validate)
-    validate.set_defaults(handler=cmd_validate)
-
-    show = subparsers.add_parser(
-        "show", help="print the merged configuration and its provenance"
-    )
-    _add_config_arguments(show)
-    show.set_defaults(handler=cmd_show)
-
-    run = subparsers.add_parser("run", help="run both arms and write the comparison")
-    _add_config_arguments(run)
-    run.add_argument(
-        "--base-ref", default="main", help="the ref to compare against (default: main)"
-    )
-    run.add_argument("--out-dir", help="where to write results")
-    run.add_argument(
-        "--skip-seed",
-        action="store_true",
-        help="reuse the database and seed from the previous run",
-    )
-    run.set_defaults(handler=cmd_run)
-
-    report = subparsers.add_parser(
-        "report", help="recompute the comparison from a previous run's JSON"
-    )
-    _add_config_arguments(report)
-    report.add_argument("--out-dir", help="where the previous run wrote its results")
-    report.set_defaults(handler=cmd_report)
-
-    step = subparsers.add_parser(
-        "step",
-        help="run one in-process step; invoked by 'run', not usually by hand",
-    )
-    step.add_argument("step", choices=["migrate", "seed", "bench", "trace"])
-    step.set_defaults(handler=cmd_step)
-
-    return parser
-
-
-def main(argv: list[str] | None = None) -> int:
-    """Parse arguments and dispatch, turning known failures into exit codes."""
-    parser = build_parser()
-    args = parser.parse_args(argv)
-    try:
-        return args.handler(args)
-    except ConfigError as exc:
-        err(f"ol-benchmark: configuration error: {exc}")
-        return 2
-    except (OSError, RuntimeError, ValueError) as exc:
-        err(f"ol-benchmark: {type(exc).__name__}: {exc}")
-        return 1
+    steps.run(step, config, steps.label_from_environment())
 
 
 if __name__ == "__main__":  # pragma: no cover
-    sys.exit(main())
+    cli()

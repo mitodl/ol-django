@@ -12,6 +12,11 @@ dependencies = [
     "django>=4.2",
     "opentelemetry-api>=1.31.0",
     "opentelemetry-sdk>=1.31.0",
+    # The CLI is not optional tooling: the runner drives every step by
+    # invoking `python -m mitol.benchmark step <name>` inside the application
+    # environment, so it has to work wherever the package is installed.
+    "click>=8.1,<9",
+    "cloup>=3.0,<4",
 ]
 
 [project.optional-dependencies]
@@ -30,7 +35,7 @@ postgres = [
 postgres2 = ["opentelemetry-instrumentation-psycopg2>=0.50b0"]
 
 [project.scripts]
-ol-benchmark = "mitol.benchmark.cli:main"
+ol-benchmark = "mitol.benchmark.cli:cli"
 
 [project.urls]
 Repository = "https://github.com/mitodl/ol-django"

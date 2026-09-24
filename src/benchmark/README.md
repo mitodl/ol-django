@@ -30,6 +30,11 @@ Installation
 uv add --dev "mitol-django-benchmark[drf,factories,django,postgres]"
 ```
 
+`click` and `cloup` come with it rather than as an extra: the runner drives
+every step by invoking `python -m mitol.benchmark step <name>` inside the
+application environment, so the CLI has to work wherever the package is
+installed.
+
 | Extra       | Gives you |
 | ----------- | --------- |
 | `drf`       | DRF's `APIClient`, so authentication does not cost a login round-trip per call |
@@ -80,6 +85,11 @@ ol-benchmark init --benchmark library-list       # benchmarks/library_list.toml
 ol-benchmark validate benchmarks/library_list.toml
 ol-benchmark run benchmarks/library_list.toml --base-ref main
 ```
+
+`ol-benchmark -h` lists the subcommands; each takes `-h` of its own. Exit
+codes are part of the contract, because the backends run these as
+subprocesses: `2` is a configuration problem, `1` is everything else that is
+known to go wrong — including a `void` comparison.
 
 Writing the seed
 ----------------
