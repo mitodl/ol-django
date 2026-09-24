@@ -1,4 +1,5 @@
-from mitol.common.envs import get_bool, get_string
+from mitol.common.envs import get_bool, get_int, get_string
+from mitol.keycloak.constants import DEFAULT_ADMIN_TIMEOUT
 
 MITOL_KEYCLOAK_BASE_URL = get_string(
     name="MITOL_KEYCLOAK_BASE_URL",
@@ -52,4 +53,13 @@ MITOL_KEYCLOAK_ADMIN_CLIENT_NO_VERIFY_SSL = get_bool(
     name="MITOL_KEYCLOAK_ADMIN_CLIENT_NO_VERIFY_SSL",
     default=False,
     description="If true, do not verify SSL certificates for the admin client.",
+)
+
+MITOL_KEYCLOAK_ADMIN_TIMEOUT = get_int(
+    name="MITOL_KEYCLOAK_ADMIN_TIMEOUT",
+    default=DEFAULT_ADMIN_TIMEOUT,
+    description=(
+        "Seconds to wait on a Keycloak Admin API request before giving up. "
+        "Lower this in apps that call the Admin API while serving a request."
+    ),
 )

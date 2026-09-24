@@ -1,3 +1,8 @@
+# Matches python-keycloak's own default, so upgrading to a version of this
+# package that honours MITOL_KEYCLOAK_ADMIN_TIMEOUT changes nothing until an app
+# lowers it.
+DEFAULT_ADMIN_TIMEOUT = 60
+
 READONLY_USER_ATTRIBUTES = (
     "userProfileMetadata",
     "access",
