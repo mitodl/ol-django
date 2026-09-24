@@ -322,10 +322,19 @@ class SeedConfig:
 
 @dataclass(frozen=True)
 class Classifier:
-    """One rule mapping a SQL statement to a logical query label."""
+    """
+    One rule mapping a SQL statement to a logical query label.
+
+    ``targeted`` marks a query the change under test is meant to affect. It
+    is what lets the production comparison tell a deliberate improvement apart
+    from a seed that is the wrong shape: an untargeted query drifting from
+    production is a calibration problem, the same query drifting when it *is*
+    the target is the result.
+    """
 
     label: str
     pattern: str
+    targeted: bool = False
 
 
 @dataclass(frozen=True)
@@ -359,6 +368,15 @@ class CalibrationConfig:
     """Production evidence, echoed into the report next to the numbers."""
 
     observables: tuple[Observable, ...] = ()
+    # A committed baseline distilled from production traces: per-query
+    # medians keyed by classifier label, carrying no statement text. Built by
+    # `ol-benchmark baseline`; see mitol.benchmark.baseline for why the raw
+    # trace is never the committed artifact.
+    baseline: Path | None = None
+    # How far a query the change does not touch may differ from production
+    # before the report calls the seed into question. Local is expected to be
+    # faster; the alarm is local being slower.
+    drift_factor: float = 5.0
     # Row-count floors per seed step, from IN-list placeholder counts in a
     # production trace. Falling short of one is a warning, not an error: a
     # truncated export makes these lower bounds.
@@ -587,7 +605,13 @@ def _trace_from(data: Mapping[str, Any]) -> TraceConfig:
         except re.error as exc:
             msg = f"[[trace.classify]] {entry['label']!r}: invalid regex — {exc}"
             raise ConfigError(msg) from exc
-        classify.append(Classifier(label=entry["label"], pattern=entry["pattern"]))
+        classify.append(
+            Classifier(
+                label=entry["label"],
+                pattern=entry["pattern"],
+                targeted=bool(entry.get("targeted", False)),
+            )
+        )
     return TraceConfig(
         classify=tuple(classify), otlp_endpoint=section.get("otlp_endpoint")
     )
@@ -607,8 +631,30 @@ def _calibration_from(data: Mapping[str, Any]) -> CalibrationConfig:
     )
     floors = {str(k): int(v) for k, v in section.get("floors", {}).items()}
     return CalibrationConfig(
-        observables=observables, floors=floors, notes=section.get("notes", "")
+        observables=observables,
+        floors=floors,
+        notes=section.get("notes", ""),
+        baseline=_baseline_path(data, section.get("baseline")),
+        drift_factor=float(section.get("drift_factor", 5.0)),
     )
+
+
+def _baseline_path(data: Mapping[str, Any], declared: Any) -> Path | None:
+    """
+    Resolve ``[calibration].baseline`` against the benchmark file's directory.
+
+    Relative to the benchmark, not the working directory: the two live
+    together in ``benchmarks/`` and are committed together, so the reference
+    has to survive being run from anywhere in the repository.
+    """
+    if not declared:
+        return None
+    path = Path(str(declared))
+    if path.is_absolute():
+        return path
+    benchmark_file = (data.get("_layers") or {}).get("benchmark")
+    base = Path(benchmark_file).parent if benchmark_file else Path()
+    return base / path
 
 
 def from_merged(

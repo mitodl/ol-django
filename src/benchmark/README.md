@@ -175,6 +175,79 @@ really do benchmark against. It also waits for a push-based sync to finish
 after a ref switch, and the runner separately verifies the switched-to files
 actually arrived before measuring.
 
+Comparing against production
+----------------------------
+
+A/B-ing two refs tells you whether a change helped. It does not tell you
+whether your seed is shaped like reality — and a delta measured on the wrong
+shape is a number about your seed. For that you need production.
+
+**Exported OTel traces are never committed.** They carry statement literals,
+query strings, user and tenant identifiers and absolute timestamps. What gets
+committed is the *aggregate*:
+
+```bash
+ol-benchmark baseline benchmarks/library_list.toml traces/*.json
+```
+
+Pass as many exported traces as you have — the medians improve with the
+sample, exactly as `trace_repeats` does locally. Files may mix the two OTLP
+export layouts, a trace split across files is one request, and a trace present
+in two files is counted once.
+
+That writes `benchmarks/library_list.baseline.json`: per-query medians keyed
+by the labels **you** wrote in `[[trace.classify]]`, plus row-count floors and
+the sampled trace IDs. Nothing else. The safety property is structural rather
+than a scrubbing pass —
+
+> the only free-text field in the baseline is drawn from a closed set that is
+> already committed in the same repository.
+
+A production query matching none of your classifiers is labelled
+`"unclassified"` rather than by its SQL, so there is no code path — and no
+flag — that can put statement text into the file. The command warns when that
+happens so you can add a rule. Use `--stdout` to look before anything is
+written, and read the file before you commit it.
+
+**The trace IDs are the one deliberate exception.** A trace ID is a pointer,
+not data: it resolves only for someone who already has access to your tracing
+backend. It is what lets a reviewer open the exact request a number came from.
+It does record *that* a request existed, so drop the field if your team is not
+comfortable publishing that.
+
+Two things to get right when exporting:
+
+- **Include the server/root span.** A trace filtered down to database spans
+  makes the final query's gap read as zero, and that gap is where
+  serialization lives. The command warns if it spots this.
+- **One endpoint per baseline.** A glob that sweeps in unrelated traces
+  averages their queries into nonsense; the command warns when the traces
+  cover more than one route.
+
+Then reference it, and say which query the change is meant to move:
+
+```toml
+[[trace.classify]]
+label = "topics prefetch"
+pattern = "book_topics"
+targeted = true            # excluded from the drift check; it should differ
+
+[calibration]
+baseline = "library_list.baseline.json"
+drift_factor = 5
+```
+
+The attribution table gains a production column, and any **untargeted** query
+more than `drift_factor` away from production is reported under "Seed drift
+from production". That is the falsification check: a seed parameter that makes
+an unchanged query wildly slower than production is wrong, however good the
+story behind it was. Drift is a warning about the seed and never changes the
+verdict — the verdict is about whether the two arms are comparable to each
+other.
+
+Local faster than production is expected and says so. Local *slower* on a
+query the change does not touch is the real alarm.
+
 What you get
 ------------
 
@@ -189,6 +262,10 @@ Written to `.bench/out/<benchmark>/` by default:
 | `base.json`, `branch.json` | the wall-clock results, with the conditions they were measured under |
 | `trace-base.json`, `trace-branch.json` | every span: duration **and the gap to the next one** |
 | `agg-base.json`, `agg-branch.json` | median per logical query across the traced repeats |
+
+`benchmarks/<name>.baseline.json` is the one output that is **committed** — it
+is production evidence distilled to numbers, and a colleague needs it to
+re-run the drift check from a fresh clone.
 
 ### Verdicts
 

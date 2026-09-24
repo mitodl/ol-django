@@ -80,9 +80,13 @@ user_id = "$ids:user_id"
 label = "COUNT(*) paginator"
 pattern = "COUNT\\(\\*\\)"
 
+# The query a change to this endpoint would most likely target. Marking it
+# excludes it from the seed-drift check, which only makes sense for queries
+# the change is not supposed to move.
 [[trace.classify]]
 label = "topics prefetch"
 pattern = "libraries_book_topics"
+targeted = true
 
 [[trace.classify]]
 label = "books prefetch"
@@ -100,3 +104,16 @@ pattern = "FROM \"libraries_library\""
 name = "rows per page"
 source = "invented — this endpoint has no production behind it"
 production = 25
+
+# A committed baseline distilled from OTel traces, holding per-query medians
+# keyed by the classifier labels above and nothing else. Generated with:
+#
+#     ol-benchmark baseline benchmarks/testapp_libraries.toml traces/*.json
+#
+# SYNTHETIC. There is no production behind this endpoint, so this one was
+# reshaped from a local run purely to exercise the mechanism. A real baseline
+# comes from exported production traces, which are never committed — see
+# src/benchmark/AGENTS.md.
+[calibration]
+baseline = "testapp_libraries.baseline.json"
+drift_factor = 5

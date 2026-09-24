@@ -87,6 +87,50 @@ pathological.
 Check `m2m_pairs` in `seed.json` afterwards. Join multiplicity is invisible in
 an API response, so that number is the only place the report can state it.
 
+## Step 3b — Distil the trace into a committed baseline
+
+You have the production trace. **Do not commit it**, and do not paste its SQL
+into the config or a PR: it carries statement literals, query strings and user
+identifiers. Keep it outside the repository — `traces/` and `*.trace.json` are
+gitignored for this reason.
+
+Write `[[trace.classify]]` rules first, then:
+
+```bash
+ol-benchmark baseline benchmarks/<name>.toml traces/*.json
+```
+
+Pass every trace you have; the medians improve with the sample. This writes
+`benchmarks/<name>.baseline.json` containing only per-query medians keyed by
+your classifier labels, row-count floors, and the sampled trace IDs. Any query
+matching no rule is labelled `"unclassified"` — never by its SQL.
+
+**Read the file before you commit it.** It is small, and reading it is the
+review gate. Use `--stdout` first if you want to look before anything is
+written.
+
+Two ways to get this wrong:
+
+- **Exporting only database spans.** The last query's gap then reads as zero,
+  and that gap is where serialization lives — usually the largest single cost.
+  Include the server/root span. The command warns if it notices.
+- **Globbing in traces for other endpoints.** Their queries get averaged in.
+  The command warns when the set covers more than one route.
+
+Then mark what the change targets, so the drift check knows what is *supposed*
+to differ:
+
+```toml
+[[trace.classify]]
+label = "topics prefetch"
+pattern = "book_topics"
+targeted = true
+
+[calibration]
+baseline = "<name>.baseline.json"
+drift_factor = 5
+```
+
 ## Step 4 — Calibrate on what the change does not touch
 
 Tune the seed until the **independent observables** match production.
@@ -130,10 +174,17 @@ Before quoting any delta, read `comparison.json` and confirm:
    meaningless. Tighten the pattern — they are tried in declaration order, so
    put specific ones first.
 4. **`per_query` shows the saving where the change aims**, and nothing else
-   regressed to pay for it.
-5. **`preconditions` is what you expect** in both arms.
-6. **`refs` differ.** Two identical refs means the switch did not take effect.
-7. **Re-run at a second shape** (`--knob rows=200`). A delta stable across
+   regressed to pay for it. With a baseline configured, compare the
+   `production_total_ms` column too — a local number is hard to interpret
+   without it.
+5. **`calibration_drift` is empty.** A non-empty entry means a query the
+   change does not touch does not look like production, which puts the seed
+   shape in question rather than the result. Local slower than production
+   there is the falsification signal: fix the seed and re-run, do not explain
+   it away.
+6. **`preconditions` is what you expect** in both arms.
+7. **`refs` differ.** Two identical refs means the switch did not take effect.
+8. **Re-run at a second shape** (`--knob rows=200`). A delta stable across
    shapes is the strongest evidence you can produce locally.
 
 ## Step 6 — Report a floor, not an estimate
@@ -166,6 +217,8 @@ State in the write-up:
 | Tuning the seed against the query you changed | Circular |
 | Extrapolating local ms to production ms | Different hardware, cache state and network |
 | Editing `benchmark.local.toml` | It is someone's machine, and it is not committed |
+| Committing a raw OTel export, or pasting its SQL into a PR | It carries statement literals, query strings and user identifiers. Only the distilled baseline is committable |
+| Explaining away a drift warning | An unchanged query that does not look like production means the seed is wrong, not that the check is |
 
 ## Working on this package
 

@@ -186,3 +186,130 @@ def test_the_repository_s_own_example_is_valid(run):
     result = run("validate", str(root / "benchmarks" / "testapp_libraries.toml"))
     assert result.exit_code == 0
     assert "testapp-libraries" in result.stdout
+
+
+class TestBaseline:
+    """Distilling production traces through the command line."""
+
+    @pytest.fixture
+    def scaffolded(self, workdir, run):
+        """Return a benchmark file that declares one classifier."""
+        run("init", "--project")
+        run("init", "--benchmark", "demo")
+        path = workdir / "benchmarks" / "demo.toml"
+        path.write_text(
+            path.read_text()
+            + '\n[[trace.classify]]\nlabel = "users"\npattern = "FROM users"\n'
+        )
+        return path
+
+    @pytest.fixture
+    def traces(self, workdir):
+        """Return several exported traces, each a distinct request."""
+        directory = workdir / "traces"
+        directory.mkdir()
+        paths = []
+        for index in range(3):
+            path = directory / f"{index}.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "resourceSpans": [
+                            {
+                                "scopeSpans": [
+                                    {
+                                        "spans": [
+                                            {
+                                                "name": "SELECT",
+                                                "traceId": f"trace{index}",
+                                                "startTimeUnixNano": "0",
+                                                "endTimeUnixNano": str(
+                                                    (index + 1) * 1_000_000
+                                                ),
+                                                "attributes": [
+                                                    {
+                                                        "key": "db.statement",
+                                                        "value": {
+                                                            "stringValue": (
+                                                                "SELECT * FROM "
+                                                                "users WHERE "
+                                                                "email = "
+                                                                "'alice@example.com'"
+                                                            )
+                                                        },
+                                                    }
+                                                ],
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                )
+            )
+            paths.append(str(path))
+        return paths
+
+    def test_an_arbitrary_number_of_traces_is_accepted(
+        self, workdir, run, scaffolded, traces
+    ):
+        """Traces are variadic so a shell glob is the natural way to pass them."""
+        result = run("baseline", str(scaffolded), *traces)
+        assert result.exit_code == 0
+        written = workdir / "benchmarks" / "demo.baseline.json"
+        payload = json.loads(written.read_text())
+        assert payload["requests"] == 3  # noqa: PLR2004
+        assert payload["trace_ids"] == ["trace0", "trace1", "trace2"]
+
+    def test_the_written_file_carries_no_production_sql(
+        self, workdir, run, scaffolded, traces
+    ):
+        """The point of the whole command."""
+        assert run("baseline", str(scaffolded), *traces).exit_code == 0
+        written = (workdir / "benchmarks" / "demo.baseline.json").read_text()
+        assert "alice@example.com" not in written
+        assert "users" in written  # the label survived, so this is not vacuous
+
+    def test_stdout_writes_nothing(self, workdir, run, scaffolded, traces):
+        """For when you want to look before letting it near the repo."""
+        result = run("baseline", str(scaffolded), "--stdout", *traces)
+        assert result.exit_code == 0
+        assert json.loads(result.stdout)["requests"] == 3  # noqa: PLR2004
+        assert not (workdir / "benchmarks" / "demo.baseline.json").exists()
+
+    def test_out_overrides_the_destination(self, workdir, run, scaffolded, traces):
+        """A team may keep baselines somewhere other than beside the config."""
+        target = workdir / "elsewhere" / "prod.json"
+        assert (
+            run("baseline", str(scaffolded), "--out", str(target), *traces).exit_code
+            == 0
+        )
+        assert json.loads(target.read_text())["requests"] == 3  # noqa: PLR2004
+
+    def test_at_least_one_trace_is_required(self, run, scaffolded):
+        """There is nothing to distil from no traces."""
+        assert run("baseline", str(scaffolded)).exit_code == USAGE_ERROR
+
+    def test_a_benchmark_with_no_classifiers_is_refused(self, workdir, run, traces):
+        """Every query would be 'unclassified' and the baseline would be mute."""
+        run("init", "--project")
+        bare = workdir / "benchmarks" / "bare.toml"
+        bare.write_text('[benchmark]\nname = "bare"\n\n[target]\npath = "/x/"\n')
+        result = run("baseline", str(bare), *traces)
+        assert result.exit_code == CONFIG_ERROR
+        assert "no [[trace.classify]] rules" in result.stderr
+
+    def test_unmatched_queries_warn_but_succeed(self, workdir, run, traces):
+        """Labelled 'unclassified' rather than failing the command."""
+        run("init", "--project")
+        run("init", "--benchmark", "other")
+        path = workdir / "benchmarks" / "other.toml"
+        path.write_text(
+            path.read_text()
+            + '\n[[trace.classify]]\nlabel = "nope"\npattern = "FROM nothing"\n'
+        )
+        result = run("baseline", str(path), "--stdout", *traces)
+        assert result.exit_code == 0
+        assert "unclassified" in result.stderr
+        assert "alice@example.com" not in result.stdout

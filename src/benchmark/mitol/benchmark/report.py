@@ -26,6 +26,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from mitol.benchmark.aggregate import aggregate, collisions
+from mitol.benchmark.baseline import by_label
+from mitol.benchmark.baseline import load as load_baseline
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping, Sequence
@@ -124,18 +126,27 @@ def decide(
 
 
 def _per_query(
-    base_rows: Sequence[Mapping[str, Any]], branch_rows: Sequence[Mapping[str, Any]]
+    base_rows: Sequence[Mapping[str, Any]],
+    branch_rows: Sequence[Mapping[str, Any]],
+    production: Mapping[str, Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
     by_label_base = {row["query"]: row for row in base_rows}
     by_label_branch = {row["query"]: row for row in branch_rows}
     empty = {"sql_ms": 0.0, "gap_ms": 0.0, "total_ms": 0.0, "per_req": 0.0}
     rows = []
-    for label in sorted(set(by_label_base) | set(by_label_branch)):
+    labels = set(by_label_base) | set(by_label_branch) | set(production)
+    for label in sorted(labels):
         left = by_label_base.get(label, empty)
         right = by_label_branch.get(label, empty)
+        # None rather than zero where production has no such row: a query the
+        # baseline never saw is unknown, not free.
+        prod = production.get(label)
         rows.append(
             {
                 "query": label,
+                "production_sql_ms": prod["sql_ms"] if prod else None,
+                "production_gap_ms": prod["gap_ms"] if prod else None,
+                "production_total_ms": prod["total_ms"] if prod else None,
                 "base_sql_ms": left["sql_ms"],
                 "base_gap_ms": left["gap_ms"],
                 "base_total_ms": left["total_ms"],
@@ -148,6 +159,61 @@ def _per_query(
             }
         )
     return sorted(rows, key=lambda row: row["delta_ms"])
+
+
+def _drift(
+    config: BenchmarkConfig, rows: Sequence[Mapping[str, Any]]
+) -> list[dict[str, Any]]:
+    """
+    Flag queries the change does not touch that do not look like production.
+
+    This is the falsification check: a seed parameter that makes an
+    *unchanged* query wildly slower than production is wrong, however good
+    the story behind it was. A targeted query is excluded, because it is
+    supposed to differ — that is the whole point of the change.
+
+    Direction matters and is reported. Local faster than production is
+    expected: no network round-trip, a warm cache, no contention. Local
+    *slower* is the signal that the seed is the wrong shape.
+    """
+    targeted = {
+        classifier.label for classifier in config.trace.classify if classifier.targeted
+    }
+    factor = config.calibration.drift_factor
+    drifted = []
+    for row in rows:
+        production = row["production_total_ms"]
+        local = row["base_total_ms"]
+        if row["query"] in targeted or not production or not local:
+            continue
+        ratio = max(production, local) / min(production, local)
+        if ratio <= factor:
+            continue
+        slower = local > production
+        drifted.append(
+            {
+                "query": row["query"],
+                "production_total_ms": production,
+                "local_total_ms": local,
+                "ratio": round(ratio, 1),
+                "local_slower": slower,
+                "note": (
+                    "the seed makes an unchanged query slower than production; "
+                    "this shape is falsified, not merely imprecise"
+                    if slower
+                    else "local is faster than production, which is expected "
+                    "here, but this far apart suggests the seed understates "
+                    "the real fan-out"
+                ),
+            }
+        )
+    return sorted(drifted, key=lambda row: -row["ratio"])
+
+
+def _load_baseline(config: BenchmarkConfig) -> dict[str, Any] | None:
+    """Load the committed production baseline, if the benchmark declares one."""
+    path = config.calibration.baseline
+    return load_baseline(path) if path else None
 
 
 def _calibration(
@@ -187,6 +253,8 @@ def compare(
     verdict, reason = decide(base, branch, mismatches)
     base_rows = aggregate(base_trace, config.trace.classify)
     branch_rows = aggregate(branch_trace, config.trace.classify)
+    baseline = _load_baseline(config)
+    per_query = _per_query(base_rows, branch_rows, by_label(baseline))
 
     return {
         "benchmark": config.name,
@@ -204,7 +272,15 @@ def compare(
             }
             for metric in _HEADLINE_METRICS
         ],
-        "per_query": _per_query(base_rows, branch_rows),
+        "per_query": per_query,
+        # Drift is a warning about the seed, never a change to the verdict:
+        # the verdict is about whether the two arms are comparable to each
+        # other, drift is about whether either resembles production.
+        "calibration_drift": _drift(config, per_query),
+        "production": {
+            "requests": (baseline or {}).get("requests"),
+            "trace_ids": (baseline or {}).get("trace_ids", []),
+        },
         "classifier_collisions": sorted(
             set(collisions(base_rows)) | set(collisions(branch_rows))
         ),
@@ -257,6 +333,49 @@ _VERDICT_HEADLINE = {
 }
 
 
+def _render_drift(comparison: Mapping[str, Any]) -> list[str]:
+    """Render the seed-drift section, or nothing when the seed looks right."""
+    drifted = comparison.get("calibration_drift")
+    if not drifted:
+        return []
+    return [
+        "## Seed drift from production",
+        "",
+        "These queries are **not** the target of the change, so they should "
+        "look like production. They do not, which puts the seed shape in "
+        "question rather than the result.",
+        "",
+        *_table(
+            ["query", "production", "local", "ratio", "reading"],
+            [
+                [
+                    row["query"],
+                    row["production_total_ms"],
+                    row["local_total_ms"],
+                    f"{row['ratio']}x",
+                    row["note"],
+                ]
+                for row in drifted
+            ],
+        ),
+    ]
+
+
+def _render_provenance(production: Mapping[str, Any]) -> list[str]:
+    """Render the trace ids the production baseline was distilled from."""
+    trace_ids = production.get("trace_ids")
+    if not trace_ids:
+        return []
+    return [
+        "## Production baseline",
+        "",
+        f"Distilled from {production.get('requests')} request(s):",
+        "",
+        *[f"- `{trace_id}`" for trace_id in trace_ids],
+        "",
+    ]
+
+
 def render_markdown(comparison: Mapping[str, Any]) -> str:
     """Render the comparison payload as a report a reviewer can read."""
     lines: list[str] = [
@@ -295,9 +414,19 @@ def render_markdown(comparison: Mapping[str, Any]) -> str:
     )
 
     lines += ["## Per-query attribution (median of traced repeats)", ""]
+    production = comparison.get("production", {})
+    if production.get("requests"):
+        lines += [
+            f"The `prod tot` column is the median across "
+            f"{production['requests']} production request(s). Local is "
+            f"expected to be faster — no round-trip, warm cache, no "
+            f"contention.",
+            "",
+        ]
     lines += _table(
         [
             "query",
+            "prod tot",
             "base sql",
             "base gap",
             "base tot",
@@ -309,6 +438,7 @@ def render_markdown(comparison: Mapping[str, Any]) -> str:
         [
             [
                 row["query"],
+                row.get("production_total_ms"),
                 row["base_sql_ms"],
                 row["base_gap_ms"],
                 row["base_total_ms"],
@@ -320,6 +450,8 @@ def render_markdown(comparison: Mapping[str, Any]) -> str:
             for row in comparison["per_query"]
         ],
     )
+
+    lines += _render_drift(comparison)
     if comparison["classifier_collisions"]:
         collided = ", ".join(comparison["classifier_collisions"])
         lines += [
@@ -360,6 +492,8 @@ def render_markdown(comparison: Mapping[str, Any]) -> str:
                 for row in comparison["calibration"]
             ],
         )
+
+    lines += _render_provenance(production)
 
     lines += ["## Conditions", ""]
     conditions = comparison["preconditions"]

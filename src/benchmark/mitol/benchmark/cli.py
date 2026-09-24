@@ -317,6 +317,83 @@ def report(  # noqa: PLR0913
         ctx.exit(1)
 
 
+@cli.command(name="baseline")
+@config_options
+@cloup.argument(
+    "traces",
+    nargs=-1,
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+)
+@cloup.option(
+    "--out",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="where to write it  [default: alongside the config, <name>.baseline.json]",
+)
+@cloup.option("--stdout", is_flag=True, help="print it and write nothing")
+def baseline_command(  # noqa: PLR0913
+    *,
+    config: Path,
+    project_config: Path | None,
+    local_config: Path | None,
+    knob: Sequence[str],
+    traces: Sequence[Path],
+    out: Path | None,
+    stdout: bool,
+) -> None:
+    """
+    Distil production traces into a committable baseline.
+
+    Pass as many exported traces as you have — a shell glob over a directory
+    is the expected way — and the medians improve with the sample.
+
+    The traces themselves must never be committed: they carry statement
+    literals, query strings and user identifiers. What this writes carries
+    only numbers and the query labels you wrote in [[trace.classify]], so it
+    is safe to commit, and you should read it before you do.
+    """
+    from mitol.benchmark import baseline as baseline_module  # noqa: PLC0415
+
+    resolved = load_config(config, project_config, local_config, knob)
+    if not resolved.trace.classify:
+        msg = (
+            "this benchmark declares no [[trace.classify]] rules, so every "
+            "production query would be labelled 'unclassified' and the "
+            "baseline would say nothing. Add classifiers first."
+        )
+        raise ConfigError(msg)
+
+    built, warnings = baseline_module.build(resolved, list(traces))
+    rendered = baseline_module.serialize(built)
+
+    for warning in warnings:
+        click.echo(f"warning: {warning}", err=True)
+    unclassified = [
+        row for row in built["queries"] if row["query"] == baseline_module.UNCLASSIFIED
+    ]
+    if unclassified:
+        click.echo(
+            f"warning: {unclassified[0]['per_req']} queries per request matched "
+            f"no [[trace.classify]] rule and were grouped as 'unclassified'. "
+            f"Their statements are not written anywhere; read the trace to "
+            f"write patterns for them.",
+            err=True,
+        )
+
+    click.echo(rendered, nl=False)
+    if stdout:
+        return
+    target = out or config.parent / f"{config.stem}.baseline.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(rendered)
+    click.echo(
+        f"\nwrote {target} from {len(traces)} trace file(s), "
+        f"{built['requests']} request(s). Read it before committing: it is "
+        f"derived from production.",
+        err=True,
+    )
+
+
 @cli.command()
 @cloup.argument("step", type=click.Choice(["migrate", "seed", "bench", "trace"]))
 def step(*, step: str) -> None:
