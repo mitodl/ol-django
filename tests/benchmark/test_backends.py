@@ -108,6 +108,42 @@ class TestKubernetes:
         with pytest.raises(BackendError, match="will not inherit"):
             backend.describe()
 
+    @pytest.mark.parametrize(
+        "context",
+        [
+            "applications-qa",
+            "applications-production",
+            "mitxonline-ci",
+            "APPLICATIONS-QA",
+        ],
+    )
+    def test_a_deployed_looking_context_is_refused(self, context):
+        """Requiring an explicit context does not help if the name is prod."""
+        backend = get_backend(make_config(self.options(context=context)))
+        with pytest.raises(BackendError, match="deployed cluster"):
+            backend.describe()
+
+    @pytest.mark.parametrize("context", ["local-dev", "k3d-localdev", "minikube"])
+    def test_a_local_context_passes(self, context):
+        """The guard must not block the clusters people actually benchmark on."""
+        backend = get_backend(make_config(self.options(context=context)))
+        assert context in backend.describe()
+
+    def test_the_denylist_is_overridable_from_the_local_layer(self, calls):
+        """A false positive has to be fixable by the developer it affects."""
+        backend = get_backend(
+            make_config(self.options(context="precision-local", context_denylist=[]))
+        )
+        backend.exec(["python", "-V"])
+        assert "--context" in calls[0]["argv"]
+
+    def test_the_guard_runs_before_any_command(self, calls):
+        """Refusing after the first kubectl call would be too late."""
+        backend = get_backend(make_config(self.options(context="applications-qa")))
+        with pytest.raises(BackendError, match="deployed cluster"):
+            backend.admin_sql(["DROP DATABASE bench_x"])
+        assert calls == []
+
     def test_every_command_pins_the_context_and_namespace(self, calls):
         """Never the developer's ambient kubectl context."""
         backend = get_backend(make_config(self.options()))

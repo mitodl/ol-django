@@ -4,11 +4,13 @@ The Kubernetes backend, for a local-dev cluster driven by Tilt or similar.
 Two things make this different from the other backends, and both exist because
 getting them wrong is expensive:
 
-*The context is always explicit.* A developer's current ``kubectl`` context is
-routinely a deployed environment, and this harness issues ``DROP DATABASE``.
-The context is therefore required configuration and is passed on every command;
-it is never inherited from whatever ``kubectl config current-context`` happens
-to say.
+*The context is always explicit, and it is checked.* A developer's current
+``kubectl`` context is routinely a deployed environment, and this harness
+issues ``DROP DATABASE``. The context is therefore required configuration and
+is passed on every command; it is never inherited from whatever ``kubectl
+config current-context`` happens to say. On top of that, a context whose name
+looks like a deployed cluster is refused outright — being required to name it
+does not help if the name you type is ``applications-qa``.
 
 *A source change is asynchronous.* Tilt pushes files into a running pod and may
 re-sync dependencies afterwards, so a ``git switch`` on the host is not
@@ -28,6 +30,13 @@ if TYPE_CHECKING:  # pragma: no cover
     import subprocess
     from collections.abc import Mapping, Sequence
 
+# Substrings that mark a kubectl context as a deployed cluster rather than a
+# local one. Matched case-insensitively against the context name. This is
+# defence in depth behind the scratch-database name guard: that one stops the
+# wrong *database* being dropped, this one stops the right-looking name being
+# dropped in the wrong *cluster*.
+DEPLOYED_CONTEXT_MARKERS = ("ci", "qa", "prod", "applications")
+
 
 class KubernetesBackend(Backend):
     """Run steps with ``kubectl exec`` against a local-dev cluster."""
@@ -43,8 +52,16 @@ class KubernetesBackend(Backend):
         )
 
     @property
+    def denylist(self) -> tuple[str, ...]:
+        """Substrings that mark a context as a deployed cluster."""
+        configured = self.options.get("context_denylist")
+        if configured is None:
+            return DEPLOYED_CONTEXT_MARKERS
+        return tuple(str(marker).lower() for marker in configured)
+
+    @property
     def context(self) -> str:
-        """The kubectl context; required, never inherited."""
+        """The kubectl context; required, never inherited, never deployed."""
         context = self.options.get("context")
         if not context:
             msg = (
@@ -53,7 +70,19 @@ class KubernetesBackend(Backend):
                 "cluster your kubectl happens to point at."
             )
             raise BackendError(msg)
-        return str(context)
+        context = str(context)
+        matched = [marker for marker in self.denylist if marker in context.lower()]
+        if matched:
+            msg = (
+                f"[backend].context = {context!r} contains "
+                f"{', '.join(repr(m) for m in matched)}, which marks it as a "
+                f"deployed cluster. This harness runs DROP DATABASE and will "
+                f"not point it at one. If that name really is a local cluster, "
+                f"override the list in your own benchmark.local.toml: "
+                f"[backend].context_denylist."
+            )
+            raise BackendError(msg)
+        return context
 
     @property
     def namespace(self) -> str:

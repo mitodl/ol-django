@@ -156,9 +156,14 @@ Backends
 
 The `k8s` backend **requires** `context` and never inherits your current
 `kubectl` context: a developer's current context is routinely a deployed
-environment, and this harness runs `DROP DATABASE`. It also waits for a
-push-based sync to finish after a ref switch, and the runner separately
-verifies the switched-to files actually arrived before measuring.
+environment, and this harness runs `DROP DATABASE`. It also **refuses a
+context whose name contains `ci`, `qa`, `prod` or `applications`**, because
+being made to name the cluster does not help if the name you type is
+`applications-qa`. Override the markers with `[backend].context_denylist` in
+your own local config if one of them is a false positive on a cluster you
+really do benchmark against. It also waits for a push-based sync to finish
+after a ref switch, and the runner separately verifies the switched-to files
+actually arrived before measuring.
 
 What you get
 ------------
