@@ -31,7 +31,6 @@ def context():
         ("$ref:authors", "a"),
         ("$ref:authors[2]", "c"),
         ("$index", 0),
-        ("$all:authors", ["a", "b", "c"]),
         ("$$literal", "$literal"),
         ("plain", "plain"),
     ],

@@ -10,14 +10,12 @@ Tokens (a string is a token only if it *starts* with ``$``):
 
 ``$knob:NAME``      the value of a shape knob
 ``$ids:KEY``        a scalar exported by the seed (see ``[seed.export]``)
-``$env:VAR``        an environment variable, error if unset
 ``$index``          the 0-based index of the object being built
 ``$blob:N``         filler text of roughly N bytes; N may be a knob name
 ``$ref:STEP``       the first object created by an earlier step
 ``$ref:STEP[i]``    the i-th object created by an earlier step
 ``$cycle:STEP``     that step's objects, cycled by ``$index``
 ``$sample:STEP:N``  N of that step's objects, sampled from the seeded RNG
-``$all:STEP``       every object created by an earlier step
 ``$$``              a literal ``$`` — how you write a string that starts with one
 
 Anything else is returned unchanged, except that a plain string is run through
@@ -27,10 +25,9 @@ works without a token.
 
 from __future__ import annotations
 
-import os
 import random  # shape sampling, not security
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 _BLOB_PARAGRAPH = (
@@ -62,13 +59,7 @@ class ResolutionContext:
 
     def at(self, index: int) -> ResolutionContext:
         """Return a copy of this context positioned at ``index``."""
-        return ResolutionContext(
-            knobs=self.knobs,
-            ids=self.ids,
-            index=index,
-            objects=self.objects,
-            rng=self.rng,
-        )
+        return replace(self, index=index)
 
 
 def blob_text(nbytes: int) -> str:
@@ -121,14 +112,6 @@ def _resolve_ids(arg: str, ctx: ResolutionContext, token: str) -> Any:
     return ctx.ids[arg]
 
 
-def _resolve_env(arg: str, token: str) -> str:
-    value = os.environ.get(arg)
-    if value is None:
-        msg = f"{token}: environment variable {arg!r} is not set"
-        raise ResolutionError(msg)
-    return value
-
-
 def _resolve_blob(arg: str, ctx: ResolutionContext, token: str) -> str:
     size = ctx.knobs.get(arg, arg)
     return blob_text(_as_int(size, token))
@@ -162,12 +145,10 @@ def _resolve_cycle(arg: str, ctx: ResolutionContext, token: str) -> Any:
 _HANDLERS = {
     "knob": _resolve_knob,
     "ids": _resolve_ids,
-    "env": lambda arg, _ctx, token: _resolve_env(arg, token),
     "blob": _resolve_blob,
     "ref": _resolve_ref,
     "cycle": _resolve_cycle,
     "sample": _resolve_sample,
-    "all": lambda arg, ctx, token: list(_step_objects(arg, ctx, token)),
 }
 
 

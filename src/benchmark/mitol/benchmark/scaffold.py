@@ -105,8 +105,8 @@ nested_per_row = 10
 blob_bytes = 2048
 
 # Steps run in order. Later steps reference earlier ones by name.
-#   $knob:NAME   $index   $blob:NAME_OR_N   $env:VAR
-#   $ref:STEP    $ref:STEP[2]   $cycle:STEP   $sample:STEP:5   $all:STEP
+#   $knob:NAME   $index   $blob:NAME_OR_N
+#   $ref:STEP    $ref:STEP[2]   $cycle:STEP   $sample:STEP:5
 [[seed.step]]
 name = "user"
 factory = "myapp.factories:UserFactory"

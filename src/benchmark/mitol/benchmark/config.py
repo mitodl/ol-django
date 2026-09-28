@@ -28,9 +28,18 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 import tomllib
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
 PROJECT_CONFIG_NAME = "benchmark.toml"
 LOCAL_CONFIG_NAME = "benchmark.local.toml"
@@ -223,18 +232,30 @@ def find_upwards(start: Path, name: str) -> Path | None:
 # --------------------------------------------------------------------------
 
 
-@dataclass(frozen=True)
-class DjangoConfig:
+class _Section(BaseModel):
+    """A validated configuration section; the TOML mapping is the input."""
+
+    model_config = ConfigDict(frozen=True)
+
+
+_SectionT = TypeVar("_SectionT", bound=_Section)
+
+
+class DjangoConfig(_Section):
     """How a step process bootstraps the application's Django."""
 
     settings_module: str
     pythonpath: tuple[str, ...] = ()
     chdir: str | None = None
-    env: Mapping[str, str] = field(default_factory=dict)
+    env: Mapping[str, str] = {}
+
+    @field_validator("env", mode="before")
+    @classmethod
+    def _stringified(cls, value: Any) -> dict[str, str]:
+        return {str(key): str(item) for key, item in (value or {}).items()}
 
 
-@dataclass(frozen=True)
-class DatabaseConfig:
+class DatabaseConfig(_Section):
     """The scratch database: where it is, and how it is reached."""
 
     name: str
@@ -242,17 +263,62 @@ class DatabaseConfig:
     admin_url: str
     analyze: bool = True
 
+    @model_validator(mode="before")
+    @classmethod
+    def _derived(cls, data: Any, info: ValidationInfo) -> Any:
+        """Derive the name and URL the declared pieces describe."""
+        if not isinstance(data, Mapping) or "url" in data:
+            return data
+        section = dict(data)
+        prefix = section.pop("name_prefix", "bench_")
+        benchmark_name = (info.context or {}).get("benchmark_name", "")
+        name = section.get("name") or f"{prefix}{slugify(benchmark_name)}"
+        if not name.startswith(REQUIRED_DB_NAME_PREFIX):
+            msg = (
+                f"[database].name resolved to {name!r}, which does not start with "
+                f"{REQUIRED_DB_NAME_PREFIX!r}. This database is dropped and "
+                f"recreated on every run, so the harness refuses any name that is "
+                f"not obviously a scratch one."
+            )
+            raise ConfigError(msg)
+        template = section.pop(
+            "url_template", "postgres://postgres:postgres@localhost:5432/{name}"
+        )
+        if "{name}" not in template:
+            msg = "[database].url_template must contain the {name} placeholder"
+            raise ConfigError(msg)
+        section["name"] = name
+        section["url"] = template.format(name=name)
+        section.setdefault(
+            "admin_url", "postgres://postgres:postgres@localhost:5432/postgres"
+        )
+        if section["admin_url"] == section["url"]:
+            msg = (
+                "[database].admin_url points at the scratch database itself; it "
+                "must connect to a different database, because DROP DATABASE "
+                "cannot run from inside the database being dropped"
+            )
+            raise ConfigError(msg)
+        return section
 
-@dataclass(frozen=True)
-class BackendConfig:
+
+class BackendConfig(_Section):
     """Which execution backend runs the steps, and how it is configured."""
 
     kind: str = "local"
-    options: Mapping[str, Any] = field(default_factory=dict)
+    options: Mapping[str, Any] = {}
+
+    @model_validator(mode="before")
+    @classmethod
+    def _split(cls, data: Any) -> Any:
+        """Everything in the section besides ``kind`` is backend options."""
+        if not isinstance(data, Mapping) or "options" in data:
+            return data
+        section = dict(data)
+        return {"kind": section.pop("kind", "local"), "options": section}
 
 
-@dataclass(frozen=True)
-class MeasureConfig:
+class MeasureConfig(_Section):
     """Measurement method: how many calls, and which preconditions to enforce."""
 
     warmup: int = 3
@@ -268,18 +334,15 @@ class MeasureConfig:
     allow_remote_storage: bool = False
 
 
-@dataclass(frozen=True)
-class TargetConfig:
+class TargetConfig(_Section):
     """The request under test."""
 
     reverse: str | None = None
     reverse_args: tuple[Any, ...] = ()
-    reverse_kwargs: Mapping[str, Any] = field(default_factory=dict)
+    reverse_kwargs: Mapping[str, Any] = {}
     path: str | None = None
     method: str = "get"
-    params: Mapping[str, Any] = field(default_factory=dict)
-    data: Mapping[str, Any] | None = None
-    headers: Mapping[str, str] = field(default_factory=dict)
+    params: Mapping[str, Any] = {}
     expect_status: int = 200
     # Where the equivalence check finds its counts in the response body.
     count_key: str = "count"
@@ -291,17 +354,27 @@ class TargetConfig:
     # Set this only where an empty response is the thing being measured.
     allow_empty: bool = False
 
+    @field_validator("method")
+    @classmethod
+    def _lowercased(cls, value: str) -> str:
+        return value.lower()
 
-@dataclass(frozen=True)
-class AuthConfig:
+    @model_validator(mode="after")
+    def _exactly_one_of_reverse_or_path(self) -> TargetConfig:
+        if bool(self.reverse) == bool(self.path):
+            msg = "[target] needs exactly one of 'reverse' or 'path'"
+            raise ConfigError(msg)
+        return self
+
+
+class AuthConfig(_Section):
     """Who the request is made as. All fields unset means anonymous."""
 
     user_id: Any = None
     username: str | None = None
 
 
-@dataclass(frozen=True)
-class SeedStep:
+class SeedStep(_Section):
     """One step of the declarative seed."""
 
     name: str
@@ -310,26 +383,77 @@ class SeedStep:
     model: str | None = None
     hook: str | None = None
     count: Any = 1
-    kwargs: Mapping[str, Any] = field(default_factory=dict)
-    m2m: Mapping[str, Any] = field(default_factory=dict)
+    kwargs: Mapping[str, Any] = {}
+    m2m: Mapping[str, Any] = {}
     fixtures: tuple[str, ...] = ()
     statements: tuple[str, ...] = ()
     # Build in memory and bulk_create. Much faster for large steps, but skips
     # post-generation hooks and leaves m2m to the m2m block.
     bulk: bool = False
 
+    @model_validator(mode="before")
+    @classmethod
+    def _inferred_kind(cls, entry: Any) -> Any:
+        """Infer an undeclared kind from which dotted path the step sets."""
+        if not isinstance(entry, Mapping) or entry.get("kind"):
+            return entry
+        entry = dict(entry)
+        if entry.get("hook"):
+            entry["kind"] = "hook"
+        elif entry.get("model") and not entry.get("factory"):
+            entry["kind"] = "model"
+        else:
+            entry["kind"] = "factory"
+        return entry
 
-@dataclass(frozen=True)
-class SeedConfig:
+    @model_validator(mode="after")
+    def _kind_requirements(self) -> SeedStep:
+        if self.kind not in SEED_STEP_KINDS:
+            known = sorted(SEED_STEP_KINDS)
+            msg = (
+                f"seed step {self.name!r}: unknown kind {self.kind!r} (known: {known})"
+            )
+            raise ConfigError(msg)
+        attribute, description = _STEP_REQUIREMENTS[self.kind]
+        if not getattr(self, attribute):
+            msg = (
+                f"seed step {self.name!r} is kind '{self.kind}' but sets no "
+                f"'{attribute}' ({description})"
+            )
+            raise ConfigError(msg)
+        return self
+
+
+_STEP_REQUIREMENTS = {
+    "factory": ("factory", "a dotted path such as 'app.factories:ThingFactory'"),
+    "model": ("model", "a dotted path such as 'app.models:Thing'"),
+    "hook": ("hook", "a dotted path such as 'app.bench:build_things'"),
+    "fixture": ("fixtures", "a list of fixture paths for loaddata"),
+    "sql": ("statements", "a list of SQL statements"),
+}
+
+
+class SeedConfig(_Section):
     """The dataset to build, and the scalars it exports to later steps."""
 
-    steps: tuple[SeedStep, ...] = ()
-    export: Mapping[str, str] = field(default_factory=dict)
+    steps: tuple[SeedStep, ...] = Field(default=(), alias="step")
+    export: Mapping[str, str] = {}
     random_seed: int = 1234
 
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
 
-@dataclass(frozen=True)
-class Classifier:
+    @model_validator(mode="after")
+    def _unique_names(self) -> SeedConfig:
+        seen: set[str] = set()
+        for step in self.steps:
+            if step.name in seen:
+                msg = f"seed step {step.name!r} is declared twice; names must be unique"
+                raise ConfigError(msg)
+            seen.add(step.name)
+        return self
+
+
+class Classifier(_Section):
     """
     One rule mapping a SQL statement to a logical query label.
 
@@ -340,21 +464,28 @@ class Classifier:
     the target is the result.
     """
 
-    label: str
-    pattern: str
+    label: str = Field(min_length=1)
+    pattern: str = Field(min_length=1)
     targeted: bool = False
 
+    @model_validator(mode="after")
+    def _pattern_compiles(self) -> Classifier:
+        try:
+            re.compile(self.pattern)
+        except re.error as exc:
+            msg = f"[[trace.classify]] {self.label!r}: invalid regex — {exc}"
+            raise ConfigError(msg) from exc
+        return self
 
-@dataclass(frozen=True)
-class TraceConfig:
+
+class TraceConfig(_Section):
     """Span capture and how spans are grouped for attribution."""
 
     classify: tuple[Classifier, ...] = ()
     otlp_endpoint: str | None = None
 
 
-@dataclass(frozen=True)
-class Observable:
+class Observable(_Section):
     """
     One production measurement the seed is calibrated against.
 
@@ -380,11 +511,10 @@ class Observable:
     tolerance: float = 0.25
 
 
-@dataclass(frozen=True)
-class CalibrationConfig:
+class CalibrationConfig(_Section):
     """Production evidence, echoed into the report next to the numbers."""
 
-    observables: tuple[Observable, ...] = ()
+    observables: tuple[Observable, ...] = Field(default=(), alias="observable")
     # A committed baseline distilled from production traces: per-query
     # medians keyed by classifier label, carrying no statement text. Built by
     # `ol-benchmark baseline`; see mitol.benchmark.baseline for why the raw
@@ -397,8 +527,32 @@ class CalibrationConfig:
     # Row-count floors per seed step, from IN-list placeholder counts in a
     # production trace. Falling short of one is a warning, not an error: a
     # truncated export makes these lower bounds.
-    floors: Mapping[str, int] = field(default_factory=dict)
+    floors: Mapping[str, int] = {}
     notes: str = ""
+
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _resolved_baseline(cls, data: Any, info: ValidationInfo) -> Any:
+        """
+        Resolve ``[calibration].baseline`` against the benchmark file's directory.
+
+        Relative to the benchmark, not the working directory: the two live
+        together in ``benchmarks/`` and are committed together, so the reference
+        has to survive being run from anywhere in the repository.
+        """
+        if not isinstance(data, Mapping) or not data.get("baseline"):
+            return data
+        section = dict(data)
+        path = Path(str(section["baseline"]))
+        if not path.is_absolute():
+            layers = (info.context or {}).get("layers") or {}
+            benchmark_file = layers.get("benchmark")
+            base = Path(benchmark_file).parent if benchmark_file else Path()
+            path = base / path
+        section["baseline"] = path
+        return section
 
 
 @dataclass(frozen=True)
@@ -446,236 +600,35 @@ class BenchmarkConfig:
 # --------------------------------------------------------------------------
 
 
-def _require(data: Mapping[str, Any], section: str, key: str) -> Any:
+def _as_config_error(section: str, exc: ValidationError) -> ConfigError:
+    """
+    Translate a pydantic failure into this module's one-line prose contract.
+
+    Only the first error is reported, matching the loader's fail-fast style,
+    and the input value is never echoed: connection strings carry credentials,
+    which is the reason :func:`redact` exists.
+    """
+    error = exc.errors(include_url=False, include_input=False)[0]
+    if error["type"] == "value_error":
+        # One of this module's own messages; it already names its subject.
+        return ConfigError(error["msg"].removeprefix("Value error, "))
+    location = ".".join(str(piece) for piece in error["loc"])
+    subject = f"[{section}].{location}" if location else f"[{section}]"
+    if error["type"] == "missing":
+        return ConfigError(f"{subject} is required")
+    return ConfigError(f"{subject}: {error['msg']}")
+
+
+def _section(
+    model: type[_SectionT],
+    name: str,
+    data: Mapping[str, Any],
+    context: Mapping[str, Any] | None = None,
+) -> _SectionT:
     try:
-        return data[section][key]
-    except KeyError as exc:
-        msg = f"[{section}].{key} is required"
-        raise ConfigError(msg) from exc
-
-
-def _django_from(data: Mapping[str, Any]) -> DjangoConfig:
-    section = data.get("django", {})
-    return DjangoConfig(
-        settings_module=_require(data, "django", "settings_module"),
-        pythonpath=tuple(section.get("pythonpath", ())),
-        chdir=section.get("chdir"),
-        env={str(k): str(v) for k, v in section.get("env", {}).items()},
-    )
-
-
-def _database_from(data: Mapping[str, Any], benchmark_name: str) -> DatabaseConfig:
-    section = data.get("database", {})
-    prefix = section.get("name_prefix", "bench_")
-    name = section.get("name") or f"{prefix}{slugify(benchmark_name)}"
-    if not name.startswith(REQUIRED_DB_NAME_PREFIX):
-        msg = (
-            f"[database].name resolved to {name!r}, which does not start with "
-            f"{REQUIRED_DB_NAME_PREFIX!r}. This database is dropped and "
-            f"recreated on every run, so the harness refuses any name that is "
-            f"not obviously a scratch one."
-        )
-        raise ConfigError(msg)
-    template = section.get(
-        "url_template", "postgres://postgres:postgres@localhost:5432/{name}"
-    )
-    if "{name}" not in template:
-        msg = "[database].url_template must contain the {name} placeholder"
-        raise ConfigError(msg)
-    admin_url = section.get(
-        "admin_url", "postgres://postgres:postgres@localhost:5432/postgres"
-    )
-    url = template.format(name=name)
-    if admin_url == url:
-        msg = (
-            "[database].admin_url points at the scratch database itself; it "
-            "must connect to a different database, because DROP DATABASE "
-            "cannot run from inside the database being dropped"
-        )
-        raise ConfigError(msg)
-    return DatabaseConfig(
-        name=name,
-        url=url,
-        admin_url=admin_url,
-        analyze=bool(section.get("analyze", True)),
-    )
-
-
-def _backend_from(data: Mapping[str, Any]) -> BackendConfig:
-    section = dict(data.get("backend", {}))
-    kind = section.pop("kind", "local")
-    return BackendConfig(kind=kind, options=section)
-
-
-def _measure_from(data: Mapping[str, Any]) -> MeasureConfig:
-    section = data.get("measure", {})
-    return MeasureConfig(
-        warmup=int(section.get("warmup", 3)),
-        iterations=int(section.get("iterations", 15)),
-        trace_repeats=int(section.get("trace_repeats", 7)),
-        middleware_exclude=tuple(section.get("middleware_exclude", ())),
-        allow_profilers=bool(section.get("allow_profilers", False)),
-        allow_remote_storage=bool(section.get("allow_remote_storage", False)),
-    )
-
-
-def _target_from(data: Mapping[str, Any]) -> TargetConfig:
-    section = data.get("target")
-    if not section:
-        msg = "[target] is required: there is nothing to benchmark without it"
-        raise ConfigError(msg)
-    reverse, path = section.get("reverse"), section.get("path")
-    if bool(reverse) == bool(path):
-        msg = "[target] needs exactly one of 'reverse' or 'path'"
-        raise ConfigError(msg)
-    return TargetConfig(
-        reverse=reverse,
-        reverse_args=tuple(section.get("reverse_args", ())),
-        reverse_kwargs=section.get("reverse_kwargs", {}),
-        path=path,
-        method=str(section.get("method", "get")).lower(),
-        params=section.get("params", {}),
-        data=section.get("data"),
-        headers=section.get("headers", {}),
-        expect_status=int(section.get("expect_status", 200)),
-        count_key=section.get("count_key", "count"),
-        results_key=section.get("results_key", "results"),
-        nested_keys=tuple(section.get("nested_keys", ())),
-        allow_empty=bool(section.get("allow_empty", False)),
-    )
-
-
-def _seed_step_from(index: int, entry: Mapping[str, Any]) -> SeedStep:
-    name = entry.get("name")
-    if not name:
-        msg = f"[[seed.step]] #{index + 1} has no 'name'"
-        raise ConfigError(msg)
-    kind = entry.get("kind") or ("hook" if entry.get("hook") else None)
-    if kind is None:
-        kind = "model" if entry.get("model") and not entry.get("factory") else "factory"
-    if kind not in SEED_STEP_KINDS:
-        known = sorted(SEED_STEP_KINDS)
-        msg = f"seed step {name!r}: unknown kind {kind!r} (known: {known})"
-        raise ConfigError(msg)
-    step = SeedStep(
-        name=name,
-        kind=kind,
-        factory=entry.get("factory"),
-        model=entry.get("model"),
-        hook=entry.get("hook"),
-        count=entry.get("count", 1),
-        kwargs=entry.get("kwargs", {}),
-        m2m=entry.get("m2m", {}),
-        fixtures=tuple(entry.get("fixtures", ())),
-        statements=tuple(entry.get("statements", ())),
-        bulk=bool(entry.get("bulk", False)),
-    )
-    _check_step_requirements(step)
-    return step
-
-
-_STEP_REQUIREMENTS = {
-    "factory": ("factory", "a dotted path such as 'app.factories:ThingFactory'"),
-    "model": ("model", "a dotted path such as 'app.models:Thing'"),
-    "hook": ("hook", "a dotted path such as 'app.bench:build_things'"),
-    "fixture": ("fixtures", "a list of fixture paths for loaddata"),
-    "sql": ("statements", "a list of SQL statements"),
-}
-
-
-def _check_step_requirements(step: SeedStep) -> None:
-    attribute, description = _STEP_REQUIREMENTS[step.kind]
-    if not getattr(step, attribute):
-        msg = (
-            f"seed step {step.name!r} is kind '{step.kind}' but sets no "
-            f"'{attribute}' ({description})"
-        )
-        raise ConfigError(msg)
-
-
-def _seed_from(data: Mapping[str, Any]) -> SeedConfig:
-    section = data.get("seed", {})
-    steps = tuple(
-        _seed_step_from(index, entry)
-        for index, entry in enumerate(section.get("step", ()))
-    )
-    seen: set[str] = set()
-    for step in steps:
-        if step.name in seen:
-            msg = f"seed step {step.name!r} is declared twice; names must be unique"
-            raise ConfigError(msg)
-        seen.add(step.name)
-    return SeedConfig(
-        steps=steps,
-        export=section.get("export", {}),
-        random_seed=int(section.get("random_seed", 1234)),
-    )
-
-
-def _trace_from(data: Mapping[str, Any]) -> TraceConfig:
-    section = data.get("trace", {})
-    classify = []
-    for index, entry in enumerate(section.get("classify", ())):
-        if not entry.get("label") or not entry.get("pattern"):
-            msg = f"[[trace.classify]] #{index + 1} needs both 'label' and 'pattern'"
-            raise ConfigError(msg)
-        try:
-            re.compile(entry["pattern"])
-        except re.error as exc:
-            msg = f"[[trace.classify]] {entry['label']!r}: invalid regex — {exc}"
-            raise ConfigError(msg) from exc
-        classify.append(
-            Classifier(
-                label=entry["label"],
-                pattern=entry["pattern"],
-                targeted=bool(entry.get("targeted", False)),
-            )
-        )
-    return TraceConfig(
-        classify=tuple(classify), otlp_endpoint=section.get("otlp_endpoint")
-    )
-
-
-def _calibration_from(data: Mapping[str, Any]) -> CalibrationConfig:
-    section = data.get("calibration", {})
-    observables = tuple(
-        Observable(
-            name=entry.get("name", ""),
-            source=entry.get("source", ""),
-            production=entry.get("production"),
-            seed_step=entry.get("seed_step", ""),
-            note=entry.get("note", ""),
-            response=entry.get("response", ""),
-            tolerance=float(entry.get("tolerance", 0.25)),
-        )
-        for entry in section.get("observable", ())
-    )
-    floors = {str(k): int(v) for k, v in section.get("floors", {}).items()}
-    return CalibrationConfig(
-        observables=observables,
-        floors=floors,
-        notes=section.get("notes", ""),
-        baseline=_baseline_path(data, section.get("baseline")),
-        drift_factor=float(section.get("drift_factor", 5.0)),
-    )
-
-
-def _baseline_path(data: Mapping[str, Any], declared: Any) -> Path | None:
-    """
-    Resolve ``[calibration].baseline`` against the benchmark file's directory.
-
-    Relative to the benchmark, not the working directory: the two live
-    together in ``benchmarks/`` and are committed together, so the reference
-    has to survive being run from anywhere in the repository.
-    """
-    if not declared:
-        return None
-    path = Path(str(declared))
-    if path.is_absolute():
-        return path
-    benchmark_file = (data.get("_layers") or {}).get("benchmark")
-    base = Path(benchmark_file).parent if benchmark_file else Path()
-    return base / path
+        return model.model_validate(data.get(name) or {}, context=context)
+    except ValidationError as exc:
+        raise _as_config_error(name, exc) from exc
 
 
 def from_merged(
@@ -687,21 +640,22 @@ def from_merged(
     if not name:
         msg = "[benchmark].name is required"
         raise ConfigError(msg)
+    if not data.get("target"):
+        msg = "[target] is required: there is nothing to benchmark without it"
+        raise ConfigError(msg)
+    context = {"benchmark_name": name, "layers": data.get("_layers") or {}}
     return BenchmarkConfig(
         name=name,
         description=data.get("benchmark", {}).get("description", ""),
-        django=_django_from(data),
-        database=_database_from(data, name),
-        backend=_backend_from(data),
-        measure=_measure_from(data),
-        target=_target_from(data),
-        auth=AuthConfig(
-            user_id=data.get("auth", {}).get("user_id"),
-            username=data.get("auth", {}).get("username"),
-        ),
-        seed=_seed_from(data),
-        trace=_trace_from(data),
-        calibration=_calibration_from(data),
+        django=_section(DjangoConfig, "django", data),
+        database=_section(DatabaseConfig, "database", data, context),
+        backend=_section(BackendConfig, "backend", data),
+        measure=_section(MeasureConfig, "measure", data),
+        target=_section(TargetConfig, "target", data),
+        auth=_section(AuthConfig, "auth", data),
+        seed=_section(SeedConfig, "seed", data),
+        trace=_section(TraceConfig, "trace", data),
+        calibration=_section(CalibrationConfig, "calibration", data, context),
         knobs=data.get("knobs", {}),
         raw=data,
         provenance=provenance or {},

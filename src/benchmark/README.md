@@ -30,7 +30,7 @@ Installation
 uv add --dev "mitol-django-benchmark[drf,factories,django,postgres]"
 ```
 
-`click` and `cloup` come with it rather than as an extra: the runner drives
+`click` comes with it rather than as an extra: the runner drives
 every step by invoking `python -m mitol.benchmark step <name>` inside the
 application environment, so the CLI has to work wherever the package is
 installed.
@@ -141,9 +141,7 @@ Tokens, resolved anywhere in `kwargs`, `m2m`, `count`, target params and auth:
 | `$ref:STEP`, `$ref:STEP[2]` | one object from an earlier step |
 | `$cycle:STEP` | that step's objects, cycled by `$index` |
 | `$sample:STEP:5` | 5 of them, from the seeded RNG (deterministic) |
-| `$all:STEP` | all of them |
 | `$ids:KEY` | a scalar from `[seed.export]` — how the *request* reaches seeded rows |
-| `$env:VAR` | an environment variable |
 | `$$` | a literal `$` |
 
 Plain strings are also run through `str.format` with `index` and every knob, so

@@ -30,7 +30,6 @@ from __future__ import annotations
 import statistics
 import time
 from typing import TYPE_CHECKING, Any
-from urllib.parse import urlencode
 
 from mitol.benchmark.django_env import enforce_preconditions
 from mitol.benchmark.resolve import ResolutionContext, resolve
@@ -118,25 +117,14 @@ def build_caller(
     client = build_client(config, ids)
     url = resolve_url(config, ids)
     params = resolve(dict(config.target.params), context)
-    data = resolve(dict(config.target.data), context) if config.target.data else None
-    headers = {str(k): str(v) for k, v in config.target.headers.items()}
     method = getattr(client, config.target.method, None)
     if method is None:
         msg = f"[target].method = {config.target.method!r} is not supported"
         raise MeasurementError(msg)
     expected = config.target.expect_status
 
-    # A body-carrying method has no second slot for the query string, so the
-    # parameters go onto the URL instead of being silently dropped.
-    if data is not None and params:
-        url = f"{url}?{urlencode(params, doseq=True)}"
-    payload = data if data is not None else params
-    # Only pass headers when there are some: an empty mapping is not a
-    # universally accepted keyword across client versions.
-    extra = {"headers": headers} if headers else {}
-
     def call() -> Any:
-        response = method(url, payload, **extra)
+        response = method(url, params)
         if response.status_code != expected:
             body = bytes(response.content)[:400]
             msg = (
@@ -173,10 +161,13 @@ def _equivalence(config: BenchmarkConfig, response: Any) -> dict[str, Any]:
         "results": len(results) if isinstance(results, list) else None,
     }
     for key in config.target.nested_keys:
-        fields[f"nested.{key}"] = sum(
-            len(row.get(key) or []) for row in results if isinstance(row, dict)
-        )
+        fields[f"nested.{key}"] = _nested_total(results, key)
     return fields
+
+
+def _nested_total(results: Any, key: str) -> int:
+    """Total the lengths of one nested collection across every result row."""
+    return sum(len(row.get(key) or []) for row in results if isinstance(row, dict))
 
 
 def _empty_reason(config: BenchmarkConfig, response: Any) -> str | None:
@@ -206,8 +197,7 @@ def _empty_reason(config: BenchmarkConfig, response: Any) -> str | None:
     # across every row is the same failure one level down: the rows are there,
     # but the thing being measured is not.
     for key in config.target.nested_keys:
-        total = sum(len(row.get(key) or []) for row in results if isinstance(row, dict))
-        if total == 0:
+        if _nested_total(results, key) == 0:
             return (
                 f"every row came back with an empty {key!r}, which "
                 f"[target].nested_keys declares as material to this benchmark"
@@ -279,7 +269,9 @@ def run_bench(
         "total_ms_min": round(min(timings), 2),
         "total_ms_median": round(statistics.median(timings), 2),
         "total_ms_max": round(max(timings), 2),
-        "total_ms_stdev": round(statistics.pstdev(timings), 2),
+        "total_ms_stdev": (
+            round(statistics.stdev(timings), 2) if len(timings) > 1 else 0.0
+        ),
         "queries": len(captured.captured_queries),
         "sql_ms_capture_pass": round(sql_ms, 2),
         # Row fetch, model instantiation and serialization: what over-fetching
