@@ -19,11 +19,11 @@ from mitol.benchmark import steps
 class Command(BaseCommand):
     """Run one in-process benchmark step inside an already-started Django."""
 
-    help = "Run one mitol-django-benchmark step (migrate, seed, bench, trace)"
+    help = f"Run one mitol-django-benchmark step ({', '.join(sorted(steps.HANDLERS))})"
 
     def add_arguments(self, parser):
         """Declare the step to run."""
-        parser.add_argument("step", choices=["migrate", "seed", "bench", "trace"])
+        parser.add_argument("step", choices=sorted(steps.HANDLERS))
 
     def handle(self, *args, **options):  # noqa: ARG002
         """Dispatch to the same step handlers the console script uses."""

@@ -31,9 +31,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import click
-import cloup
-from cloup.constraints import RequireExactly
-from mitol.benchmark import __version__, scaffold
+from mitol.benchmark import __version__, scaffold, steps
 from mitol.benchmark import config as config_module
 from mitol.benchmark.config import ConfigError
 
@@ -44,10 +42,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 DEFAULT_BENCHMARK_DIR = "benchmarks"
 
-CONTEXT = cloup.Context.settings(
-    help_option_names=["-h", "--help"],
-    show_default=True,
-)
+CONTEXT = {
+    "help_option_names": ["-h", "--help"],
+    "show_default": True,
+}
 
 
 class ConfigurationError(click.ClickException):
@@ -60,7 +58,7 @@ class ConfigurationError(click.ClickException):
         return f"configuration error: {self.message}"
 
 
-class BenchmarkCLI(cloup.Group):
+class BenchmarkCLI(click.Group):
     """A group that turns the harness's own exceptions into exit codes."""
 
     def invoke(self, ctx: click.Context) -> Any:
@@ -120,9 +118,12 @@ def config_options(func: Callable) -> Callable:
     the loader so the failure is the domain one, naming the layer that was
     looked for, rather than a generic usage error.
     """
-    return cloup.option_group(
-        "Configuration layers",
-        cloup.option(
+    decorators = (
+        click.argument(
+            "config",
+            type=click.Path(dir_okay=False, path_type=Path),
+        ),
+        click.option(
             "--project-config",
             type=click.Path(dir_okay=False, path_type=Path),
             help=(
@@ -130,27 +131,25 @@ def config_options(func: Callable) -> Callable:
                 f"(searched for at or above the benchmark file)"
             ),
         ),
-        cloup.option(
+        click.option(
             "--local-config",
             type=click.Path(dir_okay=False, path_type=Path),
             help=f"override discovery of {config_module.LOCAL_CONFIG_NAME}",
         ),
-        cloup.option(
+        click.option(
             "--knob",
             multiple=True,
             metavar="NAME=VALUE",
             help="override a shape knob; repeatable",
         ),
-    )(
-        cloup.argument(
-            "config",
-            type=click.Path(dir_okay=False, path_type=Path),
-        )(func)
     )
+    for decorator in reversed(decorators):
+        func = decorator(func)
+    return func
 
 
-@cloup.group(cls=BenchmarkCLI, context_settings=CONTEXT)
-@cloup.version_option(__version__, prog_name="ol-benchmark")
+@click.group(cls=BenchmarkCLI, context_settings=CONTEXT)
+@click.version_option(__version__, prog_name="ol-benchmark")
 def cli() -> None:
     """
     A/B a Django endpoint across two git refs.
@@ -162,26 +161,22 @@ def cli() -> None:
 
 
 @cli.command()
-@cloup.option_group(
-    "Which layer to scaffold",
-    cloup.option("--project", is_flag=True, help="the committed project-wide layer"),
-    cloup.option("--local", is_flag=True, help="the uncommitted per-developer layer"),
-    cloup.option("--benchmark", metavar="NAME", help="a new benchmark"),
-    constraint=RequireExactly(1),
-)
-@cloup.option(
+@click.option("--project", is_flag=True, help="the committed project-wide layer")
+@click.option("--local", is_flag=True, help="the uncommitted per-developer layer")
+@click.option("--benchmark", metavar="NAME", help="a new benchmark")
+@click.option(
     "--path",
     type=click.Path(dir_okay=False, path_type=Path),
     help="write here instead of the default path",
 )
-@cloup.option(
+@click.option(
     "--dir",
     "directory",
     type=click.Path(file_okay=False, path_type=Path),
     default=DEFAULT_BENCHMARK_DIR,
     help="directory for the default path",
 )
-@cloup.option("--force", is_flag=True, help="overwrite an existing file")
+@click.option("--force", is_flag=True, help="overwrite an existing file")
 @click.pass_context
 def init(  # noqa: PLR0913
     ctx: click.Context,
@@ -194,6 +189,9 @@ def init(  # noqa: PLR0913
     force: bool,
 ) -> None:
     """Write a commented scaffold for one configuration layer."""
+    if sum([project, local, benchmark is not None]) != 1:
+        msg = "exactly 1 of --project, --local or --benchmark is required"
+        raise click.UsageError(msg)
     if project:
         target = path or directory / config_module.PROJECT_CONFIG_NAME
         content = scaffold.PROJECT_TEMPLATE
@@ -252,13 +250,13 @@ def show(
 
 @cli.command()
 @config_options
-@cloup.option("--base-ref", default="main", help="the ref to compare against")
-@cloup.option(
+@click.option("--base-ref", default="main", help="the ref to compare against")
+@click.option(
     "--out-dir",
     type=click.Path(file_okay=False, path_type=Path),
     help="where to write results  [default: .bench/out/<benchmark>]",
 )
-@cloup.option(
+@click.option(
     "--skip-seed",
     is_flag=True,
     help="reuse the database and seed from the previous run",
@@ -291,7 +289,7 @@ def run(  # noqa: PLR0913
 
 @cli.command()
 @config_options
-@cloup.option(
+@click.option(
     "--out-dir",
     type=click.Path(file_okay=False, path_type=Path),
     help="where the previous run wrote its results",
@@ -319,18 +317,18 @@ def report(  # noqa: PLR0913
 
 @cli.command(name="baseline")
 @config_options
-@cloup.argument(
+@click.argument(
     "traces",
     nargs=-1,
     required=True,
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
 )
-@cloup.option(
+@click.option(
     "--out",
     type=click.Path(dir_okay=False, path_type=Path),
     help="where to write it  [default: alongside the config, <name>.baseline.json]",
 )
-@cloup.option("--stdout", is_flag=True, help="print it and write nothing")
+@click.option("--stdout", is_flag=True, help="print it and write nothing")
 def baseline_command(  # noqa: PLR0913
     *,
     config: Path,
@@ -395,10 +393,9 @@ def baseline_command(  # noqa: PLR0913
 
 
 @cli.command()
-@cloup.argument("step", type=click.Choice(["migrate", "seed", "bench", "trace"]))
+@click.argument("step", type=click.Choice(sorted(steps.HANDLERS)))
 def step(*, step: str) -> None:
     """Run one in-process step; invoked by 'run', not usually by hand."""
-    from mitol.benchmark import steps  # noqa: PLC0415
     from mitol.benchmark.django_env import bootstrap  # noqa: PLC0415
 
     config = steps.config_from_environment()
