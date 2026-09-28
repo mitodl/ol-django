@@ -177,6 +177,118 @@ def test_shape_and_calibration_travel_with_the_number(config):
     assert result["calibration"][0]["seed"] == 300  # noqa: PLR2004
 
 
+class TestResponseCalibration:
+    """
+    Whether the response the seed produces is the size production's was.
+
+    Seed row counts prove what was created. They cannot show that the endpoint
+    returned a fraction of it — a filter that drops most rows, or a nested
+    collection the seed never attached, leaves every count correct and the
+    payload wrong.
+    """
+
+    def response_config(self, **observable):
+        """Return a config with one response-side observable, overridable."""
+        return cfg.from_merged(
+            {
+                "benchmark": {"name": "response calibration"},
+                "django": {"settings_module": "x"},
+                "database": {"name": "bench_report"},
+                "target": {"path": "/x/"},
+                "calibration": {
+                    "observable": [
+                        {
+                            "name": "response bytes",
+                            "source": "production sample",
+                            "production": 96794,
+                            "response": "response_bytes",
+                            **observable,
+                        }
+                    ]
+                },
+            }
+        )
+
+    def test_a_response_far_from_production_is_flagged(self):
+        """The 66 KB-against-97 KB case: counts fine, payload two thirds."""
+        config = self.response_config()
+        result = compare(
+            config,
+            arm("base", median=100, minimum=98, response_bytes=66_000),
+            arm("branch", median=99, minimum=97, response_bytes=66_000),
+        )
+
+        [missed] = result["calibration_mismatches"]
+        assert missed["observable"] == "response bytes"
+        assert missed["measured"] == 66_000  # noqa: PLR2004
+        assert missed["off_by"] == pytest.approx(0.318, abs=0.001)
+
+    def test_a_close_enough_response_is_not_flagged(self):
+        """Within tolerance is the normal case and must stay quiet."""
+        config = self.response_config()
+        result = compare(
+            config,
+            arm("base", median=100, minimum=98, response_bytes=101_628),
+            arm("branch", median=99, minimum=97, response_bytes=101_628),
+        )
+        assert result["calibration_mismatches"] == []
+
+    def test_the_tolerance_is_per_observable(self):
+        """Some observables are worth pinning harder than a quarter."""
+        config = self.response_config(tolerance=0.01)
+        result = compare(
+            config,
+            arm("base", median=100, minimum=98, response_bytes=101_628),
+            arm("branch", median=99, minimum=97, response_bytes=101_628),
+        )
+        assert len(result["calibration_mismatches"]) == 1
+
+    def test_a_non_numeric_observable_is_not_scored(self):
+        """Prose observables are legitimate and must not read as failures."""
+        config = self.response_config(production="one run per course")
+        result = compare(
+            config,
+            arm("base", median=100, minimum=98),
+            arm("branch", median=99, minimum=97),
+        )
+        assert result["calibration_mismatches"] == []
+        assert result["calibration"][0]["off_by"] is None
+
+    def test_an_observable_with_no_response_key_is_not_scored(self):
+        """Seed-side observables keep working exactly as before."""
+        config = self.response_config(response="")
+        result = compare(
+            config,
+            arm("base", median=100, minimum=98),
+            arm("branch", median=99, minimum=97),
+        )
+        assert result["calibration_mismatches"] == []
+        assert result["calibration"][0]["measured"] is None
+
+    def test_the_mismatch_gets_its_own_section(self):
+        """A reader has to meet this before the per-query table."""
+        config = self.response_config()
+        result = compare(
+            config,
+            arm("base", median=100, minimum=98, response_bytes=66_000),
+            arm("branch", median=99, minimum=97, response_bytes=66_000),
+        )
+        markdown = render_markdown(result)
+        assert "The response does not look like production" in markdown
+        assert "32%" in markdown
+
+    def test_it_does_not_change_the_verdict(self):
+        """Like drift, it questions the seed, not whether the arms compare."""
+        config = self.response_config()
+        result = compare(
+            config,
+            arm("base", median=100, minimum=98, response_bytes=66_000),
+            arm("branch", median=50, minimum=48, response_bytes=66_000),
+        )
+        assert result["calibration_mismatches"]
+        assert result["verdict"] == VERDICT_OK
+
+
 def test_the_local_measurement_caveat_is_always_present(config):
     """A local number is a floor; the report never lets that be dropped."""
     result = compare(

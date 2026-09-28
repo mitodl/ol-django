@@ -149,6 +149,26 @@ source = "production trace"
 production = "4.2 ms"
 ```
 
+Add `response` and the report stops taking your word for it. Seed row counts
+prove what was created; only the response proves what the endpoint did with
+it, and a seed can build every row correctly while the request still returns a
+fraction of production's payload — a filter dropping most of them, or a nested
+collection never attached. Any equivalence field works: `response_bytes`,
+`count`, `results`, `nested.<key>`.
+
+```toml
+[[calibration.observable]]
+name = "response bytes"
+source = "sample response"
+production = 96794
+response = "response_bytes"
+tolerance = 0.25          # the default
+```
+
+A miss gets its own section in the report, ahead of the per-query table. Like
+seed drift it questions the seed and never the verdict: the arms stay
+comparable to each other whether or not either resembles production.
+
 **A seed parameter that makes an *unchanged* query wildly slower than
 production is falsified — discard it, however good the story was.**
 
@@ -209,6 +229,9 @@ State in the write-up:
 | Pitfall | Why it ruins the result |
 | --- | --- |
 | Benchmarking under pytest or against test settings | Profilers and coverage scale with the work under test, inflating whichever arm loads more and **overstating the win**. The harness refuses, so do not work around it |
+| A response with no rows in it | Both arms agree perfectly on nothing, so equivalence passes and the timings are real. Usually authorization failing open — an empty queryset renders as a 200, not a 403. Refused before the timed loop; `[target].allow_empty` opts back in |
+| Seeding through remote file storage | A seed creating file-bearing rows uploads to whatever bucket the environment is pointed at, and a developer environment usually has credentials for a real one. Refused before seeding; `[measure].allow_remote_storage` opts back in |
+| Trusting seed row counts as proof of shape | They show what was created, not what the endpoint returned. Give an observable a `response` key and the report compares the payload itself against production |
 | `DEBUG = True` | Django records every query; the cost grows with statement size. The harness forces it off and says so |
 | Reseeding between arms | Different rows, so it is not an A/B |
 | One traced request | Per-query gaps are far too noisy; the default is a median of seven |

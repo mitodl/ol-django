@@ -1,7 +1,9 @@
 """Tests for the wall-clock pass and its preconditions."""
 
 import pytest
+from django.core.files.storage import FileSystemStorage
 from django.test import override_settings
+from libraries.models import Book, Library
 from mitol.benchmark import config as cfg
 from mitol.benchmark.django_env import (
     PreconditionError,
@@ -117,6 +119,79 @@ def test_an_unresolvable_reverse_is_explained(seeded):
         build_caller(broken, shape)
 
 
+class TestEmptyResponses:
+    """
+    An empty page is the one wrong answer both arms agree on.
+
+    Equivalence compares the arms to each other, so two empty responses match
+    perfectly and the run reports real timings for no work. These cases are
+    refused before the timed loop instead.
+    """
+
+    def test_an_empty_collection_is_refused(self, seeded):
+        """Timing a page with no rows produces a confident number about nothing."""
+        config, shape = seeded
+        Library.objects.all().delete()
+
+        with pytest.raises(MeasurementError, match="refusing to time an empty"):
+            run_bench(config, shape, strict=False)
+
+    def test_the_refusal_names_authorization_as_the_usual_cause(self, seeded):
+        """A filterset returning nothing answers 200, so the hint has to be given."""
+        config, shape = seeded
+        Library.objects.all().delete()
+
+        with pytest.raises(MeasurementError, match=r"\[auth\]"):
+            run_bench(config, shape, strict=False)
+
+    def test_an_empty_nested_collection_is_refused(self, seeded):
+        """`nested_keys` names what the author considers material to the run."""
+        config, shape = seeded
+        Book.objects.all().delete()
+
+        with pytest.raises(MeasurementError, match="empty 'books'"):
+            run_bench(config, shape, strict=False)
+
+    def test_allow_empty_opts_back_in(self, seeded):
+        """Where an empty response is the measurement, it stays available."""
+        config, shape = seeded
+        Library.objects.all().delete()
+        permitted = cfg.from_merged(
+            {
+                **config.as_dict(),
+                "target": {
+                    "path": "/api/libraries/",
+                    "params": {"page_size": 5},
+                    "allow_empty": True,
+                },
+            }
+        )
+
+        result = run_bench(permitted, shape, strict=False)
+        assert result["results"] == 0
+
+    def test_a_detail_endpoint_is_not_judged(self, seeded):
+        """
+        No `results` key means no collection, not an empty one.
+
+        The equivalence block still reports ``results`` as 0 for a detail
+        response, which is exactly why the check reads the body for the key
+        rather than trusting that number: doing the latter would refuse to
+        benchmark every detail endpoint there is.
+        """
+        config, shape = seeded
+        library = Library.objects.order_by("id").first()
+        detail = cfg.from_merged(
+            {
+                **config.as_dict(),
+                "target": {"path": f"/api/libraries/{library.pk}/"},
+            }
+        )
+
+        result = run_bench(detail, shape, strict=False)
+        assert result["response_bytes"] > 0
+
+
 class TestPreconditions:
     """What the harness refuses to measure, and what it fixes."""
 
@@ -167,6 +242,53 @@ class TestPreconditions:
             found = enforce_preconditions(config, strict=False)
         assert found.under_pytest is True
         assert any("pytest" in reason for reason in found.blockers())
+
+    def test_remote_file_storage_is_refused(self, monkeypatch):
+        """
+        A seed creating file-bearing rows would upload to a real bucket.
+
+        Developer environments commonly carry working credentials for the
+        production bucket, so this is a safety refusal rather than an accuracy
+        one: the write happens during seeding, before anything is measured.
+        """
+
+        class PretendS3Storage(FileSystemStorage):
+            pass
+
+        PretendS3Storage.__module__ = "storages.backends.s3boto3"
+        monkeypatch.setattr(
+            "django.core.files.storage.default_storage", PretendS3Storage()
+        )
+
+        config = make_config()
+        with override_settings(MIDDLEWARE=[], DEBUG=False):
+            found = enforce_preconditions(config, strict=False)
+
+        assert found.remote_storage == "storages.backends.s3boto3.PretendS3Storage"
+        assert any("default file storage is remote" in r for r in found.blockers())
+
+    def test_local_file_storage_is_not_flagged(self):
+        """The common case must not need an opt-out."""
+        config = make_config()
+        with override_settings(MIDDLEWARE=[], DEBUG=False):
+            found = enforce_preconditions(config, strict=False)
+        assert found.remote_storage == ""
+
+    def test_allowing_remote_storage_skips_the_check(self, monkeypatch):
+        """A genuinely disposable bucket stays available."""
+
+        class PretendS3Storage(FileSystemStorage):
+            pass
+
+        PretendS3Storage.__module__ = "storages.backends.s3boto3"
+        monkeypatch.setattr(
+            "django.core.files.storage.default_storage", PretendS3Storage()
+        )
+
+        config = make_config(measure={"allow_remote_storage": True})
+        with override_settings(MIDDLEWARE=[], DEBUG=False):
+            found = enforce_preconditions(config, strict=False)
+        assert found.remote_storage == ""
 
 
 class TestDatabaseUrlParsing:

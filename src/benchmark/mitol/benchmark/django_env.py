@@ -34,6 +34,10 @@ if TYPE_CHECKING:  # pragma: no cover
 # Middleware whose cost scales with the number of objects a request hydrates.
 PROFILER_MARKERS = ("zeal", "nplusone", "silk", "debug_toolbar")
 
+# File storage backends that write somewhere other than this machine. Matched
+# against the module path of the configured default storage class.
+REMOTE_STORAGE_MARKERS = ("s3", "boto", "gcloud", "google", "azure", "dropbox")
+
 _ENGINES = {
     "postgres": "django.db.backends.postgresql",
     "postgresql": "django.db.backends.postgresql",
@@ -57,6 +61,7 @@ class Preconditions:
     trace_function: str | None = None
     under_pytest: bool = False
     database: str = ""
+    remote_storage: str = ""
 
     def blockers(self) -> list[str]:
         """Return the reasons this process cannot produce a usable number."""
@@ -79,6 +84,15 @@ class Preconditions:
             reasons.append(
                 "running under pytest; test settings commonly enable profilers "
                 "and coverage that scale with the work under test"
+            )
+        if self.remote_storage:
+            reasons.append(
+                f"default file storage is remote ({self.remote_storage}); a seed "
+                f"that creates image or attachment rows would upload to that "
+                f"bucket, and a developer environment usually holds real "
+                f"credentials for a real one. Point storage at a local path "
+                f"through [django].env, or set allow_remote_storage = true if "
+                f"the bucket is genuinely disposable."
             )
         return reasons
 
@@ -163,6 +177,29 @@ def _point_at_bench_database(config: BenchmarkConfig) -> None:
     connections.__dict__.pop("settings", None)
 
 
+def _remote_storage_backend() -> str:
+    """
+    Return the dotted path of the default file storage if it writes remotely.
+
+    Resolving ``default_storage`` rather than reading a setting covers both the
+    ``STORAGES`` dict and the older ``DEFAULT_FILE_STORAGE``, and follows
+    whatever a project's own indirection produces. A storage that cannot be
+    constructed is not reported as remote: the seed will fail on its own terms,
+    with a better message than this one could give.
+    """
+    try:
+        from django.core.files.storage import default_storage  # noqa: PLC0415
+
+        backend = type(default_storage)
+        dotted = f"{backend.__module__}.{backend.__name__}"
+    except Exception:  # noqa: BLE001 - misconfigured storage is not this check's business
+        return ""
+    lowered = dotted.lower()
+    if any(marker in lowered for marker in REMOTE_STORAGE_MARKERS):
+        return dotted
+    return ""
+
+
 def enforce_preconditions(
     config: BenchmarkConfig, *, strict: bool = True
 ) -> Preconditions:
@@ -201,6 +238,9 @@ def enforce_preconditions(
     ]
     if config.measure.allow_profilers:
         found.profilers_active = []
+
+    if not config.measure.allow_remote_storage:
+        found.remote_storage = _remote_storage_backend()
 
     if settings.DEBUG:
         settings.DEBUG = False

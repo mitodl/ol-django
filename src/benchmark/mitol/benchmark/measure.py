@@ -13,6 +13,16 @@ different, slower pass.
 length and item counts precisely so the comparison can be declared void when
 they disagree. A delta between two arms that returned different things is not
 a speed-up, it is a bug.
+
+*Both arms must have returned something.* Two arms that each serialize an empty
+page agree perfectly, so the equivalence check passes, the timings are real,
+and the number describes nothing. An empty collection is refused before the
+timed loop rather than compared between arms, because it is not a property of
+the change under test — it means the request was not the one intended. The
+usual cause is authorization failing open: a filterset that returns an empty
+queryset for a caller without the right membership renders as a 200 carrying no
+rows, not as a 403, so ``expect_status`` is satisfied and nothing downstream
+notices.
 """
 
 from __future__ import annotations
@@ -169,6 +179,62 @@ def _equivalence(config: BenchmarkConfig, response: Any) -> dict[str, Any]:
     return fields
 
 
+def _empty_reason(config: BenchmarkConfig, response: Any) -> str | None:
+    """
+    Return why this response has nothing to measure, or ``None`` if it has.
+
+    Only collections the configuration actually names are judged. A detail
+    endpoint has no ``results`` key at all, and a body that is not JSON cannot
+    be read this way — in neither case is anything missing, so neither is
+    refused.
+    """
+    body = _body_of(response)
+    results_key = config.target.results_key
+    if results_key not in body:
+        return None
+    results = body.get(results_key)
+    if not isinstance(results, list):
+        return None
+    if not results:
+        count = body.get(config.target.count_key)
+        return f"the response carried no {results_key!r}" + (
+            f" (and {config.target.count_key} = {count})" if count == 0 else ""
+        )
+
+    # A nested collection is declared in `nested_keys` because the author
+    # considers what is inside each row material to the change. Zero of them
+    # across every row is the same failure one level down: the rows are there,
+    # but the thing being measured is not.
+    for key in config.target.nested_keys:
+        total = sum(len(row.get(key) or []) for row in results if isinstance(row, dict))
+        if total == 0:
+            return (
+                f"every row came back with an empty {key!r}, which "
+                f"[target].nested_keys declares as material to this benchmark"
+            )
+    return None
+
+
+def _refuse_empty_response(config: BenchmarkConfig, response: Any) -> None:
+    """Raise unless the response has something in it to measure."""
+    if config.target.allow_empty:
+        return
+    reason = _empty_reason(config, response)
+    if reason is None:
+        return
+    msg = (
+        f"refusing to time an empty response: {reason}.\n"
+        f"Both arms would agree and the timings would be real, so nothing "
+        f"downstream can tell you the number meant nothing.\n"
+        f"Check the seed produced rows, and that [auth] names a user the "
+        f"endpoint's filtering accepts — a caller without the right "
+        f"membership is usually answered with an empty 200, not a 403.\n"
+        f"Set [target].allow_empty = true if an empty response is genuinely "
+        f"what this benchmark measures."
+    )
+    raise MeasurementError(msg)
+
+
 def run_bench(
     config: BenchmarkConfig,
     ids: Mapping[str, Any],
@@ -182,6 +248,11 @@ def run_bench(
 
     preconditions = enforce_preconditions(config, strict=strict)
     call, url = build_caller(config, ids)
+
+    # Before the timed loop, not after it: an empty response is a setup fault,
+    # and the run should say so immediately rather than at the end of an
+    # iteration count someone chose to be slow. This call doubles as warm-up.
+    _refuse_empty_response(config, call())
 
     # Warm-up absorbs content-type caches, first-call imports and any lazily
     # built per-process state, none of which a production request pays.

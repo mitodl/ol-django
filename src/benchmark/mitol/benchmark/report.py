@@ -217,18 +217,73 @@ def _load_baseline(config: BenchmarkConfig) -> dict[str, Any] | None:
 
 
 def _calibration(
-    config: BenchmarkConfig, shape: Mapping[str, Any]
+    config: BenchmarkConfig, shape: Mapping[str, Any], arm: Mapping[str, Any]
 ) -> list[dict[str, Any]]:
     counts = shape.get("counts", {})
-    return [
-        {
+    rows = []
+    for observable in config.calibration.observables:
+        row = {
             "observable": observable.name,
             "source": observable.source,
             "production": observable.production,
             "seed": counts.get(observable.seed_step or observable.name),
+            "measured": arm.get(observable.response) if observable.response else None,
+            "off_by": None,
             "note": observable.note,
         }
+        row["off_by"] = _relative_gap(row["production"], row["measured"])
+        rows.append(row)
+    return rows
+
+
+def _relative_gap(production: Any, measured: Any) -> float | None:
+    """
+    Return |measured - production| / production, or ``None`` if not comparable.
+
+    Non-numeric observables are common and legitimate — "one run per course",
+    a prose note about tenancy — so anything that is not a pair of numbers is
+    simply not scored rather than being treated as a failure.
+    """
+    if isinstance(production, bool) or isinstance(measured, bool):
+        return None
+    if not isinstance(production, (int, float)) or not isinstance(
+        measured, (int, float)
+    ):
+        return None
+    if production == 0:
+        return None
+    return round(abs(measured - production) / abs(production), 3)
+
+
+def _calibration_mismatches(
+    config: BenchmarkConfig, rows: Sequence[Mapping[str, Any]]
+) -> list[dict[str, Any]]:
+    """
+    Observables whose measured response is too far from the production value.
+
+    This is the check that catches a seed which built the right number of rows
+    and still produces a response a fraction of production's size — the counts
+    all agree, and only the payload says otherwise. Like drift, it questions
+    the seed and never the verdict: the two arms remain comparable to each
+    other whether or not either resembles production.
+    """
+    tolerances = {
+        observable.name: observable.tolerance
         for observable in config.calibration.observables
+    }
+    return [
+        {
+            **row,
+            "tolerance": tolerances.get(row["observable"], 0.25),
+            "note": (
+                f"the response is {row['off_by']:.0%} away from the production "
+                f"value; the seed does not reproduce what this endpoint returns "
+                f"in production, so per-query numbers describe a different shape"
+            ),
+        }
+        for row in rows
+        if row.get("off_by") is not None
+        and row["off_by"] > tolerances.get(row["observable"], 0.25)
     ]
 
 
@@ -277,6 +332,12 @@ def compare(
         # the verdict is about whether the two arms are comparable to each
         # other, drift is about whether either resembles production.
         "calibration_drift": _drift(config, per_query),
+        # Measured against the branch arm: both arms are held to the same
+        # equivalence fields, so either would do, and the branch is the one
+        # whose shape a reader is about to draw conclusions from.
+        "calibration_mismatches": _calibration_mismatches(
+            config, _calibration(config, shape, branch)
+        ),
         "production": {
             "requests": (baseline or {}).get("requests"),
             "trace_ids": (baseline or {}).get("trace_ids", []),
@@ -290,7 +351,7 @@ def compare(
             "m2m_pairs": shape.get("m2m_pairs", {}),
             "warnings": shape.get("warnings", []),
         },
-        "calibration": _calibration(config, shape),
+        "calibration": _calibration(config, shape, branch),
         "preconditions": {
             "base": base.get("preconditions", {}),
             "branch": branch.get("preconditions", {}),
@@ -356,6 +417,35 @@ def _render_drift(comparison: Mapping[str, Any]) -> list[str]:
                     row["note"],
                 ]
                 for row in drifted
+            ],
+        ),
+    ]
+
+
+def _render_calibration_mismatches(comparison: Mapping[str, Any]) -> list[str]:
+    """Render response observables that missed production, or nothing."""
+    missed = comparison.get("calibration_mismatches")
+    if not missed:
+        return []
+    return [
+        "## The response does not look like production",
+        "",
+        "The seed built its rows, but what the endpoint returned is a "
+        "different size from the production sample it was calibrated against. "
+        "Row counts agreeing is not the same as the payload agreeing, and the "
+        "per-query numbers below describe whatever shape this actually is.",
+        "",
+        *_table(
+            ["observable", "production", "measured", "off by", "tolerance"],
+            [
+                [
+                    row["observable"],
+                    row["production"],
+                    row["measured"],
+                    f"{row['off_by']:.0%}",
+                    f"{row['tolerance']:.0%}",
+                ]
+                for row in missed
             ],
         ),
     ]
@@ -477,16 +567,19 @@ def render_markdown(comparison: Mapping[str, Any]) -> str:
     for warning in shape["warnings"]:
         lines += [f"> {warning}", ""]
 
+    lines += _render_calibration_mismatches(comparison)
+
     if comparison["calibration"]:
         lines += ["## Calibration against production", ""]
         lines += _table(
-            ["observable", "source", "production", "seed", "note"],
+            ["observable", "source", "production", "seed", "measured", "note"],
             [
                 [
                     row["observable"],
                     row["source"],
                     row["production"],
                     row["seed"],
+                    "—" if row["measured"] is None else row["measured"],
                     row["note"],
                 ]
                 for row in comparison["calibration"]

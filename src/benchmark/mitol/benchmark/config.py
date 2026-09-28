@@ -262,6 +262,10 @@ class MeasureConfig:
     # every result; there is no silent removal.
     middleware_exclude: tuple[str, ...] = ()
     allow_profilers: bool = False
+    # Seeding a Wagtail or file-bearing model uploads through the default
+    # storage. A developer environment commonly carries real credentials for a
+    # real bucket, so a remote backend is refused rather than written to.
+    allow_remote_storage: bool = False
 
 
 @dataclass(frozen=True)
@@ -282,6 +286,10 @@ class TargetConfig:
     results_key: str = "results"
     # Nested collections whose serialized length is worth reporting per request.
     nested_keys: tuple[str, ...] = ()
+    # An empty collection is refused rather than timed: both arms would agree,
+    # so nothing downstream could tell you the measurement described nothing.
+    # Set this only where an empty response is the thing being measured.
+    allow_empty: bool = False
 
 
 @dataclass(frozen=True)
@@ -361,6 +369,15 @@ class Observable:
     production: Any = None
     seed_step: str = ""
     note: str = ""
+    # Where to read this observable back out of the *response*, as a key in a
+    # result's equivalence block: "response_bytes", "count", "results", or
+    # "nested.<key>". Seed row counts prove what was created; only the response
+    # proves what the endpoint did with it, and a seed can be right while the
+    # request still returns a fraction of production's payload.
+    response: str = ""
+    # How far the measured value may sit from `production` before the report
+    # calls the seed into question, as a fraction.
+    tolerance: float = 0.25
 
 
 @dataclass(frozen=True)
@@ -498,6 +515,7 @@ def _measure_from(data: Mapping[str, Any]) -> MeasureConfig:
         trace_repeats=int(section.get("trace_repeats", 7)),
         middleware_exclude=tuple(section.get("middleware_exclude", ())),
         allow_profilers=bool(section.get("allow_profilers", False)),
+        allow_remote_storage=bool(section.get("allow_remote_storage", False)),
     )
 
 
@@ -523,6 +541,7 @@ def _target_from(data: Mapping[str, Any]) -> TargetConfig:
         count_key=section.get("count_key", "count"),
         results_key=section.get("results_key", "results"),
         nested_keys=tuple(section.get("nested_keys", ())),
+        allow_empty=bool(section.get("allow_empty", False)),
     )
 
 
@@ -626,6 +645,8 @@ def _calibration_from(data: Mapping[str, Any]) -> CalibrationConfig:
             production=entry.get("production"),
             seed_step=entry.get("seed_step", ""),
             note=entry.get("note", ""),
+            response=entry.get("response", ""),
+            tolerance=float(entry.get("tolerance", 0.25)),
         )
         for entry in section.get("observable", ())
     )

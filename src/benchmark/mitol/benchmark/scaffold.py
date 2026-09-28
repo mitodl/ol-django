@@ -155,6 +155,13 @@ pattern = "COUNT\\\\(\\\\*\\\\)"
 name = "rows per page"
 source = "sample response"
 production = 100
+# Set `response` and the report reads the value back out of what the endpoint
+# actually returned, instead of only comparing seed row counts. Row counts can
+# all be right while the response is a fraction of production's size — a
+# filter dropping most rows, or a nested collection the seed never attached.
+# Keys: response_bytes, count, results, nested.<key>.
+response = "results"
+# tolerance = 0.25
 
 # Row-count floors from IN-list placeholder counts in a production trace.
 # Falling short is a warning: a truncated export makes these lower bounds.
