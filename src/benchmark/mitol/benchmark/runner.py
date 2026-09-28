@@ -289,6 +289,18 @@ class Runner:
 
     # -- driving ---------------------------------------------------------
 
+    def _prepare(self) -> dict[str, Any]:
+        """Seed the scratch database, or reuse the previous run's seed."""
+        self.log(f"==> target: {self.backend.describe()}")
+        if self.skip_seed:
+            shape = json.loads((self.out_dir / "seed.json").read_text())
+            self.log("==> reusing the existing seed")
+        else:
+            self.recreate_database()
+            self.migrate()
+            shape = self.seed()
+        return shape
+
     def run_memory(self) -> dict[str, Any]:
         """
         Measure retention on one ref, against the same seed a run would use.
@@ -298,15 +310,7 @@ class Runner:
         check out and nothing to compare — which also means this does not
         touch the working tree and can be run on a dirty one.
         """
-        self.log(f"==> target: {self.backend.describe()}")
-
-        if self.skip_seed:
-            shape = json.loads((self.out_dir / "seed.json").read_text())
-            self.log("==> reusing the existing seed")
-        else:
-            self.recreate_database()
-            self.migrate()
-            shape = self.seed()
+        shape = self._prepare()
 
         ref = self.short_ref()
         self.log(f"==> measuring retention ({ref})")
@@ -331,18 +335,10 @@ class Runner:
         """Run both arms against one seeded database and report the result."""
         self.check_working_tree()
         self.check_local_config_untracked()
-        self.log(f"==> target: {self.backend.describe()}")
 
         original_ref = self.current_ref
         probes = self.probe_files(self.base_ref, original_ref)
-
-        if self.skip_seed:
-            shape = json.loads((self.out_dir / "seed.json").read_text())
-            self.log("==> reusing the existing seed")
-        else:
-            self.recreate_database()
-            self.migrate()
-            shape = self.seed()
+        shape = self._prepare()
 
         self.sync_ref(original_ref, probes)
         arms = {"branch": self.run_arm("branch", shape)}

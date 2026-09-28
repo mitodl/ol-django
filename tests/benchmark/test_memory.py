@@ -267,10 +267,12 @@ def test_the_report_leads_with_the_verdict(seeded):
     config, shape = seeded
     result = run_memory(config, shape, strict=False)
     markdown = render_memory_markdown(result)
-    headline = {"retaining": "RETAINED", "high-water": "HIGH-WATER", "stable": "STABLE"}
+    headline = {"retaining": "RETAINED"}.get(
+        result["verdict"], result["verdict"].upper()
+    )
 
     assert "# Retention:" in markdown
-    assert headline[result["verdict"]] in markdown
+    assert headline in markdown
     assert "live objects" in markdown
 
 
@@ -283,5 +285,3 @@ def test_attribution_can_be_switched_off(seeded):
     assert "retained_by_type" not in result
     assert "lru_caches_grown" not in result
     assert result["objects_per_request"] is not None
-
-

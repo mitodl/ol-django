@@ -33,21 +33,25 @@ every tracked object on each call, so a depth-first search with any branching
 costs thousands of full-heap scans and appears to hang rather than fail. The
 shortest path to something named is also the most legible one.
 
-Two limits are worth knowing before reading a result.
+The retained set is delimited with ``gc.freeze()`` rather than ``id()`` sets:
+the baseline heap is moved to the permanent generation, so everything the
+collector can still enumerate afterwards is, by construction, what the run
+added. That sidesteps address reuse entirely, and makes the per-request object
+count a count of *growth* rather than a full-heap enumeration — which matters,
+because materialising a list of every tracked object on each request inflated
+the very RSS series being measured.
 
-*Only tracked containers are visible.* CPython untracks a tuple or dict whose
-contents are all themselves untracked, so an object held only in such a
-container has no discoverable referrers and the walk reports nothing. In
-practice a leak worth finding holds model instances, querysets or closures,
-all of which keep their containers tracked.
-
-*Identity is reused.* Retention is computed by comparing `id()` sets, and an
-address freed during the run can be handed to a new object, which then looks
-like it was there all along. That direction under-reports, never over-reports.
+One limit is worth knowing before reading a result. *Only tracked containers
+are visible.* CPython untracks a tuple or dict whose contents are all
+themselves untracked, so an object held only in such a container has no
+discoverable referrers and the walk reports nothing. In practice a leak worth
+finding holds model instances, querysets or closures, all of which keep their
+containers tracked.
 """
 
 from __future__ import annotations
 
+import functools
 import gc
 import os
 import sys
@@ -119,7 +123,7 @@ def lru_cache_sizes() -> dict[str, int]:
     """
     sizes: dict[str, int] = {}
     for obj in gc.get_objects():
-        if type(obj).__name__ != "_lru_cache_wrapper":
+        if type(obj) is not functools._lru_cache_wrapper:  # noqa: SLF001
             continue
         try:
             wrapped = obj.__wrapped__
@@ -239,23 +243,22 @@ def _verdict(
     )
 
 
-def _attribution(
-    baseline_ids: frozenset[int], config: BenchmarkConfig
-) -> dict[str, Any]:
+def _attribution(retained: list[Any], config: BenchmarkConfig) -> dict[str, Any]:
     """Name what is still reachable, and optionally what holds it."""
-    survivors = gc.get_objects()
-    retained = [obj for obj in survivors if id(obj) not in baseline_ids]
-    counts = Counter(_type_name(obj) for obj in retained)
-
-    by_type: dict[str, list[Any]] = {}
+    # One exemplar per type, not every retained object: during a memory
+    # measurement, holding strong references to the whole retained set is the
+    # worst possible bookkeeping.
+    counts: Counter[str] = Counter()
+    exemplars: dict[str, Any] = {}
     for obj in retained:
-        by_type.setdefault(_type_name(obj), []).append(obj)
+        name = _type_name(obj)
+        counts[name] += 1
+        exemplars.setdefault(name, obj)
 
-    # These lists are themselves new objects; excluding them keeps the walk
-    # from reporting this function as the holder of everything it examines.
-    forbidden = frozenset(
-        {id(survivors), id(retained), id(counts), id(by_type), id(baseline_ids)}
-    )
+    # These containers are themselves new objects; excluding them keeps the
+    # walk from reporting this function as the holder of everything it
+    # examines.
+    forbidden = frozenset({id(retained), id(counts), id(exemplars)})
 
     chains = []
     budget = config.memory.scan_budget
@@ -267,7 +270,7 @@ def _attribution(
     for name, _ in informative[: config.memory.holders]:
         if budget <= 0:
             break
-        chain, budget = holders(by_type[name][0], forbidden, budget)
+        chain, budget = holders(exemplars[name], forbidden, budget)
         chains.append({"type": name, "chain": chain})
 
     return {
@@ -295,7 +298,7 @@ def run_memory(
     # Warm-up is excluded from the series: a worker's first request through an
     # endpoint compiles serializers, fills field caches and opens connections,
     # all of which are one-time and would read as growth.
-    for _ in range(max(memory.warmup, 1)):
+    for _ in range(memory.warmup):
         call()
 
     gc.collect()
@@ -303,28 +306,39 @@ def run_memory(
     baseline_rss = rss_bytes()
     baseline_objects = len(gc.get_objects())
     baseline_caches = lru_cache_sizes() if memory.attribute else {}
-    # Only the identities are kept. Holding the objects themselves would make
-    # this measurement the thing preventing their collection.
-    baseline_ids = frozenset(id(obj) for obj in gc.get_objects())
+    # Move the baseline heap into the permanent generation. From here on the
+    # collector enumerates only what the run adds, so the retained set needs
+    # no id() bookkeeping and cannot be confused by address reuse.
+    gc.freeze()
 
     series = []
     started = time.perf_counter()
-    for index in range(memory.requests):
-        call()
-        series.append(
-            {
-                "request": index + 1,
-                "rss_mib": round(rss_bytes() / (1024 * 1024), 2),
-                "objects": len(gc.get_objects()),
-            }
-        )
+    try:
+        for index in range(memory.requests):
+            call()
+            series.append(
+                {
+                    "request": index + 1,
+                    "rss_mib": round(rss_bytes() / (1024 * 1024), 2),
+                    # Growth over the frozen baseline. Cheap, unlike the
+                    # full-heap enumeration it replaces, whose per-request
+                    # allocation inflated the RSS series being measured.
+                    "objects": baseline_objects + len(gc.get_objects()),
+                }
+            )
 
-    gc.collect()
-    gc.collect()
-    final_rss = rss_bytes()
-    final_objects = len(gc.get_objects())
+        gc.collect()
+        gc.collect()
+        final_rss = rss_bytes()
+        # Two full collections move every unfrozen survivor into the oldest
+        # generation, so this list is exactly the retained set.
+        retained = gc.get_objects(generation=2)
+    finally:
+        # lru_cache_sizes() and any later pass must see the whole heap again.
+        gc.unfreeze()
+    final_objects = baseline_objects + len(retained)
 
-    requests = max(memory.requests, 1)
+    requests = memory.requests
     objects_per_request = (final_objects - baseline_objects) / requests
     mib_per_request = (final_rss - baseline_rss) / (1024 * 1024) / requests
     verdict, reason = _verdict(objects_per_request, mib_per_request, config)
@@ -349,7 +363,7 @@ def run_memory(
     }
 
     if memory.attribute:
-        result.update(_attribution(baseline_ids, config))
+        result.update(_attribution(retained, config))
         result["lru_caches_grown"] = _cache_growth(
             baseline_caches, lru_cache_sizes(), requests
         )

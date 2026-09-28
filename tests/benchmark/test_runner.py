@@ -7,7 +7,13 @@ from pathlib import Path
 import pytest
 from mitol.benchmark import config as cfg
 from mitol.benchmark.backends import Backend
-from mitol.benchmark.runner import BENCH_PREFIX, ArmResult, Runner, RunnerError
+from mitol.benchmark.runner import (
+    BENCH_PREFIX,
+    MEMORY_PREFIX,
+    ArmResult,
+    Runner,
+    RunnerError,
+)
 
 
 class FakeBackend(Backend):
@@ -176,6 +182,56 @@ class TestRefVerification:
         runner.log = said.append
         runner.sync_ref("main", [])
         assert "cannot verify" in said[0]
+
+
+class TestRunMemory:
+    """The retention pass drives the same step protocol as the A/B."""
+
+    MEMORY_RESULT = {
+        "url": "/x/",
+        "verdict": "stable",
+        "reason": "the process returns to where it started",
+        "requests": 2,
+        "warmup": 1,
+        "baseline_rss_mib": 10.0,
+        "final_rss_mib": 10.0,
+        "mib_per_request": 0.0,
+        "baseline_objects": 100,
+        "final_objects": 100,
+        "objects_per_request": 0.0,
+    }
+
+    def test_the_step_it_invokes_is_one_the_parser_accepts(
+        self, config, tmp_path, monkeypatch
+    ):
+        """
+        The drift that shipped once: 'memory' reachable from the runner but
+        rejected by the console script's argument parser. Asserted against
+        the real command's Choice, not a copy of the list.
+        """
+        from mitol.benchmark.cli import cli as console  # noqa: PLC0415
+
+        made = Runner(config, out_dir=tmp_path / "out", skip_seed=True)
+        monkeypatch.setattr(made, "backend", FakeBackend(config))
+        made.log = lambda _message: None
+        (tmp_path / "out").mkdir(parents=True)
+        (tmp_path / "out" / "seed.json").write_text("{}")
+        made.backend.stdout_for["memory"] = MEMORY_PREFIX + json.dumps(
+            self.MEMORY_RESULT
+        )
+
+        result = made.run_memory()
+
+        assert result["verdict"] == "stable"
+        step_name = made.backend.commands[-1]["argv"][-1]
+        parameter = next(
+            param for param in console.commands["step"].params if param.name == "step"
+        )
+        assert step_name in parameter.type.choices
+        written = {path.name for path in (tmp_path / "out").iterdir()}
+        assert {"config.resolved.json", "seed.json", "memory.json", "memory.md"} <= (
+            written
+        )
 
 
 def test_outputs_are_all_written(runner, tmp_path):

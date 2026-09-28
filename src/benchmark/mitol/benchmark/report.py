@@ -596,11 +596,8 @@ def render_markdown(comparison: Mapping[str, Any]) -> str:
     return "\n".join(lines)
 
 
-_MEMORY_HEADLINE = {
-    "retaining": "RETAINED",
-    "high-water": "HIGH-WATER",
-    "stable": "STABLE",
-}
+# Every other verdict renders as its own name upcased.
+_MEMORY_HEADLINE = {"retaining": "RETAINED"}
 
 
 def render_memory_markdown(result: Mapping[str, Any]) -> str:
