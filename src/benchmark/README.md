@@ -86,6 +86,14 @@ ol-benchmark validate benchmarks/library_list.toml
 ol-benchmark run benchmarks/library_list.toml --base-ref main
 ```
 
+`init --project` also adds this package's artifacts to the project's
+`.gitignore` — `.bench/`, the local configuration layer, and `traces/` plus
+`*.trace.json`. The exports are the reason it happens at adoption time rather
+than being left as advice: a raw OTel trace carries statement literals, query
+strings and user identifiers, and the first request for one comes a few steps
+later. The entries are appended behind a marker comment, so re-running adds
+nothing.
+
 `ol-benchmark -h` lists the subcommands; each takes `-h` of its own. Exit
 codes are part of the contract, because the backends run these as
 subprocesses: `2` is a configuration problem, `1` is everything else that is

@@ -8,6 +8,25 @@ installed package is worse than no template at all.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pathlib import Path
+
+# Written into the project's .gitignore by `init --project`. The marker line is
+# what makes appending idempotent, so it has to stay stable.
+GITIGNORE_MARKER = "# mitol-django-benchmark"
+
+GITIGNORE_ENTRIES = f"""\
+{GITIGNORE_MARKER}
+.bench/
+benchmarks/benchmark.local.toml
+# Exported OTel traces are production data and are never committed. Only the
+# distilled benchmarks/*.baseline.json belongs in the repository.
+traces/
+*.trace.json
+"""
+
 PROJECT_TEMPLATE = """\
 # Project-wide benchmark configuration. Committed.
 #
@@ -173,3 +192,22 @@ response = "results"
 def benchmark_template(name: str) -> str:
     """Return the per-benchmark scaffold, named for this benchmark."""
     return BENCHMARK_TEMPLATE.format(name=name)
+
+
+def ensure_gitignore(path: Path) -> bool:
+    """
+    Add the benchmark's ignore entries to ``path``, and say whether it changed.
+
+    Appended rather than written: the file belongs to the project. The marker
+    line makes a second run a no-op, so this is safe to call on every
+    ``init --project``. Of the entries, ``traces/`` is the one that matters —
+    a raw OTel export carries statement literals, query strings and user
+    identifiers, and the window in which it can be committed by accident opens
+    the moment someone is asked to produce one.
+    """
+    existing = path.read_text() if path.is_file() else ""
+    if GITIGNORE_MARKER in existing:
+        return False
+    body = existing.rstrip("\n")
+    path.write_text(f"{body}\n\n{GITIGNORE_ENTRIES}" if body else GITIGNORE_ENTRIES)
+    return True

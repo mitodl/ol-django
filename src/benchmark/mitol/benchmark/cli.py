@@ -208,7 +208,23 @@ def init(  # noqa: PLR0913
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(content)
     click.echo(f"wrote {target}")
-    if local:
+
+    gitignore = Path(".gitignore")
+    if project:
+        # Adopting the package is the moment to close the window in which a
+        # production trace or a developer's connection strings can be
+        # committed by accident — before anyone has been asked to produce one.
+        if scaffold.ensure_gitignore(gitignore):
+            click.echo(
+                f"added the benchmark's artifacts to {gitignore}: "
+                f".bench/, {config_module.LOCAL_CONFIG_NAME}, and the "
+                f"traces/ and *.trace.json exports, which are production data"
+            )
+        else:
+            click.echo(f"{gitignore} already ignores the benchmark's artifacts")
+    elif local and scaffold.GITIGNORE_MARKER not in (
+        gitignore.read_text() if gitignore.is_file() else ""
+    ):
         click.echo(
             f"add this to .gitignore — it holds your machine's connection "
             f"strings:\n    {target}"

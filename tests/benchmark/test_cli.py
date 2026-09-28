@@ -97,6 +97,45 @@ class TestInit:
         """It holds the developer's own connection strings."""
         assert ".gitignore" in run("init", "--local").stdout
 
+    def test_the_project_layer_ignores_the_artifacts(self, workdir, run):
+        """
+        Adopting the package closes the window before it opens.
+
+        A raw OTel export carries statement literals and user identifiers, and
+        someone is asked to produce one a few steps later.
+        """
+        assert run("init", "--project").exit_code == 0
+        ignored = (workdir / ".gitignore").read_text()
+
+        assert "traces/" in ignored
+        assert "*.trace.json" in ignored
+        assert cfg.LOCAL_CONFIG_NAME in ignored
+        assert ".bench/" in ignored
+
+    def test_an_existing_gitignore_is_appended_to(self, workdir, run):
+        """It is the project's file; the package only adds to it."""
+        (workdir / ".gitignore").write_text("*.pyc\n")
+        assert run("init", "--project").exit_code == 0
+        ignored = (workdir / ".gitignore").read_text()
+
+        assert ignored.startswith("*.pyc\n")
+        assert "traces/" in ignored
+
+    def test_ignoring_is_idempotent(self, workdir, run):
+        """Re-running init on an adopted project is a no-op, not a duplicate."""
+        run("init", "--project")
+        first = (workdir / ".gitignore").read_text()
+        result = run("init", "--project", "--force")
+
+        assert (workdir / ".gitignore").read_text() == first
+        assert "already ignores" in result.stdout
+
+    @pytest.mark.usefixtures("workdir")
+    def test_the_local_layer_stays_quiet_once_ignored(self, run):
+        """The warning is advice, so it stops once the advice is taken."""
+        run("init", "--project")
+        assert ".gitignore" not in run("init", "--local").stdout
+
 
 class TestValidateAndShow:
     """Checking a configuration without touching a database."""
