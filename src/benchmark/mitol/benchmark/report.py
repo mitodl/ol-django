@@ -594,3 +594,113 @@ def render_markdown(comparison: Mapping[str, Any]) -> str:
         lines += [f"> {warning}", ""]
     lines += [comparison["caveat"], ""]
     return "\n".join(lines)
+
+
+_MEMORY_HEADLINE = {
+    "retaining": "RETAINED",
+    "high-water": "HIGH-WATER",
+    "stable": "STABLE",
+}
+
+
+def render_memory_markdown(result: Mapping[str, Any]) -> str:
+    """
+    Render the retention pass as a report a reviewer can read.
+
+    Deliberately leads with the verdict and the two per-request numbers,
+    because everything after them is only worth reading if those say there is
+    something to chase.
+    """
+    verdict = result["verdict"]
+    lines: list[str] = [
+        f"# Retention: {result['url']}",
+        "",
+        f"**{_MEMORY_HEADLINE.get(verdict, verdict.upper())}** — {result['reason']}",
+        "",
+        *_table(
+            ["", "baseline", "final", "per request"],
+            [
+                [
+                    "RSS (MiB)",
+                    result["baseline_rss_mib"],
+                    result["final_rss_mib"],
+                    f"{result['mib_per_request']:+}",
+                ],
+                [
+                    "live objects",
+                    result["baseline_objects"],
+                    result["final_objects"],
+                    f"{result['objects_per_request']:+}",
+                ],
+            ],
+        ),
+        f"Over {result['requests']} requests, after a forced collection. "
+        f"Live objects are counted after collecting, so growth there is "
+        f"reachable rather than merely uncollected — that is what separates "
+        f"retention from an allocator holding freed arenas.",
+        "",
+    ]
+
+    by_type = result.get("retained_by_type") or []
+    if by_type:
+        lines += ["## What is still reachable", ""]
+        lines += _table(
+            ["type", "count", "per request"],
+            [
+                [
+                    row["type"],
+                    row["count"],
+                    round(row["count"] / max(result["requests"], 1), 1),
+                ]
+                for row in by_type
+            ],
+        )
+
+    grown = result.get("lru_caches_grown")
+    if grown:
+        lines += [
+            "## Caches that grew",
+            "",
+            "An `lru_cache` keyed on something request-scoped is the most "
+            "common way a worker grows without any one place looking wrong.",
+            "",
+        ]
+        lines += _table(
+            ["cache", "entries added", "current size", "per request"],
+            [
+                [
+                    row["cache"],
+                    row["entries_added"],
+                    row["current_size"],
+                    row["per_request"],
+                ]
+                for row in grown
+            ],
+        )
+    elif result.get("retained_objects"):
+        lines += [
+            "No `lru_cache` in the process grew, which rules that category "
+            "out: whatever holds these objects is hand-rolled.",
+            "",
+        ]
+
+    for held in result.get("holders") or []:
+        lines += [f"### What holds `{held['type']}`", ""]
+        if not held["chain"]:
+            lines += [
+                "No named holder found inside the scan budget. Raise "
+                "`[memory].scan_budget` to look further.",
+                "",
+            ]
+            continue
+        lines += ["```", *_indent_chain(held["chain"]), "```", ""]
+
+    return "\n".join(lines)
+
+
+def _indent_chain(chain: Sequence[str]) -> list[str]:
+    """Render a reference chain root-first, one indent per hop."""
+    return [
+        ("  " * depth) + ("-> " if depth else "") + step
+        for depth, step in enumerate(chain)
+    ]

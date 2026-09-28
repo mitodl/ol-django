@@ -57,7 +57,17 @@ REQUIRED_DB_NAME_PREFIX = "bench"
 _PROJECT_SECTIONS = frozenset({"django", "database", "defaults"})
 _LOCAL_SECTIONS = frozenset({"backend", "database", "django", "defaults"})
 _BENCHMARK_SECTIONS = frozenset(
-    {"benchmark", "knobs", "seed", "target", "auth", "measure", "trace", "calibration"}
+    {
+        "benchmark",
+        "knobs",
+        "seed",
+        "target",
+        "auth",
+        "measure",
+        "memory",
+        "trace",
+        "calibration",
+    }
 )
 # Sections whose string values are expanded against the environment.
 _INTERPOLATED_SECTIONS = ("django", "database", "backend")
@@ -334,6 +344,37 @@ class MeasureConfig(_Section):
     allow_remote_storage: bool = False
 
 
+class MemoryConfig(_Section):
+    """
+    The retention pass: what the process keeps after serving the endpoint.
+
+    Separate from `[measure]` because it answers a different question and is
+    run on one ref rather than two. A latency benchmark that exonerates an
+    endpoint leaves open whether the request is growing the worker, and that
+    is what makes a fast endpoint slow in production.
+    """
+
+    # A zero-request pass would report a confident "stable" about nothing,
+    # so the floor is validated rather than clamped at the call sites.
+    requests: int = Field(default=30, ge=1)
+    warmup: int = Field(default=1, ge=0)
+    # Name what is retained, and walk the reference graph to find what holds
+    # it. Off makes the pass a pure growth measurement with no heap scans.
+    attribute: bool = True
+    # How many of the most-retained types to trace back to a named holder.
+    holders: int = 3
+    # Ceiling on `gc.get_referrers` calls across all walks. Each one is a
+    # full-heap scan, so this is the real cost control.
+    scan_budget: int = 400
+    # Objects still reachable per request, after a forced collection, before
+    # the verdict calls it a leak. Some growth is a cache warming; sustained
+    # growth is something holding references across requests.
+    retained_objects_per_request: float = 10.0
+    # RSS growth per request that counts as a high-water mark when live
+    # objects are flat — the allocator holding freed arenas, not retention.
+    highwater_mib_per_request: float = 0.1
+
+
 class TargetConfig(_Section):
     """The request under test."""
 
@@ -566,6 +607,7 @@ class BenchmarkConfig:
     description: str = ""
     backend: BackendConfig = field(default_factory=BackendConfig)
     measure: MeasureConfig = field(default_factory=MeasureConfig)
+    memory: MemoryConfig = field(default_factory=MemoryConfig)
     auth: AuthConfig = field(default_factory=AuthConfig)
     seed: SeedConfig = field(default_factory=SeedConfig)
     trace: TraceConfig = field(default_factory=TraceConfig)
@@ -651,6 +693,7 @@ def from_merged(
         database=_section(DatabaseConfig, "database", data, context),
         backend=_section(BackendConfig, "backend", data),
         measure=_section(MeasureConfig, "measure", data),
+        memory=_section(MemoryConfig, "memory", data),
         target=_section(TargetConfig, "target", data),
         auth=_section(AuthConfig, "auth", data),
         seed=_section(SeedConfig, "seed", data),

@@ -224,6 +224,38 @@ State in the write-up:
   ruled out.
 - Per-query attribution, so a reviewer can check the saving is where you say.
 
+## Step 7 — When the benchmark exonerates the endpoint
+
+A clean local result against a calibrated seed is a real finding, not a failed
+run: it says the stall is not in the request. The next question is what the
+request *leaves behind*, and no A/B can answer it, because retention is a
+property of one commit rather than a difference between two.
+
+```bash
+ol-benchmark memory benchmarks/<name>.toml
+```
+
+Same seed, same auth, same refusals — which is the point of it living here.
+Every wrong answer this was built from came from measuring retention in a
+hand-rolled script that lost those guards: one under pytest, where a profiler
+the harness would have refused inflated the number by 70%, and one against an
+endpoint answering an empty page, where the heap looked admirably flat.
+
+Read the verdict first:
+
+| Verdict | What it means | Where to look next |
+| --- | --- | --- |
+| `stable` | The process returns to where it started | The growth is elsewhere; measure another endpoint |
+| `high-water` | RSS grew, live objects did not | The allocator holding freed arenas. Allocate less per request — an over-fetch is the usual cause. There is no holder to find |
+| `retaining` | Objects survive a forced collection | Something holds them. `retained_by_type` usually names it; `holders` gives the chain to the module or class |
+
+Then read what is retained, against what the response contains. Retaining far
+more objects than the response serializes means an over-fetch is being held,
+not just loaded — the same rows that cost latency, made permanent.
+
+`lru_caches_grown` being empty is informative: it rules out the whole category
+of `functools` caches and says the holder is hand-rolled.
+
 ## Pitfalls
 
 | Pitfall | Why it ruins the result |

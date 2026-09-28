@@ -26,9 +26,10 @@ from typing import TYPE_CHECKING, Any
 from mitol.benchmark import config as config_module
 from mitol.benchmark.aggregate import aggregate
 from mitol.benchmark.backends import get_backend, run_process
-from mitol.benchmark.report import compare, render_markdown
+from mitol.benchmark.report import compare, render_markdown, render_memory_markdown
 from mitol.benchmark.steps import (
     BENCH_PREFIX,
+    MEMORY_PREFIX,
     MIGRATE_PREFIX,
     SEED_PREFIX,
     TRACE_PREFIX,
@@ -287,6 +288,44 @@ class Runner:
         return comparison
 
     # -- driving ---------------------------------------------------------
+
+    def run_memory(self) -> dict[str, Any]:
+        """
+        Measure retention on one ref, against the same seed a run would use.
+
+        Single-arm on purpose. Retention is a property of the code as it
+        stands, not a difference between two commits, so there is nothing to
+        check out and nothing to compare — which also means this does not
+        touch the working tree and can be run on a dirty one.
+        """
+        self.log(f"==> target: {self.backend.describe()}")
+
+        if self.skip_seed:
+            shape = json.loads((self.out_dir / "seed.json").read_text())
+            self.log("==> reusing the existing seed")
+        else:
+            self.recreate_database()
+            self.migrate()
+            shape = self.seed()
+
+        ref = self.short_ref()
+        self.log(f"==> measuring retention ({ref})")
+        result = self.run_step("memory", MEMORY_PREFIX, shape, "memory")
+        result["ref"] = ref
+
+        self.write("config.resolved.json", self.config.redacted_dict())
+        self.write("seed.json", shape)
+        self.write("memory.json", result)
+        self.write("memory.md", render_memory_markdown(result))
+
+        self.log(
+            f"    {result['objects_per_request']:+} objects and "
+            f"{result['mib_per_request']:+} MiB per request over "
+            f"{result['requests']} requests"
+        )
+        self.log(f"==> {result['verdict']}: {result['reason']}")
+        self.log(f"==> wrote {self.out_dir}")
+        return result
 
     def run(self) -> dict[str, Any]:
         """Run both arms against one seeded database and report the result."""
