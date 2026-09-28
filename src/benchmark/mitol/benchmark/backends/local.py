@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from mitol.benchmark.backends import Backend, BackendError, run_process
+from mitol.benchmark.backends import Backend, BackendError, psql_argv, run_process
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping, Sequence
@@ -76,11 +76,8 @@ class LocalBackend(Backend):
             connection.close()
 
     def _psql(self, statements: Sequence[str]) -> None:
-        argv = ["psql", self.config.database.admin_url, "-v", "ON_ERROR_STOP=1", "-q"]
-        for statement in statements:
-            argv += ["-c", statement]
         try:
-            run_process(argv)
+            run_process(psql_argv(self.config.database.admin_url, statements))
         except FileNotFoundError as exc:
             msg = (
                 "no psycopg, psycopg2 or psql available to run administrative "
@@ -89,9 +86,9 @@ class LocalBackend(Backend):
             )
             raise BackendError(msg) from exc
 
-    def read_file(self, path: str) -> bytes:
+    def read_file(self, path: str) -> str:
         """Read a file from the working tree."""
-        return Path(self.cwd, path).read_bytes()
+        return Path(self.cwd, path).read_text()
 
 
 def _import_driver():

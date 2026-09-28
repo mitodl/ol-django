@@ -24,7 +24,7 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from mitol.benchmark.backends import Backend, BackendError, run_process
+from mitol.benchmark.backends import Backend, BackendError, psql_argv, run_process
 
 if TYPE_CHECKING:  # pragma: no cover
     import subprocess
@@ -170,21 +170,8 @@ class KubernetesBackend(Backend):
         argv = self._kubectl("exec", pod)
         if selector == self.selector and self.container:
             argv += ["-c", self.container]
-        argv += [
-            "--",
-            "psql",
-            self.config.database.admin_url,
-            "-v",
-            "ON_ERROR_STOP=1",
-            "-q",
-        ]
-        for statement in statements:
-            argv += ["-c", statement]
+        argv += ["--", *psql_argv(self.config.database.admin_url, statements)]
         run_process(argv)
-
-    def read_file(self, path: str) -> bytes:
-        """Read a file as the application pod sees it."""
-        return self.exec(["cat", path]).stdout.encode()
 
     def wait_settled(self) -> None:
         """Give a push-based file sync time to finish before measuring."""

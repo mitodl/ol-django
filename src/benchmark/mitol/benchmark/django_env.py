@@ -26,7 +26,8 @@ import sys
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
-from urllib.parse import unquote, urlparse
+
+import dj_database_url
 
 if TYPE_CHECKING:  # pragma: no cover
     from mitol.benchmark.config import BenchmarkConfig
@@ -37,14 +38,6 @@ PROFILER_MARKERS = ("zeal", "nplusone", "silk", "debug_toolbar")
 # File storage backends that write somewhere other than this machine. Matched
 # against the module path of the configured default storage class.
 REMOTE_STORAGE_MARKERS = ("s3", "boto", "gcloud", "google", "azure", "dropbox")
-
-_ENGINES = {
-    "postgres": "django.db.backends.postgresql",
-    "postgresql": "django.db.backends.postgresql",
-    "postgis": "django.contrib.gis.db.backends.postgis",
-    "sqlite": "django.db.backends.sqlite3",
-    "mysql": "django.db.backends.mysql",
-}
 
 
 class PreconditionError(RuntimeError):
@@ -105,36 +98,11 @@ def parse_database_url(url: str) -> dict[str, Any]:
     """
     Turn a database URL into Django ``DATABASES`` entries.
 
-    ``dj_database_url`` is used when it is installed, because every consuming
-    project already depends on it and its edge cases are better tested than
-    anything worth writing here. The fallback covers the common DSN shapes so
-    the harness does not acquire a dependency for one function.
+    ``dj_database_url`` is a declared dependency rather than an optional one:
+    every consuming project already carries it, and its edge cases are better
+    tested than anything worth writing here.
     """
-    try:
-        import dj_database_url  # noqa: PLC0415
-    except ImportError:
-        pass
-    else:
-        return dj_database_url.parse(url)
-
-    parsed = urlparse(url)
-    scheme = parsed.scheme.split("+")[0]
-    if scheme not in _ENGINES:
-        msg = (
-            f"cannot parse database URL with scheme {scheme!r} without "
-            f"dj_database_url installed"
-        )
-        raise PreconditionError(msg)
-    if scheme == "sqlite":
-        return {"ENGINE": _ENGINES[scheme], "NAME": parsed.path or ":memory:"}
-    return {
-        "ENGINE": _ENGINES[scheme],
-        "NAME": parsed.path.lstrip("/"),
-        "USER": unquote(parsed.username or ""),
-        "PASSWORD": unquote(parsed.password or ""),
-        "HOST": parsed.hostname or "",
-        "PORT": str(parsed.port or ""),
-    }
+    return dj_database_url.parse(url)
 
 
 def _prepare_environment(config: BenchmarkConfig) -> None:

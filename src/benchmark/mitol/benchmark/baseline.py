@@ -30,10 +30,10 @@ request existed, so a team unwilling to publish that should drop the field.
 from __future__ import annotations
 
 import json
-import statistics
 from typing import TYPE_CHECKING, Any
 
 from mitol.benchmark.aggregate import classify
+from mitol.benchmark.aggregate import median_ms as _median
 from mitol.benchmark.otel import read_requests, routes, row_floor
 from mitol.benchmark.tracing import annotate_gaps
 
@@ -69,10 +69,6 @@ def safe_classifier(sql: str, classifiers: Sequence[Classifier]) -> str:
     label = classify(sql, classifiers)
     declared = {classifier.label for classifier in classifiers}
     return label if label in declared else UNCLASSIFIED
-
-
-def _median(values: Sequence[float]) -> float:
-    return round(statistics.median(values), 3) if values else 0.0
 
 
 def build(

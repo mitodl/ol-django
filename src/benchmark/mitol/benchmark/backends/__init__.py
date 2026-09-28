@@ -59,6 +59,14 @@ def run_process(
     return completed
 
 
+def psql_argv(admin_url: str, statements: Sequence[str]) -> list[str]:
+    """Return the psql argv that runs ``statements`` against ``admin_url``."""
+    argv = ["psql", admin_url, "-v", "ON_ERROR_STOP=1", "-q"]
+    for statement in statements:
+        argv += ["-c", statement]
+    return argv
+
+
 class Backend(ABC):
     """What the runner needs from an execution environment."""
 
@@ -105,9 +113,15 @@ class Backend(ABC):
     def admin_sql(self, statements: Sequence[str]) -> None:
         """Run administrative SQL against a database that is not the scratch one."""
 
-    @abstractmethod
-    def read_file(self, path: str) -> bytes:
-        """Read a file *as the application environment sees it*."""
+    def read_file(self, path: str) -> str:
+        """
+        Read a text file *as the application environment sees it*.
+
+        Text rather than bytes, because the only caller compares Python
+        sources: capturing a subprocess's stdout is a text operation, and
+        re-encoding it only manufactures spurious mismatches.
+        """
+        return self.exec(["cat", path]).stdout
 
     def wait_settled(self) -> None:
         """

@@ -41,7 +41,7 @@ class FakeBackend(Backend):
 
     def read_file(self, path):
         """Return whatever this fake environment claims the file holds."""
-        return self.files.get(path, b"")
+        return self.files.get(path, "")
 
     def wait_settled(self):
         """Count how often the runner waited for the environment."""
@@ -155,7 +155,7 @@ class TestRefVerification:
     def test_matching_content_settles_immediately(self, runner):
         """Under a bind mount there is nothing to wait for."""
         probe = "src/benchmark/mitol/benchmark/cli.py"
-        runner.backend.files[probe] = Path(runner.repo_root, probe).read_bytes()
+        runner.backend.files[probe] = Path(runner.repo_root, probe).read_text()
         runner.sync_ref("main", [probe])
         assert runner.backend.settled == 1
 
@@ -166,7 +166,7 @@ class TestRefVerification:
         monkeypatch.setenv("OL_BENCHMARK_SYNC_TIMEOUT", "0")
         monkeypatch.setattr("mitol.benchmark.runner.time.sleep", lambda _s: None)
         probe = "src/benchmark/mitol/benchmark/cli.py"
-        runner.backend.files[probe] = b"not what the host has"
+        runner.backend.files[probe] = "not what the host has"
         with pytest.raises(RunnerError, match="timed out waiting"):
             runner.sync_ref("main", [probe])
 

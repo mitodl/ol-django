@@ -201,7 +201,7 @@ class Runner:
             os.environ.get("OL_BENCHMARK_SYNC_TIMEOUT", DEFAULT_SYNC_TIMEOUT)
         )
         for name in probes:
-            expected = Path(self.repo_root, name).read_bytes()
+            expected = Path(self.repo_root, name).read_text()
             while self.backend.read_file(name).strip() != expected.strip():
                 if time.monotonic() >= deadline:
                     msg = (
@@ -283,8 +283,7 @@ class Runner:
             traces=traces,
             shape=shape,
         )
-        self.write("comparison.json", comparison)
-        self.write("report.md", render_markdown(comparison))
+        write_comparison(self.out_dir, comparison)
         return comparison
 
     # -- driving ---------------------------------------------------------
@@ -329,6 +328,14 @@ class Runner:
         return comparison
 
 
+def write_comparison(directory: Path, comparison: Mapping[str, Any]) -> None:
+    """Write the comparison payload and the report rendered from it."""
+    (directory / "comparison.json").write_text(
+        json.dumps(comparison, indent=2, default=str)
+    )
+    (directory / "report.md").write_text(render_markdown(comparison))
+
+
 def rebuild_report(config: BenchmarkConfig, out_dir: Path | str) -> dict[str, Any]:
     """Recompute the comparison from the JSON a previous run left behind."""
     directory = Path(out_dir)
@@ -350,8 +357,5 @@ def rebuild_report(config: BenchmarkConfig, out_dir: Path | str) -> dict[str, An
         },
         shape=read("seed.json"),
     )
-    (directory / "comparison.json").write_text(
-        json.dumps(comparison, indent=2, default=str)
-    )
-    (directory / "report.md").write_text(render_markdown(comparison))
+    write_comparison(directory, comparison)
     return comparison

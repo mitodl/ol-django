@@ -42,7 +42,7 @@ def classify(sql: str, classifiers: Sequence[Classifier]) -> str:
     return statement[:_FALLBACK_LABEL_CHARS]
 
 
-def _median(values: Sequence[float]) -> float:
+def median_ms(values: Sequence[float]) -> float:
     return round(statistics.median(values), 3) if values else 0.0
 
 
@@ -67,8 +67,8 @@ def aggregate(
 
     rows = []
     for label, samples in grouped.items():
-        sql_ms = _median([sample[0] for sample in samples])
-        gap_ms = _median([sample[1] for sample in samples])
+        sql_ms = median_ms([sample[0] for sample in samples])
+        gap_ms = median_ms([sample[1] for sample in samples])
         rows.append(
             {
                 "query": label,

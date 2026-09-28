@@ -40,35 +40,34 @@ def emit(prefix: str, payload: Any) -> None:
     sys.stdout.flush()
 
 
+def _required(var: str, hint: str, environ: Mapping[str, str] | None) -> dict[str, Any]:
+    env = os.environ if environ is None else environ
+    raw = env.get(var)
+    if not raw:
+        msg = f"{var} is not set{hint}"
+        raise config_module.ConfigError(msg)
+    return json.loads(raw)
+
+
 def config_from_environment(
     environ: Mapping[str, str] | None = None,
 ) -> BenchmarkConfig:
     """Rebuild the merged configuration a step was handed."""
-    env = os.environ if environ is None else environ
-    raw = env.get(config_module.CONFIG_ENV_VAR)
-    if not raw:
-        msg = (
-            f"{config_module.CONFIG_ENV_VAR} is not set. A step is normally "
-            f"invoked by 'ol-benchmark run', which passes the merged "
-            f"configuration in that variable."
-        )
-        raise config_module.ConfigError(msg)
-    return config_module.from_dict(json.loads(raw))
+    hint = (
+        ". A step is normally invoked by 'ol-benchmark run', which passes "
+        "the merged configuration in that variable."
+    )
+    return config_module.from_dict(
+        _required(config_module.CONFIG_ENV_VAR, hint, environ)
+    )
 
 
 def shape_from_environment(
     environ: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Return the shape the seed step produced, as handed to this step."""
-    env = os.environ if environ is None else environ
-    raw = env.get(config_module.IDS_ENV_VAR)
-    if not raw:
-        msg = (
-            f"{config_module.IDS_ENV_VAR} is not set; this step needs the "
-            f"shape the seed step produced"
-        )
-        raise config_module.ConfigError(msg)
-    return json.loads(raw)
+    hint = "; this step needs the shape the seed step produced"
+    return _required(config_module.IDS_ENV_VAR, hint, environ)
 
 
 def label_from_environment(environ: Mapping[str, str] | None = None) -> str:

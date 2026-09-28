@@ -10,13 +10,18 @@ requires-python = ">=3.11"
 readme = "README.md"
 dependencies = [
     "django>=4.2",
+    # DATABASE_URL parsing when a step points Django at the scratch database.
+    "dj-database-url>=2",
     "opentelemetry-api>=1.31.0",
     "opentelemetry-sdk>=1.31.0",
     # The CLI is not optional tooling: the runner drives every step by
     # invoking `python -m mitol.benchmark step <name>` inside the application
     # environment, so it has to work wherever the package is installed.
     "click>=8.1,<9",
-    "cloup>=3.0,<4",
+    # Section validation. The models double as the schema documentation, and
+    # ValidationErrors are translated to ConfigError prose before they can
+    # echo a connection string.
+    "pydantic>=2",
 ]
 
 [project.optional-dependencies]

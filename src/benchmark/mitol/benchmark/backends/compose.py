@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from mitol.benchmark.backends import Backend, run_process
+from mitol.benchmark.backends import Backend, psql_argv, run_process
 
 if TYPE_CHECKING:  # pragma: no cover
     import subprocess
@@ -81,22 +81,12 @@ class ComposeBackend(Backend):
 
     def admin_sql(self, statements: Sequence[str]) -> None:
         """Run administrative SQL with psql inside the database service."""
-        argv = [
-            *self.compose_command,
-            "exec",
-            "-T",
-            self.db_service,
-            "psql",
-            self.config.database.admin_url,
-            "-v",
-            "ON_ERROR_STOP=1",
-            "-q",
-        ]
-        for statement in statements:
-            argv += ["-c", statement]
-        run_process(argv)
-
-    def read_file(self, path: str) -> bytes:
-        """Read a file as the application container sees it."""
-        completed = self.exec(["cat", path])
-        return completed.stdout.encode()
+        run_process(
+            [
+                *self.compose_command,
+                "exec",
+                "-T",
+                self.db_service,
+                *psql_argv(self.config.database.admin_url, statements),
+            ]
+        )

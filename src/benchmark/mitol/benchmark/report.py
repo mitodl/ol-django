@@ -54,13 +54,7 @@ _HEADLINE_METRICS = (
 
 
 def _equivalence_keys(arm: Mapping[str, Any]) -> list[str]:
-    return [
-        key
-        for key in arm
-        if any(
-            key == prefix or key.startswith(prefix) for prefix in EQUIVALENCE_PREFIXES
-        )
-    ]
+    return [key for key in arm if key.startswith(EQUIVALENCE_PREFIXES)]
 
 
 def equivalence_mismatches(
@@ -210,12 +204,6 @@ def _drift(
     return sorted(drifted, key=lambda row: -row["ratio"])
 
 
-def _load_baseline(config: BenchmarkConfig) -> dict[str, Any] | None:
-    """Load the committed production baseline, if the benchmark declares one."""
-    path = config.calibration.baseline
-    return load_baseline(path) if path else None
-
-
 def _calibration(
     config: BenchmarkConfig, shape: Mapping[str, Any], arm: Mapping[str, Any]
 ) -> list[dict[str, Any]]:
@@ -308,8 +296,10 @@ def compare(
     verdict, reason = decide(base, branch, mismatches)
     base_rows = aggregate(base_trace, config.trace.classify)
     branch_rows = aggregate(branch_trace, config.trace.classify)
-    baseline = _load_baseline(config)
+    baseline_path = config.calibration.baseline
+    baseline = load_baseline(baseline_path) if baseline_path else None
     per_query = _per_query(base_rows, branch_rows, by_label(baseline))
+    calibration = _calibration(config, shape, branch)
 
     return {
         "benchmark": config.name,
@@ -335,9 +325,7 @@ def compare(
         # Measured against the branch arm: both arms are held to the same
         # equivalence fields, so either would do, and the branch is the one
         # whose shape a reader is about to draw conclusions from.
-        "calibration_mismatches": _calibration_mismatches(
-            config, _calibration(config, shape, branch)
-        ),
+        "calibration_mismatches": _calibration_mismatches(config, calibration),
         "production": {
             "requests": (baseline or {}).get("requests"),
             "trace_ids": (baseline or {}).get("trace_ids", []),
@@ -351,7 +339,7 @@ def compare(
             "m2m_pairs": shape.get("m2m_pairs", {}),
             "warnings": shape.get("warnings", []),
         },
-        "calibration": _calibration(config, shape, branch),
+        "calibration": calibration,
         "preconditions": {
             "base": base.get("preconditions", {}),
             "branch": branch.get("preconditions", {}),
