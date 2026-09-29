@@ -1,0 +1,52 @@
+{
+  "trace_ids": [
+    "00000000000000000000000000000000",
+    "00000000000000000000000000000001",
+    "00000000000000000000000000000002",
+    "00000000000000000000000000000003",
+    "00000000000000000000000000000004",
+    "00000000000000000000000000000005",
+    "00000000000000000000000000000006"
+  ],
+  "requests": 7,
+  "queries": [
+    {
+      "query": "topics prefetch",
+      "per_req": 1.0,
+      "sql_ms": 2.188,
+      "gap_ms": 14.28,
+      "total_ms": 16.468,
+      "row_floor": 300
+    },
+    {
+      "query": "books prefetch",
+      "per_req": 1.0,
+      "sql_ms": 1.131,
+      "gap_ms": 3.301,
+      "total_ms": 4.432,
+      "row_floor": 25
+    },
+    {
+      "query": "author prefetch",
+      "per_req": 1.0,
+      "sql_ms": 0.788,
+      "gap_ms": 2.016,
+      "total_ms": 2.804,
+      "row_floor": 40
+    },
+    {
+      "query": "library page query",
+      "per_req": 1.0,
+      "sql_ms": 0.71,
+      "gap_ms": 0.902,
+      "total_ms": 1.612
+    },
+    {
+      "query": "COUNT(*) paginator",
+      "per_req": 1.0,
+      "sql_ms": 0.932,
+      "gap_ms": 0.414,
+      "total_ms": 1.346
+    }
+  ]
+}

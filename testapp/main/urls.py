@@ -2,6 +2,7 @@
 
 from django.contrib import admin
 from django.urls import include, path
+from libraries.views import LibraryViewSet
 from oauth2_provider.urls import base_urlpatterns
 from rest_framework import routers
 
@@ -9,6 +10,7 @@ from main.views import DemoCoursewareViewSet
 
 router = routers.SimpleRouter()
 router.register(r"democourseware", DemoCoursewareViewSet)
+router.register(r"libraries", LibraryViewSet)
 
 urlpatterns = [
     path("api/", include(router.urls)),
