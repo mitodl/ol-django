@@ -41,6 +41,35 @@ count a count of *growth* rather than a full-heap enumeration — which matters,
 because materialising a list of every tracked object on each request inflated
 the very RSS series being measured.
 
+*The instrument retains more per request than the threshold allows*, so it is
+taken out of the way rather than reported. Django's test client re-connects
+three signals on every request — `template_rendered` and
+`got_request_exception` in `Client.request`, `request_started` and
+`request_finished` in its handler — and `Signal.connect` registers a
+`weakref.finalize` against the owner of each receiver. Two of those owners
+never die: `close_old_connections` is a module-level function, and
+`store_exc_info` is bound to the long-lived client. So every request leaves
+finalizers in `weakref.finalize._registry` for the life of the process: twelve
+objects a request, measured, before the endpoint has done anything at all.
+Without addressing it a view returning a fixed string reads `retaining` and
+the command exits 1.
+
+Each is detached after the request that created it — a detachment the
+client's own explicit `disconnect` has already made redundant. The match is
+deliberately two-part, on the callback *and* on what the finalizer is held
+against, so that only something a test client can own qualifies: an
+application that re-connects its own long-lived receiver every request leaks
+the same way in production, and that is the finding rather than the
+instrument.
+
+Detaching rather than subtracting an estimate, because the two are not
+equivalent. The obvious estimate — the same request against a path the URL
+resolver rejects — measures 44 objects a request rather than twelve in this
+repository, the difference being a `LogRecord` per request and the
+`WSGIRequest` each one pins, held by a log handler that a 200 never reaches.
+Subtracting that would have hidden a leak of thirty objects a request. A
+no-op view reads 0.3 objects a request once the finalizers are detached.
+
 One limit is worth knowing before reading a result. *Only tracked containers
 are visible.* CPython untracks a tuple or dict whose contents are all
 themselves untracked, so an object held only in such a container has no
@@ -56,14 +85,15 @@ import gc
 import os
 import sys
 import time
+import weakref
 from collections import Counter, deque
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 from mitol.benchmark.django_env import enforce_preconditions
-from mitol.benchmark.measure import build_caller
+from mitol.benchmark.measure import build_caller, refuse_empty_response
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Mapping
+    from collections.abc import Callable, Mapping
 
     from mitol.benchmark.config import BenchmarkConfig
 
@@ -233,13 +263,17 @@ def _verdict(
     if mib_per_request >= memory.highwater_mib_per_request:
         return "high-water", (
             f"RSS grew {mib_per_request:.2f} MiB per request while live objects "
-            f"did not ({objects_per_request:+.0f} per request), so this is the "
-            f"allocator holding freed arenas rather than retention — the fix is "
-            f"to allocate less per request, not to find a holder"
+            f"did not ({objects_per_request:+.0f} per request), which is what "
+            f"the allocator holding freed arenas looks like rather than "
+            f"retention, so the fix is to allocate less per request rather "
+            f"than to find a holder — bearing in mind that retention the "
+            f"collector cannot enumerate reads exactly the same way"
         )
     return "stable", (
         f"{objects_per_request:+.0f} objects and {mib_per_request:+.2f} MiB per "
-        f"request: the process returns to where it started"
+        f"request, so neither rate [memory] sets was crossed — which is not the "
+        f"same as nothing being held: growth under the thresholds, and anything "
+        f"the collector cannot see, both read as stable"
     )
 
 
@@ -283,6 +317,158 @@ def _attribution(retained: list[Any], config: BenchmarkConfig) -> dict[str, Any]
     }
 
 
+class _Arm(NamedTuple):
+    """One measured loop, and the accounting the verdict is read from."""
+
+    baseline_rss: int
+    final_rss: int
+    baseline_objects: int
+    final_objects: int
+    objects_per_request: float
+    mib_per_request: float
+    series: list[dict[str, Any]]
+    retained: list[Any]
+    harness_finalizers_detached: int | None
+
+
+def harness_finalizer_test() -> Callable[[Any], bool] | None:
+    """
+    Return a test for "this finalizer is the harness's", or ``None``.
+
+    Narrow on purpose, and on two counts rather than one. The callback has to
+    be the one ``Signal.connect`` registers, *and* the thing it is held against
+    has to be something that exists only because a test client is driving the
+    request: ``close_old_connections``, which the client's handler re-connects
+    twice a request, or the client itself, whose ``store_exc_info`` is
+    re-connected a third time.
+
+    Matching on the callback alone would be wrong. An application that calls
+    ``connect`` on every request with a receiver that outlives it leaks a
+    finalizer a request in production too, and that is the finding — not the
+    instrument. It has to stay visible.
+
+    ``None`` means this Django does not register finalizers where the pass
+    looks for them, so nothing is detached and the result says so rather than
+    quietly reporting the test client's retention as though it were the
+    endpoint's.
+    """
+    from django.db import close_old_connections  # noqa: PLC0415
+    from django.dispatch import Signal  # noqa: PLC0415
+    from django.test import Client  # noqa: PLC0415
+
+    remove_receiver = getattr(Signal, "_remove_receiver", None)
+    if remove_receiver is None:
+        return None
+
+    def is_the_harness_s(candidate: Any) -> bool:
+        # peek() rather than attribute access: these are arbitrary finalizers,
+        # and one whose referent has already died has nothing left to compare.
+        peeked = candidate.peek()
+        if peeked is None:
+            return False
+        referent, callback, _, _ = peeked
+        if getattr(callback, "__func__", None) is not remove_receiver:
+            return False
+        return referent is close_old_connections or isinstance(referent, Client)
+
+    return is_the_harness_s
+
+
+def _sweep(is_the_harness_s: Callable[[Any], bool] | None) -> tuple[int, int]:
+    """
+    Count what the run has added, detaching the harness's own artifacts.
+
+    One enumeration for both jobs. After ``gc.freeze()`` this walks only the
+    collector's unfrozen generations, which is the run's own growth rather than
+    the whole heap, so it is cheap enough to do on every request — and doing it
+    per request is what keeps the series a picture of the endpoint instead of a
+    line with the client's slope added to it.
+
+    A detached finalizer is garbage the moment the list holding it is dropped,
+    so it is excluded from the count rather than counted and subtracted later.
+    """
+    tracked = gc.get_objects()
+    if is_the_harness_s is None:
+        return len(tracked), 0
+
+    detached = 0
+    for obj in tracked:
+        if type(obj) is weakref.finalize and is_the_harness_s(obj):
+            obj.detach()
+            detached += 1
+    return len(tracked) - detached, detached
+
+
+def _measure_arm(call: Callable[[], Any], requests: int) -> _Arm:
+    """Serve one call `requests` times and report what the process kept."""
+    is_the_harness_s = harness_finalizer_test()
+
+    gc.collect()
+    gc.collect()
+
+    # RSS is read last of the baseline readings, after the enumeration below
+    # it and after whatever cache census the caller takes before calling here.
+    # `gc.get_objects()` materialises a list of every tracked object — a
+    # million entries in a mature Django process — and glibc keeps that arena
+    # resident long after the list is freed. Read first, the baseline is low
+    # by whatever the measurement itself cost and the difference is charged to
+    # the requests: on a no-op view that reads 0.23 MiB per request, over the
+    # high-water threshold, where reading it last reads zero.
+    baseline_objects = len(gc.get_objects())
+    baseline_rss = rss_bytes()
+
+    # Move the baseline heap into the permanent generation. From here on the
+    # collector enumerates only what the run adds, so the retained set needs
+    # no id() bookkeeping and cannot be confused by address reuse.
+    gc.freeze()
+
+    series: list[dict[str, Any]] = []
+    detached_total = 0
+    try:
+        for index in range(requests):
+            call()
+            growth, detached = _sweep(is_the_harness_s)
+            detached_total += detached
+            series.append(
+                {
+                    "request": index + 1,
+                    "rss_mib": round(rss_bytes() / (1024 * 1024), 2),
+                    # Growth over the frozen baseline. Cheap, unlike the
+                    # full-heap enumeration it replaces, whose per-request
+                    # allocation inflated the RSS series being measured.
+                    "objects": baseline_objects + growth,
+                }
+            )
+
+        gc.collect()
+        gc.collect()
+        # Read before the enumeration on the next line, which is the mirror of
+        # the baseline reading coming after one: both then sit on the same
+        # allocator high-water mark, and their difference is the requests.
+        final_rss = rss_bytes()
+        # Two full collections move every unfrozen survivor into the oldest
+        # generation, so this list is exactly the retained set.
+        retained = gc.get_objects(generation=2)
+    finally:
+        # lru_cache_sizes() and anything after this must see the whole heap.
+        gc.unfreeze()
+
+    final_objects = baseline_objects + len(retained)
+    return _Arm(
+        baseline_rss=baseline_rss,
+        final_rss=final_rss,
+        baseline_objects=baseline_objects,
+        final_objects=final_objects,
+        objects_per_request=(final_objects - baseline_objects) / requests,
+        mib_per_request=(final_rss - baseline_rss) / (1024 * 1024) / requests,
+        series=series,
+        retained=retained,
+        harness_finalizers_detached=(
+            None if is_the_harness_s is None else detached_total
+        ),
+    )
+
+
 def run_memory(
     config: BenchmarkConfig,
     ids: Mapping[str, Any],
@@ -295,53 +481,33 @@ def run_memory(
     call, url = build_caller(config, ids)
     memory = config.memory
 
+    # Before anything is measured, and refused here for the reason the A/B
+    # refuses it there: an endpoint serving nothing has an admirably flat heap.
+    # This call doubles as the first warm-up.
+    refuse_empty_response(
+        config,
+        call(),
+        opening="refusing to measure retention on an empty response",
+        consequence=(
+            "An endpoint serving nothing leaves an admirably flat heap, so the "
+            "verdict would read as stable and nothing downstream could tell "
+            "you the request was not the one intended."
+        ),
+    )
+
     # Warm-up is excluded from the series: a worker's first request through an
     # endpoint compiles serializers, fills field caches and opens connections,
     # all of which are one-time and would read as growth.
     for _ in range(memory.warmup):
         call()
 
-    gc.collect()
-    gc.collect()
-    baseline_rss = rss_bytes()
-    baseline_objects = len(gc.get_objects())
-    baseline_caches = lru_cache_sizes() if memory.attribute else {}
-    # Move the baseline heap into the permanent generation. From here on the
-    # collector enumerates only what the run adds, so the retained set needs
-    # no id() bookkeeping and cannot be confused by address reuse.
-    gc.freeze()
-
-    series = []
     started = time.perf_counter()
-    try:
-        for index in range(memory.requests):
-            call()
-            series.append(
-                {
-                    "request": index + 1,
-                    "rss_mib": round(rss_bytes() / (1024 * 1024), 2),
-                    # Growth over the frozen baseline. Cheap, unlike the
-                    # full-heap enumeration it replaces, whose per-request
-                    # allocation inflated the RSS series being measured.
-                    "objects": baseline_objects + len(gc.get_objects()),
-                }
-            )
+    # Taken before the arm, so the arm's baseline RSS reading comes after this
+    # enumeration rather than before it. See the comment there.
+    baseline_caches = lru_cache_sizes() if memory.attribute else {}
+    arm = _measure_arm(call, memory.requests)
 
-        gc.collect()
-        gc.collect()
-        final_rss = rss_bytes()
-        # Two full collections move every unfrozen survivor into the oldest
-        # generation, so this list is exactly the retained set.
-        retained = gc.get_objects(generation=2)
-    finally:
-        # lru_cache_sizes() and any later pass must see the whole heap again.
-        gc.unfreeze()
-    final_objects = baseline_objects + len(retained)
-
-    requests = memory.requests
-    objects_per_request = (final_objects - baseline_objects) / requests
-    mib_per_request = (final_rss - baseline_rss) / (1024 * 1024) / requests
-    verdict, reason = _verdict(objects_per_request, mib_per_request, config)
+    verdict, reason = _verdict(arm.objects_per_request, arm.mib_per_request, config)
 
     result: dict[str, Any] = {
         "label": label,
@@ -351,21 +517,22 @@ def run_memory(
         "elapsed_s": round(time.perf_counter() - started, 2),
         "verdict": verdict,
         "reason": reason,
-        "baseline_rss_mib": round(baseline_rss / (1024 * 1024), 2),
-        "final_rss_mib": round(final_rss / (1024 * 1024), 2),
-        "baseline_objects": baseline_objects,
-        "final_objects": final_objects,
-        "objects_per_request": round(objects_per_request, 1),
-        "mib_per_request": round(mib_per_request, 3),
-        "series": series,
+        "baseline_rss_mib": round(arm.baseline_rss / (1024 * 1024), 2),
+        "final_rss_mib": round(arm.final_rss / (1024 * 1024), 2),
+        "baseline_objects": arm.baseline_objects,
+        "final_objects": arm.final_objects,
+        "objects_per_request": round(arm.objects_per_request, 1),
+        "mib_per_request": round(arm.mib_per_request, 3),
+        "harness_finalizers_detached": arm.harness_finalizers_detached,
+        "series": arm.series,
         "preconditions": preconditions.as_dict(),
         "knobs": dict(config.knobs),
     }
 
     if memory.attribute:
-        result.update(_attribution(retained, config))
+        result.update(_attribution(arm.retained, config))
         result["lru_caches_grown"] = _cache_growth(
-            baseline_caches, lru_cache_sizes(), requests
+            baseline_caches, lru_cache_sizes(), memory.requests
         )
     return result
 
@@ -378,8 +545,10 @@ def _cache_growth(
 
     A cache keyed on something request-scoped is the most common way a worker
     grows without any single place looking like a leak. An empty list here is
-    informative too: it rules the whole category out, and points at a
-    hand-rolled cache instead.
+    informative too, but it narrows the category rather than closing it: the
+    comparison is on ``cache_info().currsize``, so a cache that gains no
+    entries while the values already in it accumulate references does not
+    appear.
     """
     grown = []
     for name, size in after.items():

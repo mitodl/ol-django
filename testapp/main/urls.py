@@ -6,7 +6,7 @@ from libraries.views import LibraryViewSet
 from oauth2_provider.urls import base_urlpatterns
 from rest_framework import routers
 
-from main.views import DemoCoursewareViewSet
+from main.views import DemoCoursewareViewSet, noop
 
 router = routers.SimpleRouter()
 router.register(r"democourseware", DemoCoursewareViewSet)
@@ -14,6 +14,7 @@ router.register(r"libraries", LibraryViewSet)
 
 urlpatterns = [
     path("api/", include(router.urls)),
+    path("api/noop/", noop, name="noop"),
     path("api/", include("mitol.digitalcredentials.urls")),
     path("api/", include("mitol.google_sheets.urls")),
     path("api/", include("mitol.mail.urls")),

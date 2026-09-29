@@ -2,11 +2,19 @@
 
 import functools
 import gc
+import weakref
 
 import pytest
+from django.db import close_old_connections
+from django.dispatch import Signal
+from django.test import Client
+from libraries.models import Library
 from mitol.benchmark import config as cfg
+from mitol.benchmark.measure import MeasurementError
 from mitol.benchmark.memory import (
+    _measure_arm,
     _verdict,
+    harness_finalizer_test,
     holders,
     lru_cache_sizes,
     rss_bytes,
@@ -65,14 +73,7 @@ def test_rss_is_readable():
 
 
 def test_the_accounting_is_coherent(seeded):
-    """
-    Whatever the verdict, the numbers behind it have to add up.
-
-    Deliberately not asserting that the testapp is clean: it retains about
-    twelve objects a request in `weakref.finalize._registry`, which is a
-    finding rather than a fixture, and a test that assumed otherwise would be
-    testing the app rather than the measurement.
-    """
+    """Whatever the verdict, the numbers behind it have to add up."""
     config, shape = seeded
     result = run_memory(config, shape, strict=False)
 
@@ -85,6 +86,29 @@ def test_the_accounting_is_coherent(seeded):
     )
 
 
+def test_a_view_that_does_nothing_is_stable(seeded):
+    """
+    The test that makes the rest of this worth reading.
+
+    Django's test client re-connects three signals on every request and
+    `Signal.connect` leaves a `weakref.finalize` against the owner of each
+    receiver; two of those owners have process lifetime, so about twelve
+    objects a request accumulate before the endpoint does anything. Unless
+    they are taken out of the way, a view that returns a fixed string reports
+    `retaining` and the command exits 1 — which is to say the pass reports the
+    retention of its own instrument.
+    """
+    _, shape = seeded
+    config = make_config(
+        target={"path": "/api/noop/"},
+        memory={"requests": 20, "warmup": 2, "holders": 1, "scan_budget": 40},
+    )
+    result = run_memory(config, shape, strict=False)
+
+    assert result["verdict"] == "stable", result["reason"]
+    assert result["harness_finalizers_detached"] > 0
+
+
 def test_the_series_carries_both_signals(seeded):
     """RSS alone cannot tell retention from a high-water mark."""
     config, shape = seeded
@@ -93,6 +117,151 @@ def test_the_series_carries_both_signals(seeded):
     for point in result["series"]:
         assert point["rss_mib"] > 0
         assert point["objects"] > 0
+
+
+class TestTheHarnessArtifact:
+    """Taking the measurement's own retention out of the measurement."""
+
+    def test_the_test_client_s_finalizers_are_detached(self, seeded):
+        """
+        Three a request, and each one costs four objects.
+
+        `ClientHandler.__call__` re-connects `request_started` and
+        `request_finished` against `close_old_connections`, and
+        `Client.request` re-connects `got_request_exception` against a method
+        bound to the client. All three owners outlive the request, so the
+        finalizers never fire and never leave `weakref.finalize._registry`.
+        """
+        config, shape = seeded
+        result = run_memory(config, shape, strict=False)
+
+        assert result["harness_finalizers_detached"] == 3 * result["requests"]
+
+    def test_a_receiver_the_application_re_connects_is_left_alone(self):
+        """
+        The narrow half of the match, and the reason it is narrow.
+
+        An application that calls `connect` on every request with a receiver
+        that outlives it leaks a finalizer a request in production too. That
+        is the finding, not the instrument, so matching on the callback alone
+        would turn a real leak into a silent one. Only a finalizer held
+        against `close_old_connections` or a test client can be the harness's.
+        """
+        signal = Signal()
+
+        def receiver(**kwargs):
+            """Receive nothing; the signal only weakly references this."""
+
+        def call():
+            signal.connect(receiver)
+            signal.disconnect(receiver)
+
+        arm = _measure_arm(call, 10)
+
+        assert arm.harness_finalizers_detached == 0
+        # One finalizer, its _Info, the weakref inside it and the bound
+        # _remove_receiver: four objects a request that nothing detaches.
+        assert arm.objects_per_request >= 3  # noqa: PLR2004
+
+    def test_the_test_recognises_only_the_harness_s_finalizers(self):
+        """The predicate itself, away from any measurement."""
+        is_the_harness_s = harness_finalizer_test()
+        assert is_the_harness_s is not None
+
+        client = Client()
+        signal = Signal()
+
+        def unrelated(**kwargs):
+            """Receive nothing, on behalf of nothing the harness owns."""
+
+        signal.connect(close_old_connections)
+        signal.connect(client.store_exc_info)
+        signal.connect(unrelated)
+        gc.collect()
+        finalizers = [obj for obj in gc.get_objects() if type(obj) is weakref.finalize]
+        recognised = [
+            peeked[0]
+            for obj in finalizers
+            if is_the_harness_s(obj) and (peeked := obj.peek()) is not None
+        ]
+
+        assert close_old_connections in recognised
+        assert client in recognised
+        assert unrelated not in recognised
+
+    def test_a_django_without_that_callback_detaches_nothing(self, monkeypatch):
+        """
+        The guard, so a future Django cannot make this silently wrong.
+
+        `Signal._remove_receiver` is private. If it goes, the pass must stop
+        detaching rather than carry on matching something else.
+        """
+
+        class Signalless:
+            """A `Signal` that registers its finalizers some other way."""
+
+        monkeypatch.setattr("django.dispatch.Signal", Signalless)
+
+        assert harness_finalizer_test() is None
+
+    def test_detaching_nothing_is_reported_rather_than_assumed(
+        self, seeded, monkeypatch
+    ):
+        """
+        And when it does stop, the result has to say so.
+
+        Silently not detaching puts the client's twelve objects a request back
+        into the endpoint's figure, where they read as a leak. A result that
+        admits the instrument is still inside the number is weaker than one
+        that does not, but it is not a wrong answer.
+        """
+        monkeypatch.setattr(
+            "mitol.benchmark.memory.harness_finalizer_test", lambda: None
+        )
+        config, shape = seeded
+        result = run_memory(config, shape, strict=False)
+
+        assert result["harness_finalizers_detached"] is None
+        assert "could not be taken out" in render_memory_markdown(result)
+
+
+class TestAnEmptyResponse:
+    """
+    The refusal the A/B has, which this pass was missing.
+
+    An endpoint serving nothing has an admirably flat heap, so it reads
+    `stable` and the reader is told the request is clean rather than that it
+    was never really made.
+    """
+
+    def test_it_is_refused(self, seeded):
+        config, shape = seeded
+        Library.objects.all().delete()
+
+        with pytest.raises(MeasurementError, match="refusing to measure retention"):
+            run_memory(config, shape, strict=False)
+
+    def test_the_refusal_names_authorization_as_the_usual_cause(self, seeded):
+        """A filterset returning nothing answers 200, so the hint is needed."""
+        config, shape = seeded
+        Library.objects.all().delete()
+
+        with pytest.raises(MeasurementError, match=r"\[auth\]"):
+            run_memory(config, shape, strict=False)
+
+    def test_allow_empty_opts_back_in(self, seeded):
+        """Where an empty response is the measurement, it stays available."""
+        _, shape = seeded
+        Library.objects.all().delete()
+        config = make_config(
+            target={
+                "path": "/api/libraries/",
+                "params": {"page_size": 5},
+                "allow_empty": True,
+            }
+        )
+
+        assert run_memory(config, shape, strict=False)["requests"] == 4  # noqa: PLR2004
 
 
 class TestTheVerdictRule:
@@ -274,6 +443,9 @@ def test_the_report_leads_with_the_verdict(seeded):
     assert "# Retention:" in markdown
     assert headline in markdown
     assert "live objects" in markdown
+    # The reader has to be told the figure is the endpoint's and not the
+    # client's, because the difference is larger than the threshold.
+    assert "finalizers left by the test client" in markdown
 
 
 def test_attribution_can_be_switched_off(seeded):

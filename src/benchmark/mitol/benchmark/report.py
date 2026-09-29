@@ -600,6 +600,11 @@ def render_markdown(comparison: Mapping[str, Any]) -> str:
 _MEMORY_HEADLINE = {"retaining": "RETAINED"}
 
 
+def _signed(value: float) -> str:
+    """Render a per-request delta, without printing a signed zero."""
+    return f"{value:+}" if value else "0"
+
+
 def render_memory_markdown(result: Mapping[str, Any]) -> str:
     """
     Render the retention pass as a report a reviewer can read.
@@ -621,13 +626,13 @@ def render_memory_markdown(result: Mapping[str, Any]) -> str:
                     "RSS (MiB)",
                     result["baseline_rss_mib"],
                     result["final_rss_mib"],
-                    f"{result['mib_per_request']:+}",
+                    _signed(result["mib_per_request"]),
                 ],
                 [
                     "live objects",
                     result["baseline_objects"],
                     result["final_objects"],
-                    f"{result['objects_per_request']:+}",
+                    _signed(result["objects_per_request"]),
                 ],
             ],
         ),
@@ -637,6 +642,25 @@ def render_memory_markdown(result: Mapping[str, Any]) -> str:
         f"retention from an allocator holding freed arenas.",
         "",
     ]
+
+    detached = result.get("harness_finalizers_detached")
+    if detached is None:
+        lines += [
+            "> This Django does not register signal finalizers where the pass "
+            "looks for them, so the test client's own retention could not be "
+            "taken out — roughly a dozen objects a request, which is enough to "
+            "read as `retaining` before the endpoint does anything. Treat "
+            "these figures as including the instrument.",
+            "",
+        ]
+    elif detached:
+        lines += [
+            f"These are the endpoint's own figures. {detached} finalizers left "
+            f"by the test client's per-request signal churn were detached as "
+            f"they appeared, so what remains below is retention the request "
+            f"caused rather than retention the measurement caused.",
+            "",
+        ]
 
     by_type = result.get("retained_by_type") or []
     if by_type:
@@ -676,8 +700,10 @@ def render_memory_markdown(result: Mapping[str, Any]) -> str:
         )
     elif result.get("retained_objects"):
         lines += [
-            "No `lru_cache` in the process grew, which rules that category "
-            "out: whatever holds these objects is hand-rolled.",
+            "No `lru_cache` in the process gained entries, which narrows that "
+            "category without closing it: the comparison is on `currsize`, so "
+            "a cache whose existing values accumulate references looks flat "
+            "here. A hand-rolled cache is the other candidate.",
             "",
         ]
 

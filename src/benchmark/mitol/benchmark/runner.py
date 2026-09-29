@@ -322,10 +322,16 @@ class Runner:
         self.write("memory.json", result)
         self.write("memory.md", render_memory_markdown(result))
 
+        detached = result.get("harness_finalizers_detached")
         self.log(
             f"    {result['objects_per_request']:+} objects and "
             f"{result['mib_per_request']:+} MiB per request over "
             f"{result['requests']} requests"
+            + (
+                f", after detaching {detached} of the test client's own finalizers"
+                if detached
+                else ", including whatever the test client itself retains"
+            )
         )
         self.log(f"==> {result['verdict']}: {result['reason']}")
         self.log(f"==> wrote {self.out_dir}")

@@ -205,17 +205,31 @@ def _empty_reason(config: BenchmarkConfig, response: Any) -> str | None:
     return None
 
 
-def _refuse_empty_response(config: BenchmarkConfig, response: Any) -> None:
-    """Raise unless the response has something in it to measure."""
+def refuse_empty_response(
+    config: BenchmarkConfig,
+    response: Any,
+    opening: str = "refusing to time an empty response",
+    consequence: str = (
+        "Both arms would agree and the timings would be real, so nothing "
+        "downstream can tell you the number meant nothing."
+    ),
+) -> None:
+    """
+    Raise unless the response has something in it to measure.
+
+    The opening clause and the consequence are arguments because the retention
+    pass shares this check, and it times nothing and compares nothing — but the
+    fault it is guarding against, and the two things worth checking when it
+    fires, are identical.
+    """
     if config.target.allow_empty:
         return
     reason = _empty_reason(config, response)
     if reason is None:
         return
     msg = (
-        f"refusing to time an empty response: {reason}.\n"
-        f"Both arms would agree and the timings would be real, so nothing "
-        f"downstream can tell you the number meant nothing.\n"
+        f"{opening}: {reason}.\n"
+        f"{consequence}\n"
         f"Check the seed produced rows, and that [auth] names a user the "
         f"endpoint's filtering accepts — a caller without the right "
         f"membership is usually answered with an empty 200, not a 403.\n"
@@ -242,7 +256,7 @@ def run_bench(
     # Before the timed loop, not after it: an empty response is a setup fault,
     # and the run should say so immediately rather than at the end of an
     # iteration count someone chose to be slow. This call doubles as warm-up.
-    _refuse_empty_response(config, call())
+    refuse_empty_response(config, call())
 
     # Warm-up absorbs content-type caches, first-call imports and any lazily
     # built per-process state, none of which a production request pays.

@@ -359,7 +359,9 @@ class MemoryConfig(_Section):
     requests: int = Field(default=30, ge=1)
     warmup: int = Field(default=1, ge=0)
     # Name what is retained, and walk the reference graph to find what holds
-    # it. Off makes the pass a pure growth measurement with no heap scans.
+    # it. Off skips the retained-type census, the holder walks and the cache
+    # enumeration — not the growth measurement, which still enumerates the
+    # collector's unfrozen generations on every request.
     attribute: bool = True
     # How many of the most-retained types to trace back to a named holder.
     holders: int = 3
