@@ -71,7 +71,7 @@ pyproject.toml          # Root: workspace config, pytest config, ruff config, de
 
 **Releases**: A release is a version change merged to `main`, and it is always its own PR containing nothing else. `uv run scripts/release.py prepare --app <appname>` bumps the version, folds `changelog.d/` fragments into `CHANGELOG.md`, and refreshes `uv.lock`. The `detect-releases` and `publish` jobs in `.github/workflows/ci.yml` then build every app whose `pyproject.toml` version is not yet on PyPI, publish it via Trusted Publishing (OIDC, no API token), and create the tag. PyPI is the source of truth for what is already released, so re-runs are safe and multi-app bumps work. Never add a tag-triggered publish step, and keep publishing in `ci.yml` rather than a `workflow_run` workflow (zizmor rejects that trigger).
 
-**Adding a new app**: Copy `src/uvtestapp`, update names throughout, add to root `pyproject.toml` under `[project].dependencies` and `[tool.uv.sources]`, add to `testapp/main/settings/shared.py` (`INSTALLED_APPS` + `import_settings_modules`), and create `tests/<appname>/__init__.py`.
+**Adding a new app**: Copy `src/uvtestapp`, update names throughout, add to root `pyproject.toml` under `[project].dependencies` and `[tool.uv.sources]`, add to `testapp/main/settings/shared.py` (`INSTALLED_APPS` + `import_settings_modules`), and create `tests/<appname>/__init__.py`. Before its first release, a PyPI owner must register `mitol-django-<appname>` as a pending Trusted Publisher (owner `mitodl`, repo `ol-django`, workflow `ci.yml`, environment `pypi`). Without it the publish job fails with `400 Non-user identities cannot create new projects`; see README "PyPI Trusted Publishing".
 
 ## CI
 

@@ -57,6 +57,7 @@ To add a new one, it's easiest to copy one of the existing apps. There's one cal
 6. Add the app to `testapp/main/settings/shared.py`
    * You must add it to `INSTALLED_APPS`.
    * If your app has configuration settings, add to the `import_settings_module` call at the top too.
+7. Before the first release, register `mitol-django-<appname>` as a pending publisher on PyPI. Without it the first publish fails. See [PyPI Trusted Publishing](#pypi-trusted-publishing).
 
 You can now add your code and tests.
 
@@ -171,3 +172,14 @@ When adding a **new** package, register it as a
 [pending publisher](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/)
 with the same values before its first release, since the PyPI project will not
 exist yet.
+
+A missing publisher does not fail the OIDC token exchange, because other
+projects already trust this workflow. The upload fails instead:
+
+| Upload error | Fix |
+| --- | --- |
+| `400 Non-user identities cannot create new projects` | The project is not on PyPI yet. Add a pending publisher under *Your account → Publishing* (or the mitodl organization's publishing page). |
+| `403 Invalid API Token: OIDC scoped token is not valid for project` | The project exists but does not trust `ci.yml`. Add the publisher under *Manage project → Publishing*. |
+
+The publish job adds an error annotation naming the case that applies. Once the
+publisher is registered, re-run the failed jobs (`gh run rerun <run-id> --failed`).
