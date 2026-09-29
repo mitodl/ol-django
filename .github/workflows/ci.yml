@@ -229,11 +229,12 @@ jobs:
         # Tolerate a version that reached PyPI after this run's detect step.
         skip-existing: true
 
-    # A project with no Trusted Publisher for this workflow still gets an OIDC
-    # token, because other projects trust it, so the upload is what fails: a 400
-    # ("Non-user identities cannot create new projects") for a project not yet
-    # on PyPI, a 403 ("OIDC scoped token is not valid") for one that is. Neither
-    # message names the PyPI page where the publisher has to be added.
+    # A project with no Trusted Publisher matching this job (workflow and
+    # environment both) still gets an OIDC token, because other projects trust
+    # it, so the upload is what fails: a 400 ("Non-user identities cannot
+    # create new projects") for a project not yet on PyPI, a 403 ("OIDC scoped
+    # token is not valid") for one that is. Neither message names the PyPI page
+    # where the publisher has to be added.
     - name: Explain a failed upload
       if: failure() && steps.publish.outcome == 'failure'
       env:
@@ -246,15 +247,17 @@ jobs:
         case "$status" in
           404)
             echo "::error::${PACKAGE} is not on PyPI yet. If the upload failed with" \
-              "'400 Non-user identities cannot create new projects', register a" \
-              "pending publisher for ${PACKAGE} (${publisher}) at" \
-              "https://pypi.org/manage/account/publishing/ and re-run this job." \
+              "'400 Non-user identities cannot create new projects', no pending" \
+              "publisher for ${PACKAGE} matches all of: ${publisher}. Add one, or" \
+              "replace one whose values differ (for example, the environment)," \
+              "at https://pypi.org/manage/account/publishing/ and re-run this job." \
               "See ${README_URL}"
             ;;
           200)
             echo "::error::If the upload failed with '403 Invalid API Token: OIDC" \
-              "scoped token is not valid', ${PACKAGE} does not trust this workflow." \
-              "Add a publisher (${publisher}) at" \
+              "scoped token is not valid', no publisher on ${PACKAGE} matches all" \
+              "of: ${publisher}. Check the existing publishers for a differing" \
+              "value (for example, the environment), add one with these values at" \
               "https://pypi.org/manage/project/${PACKAGE}/settings/publishing/" \
               "and re-run this job. See ${README_URL}"
             ;;

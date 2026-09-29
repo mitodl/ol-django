@@ -178,8 +178,12 @@ projects already trust this workflow. The upload fails instead:
 
 | Upload error | Fix |
 | --- | --- |
-| `400 Non-user identities cannot create new projects` | The project is not on PyPI yet. Add a pending publisher under *Your account → Publishing*. |
-| `403 Invalid API Token: OIDC scoped token is not valid for project` | The project exists but does not trust `ci.yml`. Add the publisher under *Manage project → Publishing*. |
+| `400 Non-user identities cannot create new projects` | The project is not on PyPI yet, and no pending publisher for it matches all four values. Add one, or replace a mismatched one, under *Your account → Publishing*. |
+| `403 Invalid API Token: OIDC scoped token is not valid for project` | The project exists, but none of its publishers matches all four values. Add one under *Manage project → Publishing*. |
+
+PyPI requires every field to match, so a publisher with the right workflow but a
+different environment (such as `mitodl` instead of `pypi`) does not match. PyPI
+cannot edit a publisher: add a corrected one, then remove the old one.
 
 The publish job adds an error annotation naming the case that applies. Once the
 publisher is registered, re-run the failed jobs (`gh run rerun <run-id> --failed`).
