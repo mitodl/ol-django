@@ -178,7 +178,7 @@ projects already trust this workflow. The upload fails instead:
 
 | Upload error | Fix |
 | --- | --- |
-| `400 Non-user identities cannot create new projects` | The project is not on PyPI yet. Add a pending publisher under *Your account → Publishing* (or the mitodl organization's publishing page). |
+| `400 Non-user identities cannot create new projects` | The project is not on PyPI yet. Add a pending publisher under *Your account → Publishing*. |
 | `403 Invalid API Token: OIDC scoped token is not valid for project` | The project exists but does not trust `ci.yml`. Add the publisher under *Manage project → Publishing*. |
 
 The publish job adds an error annotation naming the case that applies. Once the
