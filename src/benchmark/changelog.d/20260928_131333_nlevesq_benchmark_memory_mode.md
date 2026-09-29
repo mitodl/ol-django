@@ -6,7 +6,14 @@
   leaves behind — a worker that grows every request ends up living at whatever
   ceiling bounds it, where stop-the-world collections are longest. Single-arm,
   because retention is a property of the code rather than a difference between
-  two commits, so it needs no checkout and runs on a dirty tree.
+  two commits, so it needs no checkout and runs on a dirty tree. The dirty-tree
+  refusal is the only one single-arm excuses: a committed `benchmark.local.toml`
+  is still refused, being one developer's connection strings in the repository
+  however many refs are measured. And because it does run on a dirty tree, the
+  result records whether it did: `ref` is reported `git describe --dirty` style
+  and `dirty_tree` carries the boolean, because a number measured against
+  uncommitted changes belongs to the tree rather than to the commit the A/B
+  would have been able to name.
 
   It reports three series, because none can be read alone: RSS, which a memory
   ceiling sees but which cannot tell retention from a high-water mark; live

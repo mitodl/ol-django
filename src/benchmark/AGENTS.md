@@ -241,7 +241,13 @@ hand-rolled script that lost those guards: one under pytest, where a profiler
 the harness would have refused inflated the number by 70%, and one against an
 endpoint answering an empty page, where the heap looked admirably flat. The
 dirty-tree check is the one refusal it drops, deliberately: single-arm, nothing
-to check out.
+to check out. A committed `benchmark.local.toml` is still refused — that is one
+developer's connection strings in the repository however many refs are measured.
+
+Because it does run on a dirty tree, the result says whether it did: `ref` is
+reported `git describe --dirty` style and `dirty_tree` carries the boolean. A
+retention number from a dirty tree belongs to the tree, not to the commit, so
+quote it with that said out loud.
 
 Read the verdict first:
 

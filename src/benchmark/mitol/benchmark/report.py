@@ -643,6 +643,19 @@ def render_memory_markdown(result: Mapping[str, Any]) -> str:
         "",
     ]
 
+    # Provenance, which the A/B gets for free by refusing to run on a dirty
+    # tree and this pass does not, because running on one is the point of it.
+    ref = result.get("ref")
+    if ref and result.get("dirty_tree"):
+        lines += [
+            f"Measured on `{ref}`. The tree carried uncommitted changes, so "
+            f"that commit is where the measurement started rather than what it "
+            f"ran — do not attribute this number to it without saying so.",
+            "",
+        ]
+    elif ref:
+        lines += [f"Measured on `{ref}`, with a clean tree.", ""]
+
     detached = result.get("harness_finalizers_detached")
     if detached is None:
         lines += [

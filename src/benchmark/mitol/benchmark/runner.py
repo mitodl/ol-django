@@ -134,9 +134,13 @@ class Runner:
 
     # -- guards ----------------------------------------------------------
 
+    def working_tree_dirty(self) -> bool:
+        """Whether the tree carries changes no commit accounts for."""
+        return bool(git("status", "--porcelain", cwd=self.repo_root))
+
     def check_working_tree(self) -> None:
         """Refuse to benchmark a dirty tree: the arms would not be two refs."""
-        if git("status", "--porcelain", cwd=self.repo_root):
+        if self.working_tree_dirty():
             msg = (
                 "the working tree has uncommitted changes; commit or stash "
                 "them, or the two arms are not the two refs you think"
@@ -309,13 +313,26 @@ class Runner:
         stands, not a difference between two commits, so there is nothing to
         check out and nothing to compare — which also means this does not
         touch the working tree and can be run on a dirty one.
+
+        Which is why the result says whether it was. The A/B can name its two
+        arms by commit because it refuses to start otherwise; here the commit
+        is where the measurement started rather than necessarily what it ran,
+        so the ref is reported ``git describe --dirty`` style and a reader is
+        told not to attribute the number to that commit alone.
         """
+        # Single-arm is what makes the dirty-tree check meaningless, and that
+        # is the only guard it excuses. A committed local layer is one
+        # developer's connection strings in the repository however many refs
+        # are being measured, so that refusal holds here too.
+        self.check_local_config_untracked()
         shape = self._prepare()
 
-        ref = self.short_ref()
+        dirty = self.working_tree_dirty()
+        ref = self.short_ref() + ("-dirty" if dirty else "")
         self.log(f"==> measuring retention ({ref})")
         result = self.run_step("memory", MEMORY_PREFIX, shape, "memory")
         result["ref"] = ref
+        result["dirty_tree"] = dirty
 
         self.write("config.resolved.json", self.config.redacted_dict())
         self.write("seed.json", shape)

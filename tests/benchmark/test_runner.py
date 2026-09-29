@@ -201,6 +201,55 @@ class TestRunMemory:
         "objects_per_request": 0.0,
     }
 
+    def test_a_committed_local_config_is_refused(self, config, tmp_path, monkeypatch):
+        """
+        Single-arm excuses the dirty-tree check and only that one.
+
+        A committed `benchmark.local.toml` is one developer's cluster and
+        connection strings sitting in the repository, which is true however
+        many refs are being measured. The retention pass reached `_prepare()`
+        without it for a while, so this pins that it does not.
+        """
+        made = Runner(config, out_dir=tmp_path / "out", skip_seed=True)
+        made.config.raw["_layers"] = {"local": "benchmarks/benchmark.local.toml"}
+        monkeypatch.setattr(
+            "mitol.benchmark.runner.git",
+            lambda *a, **k: "benchmarks/benchmark.local.toml",  # noqa: ARG005
+        )
+
+        with pytest.raises(RunnerError, match="tracked by git"):
+            made.run_memory()
+
+    def test_a_dirty_tree_is_recorded_rather_than_refused(
+        self, config, tmp_path, monkeypatch
+    ):
+        """
+        Running on a dirty tree is the point, so the result has to say so.
+
+        The A/B can name its arms by commit because it refuses to start on a
+        dirty tree. This pass does not refuse, so the commit is where the
+        measurement started rather than necessarily what it ran, and a number
+        attributed to a bare hash would be wrong.
+        """
+        made = Runner(config, out_dir=tmp_path / "out", skip_seed=True)
+        monkeypatch.setattr(made, "backend", FakeBackend(config))
+        made.log = lambda _message: None
+        (tmp_path / "out").mkdir(parents=True)
+        (tmp_path / "out" / "seed.json").write_text("{}")
+        made.backend.stdout_for["memory"] = MEMORY_PREFIX + json.dumps(
+            self.MEMORY_RESULT
+        )
+        monkeypatch.setattr(
+            "mitol.benchmark.runner.git",
+            lambda *a, **k: " M src/benchmark/mitol/benchmark/memory.py",  # noqa: ARG005
+        )
+
+        result = made.run_memory()
+
+        assert result["dirty_tree"] is True
+        assert result["ref"].endswith("-dirty")
+        assert "uncommitted changes" in (tmp_path / "out" / "memory.md").read_text()
+
     def test_the_step_it_invokes_is_one_the_parser_accepts(
         self, config, tmp_path, monkeypatch
     ):
