@@ -233,14 +233,14 @@ jobs:
     # token, because other projects trust it, so the upload is what fails: a 400
     # ("Non-user identities cannot create new projects") for a project not yet
     # on PyPI, a 403 ("OIDC scoped token is not valid") for one that is. Neither
-    # message says what to do about it.
+    # message names the PyPI page where the publisher has to be added.
     - name: Explain a failed upload
       if: failure() && steps.publish.outcome == 'failure'
       env:
         PACKAGE: ${{ matrix.package }}
         README_URL: ${{ github.server_url }}/${{ github.repository }}/blob/main/README.md#pypi-trusted-publishing
       run: |
-        status="$(curl -s -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/${PACKAGE}/json" || true)"
+        status="$(curl -s --max-time 30 -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/${PACKAGE}/json" || true)"
         publisher="owner mitodl, repository ol-django, workflow ci.yml, environment pypi"
 
         case "$status" in
