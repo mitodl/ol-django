@@ -1,3 +1,7 @@
+
+<a id='changelog-2026.9.29'></a>
+## [2026.9.29] - 2026-09-29
+
 ### Added
 
 - Initial release of `mitol-django-benchmark`: an A/B benchmarking harness that
