@@ -91,3 +91,14 @@ async def test_middleware_malformed_header():
     user = await run_middleware(make_scope(header))
 
     assert user.is_anonymous
+
+
+async def test_middleware_rejected_user(settings):
+    """A header user the backend rejects leaves the scope user anonymous."""
+
+    settings.MITOL_APIGATEWAY_USERINFO_CREATE = False
+    payload, _ = generate_fake_apisix_payload()
+
+    user = await run_middleware(make_scope(payload))
+
+    assert user.is_anonymous
