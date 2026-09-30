@@ -3,11 +3,10 @@ name = "mitol-django-payment-gateway"
 version = "2026.9.1"
 description = "Django application to handle payment processing"
 dependencies = [
-    # Capped below 0.0.64: 0.0.78 renames
-    # Ptsv2paymentsProcessingInformationAuthorizationOptionsInitiatorMerchantInitiatedTransaction
-    # to ProcessingInfoAuthorizationOptionsInitiatorMerchantInitiatedTransaction. The library
-    # source does not touch that class, but the SDK gives no deprecation window for such
-    # renames, so take the bump deliberately rather than via a lockfile refresh.
+    # Pinned to one SDK release: CyberSource renames generated model classes between
+    # releases with no deprecation window, so take each bump deliberately rather than
+    # via a lockfile refresh. 0.0.79 also caps setuptools<=81 because its api_client
+    # still imports pkg_resources, which setuptools 82 removed.
     "cybersource-rest-client-python>=0.0.79,<0.0.80",
     "django-stubs>=1.13.1",
     "django>=4.2",
