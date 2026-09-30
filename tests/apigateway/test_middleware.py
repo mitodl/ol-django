@@ -10,6 +10,7 @@ from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse, QueryDict
+from mitol.apigateway.backends import ApisixRemoteUserBackend
 from mitol.apigateway.middleware import ApisixUserMiddleware
 from mitol.common.factories.defaults import SsoUserFactory
 
@@ -133,6 +134,7 @@ def test_middleware_keeps_session_for_same_user(
     last_login = User.objects.get(pk=test_user.pk).last_login
 
     authenticate = mocker.spy(auth, "authenticate")
+    configure_user = mocker.spy(ApisixRemoteUserBackend, "configure_user")
     logout = mocker.spy(auth, "logout")
     login = mocker.spy(auth, "login")
 
@@ -144,17 +146,57 @@ def test_middleware_keeps_session_for_same_user(
     assert request.META["CSRF_COOKIE"] == csrf_token
     logout.assert_not_called()
     login.assert_not_called()
+    authenticate.assert_called_once_with(
+        request, remote_user=user_info[settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD]
+    )
+    configure_user.assert_called_once()
+    assert configure_user.call_args.kwargs["created"] is False
 
     test_user.refresh_from_db()
     assert test_user.last_login == last_login
     if update_known_user:
-        authenticate.assert_called_once_with(
-            request, remote_user=user_info[settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD]
-        )
         assert test_user.email == user_info["email"]
     else:
-        authenticate.assert_not_called()
         assert test_user.email != user_info["email"]
+
+
+class ReconcilingBackend(ApisixRemoteUserBackend):
+    """
+    Mimics a downstream backend that reconciles related data in configure_user.
+
+    mitxonline's ApisixRemoteUserOrgBackend does this regardless of
+    MITOL_APIGATEWAY_USERINFO_UPDATE.
+    """
+
+    reconciled = []
+
+    def configure_user(self, request, user, *, created=True):
+        """Configure the user, then record a reconcile."""
+        user = super().configure_user(request, user, created=created)
+        self.reconciled.append(user.pk)
+        return user
+
+
+def test_middleware_same_user_reconciles_every_request(apisix_backend):
+    """With updates off, a subclass's configure_user still runs per request."""
+    apisix_backend.AUTHENTICATION_BACKENDS = [
+        f"{ReconcilingBackend.__module__}.ReconcilingBackend"
+    ]
+    ReconcilingBackend.reconciled = []
+    test_user = SsoUserFactory.create()
+    payload, _ = generate_fake_apisix_payload(user=test_user)
+    request = generate_apisix_request("request", payload)
+    auth.login(request, test_user, backend=apisix_backend.AUTHENTICATION_BACKENDS[0])
+    request.session.save()
+    session_key = request.session.session_key
+
+    middleware = ApisixUserMiddleware(lambda req: HttpResponse())  # noqa: ARG005
+    middleware.process_request(request)
+    middleware.process_request(request)
+
+    assert ReconcilingBackend.reconciled == [test_user.pk, test_user.pk]
+    assert request.user.pk == test_user.pk
+    assert request.session.session_key == session_key
 
 
 def test_middleware_same_user_honors_lookup_field(mocker, apisix_backend):
@@ -166,12 +208,12 @@ def test_middleware_same_user_honors_lookup_field(mocker, apisix_backend):
     request = logged_in_request(test_user, encode_payload(user_info))
     session_key = request.session.session_key
 
-    authenticate = mocker.spy(auth, "authenticate")
+    logout = mocker.spy(auth, "logout")
 
     middleware = ApisixUserMiddleware(lambda req: HttpResponse())  # noqa: ARG005
     middleware.process_request(request)
 
-    authenticate.assert_not_called()
+    logout.assert_not_called()
     assert request.user.pk == test_user.pk
     assert request.session.session_key == session_key
 
@@ -192,11 +234,9 @@ def test_middleware_switches_to_different_header_user():
     assert request.session.session_key != session_key
 
 
-def test_middleware_same_user_deactivated_logs_out(apisix_backend):
-    """
-    With updates on, a session user the backend now rejects is logged out.
-    """
-    apisix_backend.MITOL_APIGATEWAY_USERINFO_UPDATE = True
+@pytest.mark.usefixtures("apisix_backend")
+def test_middleware_same_user_deactivated_logs_out():
+    """A session user the backend now rejects is logged out."""
     test_user = SsoUserFactory.create()
     payload, _ = generate_fake_apisix_payload(user=test_user)
     request = logged_in_request(test_user, payload)
