@@ -26,6 +26,8 @@ dependencies = [
   "mitol-django-scim[celery]",
   "mitol-django-apigateway",
   "mitol-django-observability",
+  # Metadata-only stand-in; see shims/urllib3-future/pyproject.toml.
+  "urllib3-future",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
@@ -150,6 +152,7 @@ mitol-django-scim = { workspace = true }
 mitol-django-apigateway = { workspace = true }
 mitol-django-observability = { workspace = true }
 mitol-drf-lint = { workspace = true }
+urllib3-future = { path = "shims/urllib3-future" }
 
 [tool.hatch.build.targets.sdist]
 include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]
