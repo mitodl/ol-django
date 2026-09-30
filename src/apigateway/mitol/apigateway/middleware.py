@@ -88,8 +88,11 @@ class ApisixUserMiddleware(RemoteUserMiddleware):
                     request.user = user
                     return
                 # The header no longer resolves to the session user (e.g. it
-                # was deactivated), so fall through and let
-                # RemoteUserMiddleware log the session out.
+                # was deactivated). Fall through to RemoteUserMiddleware, which
+                # handles it as on main: it logs out a session stored by a
+                # RemoteUserBackend and tries a fresh login, unless
+                # USERNAME_FIELD is the lookup field, where its own same-user
+                # check returns early.
 
         super().process_request(request)
 
