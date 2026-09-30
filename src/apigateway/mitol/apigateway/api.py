@@ -25,7 +25,8 @@ def decode_x_header(request: HttpRequest | dict) -> dict | None:
     Args:
         request (HttpRequest): the HTTP request
     Returns:
-    dict of decoded values, or None if the header isn't found
+    dict of decoded values, or None if the header isn't found or isn't a
+    base64-encoded JSON object
     """
 
     if isinstance(request, HttpRequest):
@@ -57,8 +58,24 @@ def decode_x_header(request: HttpRequest | dict) -> dict | None:
         )
         return None
 
-    decoded_x_userinfo = base64.b64decode(x_userinfo)
-    return json.loads(decoded_x_userinfo)
+    try:
+        decoded_x_userinfo = json.loads(base64.b64decode(x_userinfo))
+    except ValueError as exc:
+        log.warning(
+            "Unable to decode %s header: %s",
+            settings.MITOL_APIGATEWAY_USERINFO_HEADER_NAME,
+            exc,
+        )
+        return None
+
+    if not isinstance(decoded_x_userinfo, dict):
+        log.warning(
+            "%s header is not a JSON object",
+            settings.MITOL_APIGATEWAY_USERINFO_HEADER_NAME,
+        )
+        return None
+
+    return decoded_x_userinfo
 
 
 def get_user_id_from_userinfo_header(request: HttpRequest | dict) -> str | None:
