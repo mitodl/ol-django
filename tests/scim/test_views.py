@@ -1165,6 +1165,25 @@ def test_scim_group_post_duplicate_is_redacted_conflict(scim_client):
     assert Group.objects.filter(name="dupegroup").count() == 1
 
 
+def test_scim_group_search_is_not_shadowed_by_group_detail(scim_client):
+    """`Groups/.search` must reach the search view, not `Groups/<uuid>`"""
+    group = Group.objects.create(name="searchablegroup")
+
+    resp = scim_client.post(
+        "/scim/v2/Groups/.search",
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.SERACH_REQUEST],
+                "filter": f'id eq "{group.pk}"',
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Response: {resp.content}"
+    assert resp.json()["schemas"] == [constants.SchemaURI.LIST_RESPONSE]
+
+
 def test_scim_bulk_integrity_error_is_redacted(scim_client):
     """A per-operation 409 inside a Bulk response carries the fixed detail too"""
     existing = UserFactory.create()
