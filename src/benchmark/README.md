@@ -173,7 +173,8 @@ Backends
 The `k8s` backend **requires** `context` and never inherits your current
 `kubectl` context: a developer's current context is routinely a deployed
 environment, and this harness runs `DROP DATABASE`. It also **refuses a
-context whose name contains `ci`, `qa`, `prod` or `applications`**, because
+context whose name contains `ci`, `qa`, `prod`, `applications`,
+`residential`, `data` or `operations`**, because
 being made to name the cluster does not help if the name you type is
 `applications-qa`. Override the markers with `[backend].context_denylist` in
 your own local config if one of them is a false positive on a cluster you
