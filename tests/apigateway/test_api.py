@@ -72,6 +72,7 @@ def test_create_userinfo_header():
         base64.b64encode(b"\xff\xfe").decode(),
         base64.b64encode(json.dumps(["a", "list"]).encode()).decode(),
         base64.b64encode(json.dumps("a string").encode()).decode(),
+        "!!!!" + base64.b64encode(json.dumps({"sub": "someone"}).encode()).decode(),
     ],
 )
 def test_decode_x_header_malformed(caplog, obj_type, raw_header):

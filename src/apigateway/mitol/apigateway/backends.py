@@ -15,6 +15,42 @@ log = logging.getLogger(__name__)
 User = get_user_model()
 
 
+class SettingDefault:
+    """
+    Attribute that reads a Django setting on access unless the instance sets it.
+
+    Reading on access lets ``override_settings`` take effect on a backend that
+    already exists, and assigning on the instance still works as it did when
+    these were plain attributes set in ``__init__``.
+    """
+
+    def __init__(self, setting_name: str):
+        """
+        :param setting_name: the Django setting that supplies the default
+        """
+        self.setting_name = setting_name
+
+    def __set_name__(self, owner, name):
+        """Record the attribute name used to store an instance override."""
+        self.override_name = f"_{name}_override"
+
+    def __get__(self, instance, owner=None):
+        """
+        Return the instance override if set, else the setting's value.
+
+        :returns: the attribute value, or this descriptor on class access
+        """
+        if instance is None:
+            return self
+        if self.override_name in instance.__dict__:
+            return instance.__dict__[self.override_name]
+        return getattr(settings, self.setting_name)
+
+    def __set__(self, instance, value):
+        """Override the setting for this instance."""
+        instance.__dict__[self.override_name] = value
+
+
 class RemoteUserCustomFieldBackend(RemoteUserBackend):
     """
     RemoteUserBackend variant that allows the field for the lookup to be configured
@@ -80,20 +116,9 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
     we'll want to toggle the user creation code with a setting.
     """
 
-    @property
-    def lookup_field(self) -> str:
-        """The user model field that holds the gateway user ID."""
-        return settings.MITOL_APIGATEWAY_USER_LOOKUP_FIELD
-
-    @property
-    def create_unknown_user(self) -> bool:
-        """Whether to create users that aren't in the database yet."""
-        return settings.MITOL_APIGATEWAY_USERINFO_CREATE
-
-    @property
-    def update_known_user(self) -> bool:
-        """Whether to update existing users from the userinfo header."""
-        return settings.MITOL_APIGATEWAY_USERINFO_UPDATE
+    lookup_field = SettingDefault("MITOL_APIGATEWAY_USER_LOOKUP_FIELD")
+    create_unknown_user = SettingDefault("MITOL_APIGATEWAY_USERINFO_CREATE")
+    update_known_user = SettingDefault("MITOL_APIGATEWAY_USERINFO_UPDATE")
 
     def authenticate(self, request, remote_user):
         """

@@ -59,7 +59,7 @@ def decode_x_header(request: HttpRequest | dict) -> dict | None:
         return None
 
     try:
-        decoded_x_userinfo = json.loads(base64.b64decode(x_userinfo))
+        decoded_x_userinfo = json.loads(base64.b64decode(x_userinfo, validate=True))
     except ValueError as exc:
         log.warning(
             "Unable to decode %s header: %s",
