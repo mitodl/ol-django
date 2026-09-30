@@ -82,6 +82,15 @@ uv tool install tox --with tox-uv
 tox
 ```
 
+### Linting and formatting
+
+Hooks live in `.pre-commit-config.yaml` and are run by [prek](https://prek.j178.dev/), which `uv sync` installs. The config format is unchanged, so the file stays readable by `pre-commit` too.
+
+- Install the git hook: `uv run prek install -f`. The `-f` replaces an existing `pre-commit` hook, if you have one installed from before.
+- Run every hook over the whole repo: `uv run prek run --all-files`
+
+CI runs the same hooks in the `prek` check (`.github/workflows/autofix.yml`), and autofix.ci pushes a commit with any fixes to your PR.
+
 ### Changelogs
 
 We maintain changelogs in `changelog.d/` directories with each app. To create a new changelog for your changes, run:

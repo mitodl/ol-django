@@ -1,6 +1,10 @@
 ---
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+ci:
+  # autofix.ci owns fix commits now; pre-commit.ci keeps reporting until an org
+  # owner deselects this repo. Remove this block after that happens.
+  autofix_prs: false
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v6.0.0
