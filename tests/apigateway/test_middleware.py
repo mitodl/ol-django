@@ -235,6 +235,29 @@ def test_middleware_switches_to_different_header_user():
 
 
 @pytest.mark.usefixtures("apisix_backend")
+def test_middleware_same_user_resolving_elsewhere_falls_through(mocker):
+    """
+    If authenticate() resolves a matching session user to someone else, the
+    normal RemoteUserMiddleware login path runs.
+    """
+    session_user = SsoUserFactory.create()
+    other_user = SsoUserFactory.create()
+    payload, _ = generate_fake_apisix_payload(user=session_user)
+    request = logged_in_request(session_user, payload)
+    session_key = request.session.session_key
+
+    mocker.patch.object(auth, "authenticate", return_value=other_user)
+    login = mocker.spy(auth, "login")
+
+    middleware = ApisixUserMiddleware(lambda req: HttpResponse())  # noqa: ARG005
+    middleware.process_request(request)
+
+    login.assert_called_once_with(request, other_user)
+    assert request.user.pk == other_user.pk
+    assert request.session.session_key != session_key
+
+
+@pytest.mark.usefixtures("apisix_backend")
 def test_middleware_same_user_deactivated_logs_out():
     """A session user the backend now rejects is logged out."""
     test_user = SsoUserFactory.create()
