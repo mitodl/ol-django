@@ -26,9 +26,10 @@ from typing import TYPE_CHECKING, Any
 from mitol.benchmark import config as config_module
 from mitol.benchmark.aggregate import aggregate
 from mitol.benchmark.backends import get_backend, run_process
-from mitol.benchmark.report import compare, render_markdown
+from mitol.benchmark.report import compare, render_markdown, render_memory_markdown
 from mitol.benchmark.steps import (
     BENCH_PREFIX,
+    MEMORY_PREFIX,
     MIGRATE_PREFIX,
     SEED_PREFIX,
     TRACE_PREFIX,
@@ -133,9 +134,13 @@ class Runner:
 
     # -- guards ----------------------------------------------------------
 
+    def working_tree_dirty(self) -> bool:
+        """Whether the tree carries changes no commit accounts for."""
+        return bool(git("status", "--porcelain", cwd=self.repo_root))
+
     def check_working_tree(self) -> None:
         """Refuse to benchmark a dirty tree: the arms would not be two refs."""
-        if git("status", "--porcelain", cwd=self.repo_root):
+        if self.working_tree_dirty():
             msg = (
                 "the working tree has uncommitted changes; commit or stash "
                 "them, or the two arms are not the two refs you think"
@@ -288,15 +293,9 @@ class Runner:
 
     # -- driving ---------------------------------------------------------
 
-    def run(self) -> dict[str, Any]:
-        """Run both arms against one seeded database and report the result."""
-        self.check_working_tree()
-        self.check_local_config_untracked()
+    def _prepare(self) -> dict[str, Any]:
+        """Seed the scratch database, or reuse the previous run's seed."""
         self.log(f"==> target: {self.backend.describe()}")
-
-        original_ref = self.current_ref
-        probes = self.probe_files(self.base_ref, original_ref)
-
         if self.skip_seed:
             shape = json.loads((self.out_dir / "seed.json").read_text())
             self.log("==> reusing the existing seed")
@@ -304,6 +303,65 @@ class Runner:
             self.recreate_database()
             self.migrate()
             shape = self.seed()
+        return shape
+
+    def run_memory(self) -> dict[str, Any]:
+        """
+        Measure retention on one ref, against the same seed a run would use.
+
+        Single-arm on purpose. Retention is a property of the code as it
+        stands, not a difference between two commits, so there is nothing to
+        check out and nothing to compare — which also means this does not
+        touch the working tree and can be run on a dirty one.
+
+        Which is why the result says whether it was. The A/B can name its two
+        arms by commit because it refuses to start otherwise; here the commit
+        is where the measurement started rather than necessarily what it ran,
+        so the ref is reported ``git describe --dirty`` style and a reader is
+        told not to attribute the number to that commit alone.
+        """
+        # Single-arm is what makes the dirty-tree check meaningless, and that
+        # is the only guard it excuses. A committed local layer is one
+        # developer's connection strings in the repository however many refs
+        # are being measured, so that refusal holds here too.
+        self.check_local_config_untracked()
+        shape = self._prepare()
+
+        dirty = self.working_tree_dirty()
+        ref = self.short_ref() + ("-dirty" if dirty else "")
+        self.log(f"==> measuring retention ({ref})")
+        result = self.run_step("memory", MEMORY_PREFIX, shape, "memory")
+        result["ref"] = ref
+        result["dirty_tree"] = dirty
+
+        self.write("config.resolved.json", self.config.redacted_dict())
+        self.write("seed.json", shape)
+        self.write("memory.json", result)
+        self.write("memory.md", render_memory_markdown(result))
+
+        detached = result.get("harness_finalizers_detached")
+        self.log(
+            f"    {result['objects_per_request']:+} objects and "
+            f"{result['mib_per_request']:+} MiB per request over "
+            f"{result['requests']} requests"
+            + (
+                f", after detaching {detached} of the test client's own finalizers"
+                if detached
+                else ", including whatever the test client itself retains"
+            )
+        )
+        self.log(f"==> {result['verdict']}: {result['reason']}")
+        self.log(f"==> wrote {self.out_dir}")
+        return result
+
+    def run(self) -> dict[str, Any]:
+        """Run both arms against one seeded database and report the result."""
+        self.check_working_tree()
+        self.check_local_config_untracked()
+
+        original_ref = self.current_ref
+        probes = self.probe_files(self.base_ref, original_ref)
+        shape = self._prepare()
 
         self.sync_ref(original_ref, probes)
         arms = {"branch": self.run_arm("branch", shape)}

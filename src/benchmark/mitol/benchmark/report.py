@@ -594,3 +594,149 @@ def render_markdown(comparison: Mapping[str, Any]) -> str:
         lines += [f"> {warning}", ""]
     lines += [comparison["caveat"], ""]
     return "\n".join(lines)
+
+
+# Every other verdict renders as its own name upcased.
+_MEMORY_HEADLINE = {"retaining": "RETAINED"}
+
+
+def _signed(value: float) -> str:
+    """Render a per-request delta, without printing a signed zero."""
+    return f"{value:+}" if value else "0"
+
+
+def render_memory_markdown(result: Mapping[str, Any]) -> str:
+    """
+    Render the retention pass as a report a reviewer can read.
+
+    Deliberately leads with the verdict and the two per-request numbers,
+    because everything after them is only worth reading if those say there is
+    something to chase.
+    """
+    verdict = result["verdict"]
+    lines: list[str] = [
+        f"# Retention: {result['url']}",
+        "",
+        f"**{_MEMORY_HEADLINE.get(verdict, verdict.upper())}** — {result['reason']}",
+        "",
+        *_table(
+            ["", "baseline", "final", "per request"],
+            [
+                [
+                    "RSS (MiB)",
+                    result["baseline_rss_mib"],
+                    result["final_rss_mib"],
+                    _signed(result["mib_per_request"]),
+                ],
+                [
+                    "live objects",
+                    result["baseline_objects"],
+                    result["final_objects"],
+                    _signed(result["objects_per_request"]),
+                ],
+            ],
+        ),
+        f"Over {result['requests']} requests, after a forced collection. "
+        f"Live objects are counted after collecting, so growth there is "
+        f"reachable rather than merely uncollected — that is what separates "
+        f"retention from an allocator holding freed arenas.",
+        "",
+    ]
+
+    # Provenance, which the A/B gets for free by refusing to run on a dirty
+    # tree and this pass does not, because running on one is the point of it.
+    ref = result.get("ref")
+    if ref and result.get("dirty_tree"):
+        lines += [
+            f"Measured on `{ref}`. The tree carried uncommitted changes, so "
+            f"that commit is where the measurement started rather than what it "
+            f"ran — do not attribute this number to it without saying so.",
+            "",
+        ]
+    elif ref:
+        lines += [f"Measured on `{ref}`, with a clean tree.", ""]
+
+    detached = result.get("harness_finalizers_detached")
+    if detached is None:
+        lines += [
+            "> This Django does not register signal finalizers where the pass "
+            "looks for them, so the test client's own retention could not be "
+            "taken out — roughly a dozen objects a request, which is enough to "
+            "read as `retaining` before the endpoint does anything. Treat "
+            "these figures as including the instrument.",
+            "",
+        ]
+    elif detached:
+        lines += [
+            f"These are the endpoint's own figures. {detached} finalizers left "
+            f"by the test client's per-request signal churn were detached as "
+            f"they appeared, so what remains below is retention the request "
+            f"caused rather than retention the measurement caused.",
+            "",
+        ]
+
+    by_type = result.get("retained_by_type") or []
+    if by_type:
+        lines += ["## What is still reachable", ""]
+        lines += _table(
+            ["type", "count", "per request"],
+            [
+                [
+                    row["type"],
+                    row["count"],
+                    round(row["count"] / max(result["requests"], 1), 1),
+                ]
+                for row in by_type
+            ],
+        )
+
+    grown = result.get("lru_caches_grown")
+    if grown:
+        lines += [
+            "## Caches that grew",
+            "",
+            "An `lru_cache` keyed on something request-scoped is the most "
+            "common way a worker grows without any one place looking wrong.",
+            "",
+        ]
+        lines += _table(
+            ["cache", "entries added", "current size", "per request"],
+            [
+                [
+                    row["cache"],
+                    row["entries_added"],
+                    row["current_size"],
+                    row["per_request"],
+                ]
+                for row in grown
+            ],
+        )
+    elif result.get("retained_objects"):
+        lines += [
+            "No `lru_cache` in the process gained entries, which narrows that "
+            "category without closing it: the comparison is on `currsize`, so "
+            "a cache whose existing values accumulate references looks flat "
+            "here. A hand-rolled cache is the other candidate.",
+            "",
+        ]
+
+    for held in result.get("holders") or []:
+        lines += [f"### What holds `{held['type']}`", ""]
+        if not held["chain"]:
+            lines += [
+                "No named holder found inside the scan budget. Raise "
+                "`[memory].scan_budget` to look further.",
+                "",
+            ]
+            continue
+        lines += ["```", *_indent_chain(held["chain"]), "```", ""]
+
+    return "\n".join(lines)
+
+
+def _indent_chain(chain: Sequence[str]) -> list[str]:
+    """Render a reference chain root-first, one indent per hop."""
+    return [
+        ("  " * depth) + ("-> " if depth else "") + step
+        for depth, step in enumerate(chain)
+    ]

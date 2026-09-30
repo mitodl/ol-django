@@ -13,6 +13,7 @@ import pytest
 import tomllib
 from click.testing import CliRunner
 from mitol.benchmark import config as cfg
+from mitol.benchmark import steps
 from mitol.benchmark.cli import cli
 
 USAGE_ERROR = 2
@@ -217,6 +218,18 @@ class TestGroup:
         result = run("step", "nonsense")
         assert result.exit_code == USAGE_ERROR
         assert "nonsense" in result.stderr
+
+    @pytest.mark.parametrize("name", sorted(steps.HANDLERS))
+    def test_every_registered_step_is_reachable(self, run, name, monkeypatch):
+        """
+        The parser derives its choices from steps.HANDLERS, so a new handler
+        cannot ship reachable from the runner but rejected by the CLI — the
+        proof is reaching the harness's own error, not click's rejection.
+        """
+        monkeypatch.delenv(cfg.CONFIG_ENV_VAR, raising=False)
+        result = run("step", name)
+        assert "is not one of" not in result.stderr
+        assert cfg.CONFIG_ENV_VAR in result.stderr
 
 
 def test_the_repository_s_own_example_is_valid(run):

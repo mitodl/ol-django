@@ -224,6 +224,57 @@ State in the write-up:
   ruled out.
 - Per-query attribution, so a reviewer can check the saving is where you say.
 
+## Step 7 — When the benchmark exonerates the endpoint
+
+A clean local result against a calibrated seed is a real finding, not a failed
+run: it says the stall is not in the request. The next question is what the
+request *leaves behind*, and no A/B can answer it, because retention is a
+property of one commit rather than a difference between two.
+
+```bash
+ol-benchmark memory benchmarks/<name>.toml
+```
+
+Same seed, same auth, same refusals — which is the point of it living here.
+Every wrong answer this was built from came from measuring retention in a
+hand-rolled script that lost those guards: one under pytest, where a profiler
+the harness would have refused inflated the number by 70%, and one against an
+endpoint answering an empty page, where the heap looked admirably flat. The
+dirty-tree check is the one refusal it drops, deliberately: single-arm, nothing
+to check out. A committed `benchmark.local.toml` is still refused — that is one
+developer's connection strings in the repository however many refs are measured.
+
+Because it does run on a dirty tree, the result says whether it did: `ref` is
+reported `git describe --dirty` style and `dirty_tree` carries the boolean. A
+retention number from a dirty tree belongs to the tree, not to the commit, so
+quote it with that said out loud.
+
+Read the verdict first:
+
+| Verdict | What it means | Where to look next |
+| --- | --- | --- |
+| `stable` | Neither configured rate was crossed | The growth is elsewhere; measure another endpoint. Not proof nothing is held — growth under the thresholds, and anything the collector cannot enumerate, read the same way |
+| `high-water` | RSS grew, live objects did not | Consistent with the allocator holding freed arenas. Allocate less per request — an over-fetch is the usual cause, and there is no holder to find. Retention the collector cannot see reads identically |
+| `retaining` | Objects survive a forced collection | Something holds them. `retained_by_type` usually names it; `holders` gives the chain to the module or class |
+
+The figures are the endpoint's own, not the process's. Django's test client
+re-connects three signals per request and `Signal.connect` leaves a
+`weakref.finalize` against the owner of each receiver — two of which have
+process lifetime — so twelve objects a request accumulate before the endpoint
+does anything. Each is detached as it appears, and
+`harness_finalizers_detached` says how many. When that field is `null` the
+pass could not identify them on this Django and the figures include the
+instrument.
+
+Then read what is retained, against what the response contains. Retaining far
+more objects than the response serializes means an over-fetch is being held,
+not just loaded — the same rows that cost latency, made permanent.
+
+`lru_caches_grown` being empty is informative, but it narrows the category
+rather than closing it: the comparison is on `cache_info().currsize`, so a
+cache that gains no entries while the values already in it accumulate
+references looks flat. A hand-rolled cache is the other candidate.
+
 ## Pitfalls
 
 | Pitfall | Why it ruins the result |

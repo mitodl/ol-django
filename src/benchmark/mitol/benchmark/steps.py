@@ -31,6 +31,7 @@ if TYPE_CHECKING:  # pragma: no cover
 SEED_PREFIX = "SEED_SHAPE "
 BENCH_PREFIX = "BENCH_RESULT "
 TRACE_PREFIX = "TRACE_RESULT "
+MEMORY_PREFIX = "MEMORY_RESULT "
 MIGRATE_PREFIX = "MIGRATE_OK "
 
 
@@ -105,11 +106,19 @@ def step_trace(config: BenchmarkConfig, label: str = "unknown") -> None:
     emit(TRACE_PREFIX, run_trace(config, shape_from_environment(), label))
 
 
+def step_memory(config: BenchmarkConfig, label: str = "unknown") -> None:
+    """Serve the endpoint repeatedly and report what the process kept."""
+    from mitol.benchmark.memory import run_memory  # noqa: PLC0415
+
+    emit(MEMORY_PREFIX, run_memory(config, shape_from_environment(), label))
+
+
 HANDLERS = {
     "migrate": step_migrate,
     "seed": step_seed,
     "bench": step_bench,
     "trace": step_trace,
+    "memory": step_memory,
 }
 
 

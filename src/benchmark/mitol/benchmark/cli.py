@@ -308,6 +308,60 @@ def run(  # noqa: PLR0913
 @click.option(
     "--out-dir",
     type=click.Path(file_okay=False, path_type=Path),
+    help="where to write results  [default: .bench/out/<benchmark>]",
+)
+@click.option(
+    "--skip-seed",
+    is_flag=True,
+    help="reuse the database and seed from the previous run",
+)
+@click.pass_context
+def memory(  # noqa: PLR0913
+    ctx: click.Context,
+    *,
+    config: Path,
+    project_config: Path | None,
+    local_config: Path | None,
+    knob: Sequence[str],
+    out_dir: Path | None,
+    skip_seed: bool,
+) -> None:
+    """
+    Measure what the endpoint leaves behind, on one ref.
+
+    Run this when `run` has exonerated the endpoint and production still
+    disagrees. A request that grows the worker eventually puts it wherever a
+    memory ceiling or a process manager acts, and neither shows up in a
+    latency comparison.
+    """
+    from mitol.benchmark.runner import Runner  # noqa: PLC0415
+
+    resolved = load_config(config, project_config, local_config, knob)
+    result = Runner(resolved, out_dir=out_dir, skip_seed=skip_seed).run_memory()
+    click.echo(
+        json.dumps(
+            {
+                key: result[key]
+                for key in (
+                    "verdict",
+                    "objects_per_request",
+                    "mib_per_request",
+                    "baseline_rss_mib",
+                    "final_rss_mib",
+                )
+            },
+            indent=2,
+        )
+    )
+    if result["verdict"] == "retaining":
+        ctx.exit(1)
+
+
+@cli.command()
+@config_options
+@click.option(
+    "--out-dir",
+    type=click.Path(file_okay=False, path_type=Path),
     help="where the previous run wrote its results",
 )
 @click.pass_context
