@@ -2301,7 +2301,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-benchmark"
-version = "2026.9.29"
+version = "2026.9.30"
 source = { editable = "src/benchmark" }
 dependencies = [
     { name = "click" },
