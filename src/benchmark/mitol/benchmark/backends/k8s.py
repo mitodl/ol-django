@@ -35,7 +35,15 @@ if TYPE_CHECKING:  # pragma: no cover
 # defence in depth behind the scratch-database name guard: that one stops the
 # wrong *database* being dropped, this one stops the right-looking name being
 # dropped in the wrong *cluster*.
-DEPLOYED_CONTEXT_MARKERS = ("ci", "qa", "prod", "applications")
+DEPLOYED_CONTEXT_MARKERS = (
+    "ci",
+    "qa",
+    "prod",
+    "applications",
+    "residential",
+    "data",
+    "operations",
+)
 
 
 class KubernetesBackend(Backend):
