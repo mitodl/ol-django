@@ -63,9 +63,9 @@ class ApisixUserMiddleware(RemoteUserMiddleware):
         logs the session out and back in on every request, which flushes the
         session, rotates the session key and CSRF token, and rewrites
         last_login. So when the session user already matches on the lookup
-        field, the session is kept. With MITOL_APIGATEWAY_USERINFO_UPDATE on,
-        the user is still passed through authenticate() so the backend can
-        apply userinfo updates.
+        field, the session is kept, but the user is still passed through
+        authenticate() so the backend's configure_user runs on every request
+        (e.g. to apply userinfo updates or reconcile related data).
         """
 
         log.debug("ApisixUserMiddleware.process_request: started")
@@ -83,9 +83,6 @@ class ApisixUserMiddleware(RemoteUserMiddleware):
                 and request.user.is_authenticated
                 and getattr(request.user, lookup_field, None) == user_id
             ):
-                if not settings.MITOL_APIGATEWAY_USERINFO_UPDATE:
-                    return
-
                 user = auth.authenticate(request, remote_user=user_id)
                 if user is not None and user.pk == request.user.pk:
                     request.user = user
