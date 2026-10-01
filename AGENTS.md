@@ -19,9 +19,10 @@ uv run pytest tests/<appname>/test_something.py
 # Run a single test
 uv run pytest tests/<appname>/test_something.py::test_function_name
 
-# Lint and format
+# Lint and format (ruff is 2 of the 16 hooks; prek runs them all)
 uv run ruff check --fix .
 uv run ruff format .
+uv run prek run --all-files
 
 # Django management (use testapp)
 uv run testapp/manage.py <command>
