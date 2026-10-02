@@ -1014,20 +1014,21 @@ wheels = [
 
 [[package]]
 name = "cybersource-rest-client-python"
-version = "0.0.63"
+version = "0.0.79"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
     { name = "cryptography" },
     { name = "datetime" },
     { name = "jwcrypto" },
+    { name = "pgpy" },
     { name = "pycryptodome" },
-    { name = "pyjwt" },
     { name = "setuptools" },
     { name = "six" },
-    { name = "urllib3" },
+    { name = "standard-imghdr", marker = "python_full_version >= '3.13' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
+    { name = "urllib3-future" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f3/74/e3e2718ee0b124079320eba8afa08e59c1cecb22c6009c354276d8bd5e06/cybersource_rest_client_python-0.0.63.tar.gz", hash = "sha256:2e5d3a3d0db37360931833ac9082c24509d6357d65b3d056da5580c9960962f6", size = 1259574, upload-time = "2025-03-24T10:46:48.411Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7f/d7/1c6c5bd378f7bce1d35ac4a336ebc4a49180ce163d3f535af7dc1c27c6dd/cybersource_rest_client_python-0.0.79.tar.gz", hash = "sha256:a6a63062b5dc3c9a79d201a8465d5ebc9fe08a35150bf8fe03077062bb95d013", size = 1894661, upload-time = "2026-09-15T05:20:53.13Z" }
 
 [[package]]
 name = "datetime"
@@ -2764,7 +2765,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cybersource-rest-client-python", specifier = ">=0.0.59,<0.0.64" },
+    { name = "cybersource-rest-client-python", specifier = ">=0.0.79,<0.0.80" },
     { name = "django", specifier = ">=4.2" },
     { name = "django-stubs", specifier = ">=1.13.1" },
     { name = "mitol-django-common", editable = "src/common" },
@@ -2964,6 +2965,7 @@ dependencies = [
     { name = "mitol-django-scim", extra = ["celery"] },
     { name = "mitol-django-transcoding" },
     { name = "mitol-django-uvtestapp" },
+    { name = "urllib3-future" },
 ]
 
 [package.dev-dependencies]
@@ -3042,6 +3044,7 @@ requires-dist = [
     { name = "mitol-django-scim", extras = ["celery"], editable = "src/scim" },
     { name = "mitol-django-transcoding", editable = "src/transcoding" },
     { name = "mitol-django-uvtestapp", editable = "src/uvtestapp" },
+    { name = "urllib3-future", directory = "shims/urllib3-future" },
 ]
 
 [package.metadata.requires-dev]
@@ -3367,6 +3370,16 @@ sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce
 wheels = [
     { url = "https://files.pythonhosted.org/packages/9e/c3/059298687310d527a58bb01f3b1965787ee3b40dce76752eda8b44e9a2c5/pexpect-4.9.0-py2.py3-none-any.whl", hash = "sha256:7236d1e080e4936be2dc3e326cec0af72acf9212a7e1d060210e70a47e253523", size = 63772, upload-time = "2023-11-25T06:56:14.81Z" },
 ]
+
+[[package]]
+name = "pgpy"
+version = "0.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "pyasn1" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f8/68/5e285ba9465550a48e837b08b27fa99ef238618f6085a1464afaa4dc8426/PGPy-0.6.0.tar.gz", hash = "sha256:279c2e353f4c3a319f00bd9bd582456e420f8a3ac6de2b4e9731444746828383", size = 603002, upload-time = "2022-11-24T02:35:22.133Z" }
 
 [[package]]
 name = "pluggy"
@@ -4426,6 +4439,15 @@ wheels = [
 ]
 
 [[package]]
+name = "standard-imghdr"
+version = "3.13.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/1a/8d/ab2620fbe2e348483c9cb776c3b7b3cc407899291a041d7fa026469b7cd1/standard_imghdr-3.13.0.tar.gz", hash = "sha256:8d9c68058d882f6fc3542a8d39ef9ff94d2187dc90bd0c851e0902776b7b7a42", size = 5511, upload-time = "2024-10-30T16:01:36.412Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/df/cb/e1da7e340586a078404c7e4328bfefc930867ace8a9a55916fd220cf9547/standard_imghdr-3.13.0-py3-none-any.whl", hash = "sha256:30a1bff5465605bb496f842a6ac3cc1f2131bf3025b0da28d4877d6d4b7cc8e9", size = 4639, upload-time = "2024-10-30T16:01:13.829Z" },
+]
+
+[[package]]
 name = "stevedore"
 version = "5.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -4672,6 +4694,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/53/0c/06f8b233b8fd13b9e
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7f/3e/5db95bcf282c52709639744ca2a8b149baccf648e39c8cc87553df9eae0c/urllib3-2.7.0-py3-none-any.whl", hash = "sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897", size = 131087, upload-time = "2026-05-07T16:13:17.151Z" },
 ]
+
+[[package]]
+name = "urllib3-future"
+version = "0.0.0"
+source = { directory = "shims/urllib3-future" }
 
 [[package]]
 name = "vine"
