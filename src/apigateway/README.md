@@ -64,10 +64,9 @@ import_settings_modules(globals(), "mitol.apigateway.settings")
 
 ### User Model Configuration
 
-OL applications have standardized on adding a field called `global_id` to the `User` model to store the immutable ID that Keycloak generates for the user. This requires two things:
+OL applications have standardized on adding a field called `global_id` to the `User` model to store the immutable ID that Keycloak generates for the user. Your app must have a custom user model so that the `global_id` field can be added.
 
-- Your app must have a custom user model so that the `global_id` field can be added.
-- Your app's user model should specify `global_id` as the `USERNAME_FIELD` - otherwise, the base Django RemoteUserBackend won't be able to find the user.
+The backend looks users up on the field named by `MITOL_APIGATEWAY_USER_LOOKUP_FIELD` (default `global_id`), so it doesn't need to be the `USERNAME_FIELD`. Where the two differ, the middleware still keeps the session of a user who already matches the header instead of logging them out and back in on every request.
 
 You can use other fields, but you probably shouldn't. The immutable ID in Keycloak is the "Subscriber" field (sub) and it's a UUID that Keycloak generates when the user registers their account.
 
@@ -86,6 +85,7 @@ These settings are needed for your environment:
 
 These settings are likely to need adjustment for your environment:
 
+- `MITOL_APIGATEWAY_USER_LOOKUP_FIELD` - the user model field matched against the userinfo field named by `MITOL_APIGATEWAY_USERINFO_ID_FIELD`. Defaults to `global_id`.
 - `MITOL_APIGATEWAY_USERINFO_CREATE` - controls if the backend will create _new_ users or not. If set to False, users will have to be pre-created within the system before they can be authenticated. Defaults to True.
 - `MITOL_APIGATEWAY_USERINFO_UPDATE` - controls if the backend will update _existing_ users or not. Defaults to False, since the userinfo attached to a request is only refreshed at login and will otherwise clobber newer data written by a backchannel process. Set this to True only if your app has no backchannel (SCIM, etc) keeping users in sync.
 

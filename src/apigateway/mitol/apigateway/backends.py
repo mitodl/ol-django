@@ -15,6 +15,42 @@ log = logging.getLogger(__name__)
 User = get_user_model()
 
 
+class SettingDefault:
+    """
+    Attribute that reads a Django setting on access unless the instance sets it.
+
+    Reading on access lets ``override_settings`` take effect on a backend that
+    already exists, and assigning on the instance still works as it did when
+    these were plain attributes set in ``__init__``.
+    """
+
+    def __init__(self, setting_name: str):
+        """
+        :param setting_name: the Django setting that supplies the default
+        """
+        self.setting_name = setting_name
+
+    def __set_name__(self, owner, name):
+        """Record the attribute name used to store an instance override."""
+        self.override_name = f"_{name}_override"
+
+    def __get__(self, instance, owner=None):
+        """
+        Return the instance override if set, else the setting's value.
+
+        :returns: the attribute value, or this descriptor on class access
+        """
+        if instance is None:
+            return self
+        if self.override_name in instance.__dict__:
+            return instance.__dict__[self.override_name]
+        return getattr(settings, self.setting_name)
+
+    def __set__(self, instance, value):
+        """Override the setting for this instance."""
+        instance.__dict__[self.override_name] = value
+
+
 class RemoteUserCustomFieldBackend(RemoteUserBackend):
     """
     RemoteUserBackend variant that allows the field for the lookup to be configured
@@ -24,7 +60,15 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
 
     def authenticate(self, request, remote_user):
         """
-        Authenticate the user
+        Authenticate the user.
+
+        If the request's current user already matches ``remote_user`` on the
+        lookup field, that user is reused rather than looked up again, but it
+        still goes through ``configure_user`` so updates can be applied.
+
+        :param request: the HTTP request, or a Channels scope dict
+        :param remote_user: the lookup field value from the gateway
+        :returns: the authenticated user, or None
         """
         if not remote_user:
             return None
@@ -32,43 +76,35 @@ class RemoteUserCustomFieldBackend(RemoteUserBackend):
         user = None
         username = self.clean_username(remote_user)
 
-        # if the current user and the user from the backend match
-        # just return that user and do no further queries or configuration
-        if getattr(request.user, self.lookup_field, None) == username:
-            user = request.user
-            return user if self.user_can_authenticate(user) else None
-
-        if self.create_unknown_user:
+        # A Channels scope is a dict, so it has no user attribute.
+        request_user = getattr(request, "user", None)
+        if getattr(request_user, self.lookup_field, None) == username:
+            user = request_user
+        elif self.create_unknown_user:
             user, created = User.objects.get_or_create(**{self.lookup_field: username})
         else:
             with contextlib.suppress(User.DoesNotExist):
-                user = User.objects.get_by_natural_key(username)
+                user = User.objects.get(**{self.lookup_field: username})
+
+        if user is None:
+            return None
+
         user = self.configure_user(request, user, created=created)
         return user if self.user_can_authenticate(user) else None
 
     async def aauthenticate(self, request, remote_user):
-        """See authenticate()."""
+        """
+        See authenticate().
+
+        Delegates to the sync ``authenticate()`` via ``sync_to_async``. A
+        subclass may wrap ``authenticate()`` in ``transaction.atomic()``,
+        which raises ``SynchronousOnlyOperation`` from an async context.
+        """
         if not remote_user:
             return None
-        created = False
-        user = None
-        username = self.clean_username(remote_user)
-
-        # if the current user and the user from the backend match
-        # just return that user and do no further queries or configuration
-        if getattr(request.user, self.lookup_field, None) == username:
-            user = request.user
-            return user if self.user_can_authenticate(user) else None
-
-        if self.create_unknown_user:
-            user, created = await User.objects.aget_or_create(
-                **{self.lookup_field: username}
-            )
-        else:
-            with contextlib.suppress(User.DoesNotExist):
-                user = await User.objects.aget_by_natural_key(username)
-        user = await self.aconfigure_user(request, user, created=created)
-        return user if self.user_can_authenticate(user) else None
+        return await sync_to_async(self.authenticate, thread_sensitive=True)(
+            request, remote_user
+        )
 
 
 class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
@@ -80,18 +116,9 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
     we'll want to toggle the user creation code with a setting.
     """
 
-    lookup_field = "global_id"
-
-    def __init__(self, *args, **kwargs):
-        """
-        Read the create/update flags per-instance.
-
-        These are read here rather than bound as class attributes so that a
-        change to the settings takes effect without re-importing the module.
-        """
-        super().__init__(*args, **kwargs)
-        self.create_unknown_user = settings.MITOL_APIGATEWAY_USERINFO_CREATE
-        self.update_known_user = settings.MITOL_APIGATEWAY_USERINFO_UPDATE
+    lookup_field = SettingDefault("MITOL_APIGATEWAY_USER_LOOKUP_FIELD")
+    create_unknown_user = SettingDefault("MITOL_APIGATEWAY_USERINFO_CREATE")
+    update_known_user = SettingDefault("MITOL_APIGATEWAY_USERINFO_UPDATE")
 
     def authenticate(self, request, remote_user):
         """
@@ -103,22 +130,6 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
         except Exception:
             log.exception("Unable to authenticate api gateway user")
             return None
-
-    async def aauthenticate(self, request, remote_user):
-        """See authenticate().
-
-        Delegates to the sync ``authenticate()`` (via ``sync_to_async``)
-        rather than awaiting ``super().aauthenticate()`` directly: the
-        latter's async ORM calls can't be wrapped in a plain
-        ``transaction.atomic()`` block from an async context (Django raises
-        ``SynchronousOnlyOperation``), and the sync path is the one covered
-        by tests.
-        """
-        if not remote_user:
-            return None
-        return await sync_to_async(self.authenticate, thread_sensitive=True)(
-            request, remote_user
-        )
 
     def configure_user(self, request, user, *, created=True):
         """
