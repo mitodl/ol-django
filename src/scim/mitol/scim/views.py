@@ -2,38 +2,97 @@
 
 import json
 import logging
+from contextlib import contextmanager
 from http import HTTPStatus
 from urllib.parse import urljoin, urlparse
 
 from django.db import transaction
+from django.db.utils import IntegrityError as DatabaseIntegrityError
 from django.http import HttpResponse
 from django.urls import Resolver404, resolve, reverse
 from django_scim import constants as djs_constants
 from django_scim import exceptions
 from django_scim import views as djs_views
+from django_scim.settings import scim_settings
 from django_scim.utils import get_base_scim_location_getter
 from mitol.scim import constants
 from mitol.scim.requests import InMemoryHttpRequest
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
+
+INTEGRITY_ERROR_DETAIL = "The write conflicts with a constraint on the resource."
 
 
-class UsersView(djs_views.UsersView):
+@contextmanager
+def redact_integrity_errors(request):
+    """
+    Turn a failed database constraint into a SCIM 409 that carries no row data.
+
+    ``django_scim`` puts ``str(e)`` from the database driver into the response
+    body. On Postgres that is the whole error, including the ``DETAIL`` line
+    echoing the failing row, and ``EXPOSE_SCIM_EXCEPTIONS`` does not gate it
+    because ``django_scim.exceptions.IntegrityError`` is already a
+    ``SCIMException``. The database text goes to the application log instead,
+    and the client gets a status it can act on rather than the row it sent.
+
+    The ``PATCH`` path has no such cast at all, so this is also what keeps an
+    integrity error there from becoming a 500 that a client will retry.
+
+    :param request: the request being handled, named in the log message
+    """
+    try:
+        yield
+    except (DatabaseIntegrityError, exceptions.IntegrityError) as exc:
+        detail = exc.detail if isinstance(exc, exceptions.SCIMException) else str(exc)
+        log.exception(
+            "SCIM %s %s failed a database constraint: %s",
+            request.method,
+            request.path,
+            detail,
+        )
+        if not scim_settings.EXPOSE_SCIM_EXCEPTIONS:
+            detail = INTEGRITY_ERROR_DETAIL
+        raise exceptions.IntegrityError(detail) from exc
+
+
+class SCIMWriteMixin:
+    """
+    Run every write verb in a transaction and redact its integrity errors.
+
+    ``SCIMView.dispatch`` holds the try/except that turns an exception into a
+    response, so there is no hook between it and the handler to put this on.
+    Each verb has to be wrapped where it is defined.
+    """
+
     def post(self, request, *args, **kwargs):
-        with transaction.atomic():
+        with redact_integrity_errors(request), transaction.atomic():
             return super().post(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
-        with transaction.atomic():
+        with redact_integrity_errors(request), transaction.atomic():
             return super().put(request, *args, **kwargs)
 
     def patch(self, request, *args, **kwargs):
-        with transaction.atomic():
+        with redact_integrity_errors(request), transaction.atomic():
             return super().patch(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
-        with transaction.atomic():
+        with redact_integrity_errors(request), transaction.atomic():
             return super().delete(request, *args, **kwargs)
+
+
+class UsersView(SCIMWriteMixin, djs_views.UsersView):
+    """Users endpoint"""
+
+
+class GroupsView(SCIMWriteMixin, djs_views.GroupsView):
+    """
+    Groups endpoint.
+
+    ``mitol.scim.urls`` mounts ``django_scim.urls`` alongside its own patterns,
+    so without this the Groups endpoint is live on the stock view and leaks the
+    driver's error text exactly as Users did.
+    """
 
 
 class BulkView(djs_views.SCIMView):
