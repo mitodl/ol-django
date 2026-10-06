@@ -1,3 +1,4 @@
+import functools
 import json
 import logging
 import warnings
@@ -23,6 +24,38 @@ def get_user_model_for_scim():
         model: User model.
     """
     return User
+
+
+@functools.cache
+def lock_free_adapter(adapter_cls: type) -> type:
+    """
+    Build a variant of `adapter_cls` that does not take a row lock.
+
+    `UserAdapter` takes a `SELECT ... FOR UPDATE` when it is constructed, which
+    is what a read-modify-write needs but is pure cost on a read -- `to_dict()`
+    only reads, and `django_scim` builds one adapter per serialized object.
+
+    Returns a subclass rather than a `functools.partial` so the class-level
+    attributes the views read off the adapter -- `url_name`, `id_field`,
+    `resource_type_dict` -- keep resolving. Cached so there is one such class
+    per adapter rather than one per request, which keeps `isinstance` checks
+    and identity comparisons stable.
+
+    Args:
+        adapter_cls (type): the adapter class to derive from
+
+    Returns:
+        type: a subclass of `adapter_cls` that never locks
+    """
+
+    class LockFreeAdapter(adapter_cls):
+        def __init__(self, obj, request=None, **kwargs):
+            kwargs["lock_user"] = False
+            super().__init__(obj, request=request, **kwargs)
+
+    LockFreeAdapter.__name__ = f"LockFree{adapter_cls.__name__}"
+    LockFreeAdapter.__qualname__ = LockFreeAdapter.__name__
+    return LockFreeAdapter
 
 
 class UserAdapter(SCIMUser):
