@@ -6,6 +6,72 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.10.6'></a>
+## [2026.10.6] - 2026-10-06
+
+### Removed
+
+- Removed the `default_app_config` module attribute. Django deprecated it in 3.2 and dropped support in 4.1, so it has been dead for every version this package now supports.
+
+### Added
+
+- `UserState` now carries `response_body` (the echoed resource on a successful
+  Bulk create) and `error` (the operation's error body on failure), so callers
+  can verify what was actually stored without making additional API calls.
+
+### Changed
+
+- Added logging of global_id when a user is created/updated.
+
+- SCIM user operations are now performed with a `select_for_update()`.
+
+- **Breaking:** `sync_users_to_scim_remote` now yields `UserState` results as
+  a generator instead of returning `None`. It does nothing until iterated -
+  existing callers that discarded the return value (e.g.
+  `sync_users_to_scim_remote_batch`) must now iterate or drain it (e.g.
+  `deque(sync_users_to_scim_remote(users), maxlen=0)`) for the sync to run at
+  all. A caller that needs a concrete list should wrap a single, bounded call
+  in `list(...)` itself - materializing every `UserState` (each now carrying
+  a full response body) for an unbounded `users` list risks exhausting
+  memory, which this generator-based API avoids by construction.
+
+- Raised the minimum supported Django to 4.2. The previous `django>=3.0` had not been true for some time: CI's lowest matrix leg is already 4.2, and the last 3.x release (3.2 LTS) reached end-of-life in April 2024.
+- Replaced `re_path()` with `path()` where the route was a plain literal. The patterns are equivalent; the remaining `re_path()` entries genuinely need a regex and are untouched.
+
+### Fixed
+
+- `UserState.error` on a failed Bulk operation now holds the nested SCIM
+  error body (`operation["response"]`) instead of the entire Bulk operation
+  envelope, matching what's documented and what `response_body` already does
+  for successful operations.
+
+- `SCIMUser.from_dict` wrote `""` to `global_id` when the payload carried no `externalId`. Now that the field is unique, the second such user would have collided; it writes `None`.
+- `sync_all_users_to_scim_remote(never_synced_only=True)` selected never-synced users with `global_id=""`. Most matched anyway through its other `scim_external_id=None` clause, but a user with `global_id` unset and a `scim_external_id` already populated would have stopped matching once unset became `NULL`. It now matches either empty representation of `global_id` directly.
+
+- `UserAdapter`'s nested-path handler is now spelled
+  `_handle_replace_nested_path`. It was `_handle_resplace_nested_path` - with
+  the letters transposed - so a subclass that overrode it under the spelling
+  the name reads never ran: a SCIM PATCH carrying an attribute that subclass
+  was meant to handle returned 200 and silently wrote nothing. A subclass
+  still matching the old misspelling keeps working and now raises a
+  `DeprecationWarning`.
+
+<a id='changelog-2026.4.29'></a>
+## [2026.4.29] - 2026-04-29
+
+### Removed
+
+- Removed support for Python 3.10
+
+### Added
+
+- Added  support for django version to 5.2
+- Add tox and expand gh action test matrix
+
+### Changed
+
+- Removed `pkg_resources.declare_namespace()` from the `mitol` namespace package declaration in favour of implicit namespace packages (PEP 420), eliminating the runtime dependency on `setuptools`/`pkg_resources`.
+
 <a id='changelog-2025.7.29'></a>
 ## [2025.7.29] - 2025-07-29
 
