@@ -62,8 +62,35 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      # The BASE commit: this is the trusted tree the classifier runs from. `fetch-depth:
-      # 0` brings down every branch, which is both how the merge base resolves and how
+      # THE FIRST STEP IN THE JOB, before even the checkout. Anything ahead of it is
+      # another way to fail with a stale approval still standing -- a checkout that
+      # cannot reach GitHub, or a head commit that a second force-push made
+      # unreachable. It needs nothing from the repository, only `gh`.
+    - name: Withdraw any approval of mine
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+        DISMISSAL_BODY: >-
+          Withdrawn pending a fresh check of whether this pull request still contains
+          nothing but a release.
+      run: |
+        # A dismissed review keeps its row with `state: DISMISSED`, so filtering on the
+        # live state is what separates "is approved" from "was approved once".
+        # `--paginate` is safe with THIS filter and would not be with every filter:
+        # `--jq` runs once per page, so a per-element select emits the right ids from
+        # each, while anything aggregate (`last`, `length`) would emit one per page.
+        for id in $(gh api --paginate "repos/${REPO}/pulls/${PR}/reviews?per_page=100" \
+          --jq '.[] | select(.user.login == "github-actions[bot]"
+                             and .state == "APPROVED") | .id'); do
+          gh api --method PUT \
+            "repos/${REPO}/pulls/${PR}/reviews/${id}/dismissals" \
+            -f event=DISMISS -f message="${DISMISSAL_BODY}"
+          echo "Withdrew review ${id}."
+        done
+
+      # The BASE commit: the trusted tree the classifier runs from. `fetch-depth: 0`
+      # brings down every branch, which is both how the merge base resolves and how
       # the pull request's head commit gets into the object database.
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
@@ -79,29 +106,6 @@ jobs:
           echo "::error::${HEAD_SHA} is not in this clone; cannot classify the diff."
           exit 1
         fi
-
-      # FIRST, before anything that can fail for an unrelated reason. See the header.
-    - name: Withdraw any approval of mine
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PR: ${{ github.event.pull_request.number }}
-        REPO: ${{ github.repository }}
-        DISMISSAL_BODY: >-
-          Withdrawn pending a fresh check of whether this pull request still contains
-          nothing but a release.
-      run: |
-        # A dismissed review keeps its row with `state: DISMISSED`, so filtering on the
-        # live state is what separates "is approved" from "was approved once".
-        # No `--paginate`: `--jq` runs per page, so a filter ending in `last` would
-        # emit one id per page. One request is plenty for a review list.
-        for id in $(gh api "repos/${REPO}/pulls/${PR}/reviews?per_page=100" \
-          --jq '.[] | select(.user.login == "github-actions[bot]"
-                             and .state == "APPROVED") | .id'); do
-          gh api --method PUT \
-            "repos/${REPO}/pulls/${PR}/reviews/${id}/dismissals" \
-            -f event=DISMISS -f message="${DISMISSAL_BODY}"
-          echo "Withdrew review ${id}."
-        done
 
     - name: Install uv
       uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0

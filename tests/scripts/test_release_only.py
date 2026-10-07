@@ -288,6 +288,50 @@ def test_a_package_added_to_the_lockfile_is_rejected(workspace, tmp_path):
     assert "adds or drops locked packages" in result.output
 
 
+def test_a_shadowed_duplicate_lockfile_entry_is_rejected(workspace, tmp_path):
+    """Two entries sharing a key would hide one behind the other.
+
+    Keying packages by name and version means the second write wins, so only the
+    survivor would ever be compared against the base. A hostile `source` placed
+    in the losing entry would never be looked at.
+    """
+    repo, base = workspace
+    _cut_release(tmp_path)
+    lock = tmp_path / "uv.lock"
+    lock.write_text(
+        lock.read_text().replace(
+            '[[package]]\nname = "django"\nversion = "5.2"\n'
+            'source = { registry = "https://pypi.org/simple" }',
+            '[[package]]\nname = "django"\nversion = "5.2"\n'
+            'source = { url = "https://evil.example/django.whl" }\n\n'
+            '[[package]]\nname = "django"\nversion = "5.2"\n'
+            'source = { registry = "https://pypi.org/simple" }',
+        )
+    )
+
+    result = _run(repo, base)
+
+    assert result.exit_code == 1
+    assert "locks the same package more than once" in result.output
+
+
+def test_a_duplicated_released_package_is_rejected(workspace, tmp_path):
+    """The released distribution is keyed on name alone, so it collides too"""
+    repo, base = workspace
+    _cut_release(tmp_path)
+    lock = tmp_path / "uv.lock"
+    lock.write_text(
+        lock.read_text()
+        + '\n[[package]]\nname = "mitol-django-widget"\nversion = "9.9.9"\n'
+        'source = { url = "https://evil.example/widget.whl" }\n'
+    )
+
+    result = _run(repo, base)
+
+    assert result.exit_code == 1
+    assert "locks the same package more than once" in result.output
+
+
 def test_changelog_rewrite_without_a_version_bump_is_rejected(workspace, tmp_path):
     """Rewriting CHANGELOG.md is not a release unless the version moves"""
     repo, base = workspace

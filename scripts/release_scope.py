@@ -127,24 +127,38 @@ def _pyproject_violations(base: Commit, target: Commit, app: App) -> list[str]:
     return []
 
 
-def _lock_entries(raw: bytes, released: str) -> tuple[dict[str, Any], dict]:
-    """Split a lockfile into its non-package body and its packages, by identity.
+def _lock_entries(raw: bytes, released: str) -> tuple[dict[str, Any], dict, list[str]]:
+    """Split a lockfile into its non-package body, its packages, and any collisions.
 
     Keyed on name AND version, because a lockfile legitimately carries several
     versions of one package. The released distribution is keyed on name alone,
     with its version dropped, since moving that is the whole point of the diff.
+
+    COLLISIONS ARE REPORTED, NOT RESOLVED. Two entries sharing a key would
+    otherwise overwrite each other, and only the survivor would be compared --
+    so a second `django 5.0` carrying a hostile `source` could hide behind the
+    legitimate one and never be looked at. uv may well reject such a lockfile
+    itself, but this is not the place to assume that.
     """
     doc = tomllib.loads(raw.decode())
-    packages = {}
+    packages: dict[tuple[str, ...], dict] = {}
+    collisions = []
 
     for package in doc.pop("package", []):
         name = package.get("name")
-        if name == released:
-            packages[(name,)] = {k: v for k, v in package.items() if k != "version"}
-        else:
-            packages[(name, package.get("version"))] = package
 
-    return doc, packages
+        if name == released:
+            key, entry = (name,), {k: v for k, v in package.items() if k != "version"}
+        else:
+            key, entry = (name, package.get("version")), package
+
+        if key in packages:
+            collisions.append(_label(key))
+            continue
+
+        packages[key] = entry
+
+    return doc, packages, collisions
 
 
 def _label(key: tuple[str, ...]) -> str:
@@ -164,8 +178,14 @@ def _lockfile_violations(base: Commit, target: Commit, app: App) -> list[str]:
     if before is None or after is None or before == after:
         return []
 
-    body_before, packages_before = _lock_entries(before, app.name)
-    body_after, packages_after = _lock_entries(after, app.name)
+    body_before, packages_before, collisions_before = _lock_entries(before, app.name)
+    body_after, packages_after, collisions_after = _lock_entries(after, app.name)
+
+    if collisions := sorted(set(collisions_before + collisions_after)):
+        return [
+            f"{LOCKFILE} locks the same package more than once, which hides one "
+            f"entry behind another: {', '.join(collisions)}."
+        ]
 
     if body_before != body_after:
         return [f"{LOCKFILE} changes something outside its package list."]

@@ -159,8 +159,10 @@ nothing else. All three ship, so a path-level allowance is not enough.
 
 Every push re-decides, and each run withdraws the previous approval before it
 re-checks — so an approval on the PR means a complete run just verified the diff
-as it stands. A PR that does not qualify is not broken; it just needs a human,
-like any other.
+as it stands. That also makes the approval best-effort rather than sticky: a run
+that is cancelled or fails partway leaves a legitimate release PR unapproved
+until the next push or a re-run. A PR that does not qualify is not broken; it
+just needs a human, like any other.
 
 If you would rather not use `prepare`, editing the version by hand works too —
 the workflow only reads `[project] version` from the app's `pyproject.toml`. Keep
