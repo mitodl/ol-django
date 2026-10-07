@@ -42,8 +42,12 @@ on:
   # zizmor: ignore[dangerous-triggers]
   # Deliberate, and the safe shape of it: no checkout of the pull request, no execution
   # of its contents. See the header.
+  # `edited` is here for base-branch retargets. `synchronize` only fires when the HEAD
+  # moves; changing the base fires `edited` (as do title and body edits, whose runs are
+  # harmless -- they revoke and re-decide). Without it, a PR approved against one base
+  # and then retargeted would keep an approval its new diff never earned.
   pull_request_target:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
 
 permissions: {}
 
@@ -136,8 +140,14 @@ jobs:
           echo "release_only=false" >> "$GITHUB_OUTPUT"
         fi
 
+      # Approval is only ever granted against the default branch, where the ruleset it
+      # satisfies applies. The guard sits HERE rather than on the job so that the
+      # revoke above still runs for every base -- a retarget away from the default
+      # branch must withdraw the approval, not skip the job that would have.
     - name: Approve
-      if: steps.classify.outputs.release_only == 'true'
+      if: >-
+        steps.classify.outputs.release_only == 'true' &&
+        github.event.pull_request.base.ref == github.event.repository.default_branch
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PR: ${{ github.event.pull_request.number }}

@@ -155,7 +155,9 @@ exempts the two files that declare the version by path, where this one checks
 what changed inside them: `mitol/APPNAME/__init__.py` may move its `__version__`
 line and nothing else, the app's `pyproject.toml` may move its two version
 declarations and nothing else, and `uv.lock` may record the new version and
-nothing else. All three ship, so a path-level allowance is not enough.
+nothing else. All three ship, so a path-level allowance is not enough. The same
+goes for `changelog.d/`, which may only lose fragments — `scriv.ini` lives
+there, and scriv config can run shell commands.
 
 Every push re-decides, and each run withdraws the previous approval before it
 re-checks — so an approval on the PR means a complete run just verified the diff

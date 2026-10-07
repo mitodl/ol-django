@@ -3,11 +3,9 @@ from os import makedirs
 from pathlib import Path
 from textwrap import dedent, indent
 
-import tomllib
 from click import echo
 from click_log import simple_verbosity_option
 from cloup import Context, group, option, pass_context
-from git import Commit
 from git.diff import Diff
 from scriv.collect import collect
 from scriv.create import create
@@ -20,6 +18,7 @@ from scripts.decorators import app_option, pass_app, pass_project
 from scripts.project import Project
 from scripts.release_scope import (
     content_violations,
+    declared_version,
     out_of_release_scope,
 )
 
@@ -181,17 +180,6 @@ def _changed_paths(changes: Iterable[Diff]) -> set[str]:
     }
 
 
-def _released_version(commit: Commit, app: App) -> str:
-    """Read the version being released out of the diff's target commit.
-
-    Not `app.version`, which reads the working tree -- under
-    `pull_request_target` that is the base branch, so it would print the old one.
-    """
-    blob = commit.tree / str(app.relative_path / "pyproject.toml")
-
-    return tomllib.loads(blob.data_stream.read().decode())["project"]["version"]
-
-
 def _released_app(ctx: Context, apps: list[App], changes: dict[str, Changes]) -> App:
     """Return the single app whose release this diff cuts, or exit non-zero"""
     released = [
@@ -295,7 +283,7 @@ def check_release_only(ctx: Context, project: Project, base: str, target: str):
         )
         ctx.exit(1)
 
-    echo(f"Release-only: {app.name} {_released_version(target_commit, app)}")
+    echo(f"Release-only: {app.name} {declared_version(target_commit, app)}")
 
 
 @changelog.command("create-renovate")

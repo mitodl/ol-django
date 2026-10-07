@@ -47,7 +47,15 @@ def _blob(commit: Commit, path: str) -> bytes | None:
         return None
 
 
-def _declared_version(raw: bytes | None) -> str | None:
+def declared_version(commit: Commit, app: App) -> str | None:
+    """Read the `[project] version` an app's pyproject declares at a commit.
+
+    Reads the commit's blob, not `app.version`, which reads the working tree --
+    under `pull_request_target` that is the base branch, so it would answer with
+    the old version.
+    """
+    raw = _blob(commit, str(app.relative_path / "pyproject.toml"))
+
     if raw is None:
         return None
 
@@ -57,8 +65,8 @@ def _declared_version(raw: bytes | None) -> str | None:
 def _version_violations(base: Commit, target: Commit, app: App) -> list[str]:
     """Require a version present at both ends of the diff, and higher at the end"""
     path = str(app.relative_path / "pyproject.toml")
-    before = _declared_version(_blob(base, path))
-    after = _declared_version(_blob(target, path))
+    before = declared_version(base, app)
+    after = declared_version(target, app)
 
     if before is None or after is None:
         return [f"{path} does not declare a version at both ends of the diff."]
@@ -97,6 +105,34 @@ def _dunder_violations(base: Commit, target: Commit, app: App) -> list[str]:
         ]
 
     return []
+
+
+def _changelogd_violations(base: Commit, target: Commit, app: App) -> list[str]:
+    """`changelog.d/` may only lose fragments; everything else in it is code.
+
+    This is the one directory inside the app that the code checks never see:
+    `changes.py` excludes `*/changelog.d/*` from `source_changes`, so nothing in
+    it ever counts as `code_changes`. That exclusion is right for the advisory
+    `check` and wrong for an approval gate -- `scriv.ini` lives here, and scriv
+    executes `command:`-prefixed config values on the next `collect`, so an
+    edit to it (or any file smuggled in alongside the fragments) must be a
+    violation, not a blind spot. Collecting fragments only ever deletes files,
+    which is all a release is allowed to do here.
+    """
+    changelogd = app.relative_path / "changelog.d"
+    problems = []
+
+    for change in base.diff(target, paths=[str(changelogd)]):
+        if change.change_type == "D" and Path(change.a_path).name != "scriv.ini":
+            continue
+
+        path = change.b_path or change.a_path
+        problems.append(
+            f"{path} is not a fragment deletion; cutting a release only ever "
+            f"removes files from {changelogd}."
+        )
+
+    return sorted(problems)
 
 
 def _without_version_keys(doc: dict[str, Any]) -> dict[str, Any]:
@@ -218,4 +254,5 @@ def content_violations(base: Commit, target: Commit, app: App) -> list[str]:
         *_dunder_violations(base, target, app),
         *_pyproject_violations(base, target, app),
         *_lockfile_violations(base, target, app),
+        *_changelogd_violations(base, target, app),
     ]
