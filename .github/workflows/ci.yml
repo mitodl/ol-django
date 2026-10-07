@@ -31,6 +31,27 @@ jobs:
       run: uv run scripts/version.py check
 
 
+  # The release tooling's tests, once, on the dev interpreter `uv sync` resolves.
+  # They are deliberately not part of the matrix: scripts/ is a dev tool that never
+  # runs under the matrix's pythons or djangos, and importing it on an older
+  # interpreter is not something it supports.
+  script-tests:
+    runs-on: ubuntu-24.04
+    name: Script tests
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+    - name: Install dependencies
+      run: uv sync
+
+    - name: Tests
+      run: uv run pytest tests/scripts
+
   tests:
     runs-on: ubuntu-24.04
     name: Python tests (Python ${{ matrix.python-version}}, Django ${{ matrix.django-version
@@ -111,7 +132,7 @@ jobs:
   # anywhere. `detect-releases`/`publish` are excluded: both only run on a push to main
   # (`if: github.ref == 'refs/heads/main'`), so they contribute nothing to gating a PR.
   ci-gate:
-    needs: [changelog, tests]
+    needs: [changelog, tests, script-tests]
     # Without this the gate is skipped when a dependency fails, and GitHub treats a
     # skipped required job as successful, allowing the PR to merge despite the failure.
     if: always()
@@ -146,7 +167,7 @@ jobs:
   # This repo has published versions that were never tagged, so a tag-based
   # check would try to republish them.
   detect-releases:
-    needs: [changelog, tests]
+    needs: [changelog, tests, script-tests]
     name: Detect unpublished versions
     runs-on: ubuntu-24.04
     if: github.ref == 'refs/heads/main'

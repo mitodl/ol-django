@@ -1,9 +1,8 @@
-from ast import TypeAlias
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 from git import Commit, Diff
 
