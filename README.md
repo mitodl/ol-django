@@ -129,7 +129,8 @@ describes.
    `changelog.d/` fragments into `CHANGELOG.md`, deletes them, and refreshes
    `uv.lock`.
 
-3. Commit the result, open a PR, and merge it once CI is green.
+3. Commit the result, open a PR, and merge it once CI is green. It needs no
+   approval from anyone else — see below.
 
 Once the checks pass on `main`, the `publish` job in
 [the CI workflow](.github/workflows/ci.yml) builds every package whose version
@@ -138,6 +139,20 @@ is not yet on PyPI, uploads it, and then creates the version tag.
 Do not add code to a release PR. CI rejects a PR that rewrites an app's
 `CHANGELOG.md` while changing anything under that app other than the two files
 that declare its version.
+
+#### Release PRs approve themselves
+
+A PR that contains nothing but a release is approved automatically by
+[`release-auto-approve.yml`](.github/workflows/release-auto-approve.yml), so
+cutting one does not need a second person to read a diff `prepare` generated.
+`uv run scripts/changelog.py check-release-only` is what decides, and you can run
+it on your branch to see what it sees.
+
+It is stricter than the `changelog` job above, which only looks under
+`src/APPNAME/`. Anything else in the diff — a workflow, a script, the root
+`pyproject.toml`, a second app's release — means no approval, and withdraws one
+already given if you push it later. Such a PR is not broken; it just needs a
+human, like any other.
 
 If you would rather not use `prepare`, editing the version by hand works too —
 the workflow only reads `[project] version` from the app's `pyproject.toml`. Keep

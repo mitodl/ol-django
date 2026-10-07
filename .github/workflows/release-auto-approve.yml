@@ -1,0 +1,114 @@
+---
+# Approves a pull request that contains nothing but a release, so cutting one does not
+# need a second person to rubber-stamp a diff that `scripts/release.py prepare`
+# generated and that CI already checks.
+#
+# `scripts/changelog.py check-release-only` is what decides, and it is deliberately
+# stricter than the `changelog` job in ci.yml: anything outside the app being released
+# -- a workflow, a script, the root pyproject -- means no approval. See that command's
+# docstring for why the two differ.
+#
+# TWO LIVE SETTINGS THIS DEPENDS ON, NEITHER OF THEM IN THIS REPO:
+#
+#   can_approve_pull_request_reviews      Repo setting, Settings > Actions > General.
+#                                         True today. False means github-actions[bot]
+#                                         cannot approve, so this job stops working.
+#   required_approving_review_count: 1    mitodl's org-level `baseline-default-branch`
+#                                         ruleset. The bot's approval is what satisfies
+#                                         it; without that rule this workflow is inert.
+#
+# NOT A REQUIRED CHECK, deliberately. If this job is red, skipped, or never runs, the
+# PR simply needs a human approval -- which is the correct fallback, and the reason it
+# is safe for the classifier to fail closed on any error it does not recognise.
+name: Release auto-approve
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions: {}
+
+concurrency:
+  group: release-auto-approve-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  auto-approve:
+    name: Auto-approve release-only PR
+    # A pull request from a fork gets a read-only token, so the approve step could not
+    # work there anyway -- and no release is ever cut from a fork.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 0   # check-release-only diffs from the merge base
+        persist-credentials: false
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+    - name: Install dependencies
+      run: uv sync
+
+      # Any non-zero exit means "do not approve", including a crash. Failing closed
+      # costs a human approval; failing open hands one out for an unread diff.
+    - name: Classify the diff
+      id: classify
+      env:
+        BASE_REF: ${{ github.event.pull_request.base.ref }}
+      run: |
+        if uv run scripts/changelog.py check-release-only --base "origin/${BASE_REF}"; then
+          echo "release_only=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "release_only=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Approve, or withdraw a previous approval
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+        RELEASE_ONLY: ${{ steps.classify.outputs.release_only }}
+        APPROVAL_BODY: >-
+          This pull request contains nothing but a release, so it is approved
+          automatically. `scripts/changelog.py check-release-only` decided that;
+          pushing anything outside the app being released withdraws this approval.
+        DISMISSAL_BODY: >-
+          This pull request no longer contains only a release, so the automatic
+          approval no longer applies. It needs a human review.
+      run: |
+        # A dismissed review keeps its row in the history with `state: DISMISSED`, so
+        # filtering on the live state is what distinguishes "approved" from "was
+        # approved once".
+        review_id="$(gh api --paginate "repos/${REPO}/pulls/${PR}/reviews" \
+          --jq '[.[] | select(.user.login == "github-actions[bot]"
+                              and .state == "APPROVED")] | last | .id // empty')"
+
+        if [ "${RELEASE_ONLY}" = "true" ]; then
+          if [ -n "${review_id}" ]; then
+            echo "Already approved by review ${review_id}; nothing to do."
+            exit 0
+          fi
+          gh pr review "${PR}" --repo "${REPO}" --approve --body "${APPROVAL_BODY}"
+          exit 0
+        fi
+
+        if [ -z "${review_id}" ]; then
+          echo "Not a release-only pull request, and no approval of mine to withdraw."
+          exit 0
+        fi
+
+        # `baseline-default-branch` sets `dismiss_stale_reviews_on_push: false`, so a
+        # later push does not take this approval back -- nothing but the block below
+        # does. Leaving a stale one standing is the worst thing this workflow could do,
+        # which is why the dismissal is not best-effort: `set -e` is on and a failure
+        # here fails the job.
+        gh api --method PUT \
+          "repos/${REPO}/pulls/${PR}/reviews/${review_id}/dismissals" \
+          -f event=DISMISS \
+          -f message="${DISMISSAL_BODY}"
+        echo "Dismissed review ${review_id}: no longer a release-only pull request."
