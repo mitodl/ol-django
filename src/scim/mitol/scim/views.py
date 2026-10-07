@@ -5,7 +5,6 @@ import logging
 from http import HTTPStatus
 from urllib.parse import urljoin, urlparse
 
-from django.db import transaction
 from django.http import HttpResponse
 from django.urls import Resolver404, resolve, reverse
 from django_scim import constants as djs_constants
@@ -14,28 +13,19 @@ from django_scim import views as djs_views
 from django_scim.utils import get_base_scim_location_getter
 from mitol.scim import constants
 from mitol.scim.requests import InMemoryHttpRequest
+from mitol.scim.view_mixins import ScimLockingMixin
 
 log = logging.getLogger()
 
 
-class UsersView(djs_views.UsersView):
-    def post(self, request, *args, **kwargs):
-        with transaction.atomic():
-            return super().post(request, *args, **kwargs)
-
-    def put(self, request, *args, **kwargs):
-        with transaction.atomic():
-            return super().put(request, *args, **kwargs)
-
-    def patch(self, request, *args, **kwargs):
-        with transaction.atomic():
-            return super().patch(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        with transaction.atomic():
-            return super().delete(request, *args, **kwargs)
+class UsersView(ScimLockingMixin, djs_views.UsersView):
+    """Users endpoint, with the default locking/transaction behavior"""
 
 
+# Deliberately not a ScimLockingMixin: each operation is dispatched as a
+# sub-request into UsersView, which locks and opens its own transaction per
+# operation. One transaction around the whole bulk would undo the
+# partial-success semantics that `failOnErrors` is built on (RFC 7644 3.7).
 class BulkView(djs_views.SCIMView):
     http_method_names = ["post"]
 
@@ -155,10 +145,14 @@ class BulkView(djs_views.SCIMView):
         }
 
 
-class SearchView(djs_views.UserSearchView):
+class SearchView(ScimLockingMixin, djs_views.UserSearchView):
     """
     View for /.search endpoint
     """
+
+    # /.search is a POST, but it only reads -- it serializes a page of users
+    # and writes nothing.
+    LOCKING_METHODS = frozenset()
 
     def post(self, request, *args, **kwargs):  # noqa: ARG002
         body = self.load_body(request.body)

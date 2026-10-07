@@ -13,11 +13,14 @@ import pytest
 from anys import ANY_STR
 from deepmerge import always_merger
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.test import Client
 from django.urls import reverse
 from main.factories import UserFactory
 from mitol.scim import constants
-from mitol.scim.adapters import UserAdapter
+from mitol.scim.adapters import UserAdapter, lock_free_adapter
+from mitol.scim.requests import InMemoryHttpRequest
+from mitol.scim.view_mixins import ScimLockingMixin
 from mitol.scim.views import UsersView
 
 User = get_user_model()
@@ -742,3 +745,288 @@ def test_bulk_delete_dispatches_to_custom_users_view(scim_client, mocker):
 
     assert resp.status_code == HTTPStatus.OK
     mock_delete.assert_called_once()
+
+
+@pytest.fixture
+def autocommit_scim_client():
+    """SCIM client for tests that run without an enclosing transaction.
+
+    The `scim_client` fixture depends on `staff_user(db)`, which wraps the test
+    in a transaction. That hides anything that depends on autocommit -- which
+    is how production actually serves these requests.
+    """
+    client = Client()
+    client.force_login(UserFactory.create(is_staff=True))
+    return client
+
+
+@pytest.mark.django_db(transaction=True)
+def test_get_single_without_enclosing_transaction(autocommit_scim_client):
+    """GET of one user must not require a transaction"""
+    user = UserFactory.create()
+
+    resp = autocommit_scim_client.get(f"{reverse('scim:users')}/{user.scim_id}")
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+    assert resp.json()["id"] == str(user.scim_id)
+
+
+@pytest.mark.django_db(transaction=True)
+def test_get_many_without_enclosing_transaction(autocommit_scim_client):
+    """GET of the user list must not require a transaction"""
+    UserFactory.create_batch(3)
+
+    resp = autocommit_scim_client.get(reverse("scim:users"))
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+    assert resp.json()["totalResults"] == User.objects.count()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_search_without_enclosing_transaction(autocommit_scim_client):
+    """POST /.search must not require a transaction"""
+    users = UserFactory.create_batch(3)
+
+    resp = autocommit_scim_client.post(
+        reverse("ol-scim:users-search"),
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.SERACH_REQUEST],
+                "filter": " OR ".join(
+                    [f'emails.value EQ "{user.email}"' for user in users]
+                ),
+                "startIndex": "1",
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+    assert resp.json()["totalResults"] == len(users)
+
+
+@pytest.mark.django_db(transaction=True)
+def test_patch_without_enclosing_transaction(autocommit_scim_client):
+    """PATCH still takes its lock and commits when there is no outer transaction"""
+    user = UserFactory.create()
+
+    resp = autocommit_scim_client.patch(
+        f"{reverse('scim:users')}/{user.scim_id}",
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.PATCH_OP],
+                "Operations": [
+                    {
+                        "op": "replace",
+                        "value": json.dumps(
+                            {
+                                "schemas": [constants.SchemaURI.USER],
+                                "name": {"givenName": "Billy", "familyName": "Bob"},
+                            }
+                        ),
+                    }
+                ],
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+
+    user.refresh_from_db()
+    assert user.first_name == "Billy"
+    assert user.last_name == "Bob"
+
+
+@pytest.mark.django_db
+def test_reads_do_not_requery_each_user(scim_client, django_assert_num_queries):
+    """Serializing a page of users must not re-fetch each row.
+
+    A locking adapter issues one `SELECT ... FOR UPDATE` per serialized object
+    on top of the queryset that already loaded them, so the query count is what
+    catches a reintroduction of the lock on a read path.
+    """
+    UserFactory.create_batch(5)
+
+    with django_assert_num_queries(3):
+        # session, user list, group prefetch -- and crucially no per-user query
+        resp = scim_client.get(reverse("scim:users"))
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+
+
+@pytest.mark.django_db
+def test_read_uses_lock_free_adapter(scim_client, mocker):
+    """A read path must never construct a locking adapter"""
+    user = UserFactory.create()
+
+    mock_sfu = mocker.patch("mitol.scim.adapters.User.objects.select_for_update")
+
+    resp = scim_client.get(f"{reverse('scim:users')}/{user.scim_id}")
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+    mock_sfu.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_write_still_uses_locking_adapter(scim_client, mocker):
+    """A write path must still construct a locking adapter"""
+    user = UserFactory.create()
+
+    locked_qs = mocker.MagicMock()
+    locked_qs.get.return_value = user
+    mock_sfu = mocker.patch(
+        "mitol.scim.adapters.User.objects.select_for_update",
+        return_value=locked_qs,
+    )
+
+    resp = scim_client.put(
+        f"{reverse('scim:users')}/{user.scim_id}",
+        content_type="application/scim+json",
+        data=json.dumps(_user_to_scim_payload(user)),
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+    mock_sfu.assert_called()
+
+
+def _in_atomic_block(*args, **kwargs):  # noqa: ARG001
+    """Report whether this handler is running inside a transaction"""
+    return transaction.get_connection().in_atomic_block
+
+
+@pytest.mark.django_db(transaction=True)
+def test_locking_mixin_wraps_a_subclass_own_handler():
+    """A subclass that defines its own handler still gets the transaction.
+
+    An inherited `post` override would be shadowed by the subclass's own,
+    which is the failure mode the mixin exists to remove.
+    """
+
+    class View(ScimLockingMixin):
+        post = _in_atomic_block
+
+    assert View().post(None) is True
+
+
+@pytest.mark.django_db(transaction=True)
+def test_locking_mixin_honors_narrowed_locking_methods():
+    """A subclass that narrows LOCKING_METHODS leaves the rest unwrapped"""
+
+    class View(ScimLockingMixin):
+        LOCKING_METHODS = frozenset({"PUT"})
+
+        post = _in_atomic_block
+        put = _in_atomic_block
+
+    assert View().post(None) is False
+    assert View().put(None) is True
+
+
+def test_locking_mixin_does_not_double_wrap():
+    """An inheritance chain wraps each handler once"""
+
+    class Base(ScimLockingMixin):
+        post = _in_atomic_block
+
+    class Child(Base):
+        pass
+
+    assert Child.post is Base.post
+
+
+@pytest.mark.parametrize(
+    ("method", "expects_lock"),
+    [
+        ("GET", False),
+        ("POST", True),
+        ("PUT", True),
+        ("PATCH", True),
+        ("DELETE", True),
+    ],
+)
+def test_locking_mixin_adapter_choice(mocker, method, expects_lock):
+    """The adapter locks on exactly the declared methods"""
+
+    class Base:
+        scim_adapter = UserAdapter
+
+    # mixin first, so its property resolves ahead of the base's attribute --
+    # the same ordering the real views use against djs_views.SCIMView
+    class View(ScimLockingMixin, Base):
+        pass
+
+    view = View()
+    view.request = mocker.Mock(method=method)
+
+    if expects_lock:
+        assert view.scim_adapter is UserAdapter
+    else:
+        assert view.scim_adapter is not UserAdapter
+        assert issubclass(view.scim_adapter, UserAdapter)
+
+
+def test_lock_free_adapter_is_cached():
+    """One lock-free class per adapter, not one per call"""
+    assert lock_free_adapter(UserAdapter) is lock_free_adapter(UserAdapter)
+
+
+def test_lock_free_adapter_keeps_class_attributes():
+    """Class attributes the views read off the adapter still resolve"""
+    lock_free = lock_free_adapter(UserAdapter)
+
+    assert lock_free.id_field == UserAdapter.id_field
+    assert lock_free.resource_type == UserAdapter.resource_type
+
+
+@pytest.mark.django_db
+def test_bulk_write_still_locks(scim_client, mocker):
+    """A write dispatched through /Bulk must still take the row lock.
+
+    Bulk operations carry the verb as it appears in the payload, which
+    scim-for-keycloak sends lowercase, so the adapter choice has to normalize
+    it. Comparing it raw hands a bulk write the lock-free adapter.
+    """
+    user = UserFactory.create()
+
+    locked_qs = mocker.MagicMock()
+    locked_qs.get.return_value = user
+    mock_sfu = mocker.patch(
+        "mitol.scim.adapters.User.objects.select_for_update",
+        return_value=locked_qs,
+    )
+
+    resp = scim_client.post(
+        reverse("ol-scim:bulk"),
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.BULK_REQUEST],
+                "Operations": [
+                    {
+                        "method": "put",
+                        "bulkId": "bulk-lock-put",
+                        "path": f"/Users/{user.scim_id}",
+                        "data": _user_to_scim_payload(user),
+                    }
+                ],
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK
+    mock_sfu.assert_called()
+
+
+@pytest.mark.parametrize("method", ["put", "PUT", "Put"])
+def test_in_memory_request_uppercases_the_method(method):
+    """An in-memory request exposes an uppercase method, like a real one.
+
+    /Bulk takes its verb from the operation payload, and scim-for-keycloak
+    sends it lowercase. HTTP methods are case-sensitive and uppercase
+    (RFC 9110 9.1), and Django never hands a view anything else, so anything
+    comparing `request.method` is entitled to assume that.
+    """
+    request = InMemoryHttpRequest.stub(method=method)
+
+    assert request.method == "PUT"
