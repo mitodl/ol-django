@@ -80,9 +80,16 @@ jobs:
         # `--paginate` is safe with THIS filter and would not be with every filter:
         # `--jq` runs once per page, so a per-element select emits the right ids from
         # each, while anything aggregate (`last`, `length`) would emit one per page.
-        for id in $(gh api --paginate "repos/${REPO}/pulls/${PR}/reviews?per_page=100" \
+        # Assigned on its own line, NOT inlined into the `for`. A command substitution
+        # in a `for` word list does not trip `errexit`, so a 5xx or a rate limit there
+        # would quietly yield an empty list: nothing withdrawn, step green, and a stale
+        # approval left standing -- the exact outcome revoking first exists to prevent.
+        # A standalone assignment is checked.
+        ids="$(gh api --paginate "repos/${REPO}/pulls/${PR}/reviews?per_page=100" \
           --jq '.[] | select(.user.login == "github-actions[bot]"
-                             and .state == "APPROVED") | .id'); do
+                             and .state == "APPROVED") | .id')"
+
+        for id in ${ids}; do
           gh api --method PUT \
             "repos/${REPO}/pulls/${PR}/reviews/${id}/dismissals" \
             -f event=DISMISS -f message="${DISMISSAL_BODY}"
