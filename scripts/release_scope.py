@@ -247,6 +247,34 @@ def _lockfile_violations(base: Commit, target: Commit, app: App) -> list[str]:
     return []
 
 
+def rename_violations(base: Commit, target: Commit) -> list[str]:
+    """Reject every rename or copy in the diff; a release does neither.
+
+    `release.py prepare` only ever deletes fragments and rewrites files in place,
+    so any rename is out of scope on its face. It also closes a laundering path
+    the content checks cannot see on their own: `git diff -M` pairs a deleted
+    `changelog.d/` fragment (or `CHANGELOG.md`) with a sufficiently-similar new
+    file anywhere, and that pairing slips arbitrary code into the released app.
+
+    `changes.py` drops a change from `source_changes` when EITHER side matches
+    `*/changelog.d/*` or `*/CHANGELOG.md`, so the rename never counts as
+    `code_changes`; and `_changelogd_violations` diffs path-limited to
+    `changelog.d/`, where pathspec filtering runs before rename detection and the
+    change degrades to a bare `D` -- which a release is allowed. Rejecting the
+    rename here is what catches it.
+
+    Dropping below the 50% similarity `-M` wants is not an escape: the change
+    then decomposes into a `D` and an `A`, and the `A` lands in `code_changes`
+    and is already rejected.
+    """
+    return sorted(
+        f"{change.a_path} -> {change.b_path} is a rename or copy, which cutting "
+        "a release never does."
+        for change in base.diff(target)
+        if change.renamed_file or change.copied_file
+    )
+
+
 def content_violations(base: Commit, target: Commit, app: App) -> list[str]:
     """Every way this diff touches a release-allowed file it should not have"""
     return [

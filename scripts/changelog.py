@@ -20,6 +20,7 @@ from scripts.release_scope import (
     content_violations,
     declared_version,
     out_of_release_scope,
+    rename_violations,
 )
 
 
@@ -254,6 +255,11 @@ def check_release_only(ctx: Context, project: Project, base: str, target: str):
     app = _released_app(ctx, apps, changes)
 
     problems = [
+        # A release renames and copies nothing. Checked across the whole diff,
+        # not per app: a rename pairing a changelog deletion with a new in-app
+        # file would otherwise launder code past the exclusions. See
+        # release_scope.py.
+        *rename_violations(base_commit, target_commit),
         # Files a release is allowed to touch, checked for what changed inside
         # them -- see release_scope.py for why a path allowance is not enough.
         *content_violations(base_commit, target_commit, app),
