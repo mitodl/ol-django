@@ -148,11 +148,19 @@ cutting one does not need a second person to read a diff `prepare` generated.
 `uv run scripts/changelog.py check-release-only` is what decides, and you can run
 it on your branch to see what it sees.
 
-It is stricter than the `changelog` job above, which only looks under
-`src/APPNAME/`. Anything else in the diff — a workflow, a script, the root
-`pyproject.toml`, a second app's release — means no approval, and withdraws one
-already given if you push it later. Such a PR is not broken; it just needs a
-human, like any other.
+It is stricter than the `changelog` job above in two ways. That job only looks
+under `src/APPNAME/`, so anything else in the diff — a workflow, a script, the
+root `pyproject.toml`, a second app's release — means no approval here. And it
+exempts the two files that declare the version by path, where this one checks
+what changed inside them: `mitol/APPNAME/__init__.py` may move its `__version__`
+line and nothing else, the app's `pyproject.toml` may move its two version
+declarations and nothing else, and `uv.lock` may record the new version and
+nothing else. All three ship, so a path-level allowance is not enough.
+
+Every push re-decides, and each run withdraws the previous approval before it
+re-checks — so an approval on the PR means a complete run just verified the diff
+as it stands. A PR that does not qualify is not broken; it just needs a human,
+like any other.
 
 If you would rather not use `prepare`, editing the version by hand works too —
 the workflow only reads `[project] version` from the app's `pyproject.toml`. Keep

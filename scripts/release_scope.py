@@ -1,0 +1,201 @@
+"""Decide whether a diff is one app's release and nothing else.
+
+`changelog.py check-release-only` gates an automatic pull request approval with
+this, so allowing a file by PATH is not enough. Everything a release is allowed
+to touch is a shipped artifact: `mitol/<app>/__init__.py` is imported by every
+consumer of the package, the app's `pyproject.toml` decides its dependencies and
+how it is built, and `uv.lock` decides what CI installs while CI holds the PyPI
+publishing identity. So each one is checked for WHAT changed inside it.
+
+Nothing here executes any of the content it reads. Blobs are pulled out of the
+object database and parsed, never imported, and the working tree the caller runs
+from is the base branch rather than the branch being judged.
+"""
+
+from collections.abc import Iterable
+from copy import deepcopy
+from pathlib import Path
+from typing import Any
+
+import tomllib
+from git import Commit
+from packaging.version import InvalidVersion, Version
+
+from scripts.apps import App
+from scripts.version import DUNDER_VERSION
+
+#: The only path outside the released app a release may touch. Checked by content
+#: in `_lockfile_violations`, because "uv.lock changed" and "uv.lock recorded the
+#: new version" are very different diffs.
+LOCKFILE = "uv.lock"
+
+
+def out_of_release_scope(paths: Iterable[str], app_path: Path) -> list[str]:
+    """Return the paths a release of ``app_path`` has no business touching"""
+    return sorted(
+        path
+        for path in paths
+        if path != LOCKFILE and not Path(path).is_relative_to(app_path)
+    )
+
+
+def _blob(commit: Commit, path: str) -> bytes | None:
+    """Read a file out of the object database, or None if it is not there"""
+    try:
+        return (commit.tree / path).data_stream.read()
+    except KeyError:
+        return None
+
+
+def _declared_version(raw: bytes | None) -> str | None:
+    if raw is None:
+        return None
+
+    return tomllib.loads(raw.decode()).get("project", {}).get("version")
+
+
+def _version_violations(base: Commit, target: Commit, app: App) -> list[str]:
+    """Require a version present at both ends of the diff, and higher at the end"""
+    path = str(app.relative_path / "pyproject.toml")
+    before = _declared_version(_blob(base, path))
+    after = _declared_version(_blob(target, path))
+
+    if before is None or after is None:
+        return [f"{path} does not declare a version at both ends of the diff."]
+
+    if before == after:
+        return [
+            f"{app.relative_path}/CHANGELOG.md is rewritten but the version in "
+            f"pyproject.toml is still {before}, so no release is being cut."
+        ]
+
+    try:
+        went_up = Version(after) > Version(before)
+    except InvalidVersion:
+        return [f"{path}: {after!r} is not a version this can compare."]
+
+    if not went_up:
+        return [f"{path}: version went from {before} to {after}, which is not up."]
+
+    return []
+
+
+def _dunder_violations(base: Commit, target: Commit, app: App) -> list[str]:
+    """`__init__.py` is a shipped module: only its `__version__` line may move"""
+    path = str(app.relative_path / "mitol" / app.module_name / "__init__.py")
+    before, after = _blob(base, path), _blob(target, path)
+
+    if before is None or after is None:
+        return [f"{path} is added or removed, which a release does not do."]
+
+    if DUNDER_VERSION.sub("", before.decode()) != DUNDER_VERSION.sub(
+        "", after.decode()
+    ):
+        return [
+            f"{path} changes something other than its `__version__` line. "
+            "That module is imported by everyone who installs the package."
+        ]
+
+    return []
+
+
+def _without_version_keys(doc: dict[str, Any]) -> dict[str, Any]:
+    """Copy a pyproject with the two declarations a release moves removed"""
+    stripped = deepcopy(doc)
+    stripped.get("project", {}).pop("version", None)
+    stripped.get("tool", {}).get("bumpver", {}).pop("current_version", None)
+
+    return stripped
+
+
+def _pyproject_violations(base: Commit, target: Commit, app: App) -> list[str]:
+    """Only the two version declarations may differ; dependencies may not"""
+    path = str(app.relative_path / "pyproject.toml")
+    before, after = _blob(base, path), _blob(target, path)
+
+    if before is None or after is None:
+        return []  # already reported by `_version_violations`
+
+    if _without_version_keys(tomllib.loads(before.decode())) != _without_version_keys(
+        tomllib.loads(after.decode())
+    ):
+        return [
+            f"{path} changes something other than the version declarations - "
+            "a dependency, a build setting, or tool configuration."
+        ]
+
+    return []
+
+
+def _lock_entries(raw: bytes, released: str) -> tuple[dict[str, Any], dict]:
+    """Split a lockfile into its non-package body and its packages, by identity.
+
+    Keyed on name AND version, because a lockfile legitimately carries several
+    versions of one package. The released distribution is keyed on name alone,
+    with its version dropped, since moving that is the whole point of the diff.
+    """
+    doc = tomllib.loads(raw.decode())
+    packages = {}
+
+    for package in doc.pop("package", []):
+        name = package.get("name")
+        if name == released:
+            packages[(name,)] = {k: v for k, v in package.items() if k != "version"}
+        else:
+            packages[(name, package.get("version"))] = package
+
+    return doc, packages
+
+
+def _label(key: tuple[str, ...]) -> str:
+    """Name a locked package for a message. The released one carries no version"""
+    return " ".join(str(part) for part in key)
+
+
+def _lockfile_violations(base: Commit, target: Commit, app: App) -> list[str]:
+    """Allow the lockfile to record the new version and nothing else.
+
+    A release moves exactly one line here. Anything else -- a repointed `source`,
+    an edited hash, a package added or dropped -- would be installed by every
+    later `uv sync`, including the CI jobs that publish to PyPI.
+    """
+    before, after = _blob(base, LOCKFILE), _blob(target, LOCKFILE)
+
+    if before is None or after is None or before == after:
+        return []
+
+    body_before, packages_before = _lock_entries(before, app.name)
+    body_after, packages_after = _lock_entries(after, app.name)
+
+    if body_before != body_after:
+        return [f"{LOCKFILE} changes something outside its package list."]
+
+    added = sorted(map(_label, packages_after.keys() - packages_before.keys()))
+    dropped = sorted(map(_label, packages_before.keys() - packages_after.keys()))
+
+    if added or dropped:
+        return [
+            f"{LOCKFILE} adds or drops locked packages: {', '.join(added + dropped)}."
+        ]
+
+    changed = sorted(
+        key[0] for key in packages_before if packages_before[key] != packages_after[key]
+    )
+
+    if changed:
+        return [
+            f"{LOCKFILE} rewrites locked packages other than the version being "
+            f"released: {', '.join(changed)}."
+        ]
+
+    return []
+
+
+def content_violations(base: Commit, target: Commit, app: App) -> list[str]:
+    """Every way this diff touches a release-allowed file it should not have"""
+    return [
+        *_version_violations(base, target, app),
+        *_dunder_violations(base, target, app),
+        *_pyproject_violations(base, target, app),
+        *_lockfile_violations(base, target, app),
+    ]

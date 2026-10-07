@@ -3,7 +3,7 @@ from os import makedirs
 from pathlib import Path
 from textwrap import dedent, indent
 
-import toml
+import tomllib
 from click import echo
 from click_log import simple_verbosity_option
 from cloup import Context, group, option, pass_context
@@ -18,6 +18,10 @@ from scripts.changes import Changes
 from scripts.contextlibs import chdir
 from scripts.decorators import app_option, pass_app, pass_project
 from scripts.project import Project
+from scripts.release_scope import (
+    content_violations,
+    out_of_release_scope,
+)
 
 
 @group("changelog")
@@ -167,11 +171,6 @@ def check(ctx: Context, project: Project, base: str, target: str):
         ctx.exit(1)
 
 
-#: Paths a release PR may touch outside the app being released. The lockfile pins
-#: every workspace member's version, so it moves with the bump (see release.py).
-_RELEASE_SCOPE_EXEMPT = frozenset({"uv.lock"})
-
-
 def _changed_paths(changes: Iterable[Diff]) -> set[str]:
     """Collect every path a diff touches, both sides of a rename included"""
     return {
@@ -182,29 +181,15 @@ def _changed_paths(changes: Iterable[Diff]) -> set[str]:
     }
 
 
-def out_of_release_scope(paths: Iterable[str], app_path: Path) -> list[str]:
-    """Return the paths a release of ``app_path`` has no business touching.
+def _released_version(commit: Commit, app: App) -> str:
+    """Read the version being released out of the diff's target commit.
 
-    Deliberately a pure function over paths: it is the whole security boundary of
-    ``check-release-only`` and is unit-tested without a git fixture.
+    Not `app.version`, which reads the working tree -- under
+    `pull_request_target` that is the base branch, so it would print the old one.
     """
-    return sorted(
-        path
-        for path in paths
-        if path not in _RELEASE_SCOPE_EXEMPT and not Path(path).is_relative_to(app_path)
-    )
+    blob = commit.tree / str(app.relative_path / "pyproject.toml")
 
-
-def _version_at(commit: Commit, app: App) -> str | None:
-    """Read an app's declared version as of ``commit``, or None if it did not exist"""
-    try:
-        blob = commit.tree / str(app.relative_path / "pyproject.toml")
-    except KeyError:
-        return None
-
-    return (
-        toml.loads(blob.data_stream.read().decode()).get("project", {}).get("version")
-    )
+    return tomllib.loads(blob.data_stream.read().decode())["project"]["version"]
 
 
 def _released_app(ctx: Context, apps: list[App], changes: dict[str, Changes]) -> App:
@@ -254,6 +239,12 @@ def check_release_only(ctx: Context, project: Project, base: str, target: str):
     so anything outside the released app is a privilege-escalation path and is
     rejected by name.
 
+    It also will not take a file on trust because a release is allowed to touch
+    it. `check` exempts the two version declarations by PATH, so arbitrary code
+    appended to the shipped `mitol/<app>/__init__.py` reads as a release; here
+    every allowed file is checked for what changed inside it. See
+    release_scope.py.
+
     Diffs from the MERGE BASE rather than `base..target`. `check` takes the two-dot
     diff, which folds commits landed on main since the branch point in as reverse
     changes; an approval gate cannot be wrong in either direction.
@@ -273,33 +264,30 @@ def check_release_only(ctx: Context, project: Project, base: str, target: str):
     }
 
     app = _released_app(ctx, apps, changes)
-    is_error = False
 
-    if _version_at(base_commit, app) == _version_at(target_commit, app):
-        echo(
-            f"{app.relative_path}/CHANGELOG.md is rewritten but the version in "
-            "pyproject.toml is unchanged, so no release is being cut."
-        )
-        is_error = True
+    problems = [
+        # Files a release is allowed to touch, checked for what changed inside
+        # them -- see release_scope.py for why a path allowance is not enough.
+        *content_violations(base_commit, target_commit, app),
+        # Files a release is not allowed to touch at all.
+        *(
+            f"{path} is not part of releasing {app.relative_path}."
+            for path in out_of_release_scope(
+                _changed_paths(base_commit.diff(target_commit)), app.relative_path
+            )
+        ),
+    ]
 
     for other in apps:
-        if changes[other.module_name].has_code_changes:
-            echo(f"Code is changing in {other.relative_path} alongside the release:")
-            for change in changes[other.module_name].code_changes:
-                _echo_change(change)
-            is_error = True
+        for change in changes[other.module_name].code_changes:
+            problems.append(  # noqa: PERF401
+                f"{change.a_path or change.b_path} is code, not a release."
+            )
 
-    out_of_scope = out_of_release_scope(
-        _changed_paths(base_commit.diff(target_commit)), app.relative_path
-    )
-
-    if out_of_scope:
-        echo(f"Files outside {app.relative_path} are changing alongside the release:")
-        for path in out_of_scope:
-            echo(indent(path, "\t"))
-        is_error = True
-
-    if is_error:
+    if problems:
+        echo(f"Not a release-only diff ({len(problems)} problems):")
+        for problem in sorted(set(problems)):
+            echo(indent(problem, "\t"))
         echo("")
         echo(
             "A release PR contains nothing but the release, so this one is not\n"
@@ -307,7 +295,7 @@ def check_release_only(ctx: Context, project: Project, base: str, target: str):
         )
         ctx.exit(1)
 
-    echo(f"Release-only: {app.version_git_tag}")
+    echo(f"Release-only: {app.name} {_released_version(target_commit, app)}")
 
 
 @changelog.command("create-renovate")

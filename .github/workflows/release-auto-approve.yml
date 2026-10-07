@@ -1,12 +1,32 @@
 ---
 # Approves a pull request that contains nothing but a release, so cutting one does not
 # need a second person to rubber-stamp a diff that `scripts/release.py prepare`
-# generated and that CI already checks.
+# generated. `scripts/changelog.py check-release-only` decides.
 #
-# `scripts/changelog.py check-release-only` is what decides, and it is deliberately
-# stricter than the `changelog` job in ci.yml: anything outside the app being released
-# -- a workflow, a script, the root pyproject -- means no approval. See that command's
-# docstring for why the two differ.
+# WHY `pull_request_target` AND NOT `pull_request`. On a `pull_request` event GitHub
+# resolves the workflow file AND the checked-out code from the pull request's own tree,
+# so the branch being judged would be supplying the thing that judges it: edit
+# `check-release-only` to return cleanly, or replace the classifier call with
+# `echo release_only=true`, and the approval is yours for any diff. That is not
+# hypothetical -- #595 is the pull request that added autofix.yml, and that file's
+# `prek` check ran on #595 itself.
+#
+# `pull_request_target` resolves both from the base branch instead, so the classifier
+# is always the reviewed one on `main`. The cost is a privileged token, which is why:
+#
+#   - the job refuses anything but a same-repository branch;
+#   - checkout takes the BASE commit, never the pull request's;
+#   - nothing from the pull request is executed. `uv sync` installs the base branch's
+#     locked dependencies, and the classifier only ever reads the pull request's blobs
+#     out of the object database.
+#
+# WHY IT DISMISSES BEFORE IT CLASSIFIES. `baseline-default-branch` sets
+# `dismiss_stale_reviews_on_push: false`, so a push does not revoke an approval and
+# this job is the only thing that can. Any approval left standing while the diff is no
+# longer release-only is the worst thing this workflow could produce -- so every run
+# revokes first and re-approves only after a complete pass. A failure anywhere after
+# the revoke (a flaky `uv sync`, a cancelled run, a 5xx) therefore leaves no approval
+# rather than a stale one.
 #
 # TWO LIVE SETTINGS THIS DEPENDS ON, NEITHER OF THEM IN THIS REPO:
 #
@@ -16,14 +36,13 @@
 #   required_approving_review_count: 1    mitodl's org-level `baseline-default-branch`
 #                                         ruleset. The bot's approval is what satisfies
 #                                         it; without that rule this workflow is inert.
-#
-# NOT A REQUIRED CHECK, deliberately. If this job is red, skipped, or never runs, the
-# PR simply needs a human approval -- which is the correct fallback, and the reason it
-# is safe for the classifier to fail closed on any error it does not recognise.
 name: Release auto-approve
 
 on:
-  pull_request:
+  # zizmor: ignore[dangerous-triggers]
+  # Deliberate, and the safe shape of it: no checkout of the pull request, no execution
+  # of its contents. See the header.
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
 
 permissions: {}
@@ -35,22 +54,59 @@ concurrency:
 jobs:
   auto-approve:
     name: Auto-approve release-only PR
-    # A pull request from a fork gets a read-only token, so the approve step could not
-    # work there anyway -- and no release is ever cut from a fork.
+    # No release is ever cut from a fork, and under `pull_request_target` a fork would
+    # otherwise reach a token with write access.
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     permissions:
       contents: read
       pull-requests: write
     steps:
+      # The BASE commit: this is the trusted tree the classifier runs from. `fetch-depth:
+      # 0` brings down every branch, which is both how the merge base resolves and how
+      # the pull request's head commit gets into the object database.
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
-        fetch-depth: 0   # check-release-only diffs from the merge base
+        ref: ${{ github.event.pull_request.base.sha }}
+        fetch-depth: 0
         persist-credentials: false
+
+    - name: The head commit is readable
+      env:
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      run: |
+        if ! git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
+          echo "::error::${HEAD_SHA} is not in this clone; cannot classify the diff."
+          exit 1
+        fi
+
+      # FIRST, before anything that can fail for an unrelated reason. See the header.
+    - name: Withdraw any approval of mine
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+        DISMISSAL_BODY: >-
+          Withdrawn pending a fresh check of whether this pull request still contains
+          nothing but a release.
+      run: |
+        # A dismissed review keeps its row with `state: DISMISSED`, so filtering on the
+        # live state is what separates "is approved" from "was approved once".
+        # No `--paginate`: `--jq` runs per page, so a filter ending in `last` would
+        # emit one id per page. One request is plenty for a review list.
+        for id in $(gh api "repos/${REPO}/pulls/${PR}/reviews?per_page=100" \
+          --jq '.[] | select(.user.login == "github-actions[bot]"
+                             and .state == "APPROVED") | .id'); do
+          gh api --method PUT \
+            "repos/${REPO}/pulls/${PR}/reviews/${id}/dismissals" \
+            -f event=DISMISS -f message="${DISMISSAL_BODY}"
+          echo "Withdrew review ${id}."
+        done
 
     - name: Install uv
       uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
+      # Resolves against the BASE branch's uv.lock, not the pull request's.
     - name: Install dependencies
       run: uv sync
 
@@ -59,56 +115,24 @@ jobs:
     - name: Classify the diff
       id: classify
       env:
-        BASE_REF: ${{ github.event.pull_request.base.ref }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       run: |
-        if uv run scripts/changelog.py check-release-only --base "origin/${BASE_REF}"; then
+        if uv run scripts/changelog.py check-release-only \
+            --base "${BASE_SHA}" --target "${HEAD_SHA}"; then
           echo "release_only=true" >> "$GITHUB_OUTPUT"
         else
           echo "release_only=false" >> "$GITHUB_OUTPUT"
         fi
 
-    - name: Approve, or withdraw a previous approval
+    - name: Approve
+      if: steps.classify.outputs.release_only == 'true'
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PR: ${{ github.event.pull_request.number }}
         REPO: ${{ github.repository }}
-        RELEASE_ONLY: ${{ steps.classify.outputs.release_only }}
         APPROVAL_BODY: >-
           This pull request contains nothing but a release, so it is approved
-          automatically. `scripts/changelog.py check-release-only` decided that;
-          pushing anything outside the app being released withdraws this approval.
-        DISMISSAL_BODY: >-
-          This pull request no longer contains only a release, so the automatic
-          approval no longer applies. It needs a human review.
-      run: |
-        # A dismissed review keeps its row in the history with `state: DISMISSED`, so
-        # filtering on the live state is what distinguishes "approved" from "was
-        # approved once".
-        review_id="$(gh api --paginate "repos/${REPO}/pulls/${PR}/reviews" \
-          --jq '[.[] | select(.user.login == "github-actions[bot]"
-                              and .state == "APPROVED")] | last | .id // empty')"
-
-        if [ "${RELEASE_ONLY}" = "true" ]; then
-          if [ -n "${review_id}" ]; then
-            echo "Already approved by review ${review_id}; nothing to do."
-            exit 0
-          fi
-          gh pr review "${PR}" --repo "${REPO}" --approve --body "${APPROVAL_BODY}"
-          exit 0
-        fi
-
-        if [ -z "${review_id}" ]; then
-          echo "Not a release-only pull request, and no approval of mine to withdraw."
-          exit 0
-        fi
-
-        # `baseline-default-branch` sets `dismiss_stale_reviews_on_push: false`, so a
-        # later push does not take this approval back -- nothing but the block below
-        # does. Leaving a stale one standing is the worst thing this workflow could do,
-        # which is why the dismissal is not best-effort: `set -e` is on and a failure
-        # here fails the job.
-        gh api --method PUT \
-          "repos/${REPO}/pulls/${PR}/reviews/${review_id}/dismissals" \
-          -f event=DISMISS \
-          -f message="${DISMISSAL_BODY}"
-        echo "Dismissed review ${review_id}: no longer a release-only pull request."
+          automatically. `scripts/changelog.py check-release-only` decided that, and
+          re-decides on every push.
+      run: gh pr review "${PR}" --repo "${REPO}" --approve --body "${APPROVAL_BODY}"
