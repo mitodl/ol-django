@@ -26,6 +26,8 @@ dependencies = [
   "mitol-django-scim[celery]",
   "mitol-django-apigateway",
   "mitol-django-observability",
+  # Metadata-only stand-in; see shims/urllib3-future/pyproject.toml.
+  "urllib3-future",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
@@ -68,7 +70,6 @@ dev = [
     "pytest-responses>=0.5.1",
     "more-itertools>=10.6.0",
     "deepdiff>=8.5.0",
-    "lxml<=5.3.2",
     "mitol-drf-lint",
 ]
 django42 = [
@@ -129,9 +130,6 @@ allow-direct-references = true
 [tool.uv.workspace]
 members = ["src/*", "testapp"]
 
-[tool.uv.pip]
-no-binary = ["lxml"]
-
 [tool.uv.sources]
 mitol-django-common = { workspace = true }
 mitol-django-mail = { workspace = true }
@@ -154,6 +152,7 @@ mitol-django-scim = { workspace = true }
 mitol-django-apigateway = { workspace = true }
 mitol-django-observability = { workspace = true }
 mitol-drf-lint = { workspace = true }
+urllib3-future = { path = "shims/urllib3-future" }
 
 [tool.hatch.build.targets.sdist]
 include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]
