@@ -1199,8 +1199,8 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "asgiref" },
-    { name = "sqlparse" },
+    { name = "asgiref", marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
+    { name = "sqlparse", marker = "extra == 'group-9-ol-django-django52' or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51')" },
     { name = "tzdata", marker = "(sys_platform == 'win32' and extra != 'group-9-ol-django-django42' and extra != 'group-9-ol-django-django50' and extra != 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django50') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django42' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d5/d8/43e9d000519adceb189620b6869ff88031e046df91c2e9da72f8f6918399/django-5.2.17.tar.gz", hash = "sha256:9d4d93be539a18ab80d058eb515900e10951e04c537c5a6b394fc49528d3251f", size = 10889740, upload-time = "2026-08-04T15:04:03.173Z" }
@@ -2918,7 +2918,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-scim"
-version = "2026.4.2"
+version = "2026.10.6"
 source = { editable = "src/scim" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
@@ -3142,6 +3142,7 @@ dev = [
     { name = "more-itertools" },
     { name = "mypy" },
     { name = "mypy-extensions" },
+    { name = "prek" },
     { name = "psycopg2-binary" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -3168,6 +3169,9 @@ django51 = [
 ]
 django52 = [
     { name = "django", version = "5.2.17", source = { registry = "https://pypi.org/simple" } },
+]
+prek = [
+    { name = "prek" },
 ]
 
 [package.metadata]
@@ -3216,6 +3220,7 @@ dev = [
     { name = "more-itertools", specifier = ">=10.6.0" },
     { name = "mypy" },
     { name = "mypy-extensions" },
+    { name = "prek", specifier = "==0.5.3" },
     { name = "psycopg2-binary" },
     { name = "pytest", specifier = ">=8.3.3" },
     { name = "pytest-asyncio", specifier = ">=0.25.3" },
@@ -3224,7 +3229,7 @@ dev = [
     { name = "pytest-lazy-fixtures", specifier = ">=1" },
     { name = "pytest-mock", specifier = "==3.15.1" },
     { name = "pytest-responses", specifier = ">=0.5.1" },
-    { name = "responses", specifier = "==0.26.2" },
+    { name = "responses", specifier = "==0.26.3" },
     { name = "ruff" },
     { name = "scriv", extras = ["toml"] },
     { name = "semver" },
@@ -3235,6 +3240,7 @@ django42 = [{ name = "django", specifier = ">=4.2,<5.0" }]
 django50 = [{ name = "django", specifier = ">=5.0,<5.1" }]
 django51 = [{ name = "django", specifier = ">=5.1,<5.2" }]
 django52 = [{ name = "django", specifier = ">=5.2,<5.3" }]
+prek = [{ name = "prek", specifier = "==0.5.3" }]
 
 [[package]]
 name = "opentelemetry-api"
@@ -3548,6 +3554,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/bd/16/b5d1489bae5ef5bd20c85b5b95f2b44609926b4ddb6c86794213ce1a832b/posthog-7.60.0.tar.gz", hash = "sha256:6c1ab0f0d31c83b47a3cf6b6829d4ee83f250a4f8844c4c24adae329982d3f36", size = 689157, upload-time = "2026-09-23T16:34:43.475Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/75/23/212a7007dc70dc58b4273c461dbac794844065639935573a129356f80931/posthog-7.60.0-py3-none-any.whl", hash = "sha256:48ecc52c124d8262779bef4fd3dc268ef66a08905449700c4ddfe44f5b0027d1", size = 805784, upload-time = "2026-09-23T16:34:41.242Z" },
+]
+
+[[package]]
+name = "prek"
+version = "0.5.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/54/93/d1e5afc996b9fde04d71c37fd28bdd404e54daf1da6c76b883c5cdbdb411/prek-0.5.3.tar.gz", hash = "sha256:06d88bed9a5b2886cd3796957e4cecf05fa9b06724b625df31dbf0a48ff2330c", size = 551929, upload-time = "2026-09-13T08:38:37.823Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/db/5d/8731dc49cb5424d37424db3ea2f3ff6a0b20caa971db72796e822ce48b24/prek-0.5.3-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:2d7240c5e6a996ef5bebe5d57d43049803e41c225b343681c020bf0c87dab2b2", size = 6003518, upload-time = "2026-09-13T08:38:20.584Z" },
+    { url = "https://files.pythonhosted.org/packages/51/45/ca413aefb3ea2411bbf0adb6eebfac1e9bfc5ac7679dbe26336fc651c347/prek-0.5.3-py3-none-macosx_11_0_arm64.whl", hash = "sha256:1dd6df8235ca361dbbeec89c305ccb41a138088a2fc548484b4cb89f66a80d20", size = 5538754, upload-time = "2026-09-13T08:38:23.004Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/92/874d58ba40d2fe7cfec2789ae8bf415f3751666ad5c59928821fe53c3c01/prek-0.5.3-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64.whl", hash = "sha256:61ff791bb850ba52cc0d86576498df7e1bd1e9ed20df63dae113a4a6aa495e19", size = 5841568, upload-time = "2026-09-13T08:38:25.008Z" },
+    { url = "https://files.pythonhosted.org/packages/8f/40/167037b8eef75f6f036c60ff7e93f42defebb7c3733677e2f30e5a479257/prek-0.5.3-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a863379a2668c4ef079d820ffd5b14073145380dfbe0e70fef498dc73c568f86", size = 6226960, upload-time = "2026-09-13T08:38:26.788Z" },
+    { url = "https://files.pythonhosted.org/packages/42/9a/bfcd3c1fe1fdefee8dc144a92c4b0b93b59f31c7df60ee1720c49223a90a/prek-0.5.3-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:086d1b77557f0a089568dc5b93c22ccd793351524f3eeb29d36781421a350e72", size = 5854832, upload-time = "2026-09-13T08:38:28.954Z" },
+    { url = "https://files.pythonhosted.org/packages/15/41/1450b995b18bbf0d8ab65016860198052baad5c79c231151fa1dcca4a2de/prek-0.5.3-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:4f09b947255124e9591a7f7ef16eb5340a36ba94a275d788d7ea804fab35f0e2", size = 6343055, upload-time = "2026-09-13T08:38:30.96Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/e8/8f45950b8a8ddcf22efc7183e9d6b1d7e30373229ff7d9e56f918a55922c/prek-0.5.3-py3-none-win_amd64.whl", hash = "sha256:5b74a9742c3e8f8688d5dad1439688f112e2e1746fcb91016015dae38df3eb42", size = 5744293, upload-time = "2026-09-13T08:38:33.104Z" },
+    { url = "https://files.pythonhosted.org/packages/24/cd/ce637f4b6cc6c583516dc16b539408dab593672f7c6fe7723a37caf378ff/prek-0.5.3-py3-none-win_arm64.whl", hash = "sha256:20d92aef53a5e237f4659ecc6669c0fbc98a1b83f0e2476530400a72d42ca390", size = 5512958, upload-time = "2026-09-13T08:38:36.123Z" },
 ]
 
 [[package]]
@@ -4304,16 +4326,16 @@ wheels = [
 
 [[package]]
 name = "responses"
-version = "0.26.2"
+version = "0.26.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyyaml" },
     { name = "requests" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f0/1a/4af3e6d659394b809838490b144e4ab8d7ed3b9fecc7ca78f5d2f79b1a3d/responses-0.26.2.tar.gz", hash = "sha256:9c9259b46a8349197edebf43cfa68a87e1a2802ef503ff8b2fecbabc0b45afd8", size = 84030, upload-time = "2026-07-03T16:44:50.325Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9f/47/f216a33221db8eff328987661cf18371afee89c62a62b434b963d6b509c9/responses-0.26.3.tar.gz", hash = "sha256:b0c11ca8131b8b227b8d5108e6ed39772222bd5aab030ed430e8f99057c4c409", size = 86335, upload-time = "2026-08-26T19:17:24.373Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7c/28/693e1d9ebf72baa062ded80d837a035b86ce75eda5a269379e9e2b1008a8/responses-0.26.2-py3-none-any.whl", hash = "sha256:6fdfeabd58e5ec473b98dfe02e6d46d3173bd8dd573eff2ccccf1a05a5135364", size = 35609, upload-time = "2026-07-03T16:44:49.1Z" },
+    { url = "https://files.pythonhosted.org/packages/6d/86/ca7958de70cb0752350575e98229368a3a2f746a2942034b3364e17312bb/responses-0.26.3-py3-none-any.whl", hash = "sha256:74474f799334ac4f37d93b6437ecc3bb1bb5c77a8d31780a338643be2dce0af8", size = 36289, upload-time = "2026-08-26T19:17:23.176Z" },
 ]
 
 [[package]]

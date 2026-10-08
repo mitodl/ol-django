@@ -41,7 +41,13 @@ class InMemoryHttpRequest(HttpRequest):
             }
         )
         self.path = path
-        self.method = method
+        # Upper-cased to hold the same invariant a real HttpRequest does: HTTP
+        # methods are case-sensitive and uppercase (RFC 9110 9.1), and Django
+        # never hands a view anything else. /Bulk operations take their verb
+        # from the request payload, and scim-for-keycloak sends it lowercase,
+        # so without this a consumer that compares `request.method` against
+        # the spelled-correctly verb silently does not match.
+        self.method = method.upper() if method else method
         self.content_type = djs_constants.SCIM_CONTENT_TYPE
 
         # normally HttpRequest would read this in, but we already have the value

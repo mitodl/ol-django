@@ -1,5 +1,7 @@
+import functools
 import json
 import logging
+import warnings
 from typing import Union
 
 from django.contrib.auth import get_user_model
@@ -22,6 +24,38 @@ def get_user_model_for_scim():
         model: User model.
     """
     return User
+
+
+@functools.cache
+def lock_free_adapter(adapter_cls: type) -> type:
+    """
+    Build a variant of `adapter_cls` that does not take a row lock.
+
+    `UserAdapter` takes a `SELECT ... FOR UPDATE` when it is constructed, which
+    is what a read-modify-write needs but is pure cost on a read -- `to_dict()`
+    only reads, and `django_scim` builds one adapter per serialized object.
+
+    Returns a subclass rather than a `functools.partial` so the class-level
+    attributes the views read off the adapter -- `url_name`, `id_field`,
+    `resource_type_dict` -- keep resolving. Cached so there is one such class
+    per adapter rather than one per request, which keeps `isinstance` checks
+    and identity comparisons stable.
+
+    Args:
+        adapter_cls (type): the adapter class to derive from
+
+    Returns:
+        type: a subclass of `adapter_cls` that never locks
+    """
+
+    class LockFreeAdapter(adapter_cls):
+        def __init__(self, obj, request=None, **kwargs):
+            kwargs["lock_user"] = False
+            super().__init__(obj, request=request, **kwargs)
+
+    LockFreeAdapter.__name__ = f"LockFree{adapter_cls.__name__}"
+    LockFreeAdapter.__qualname__ = LockFreeAdapter.__name__
+    return LockFreeAdapter
 
 
 class UserAdapter(SCIMUser):
@@ -235,7 +269,7 @@ class UserAdapter(SCIMUser):
 
         return results
 
-    def _handle_resplace_nested_path(self, nested_path, nested_value):
+    def _handle_replace_nested_path(self, nested_path, nested_value):
         """Handle processing a nested path"""
         if nested_path.first_path in self.ATTR_MAP:
             setattr(self.obj, self.ATTR_MAP[nested_path.first_path], nested_value)
@@ -244,6 +278,31 @@ class UserAdapter(SCIMUser):
         else:
             return False
         return True
+
+    # Deprecated alias for the historical misspelling, kept so a subclass that
+    # overrode that name can still delegate up through super().
+    _handle_resplace_nested_path = _handle_replace_nested_path
+
+    def _dispatch_replace_nested_path(self, nested_path, nested_value):
+        """Route a nested path to its handler.
+
+        This method used to be named ``_handle_resplace_nested_path`` - note
+        the transposed letters. A subclass that spelled its override the way
+        the name reads (``_handle_replace_nested_path``) silently never got
+        called, which is the bug this rename fixes. Dispatching through here
+        keeps any subclass that matched the historical misspelling working,
+        so the rename doesn't trade one silent no-op for another.
+        """
+        legacy = getattr(type(self), "_handle_resplace_nested_path", None)
+        if legacy is not None and legacy is not UserAdapter._handle_replace_nested_path:
+            warnings.warn(
+                f"{type(self).__name__} overrides _handle_resplace_nested_path, "
+                "which is deprecated. Rename it to _handle_replace_nested_path.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return legacy(self, nested_path, nested_value)
+        return self._handle_replace_nested_path(nested_path, nested_value)
 
     def handle_replace(
         self,
@@ -263,7 +322,7 @@ class UserAdapter(SCIMUser):
 
         for nested_path, nested_value in (value or {}).items():
             if (
-                not self._handle_resplace_nested_path(nested_path, nested_value)
+                not self._dispatch_replace_nested_path(nested_path, nested_value)
                 and nested_path.first_path not in self.IGNORED_PATHS
             ):
                 logger.debug(

@@ -33,7 +33,11 @@ readme = "README.md"
 requires-python = ">= 3.11"
 
 [dependency-groups]
+# 0.5.4 is the fleet pin, but it is newer than `exclude-newer = "7d"` allows.
+# Renovate bumps this once the release clears the window.
+prek = ["prek==0.5.3"]
 dev = [
+    {include-group = "prek"},
     "GitPython",
     "anys>=0.3.1",
     "bumpver",
@@ -57,7 +61,7 @@ dev = [
     "pytest-django==4.14.0",
     "pytest-lazy-fixtures>=1",
     "pytest-mock==3.15.1",
-    "responses==0.26.2",
+    "responses==0.26.3",
     "ruff",
     "scriv[toml]",
     "semver",
