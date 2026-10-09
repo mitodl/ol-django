@@ -61,3 +61,39 @@ def test_create_userinfo_header():
     result = json.loads(base64.b64decode(header_data[header_name]).decode())
 
     assert result["sub"] == user.global_id
+
+
+@pytest.mark.parametrize("obj_type", ["request", "scope"])
+@pytest.mark.parametrize(
+    "raw_header",
+    [
+        "abcde",
+        base64.b64encode(b"not json").decode(),
+        base64.b64encode(b"\xff\xfe").decode(),
+        base64.b64encode(json.dumps(["a", "list"]).encode()).decode(),
+        base64.b64encode(json.dumps("a string").encode()).decode(),
+        "!!!!" + base64.b64encode(json.dumps({"sub": "someone"}).encode()).decode(),
+    ],
+)
+def test_decode_x_header_malformed(caplog, obj_type, raw_header):
+    """A header that isn't a base64-encoded JSON object is treated as missing."""
+
+    request = generate_apisix_request(obj_type, raw_header)
+
+    assert api.decode_x_header(request) is None
+    assert api.get_user_id_from_userinfo_header(request) is None
+    assert any(record.levelname == "WARNING" for record in caplog.records)
+
+
+def test_get_username_honors_lookup_field(settings):
+    """The username lookup uses MITOL_APIGATEWAY_USER_LOOKUP_FIELD."""
+
+    settings.MITOL_APIGATEWAY_USER_LOOKUP_FIELD = "scim_external_id"
+    user = SsoUserFactory.create(scim_external_id=FAKE.unique.uuid4())
+    _, user_info = generate_fake_apisix_payload(user=user)
+    user_info[settings.MITOL_APIGATEWAY_USERINFO_ID_FIELD] = user.scim_external_id
+    payload = base64.b64encode(json.dumps(user_info).encode()).decode()
+
+    request = generate_apisix_request("request", payload)
+
+    assert api.get_username_from_userinfo_header(request) == user.username
