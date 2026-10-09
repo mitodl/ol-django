@@ -129,7 +129,8 @@ describes.
    `changelog.d/` fragments into `CHANGELOG.md`, deletes them, and refreshes
    `uv.lock`.
 
-3. Commit the result, open a PR, and merge it once CI is green.
+3. Commit the result, open a PR, and merge it once CI is green. It needs no
+   approval from anyone else — see below.
 
 Once the checks pass on `main`, the `publish` job in
 [the CI workflow](.github/workflows/ci.yml) builds every package whose version
@@ -138,6 +139,32 @@ is not yet on PyPI, uploads it, and then creates the version tag.
 Do not add code to a release PR. CI rejects a PR that rewrites an app's
 `CHANGELOG.md` while changing anything under that app other than the two files
 that declare its version.
+
+#### Release PRs approve themselves
+
+A PR that contains nothing but a release is approved automatically by
+[`release-auto-approve.yml`](.github/workflows/release-auto-approve.yml), so
+cutting one does not need a second person to read a diff `prepare` generated.
+`uv run scripts/changelog.py check-release-only` is what decides, and you can run
+it on your branch to see what it sees.
+
+It is stricter than the `changelog` job above in two ways. That job only looks
+under `src/APPNAME/`, so anything else in the diff — a workflow, a script, the
+root `pyproject.toml`, a second app's release — means no approval here. And it
+exempts the two files that declare the version by path, where this one checks
+what changed inside them: `mitol/APPNAME/__init__.py` may move its `__version__`
+line and nothing else, the app's `pyproject.toml` may move its two version
+declarations and nothing else, and `uv.lock` may record the new version and
+nothing else. All three ship, so a path-level allowance is not enough. The same
+goes for `changelog.d/`, which may only lose fragments — `scriv.ini` lives
+there, and scriv config can run shell commands.
+
+Every push re-decides, and each run withdraws the previous approval before it
+re-checks — so an approval on the PR means a complete run just verified the diff
+as it stands. That also makes the approval best-effort rather than sticky: a run
+that is cancelled or fails partway leaves a legitimate release PR unapproved
+until the next push or a re-run. A PR that does not qualify is not broken; it
+just needs a human, like any other.
 
 If you would rather not use `prepare`, editing the version by hand works too —
 the workflow only reads `[project] version` from the app's `pyproject.toml`. Keep
