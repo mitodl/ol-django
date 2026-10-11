@@ -1,0 +1,159 @@
+---
+# Approves a pull request that contains nothing but a release, so cutting one does not
+# need a second person to rubber-stamp a diff that `scripts/release.py prepare`
+# generated. `scripts/changelog.py check-release-only` decides.
+#
+# WHY `pull_request_target` AND NOT `pull_request`. On a `pull_request` event GitHub
+# resolves the workflow file AND the checked-out code from the pull request's own tree,
+# so the branch being judged would be supplying the thing that judges it: edit
+# `check-release-only` to return cleanly, or replace the classifier call with
+# `echo release_only=true`, and the approval is yours for any diff. That is not
+# hypothetical -- #595 is the pull request that added autofix.yml, and that file's
+# `prek` check ran on #595 itself.
+#
+# `pull_request_target` resolves both from the base branch instead, so the classifier
+# is always the reviewed one on `main`. The cost is a privileged token, which is why:
+#
+#   - the job refuses anything but a same-repository branch;
+#   - checkout takes the BASE commit, never the pull request's;
+#   - nothing from the pull request is executed. `uv sync` installs the base branch's
+#     locked dependencies, and the classifier only ever reads the pull request's blobs
+#     out of the object database.
+#
+# WHY IT DISMISSES BEFORE IT CLASSIFIES. `baseline-default-branch` sets
+# `dismiss_stale_reviews_on_push: false`, so a push does not revoke an approval and
+# this job is the only thing that can. Any approval left standing while the diff is no
+# longer release-only is the worst thing this workflow could produce -- so every run
+# revokes first and re-approves only after a complete pass. A failure anywhere after
+# the revoke (a flaky `uv sync`, a cancelled run, a 5xx) therefore leaves no approval
+# rather than a stale one.
+#
+# TWO LIVE SETTINGS THIS DEPENDS ON, NEITHER OF THEM IN THIS REPO:
+#
+#   can_approve_pull_request_reviews      Repo setting, Settings > Actions > General.
+#                                         True today. False means github-actions[bot]
+#                                         cannot approve, so this job stops working.
+#   required_approving_review_count: 1    mitodl's org-level `baseline-default-branch`
+#                                         ruleset. The bot's approval is what satisfies
+#                                         it; without that rule this workflow is inert.
+name: Release auto-approve
+
+on:
+  # zizmor: ignore[dangerous-triggers]
+  # Deliberate, and the safe shape of it: no checkout of the pull request, no execution
+  # of its contents. See the header.
+  # `edited` is here for base-branch retargets. `synchronize` only fires when the HEAD
+  # moves; changing the base fires `edited` (as do title and body edits, whose runs are
+  # harmless -- they revoke and re-decide). Without it, a PR approved against one base
+  # and then retargeted would keep an approval its new diff never earned.
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+
+permissions: {}
+
+concurrency:
+  group: release-auto-approve-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  auto-approve:
+    name: Auto-approve release-only PR
+    # No release is ever cut from a fork, and under `pull_request_target` a fork would
+    # otherwise reach a token with write access.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      # THE FIRST STEP IN THE JOB, before even the checkout. Anything ahead of it is
+      # another way to fail with a stale approval still standing -- a checkout that
+      # cannot reach GitHub, or a head commit that a second force-push made
+      # unreachable. It needs nothing from the repository, only `gh`.
+    - name: Withdraw any approval of mine
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+        DISMISSAL_BODY: >-
+          Withdrawn pending a fresh check of whether this pull request still contains
+          nothing but a release.
+      run: |
+        # A dismissed review keeps its row with `state: DISMISSED`, so filtering on the
+        # live state is what separates "is approved" from "was approved once".
+        # `--paginate` is safe with THIS filter and would not be with every filter:
+        # `--jq` runs once per page, so a per-element select emits the right ids from
+        # each, while anything aggregate (`last`, `length`) would emit one per page.
+        # Assigned on its own line, NOT inlined into the `for`. A command substitution
+        # in a `for` word list does not trip `errexit`, so a 5xx or a rate limit there
+        # would quietly yield an empty list: nothing withdrawn, step green, and a stale
+        # approval left standing -- the exact outcome revoking first exists to prevent.
+        # A standalone assignment is checked.
+        ids="$(gh api --paginate "repos/${REPO}/pulls/${PR}/reviews?per_page=100" \
+          --jq '.[] | select(.user.login == "github-actions[bot]"
+                             and .state == "APPROVED") | .id')"
+
+        for id in ${ids}; do
+          gh api --method PUT \
+            "repos/${REPO}/pulls/${PR}/reviews/${id}/dismissals" \
+            -f event=DISMISS -f message="${DISMISSAL_BODY}"
+          echo "Withdrew review ${id}."
+        done
+
+      # The BASE commit: the trusted tree the classifier runs from. `fetch-depth: 0`
+      # brings down every branch, which is both how the merge base resolves and how
+      # the pull request's head commit gets into the object database.
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ github.event.pull_request.base.sha }}
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: The head commit is readable
+      env:
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      run: |
+        if ! git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
+          echo "::error::${HEAD_SHA} is not in this clone; cannot classify the diff."
+          exit 1
+        fi
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      # Resolves against the BASE branch's uv.lock, not the pull request's.
+    - name: Install dependencies
+      run: uv sync
+
+      # Any non-zero exit means "do not approve", including a crash. Failing closed
+      # costs a human approval; failing open hands one out for an unread diff.
+    - name: Classify the diff
+      id: classify
+      env:
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      run: |
+        if uv run scripts/changelog.py check-release-only \
+            --base "${BASE_SHA}" --target "${HEAD_SHA}"; then
+          echo "release_only=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "release_only=false" >> "$GITHUB_OUTPUT"
+        fi
+
+      # Approval is only ever granted against the default branch, where the ruleset it
+      # satisfies applies. The guard sits HERE rather than on the job so that the
+      # revoke above still runs for every base -- a retarget away from the default
+      # branch must withdraw the approval, not skip the job that would have.
+    - name: Approve
+      if: >-
+        steps.classify.outputs.release_only == 'true' &&
+        github.event.pull_request.base.ref == github.event.repository.default_branch
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+        APPROVAL_BODY: >-
+          This pull request contains nothing but a release, so it is approved
+          automatically. `scripts/changelog.py check-release-only` decided that, and
+          re-decides on every push.
+      run: gh pr review "${PR}" --repo "${REPO}" --approve --body "${APPROVAL_BODY}"

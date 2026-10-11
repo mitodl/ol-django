@@ -322,7 +322,11 @@ env_list = [
 
 [tool.tox.env_run_base]
 description = "Run pytest under {base_python}"
-commands = [["pytest"]]
+# tests/scripts covers the release tooling, which only ever runs on the dev
+# interpreter -- CI runs it once in its own job (`script-tests` in ci.yml)
+# instead of on every (python, django) shard. It also imports scripts/, which
+# is not held to the matrix's older interpreters.
+commands = [["pytest", "--ignore=tests/scripts"]]
 runner = "uv-venv-lock-runner"
 set_env = { FACTOR_DJANGO = "{factor:django}" }
 dependency_groups = [
