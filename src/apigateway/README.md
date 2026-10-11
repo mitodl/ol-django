@@ -59,6 +59,7 @@ Finally, import the settings:
 ```python
 # in your project's settings.py
 from mitol.common.envs import import_settings_modules
+
 import_settings_modules(globals(), "mitol.apigateway.settings")
 ```
 
