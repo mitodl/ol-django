@@ -1,6 +1,6 @@
 import subprocess
 
-from click import echo
+from click import Choice, echo, option
 from cloup import Context, group, pass_context
 
 from scripts import changelog, version
@@ -17,10 +17,24 @@ def release(ctx: Context):
 
 @release.command()
 @app_option
+@option(
+    "--bump",
+    type=Choice(["major", "minor", "patch"]),
+    help="Which part to bump. Required for, and only accepted by, semver apps.",
+)
 @pass_app
 @pass_context
-def prepare(ctx: Context, app: App):
+def prepare(ctx: Context, app: App, bump: str | None):
     """Bump an app's version and fold its changelog fragments into CHANGELOG.md"""
+    # bumpver derives a date-based version on its own, but refuses to bump a
+    # MAJOR.MINOR.PATCH one without being told which part.
+    if app.is_semver and bump is None:
+        echo(f"{app.module_name} uses semantic versioning; pass --bump major|minor|patch")
+        raise SystemExit(1)
+    if not app.is_semver and bump is not None:
+        echo(f"{app.module_name} uses date-based versioning; --bump does not apply")
+        raise SystemExit(1)
+
     if not _fragment_paths(app):
         echo(
             f"No changelog fragments found in {app.module_name}/changelog.d.\n"
@@ -29,7 +43,9 @@ def prepare(ctx: Context, app: App):
         )
         raise SystemExit(1)
 
-    ctx.invoke(version.version.get_command(ctx, "update"))
+    ctx.invoke(
+        version.version.get_command(ctx, "update"), **({bump: True} if bump else {})
+    )
     # keep=False lets scriv delete the fragments it consumed; they are then
     # committed as ordinary deletions alongside the version bump.
     ctx.invoke(changelog.collect, version=app.version, keep=False)
