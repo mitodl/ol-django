@@ -21,7 +21,7 @@ dependencies = [
 Repository = "https://github.com/mitodl/ol-django"
 
 # Semantic versioning, not the date-based scheme the mitol-django-* packages
-# use: consumers pin edx-api-client by semver range (for example >=1.14,<2).
+# use: consumers pin semver versions of edx-api-client (for example >=1.14.0,<2).
 [tool.bumpver]
 current_version = "1.14.0"
 version_pattern = "MAJOR.MINOR.PATCH"

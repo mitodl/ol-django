@@ -109,7 +109,7 @@ A fragment ships in the same PR as the code it describes, and that PR must not t
 Changelogs are maintained according to [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning uses a date-based versioning scheme with incremental builds on the same day.
 The exception is `edx-api-client`, which uses semantic versioning because its
-consumers pin it by semver range.
+consumers pin semver versions (for example `>=1.14.0,<2`).
 Version tags follow `{package-name}/v{version}` and are created by CI.
 
 **A release is a version change merged to `main`.** There are no tags to push and

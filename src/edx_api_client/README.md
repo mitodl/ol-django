@@ -15,7 +15,7 @@ To get the latest commit from GitHub
 pip install "edx-api-client @ git+https://github.com/mitodl/ol-django.git#subdirectory=src/edx_api_client"
 ```
 
-This package lives in the [ol-django](https://github.com/mitodl/ol-django) monorepo under `src/edx_api_client`. Its history before the move is in the archived [mitodl/edx-api-client](https://github.com/mitodl/edx-api-client) repository.
+This package lives in the [ol-django](https://github.com/mitodl/ol-django) monorepo under `src/edx_api_client`. Its history before the move is in the [mitodl/edx-api-client](https://github.com/mitodl/edx-api-client) repository.
 
 
 ## Tests
