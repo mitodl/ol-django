@@ -1,10 +1,13 @@
 """
 edX Certificates REST API client class
 """
-from requests.exceptions import HTTPError
+
 from urllib.parse import urljoin
 
+from requests.exceptions import HTTPError
+
 from edx_api.enrollments import CourseEnrollments
+
 from .models import Certificate, Certificates
 
 
@@ -37,7 +40,7 @@ class UserCertificates:
         resp = self.requester.get(
             urljoin(
                 self.base_url,
-                f'/api/certificates/v0/certificates/{username}/courses/{course_id}/'
+                f"/api/certificates/v0/certificates/{username}/courses/{course_id}/",
             )
         )
 
@@ -65,7 +68,9 @@ class UserCertificates:
         all_certificates = []
         for course_id in course_ids:
             try:
-                all_certificates.append(self.get_student_certificate(username, course_id))
+                all_certificates.append(
+                    self.get_student_certificate(username, course_id)
+                )
             except HTTPError as error:
                 if error.response.status_code >= 500:
                     raise

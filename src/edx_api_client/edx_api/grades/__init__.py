@@ -1,11 +1,14 @@
 """
 edX Grades REST API client class
 """
-from requests.exceptions import HTTPError
+
 from urllib.parse import urljoin
 
+from requests.exceptions import HTTPError
+
 from edx_api.enrollments import CourseEnrollments
-from .models import CurrentGrade, CurrentGradesByUser, CurrentGradesByCourse
+
+from .models import CurrentGrade, CurrentGradesByCourse, CurrentGradesByUser
 
 
 class UserCurrentGrades:
@@ -37,7 +40,7 @@ class UserCurrentGrades:
         resp = self.requester.get(
             urljoin(
                 self.base_url,
-                f'/api/grades/v1/courses/{course_id}/?username={username}'
+                f"/api/grades/v1/courses/{course_id}/?username={username}",
             )
         )
 
@@ -65,7 +68,9 @@ class UserCurrentGrades:
         all_current_grades = []
         for course_id in course_ids:
             try:
-                all_current_grades.append(self.get_student_current_grade(username, course_id))
+                all_current_grades.append(
+                    self.get_student_current_grade(username, course_id)
+                )
             except HTTPError as error:
                 if error.response.status_code >= 500:
                     raise
@@ -87,20 +92,19 @@ class UserCurrentGrades:
             in a course.
         """
         resp = self.requester.get(
-            urljoin(
-                self.base_url,
-                f'/api/grades/v1/courses/{course_id}/'
-            )
+            urljoin(self.base_url, f"/api/grades/v1/courses/{course_id}/")
         )
         resp.raise_for_status()
         resp_json = resp.json()
-        if 'results' in resp_json:
+        if "results" in resp_json:
             grade_entries = [CurrentGrade(entry) for entry in resp_json["results"]]
-            while resp_json['next'] is not None:
-                resp = self.requester.get(resp_json['next'])
+            while resp_json["next"] is not None:
+                resp = self.requester.get(resp_json["next"])
                 resp.raise_for_status()
                 resp_json = resp.json()
-                grade_entries.extend(CurrentGrade(entry) for entry in resp_json["results"])
+                grade_entries.extend(
+                    CurrentGrade(entry) for entry in resp_json["results"]
+                )
         else:
             grade_entries = [CurrentGrade(entry) for entry in resp_json]
 

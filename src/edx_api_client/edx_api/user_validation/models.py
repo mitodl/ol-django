@@ -1,12 +1,13 @@
 """Models for user_validation client"""
 
 
-class UserValidationResult(object):
+class UserValidationResult:
     """
     Validation result about user
     """
+
     def __init__(self, json):
-        self.validation_decisions = json.get('validation_decisions', {})
+        self.validation_decisions = json.get("validation_decisions", {})
 
     def __str__(self):
         return "<User validation>"
@@ -19,7 +20,7 @@ class UserValidationResult(object):
         Returns:
             str: A validation message for the name. An empty string indicates a valid name.
         """
-        return self.validation_decisions.get('name')
+        return self.validation_decisions.get("name")
 
     @property
     def username(self):
@@ -29,4 +30,4 @@ class UserValidationResult(object):
         Returns:
             str: A validation message for the username. An empty string indicates a valid username.
         """
-        return self.validation_decisions.get('username')
+        return self.validation_decisions.get("username")

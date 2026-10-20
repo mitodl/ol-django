@@ -1,4 +1,5 @@
 """Course Detail API"""
+
 from urllib.parse import urljoin
 
 from .models import CourseDetail, CourseMode
@@ -39,7 +40,7 @@ class CourseDetails:
             resp = self._requester.get(
                 urljoin(
                     self._base_url,
-                    f"/api/courses/v1/courses/{course_id}/?username={username}"
+                    f"/api/courses/v1/courses/{course_id}/?username={username}",
                 )
             )
 
@@ -107,7 +108,18 @@ class CourseModes:
         resp.raise_for_status()
         return CourseMode(resp.json())
 
-    def create_course_mode(self, course_id, mode_slug, mode_display_name, currency, min_price=0, expiration_datetime=None, description=None, sku=None, bulk_sku=None):
+    def create_course_mode(
+        self,
+        course_id,
+        mode_slug,
+        mode_display_name,
+        currency,
+        min_price=0,
+        expiration_datetime=None,
+        description=None,
+        sku=None,
+        bulk_sku=None,
+    ):
         """
         Creates a new course mode for the given course.
 
@@ -146,12 +158,23 @@ class CourseModes:
                 self._base_url,
                 f"/api/course_modes/v1/courses/{course_id}/",
             ),
-            json=payload
+            json=payload,
         )
         resp.raise_for_status()
         return CourseMode(resp.json())
 
-    def update_course_mode(self, course_id, mode_slug, mode_display_name=None, currency=None, min_price=None, expiration_datetime=None, description=None, sku=None, bulk_sku=None):
+    def update_course_mode(
+        self,
+        course_id,
+        mode_slug,
+        mode_display_name=None,
+        currency=None,
+        min_price=None,
+        expiration_datetime=None,
+        description=None,
+        sku=None,
+        bulk_sku=None,
+    ):
         """
         Updates an existing course mode for the given course.
 
@@ -185,10 +208,9 @@ class CourseModes:
                 f"/api/course_modes/v1/courses/{course_id}/{mode_slug}",
             ),
             json=payload,
-            headers={"Content-Type": "application/merge-patch+json"}
+            headers={"Content-Type": "application/merge-patch+json"},
         )
         resp.raise_for_status()
-        return
 
     def delete_course_mode(self, course_id, mode_slug):
         """
@@ -207,4 +229,3 @@ class CourseModes:
             )
         )
         resp.raise_for_status()
-        return

@@ -1,4 +1,5 @@
 """Tests for Info"""
+
 import json
 import os
 from unittest import TestCase
@@ -11,8 +12,9 @@ class InfoTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with open(os.path.join(os.path.dirname(__file__),
-                               'fixtures/user_info.json')) as file_obj:
+        with open(
+            os.path.join(os.path.dirname(__file__), "fixtures/user_info.json")
+        ) as file_obj:
             cls.user_info_json = json.loads(file_obj.read())
 
         cls.info = Info(cls.user_info_json)
@@ -23,10 +25,10 @@ class InfoTests(TestCase):
 
     def test_properties(self):
         """Test properties on Info model"""
-        assert self.info.name == self.user_info_json['name']
-        assert self.info.username == self.user_info_json['username']
-        assert self.info.email == self.user_info_json['email']
-        assert self.info.user_id == self.user_info_json['id']
+        assert self.info.name == self.user_info_json["name"]
+        assert self.info.username == self.user_info_json["username"]
+        assert self.info.email == self.user_info_json["email"]
+        assert self.info.user_id == self.user_info_json["id"]
 
     def test_missing(self):  # pylint: disable=no-self-use
         """Missing properties shouldn't cause a problem"""

@@ -1,7 +1,9 @@
 """
 Business objects for the Grades API
 """
+
 from collections.abc import Iterable
+
 # pylint: disable=too-few-public-methods
 
 
@@ -9,9 +11,10 @@ class CurrentGrades:
     """
     Current Grades object representation
     """
+
     def __init__(self, current_grade_list):
         if not isinstance(current_grade_list, Iterable):
-            raise TypeError('CurrentGrades needs an Iterable object')
+            raise TypeError("CurrentGrades needs an Iterable object")
 
     @property
     def all_current_grades(self):
@@ -23,6 +26,7 @@ class CurrentGradesByCourse(CurrentGrades):
     """
     Represents the current grades for a specific course
     """
+
     def __init__(self, current_grade_list):
         """
         Args:
@@ -37,7 +41,9 @@ class CurrentGradesByCourse(CurrentGrades):
             if self.course_id is None:
                 self.course_id = current_grade.course_id
             if self.course_id is not None and current_grade.course_id != self.course_id:
-                raise ValueError("Only CurrentGrade objects for the same course are allowed")
+                raise ValueError(
+                    "Only CurrentGrade objects for the same course are allowed"
+                )
             self.current_grades[current_grade.username] = current_grade
 
     def __str__(self):
@@ -53,6 +59,7 @@ class CurrentGradesByUser(CurrentGrades):
     """
     Represents the current grades for a specific user
     """
+
     def __init__(self, current_grade_list):
         """
         Args:
@@ -83,6 +90,7 @@ class CurrentGrade:
     """
     Single current grade object representation
     """
+
     def __init__(self, json):
         self.json = json
 
@@ -92,22 +100,22 @@ class CurrentGrade:
     @property
     def course_id(self):
         """Shortcut for a nested property"""
-        return self.json.get('course_id')
+        return self.json.get("course_id")
 
     @property
     def email(self):
         """Returns email of the user"""
-        return self.json.get('email')
+        return self.json.get("email")
 
     @property
     def username(self):
         """Returns the username of the user."""
-        return self.json.get('username')
+        return self.json.get("username")
 
     @property
     def passed(self):
         """Whether the user has passed the course"""
-        return self.json.get('passed')
+        return self.json.get("passed")
 
     @property
     def percent(self):
@@ -115,7 +123,7 @@ class CurrentGrade:
         Returns a decimal representation between
         0 and 1 of the student grade for the course
         """
-        return self.json.get('percent')
+        return self.json.get("percent")
 
     @property
     def letter_grade(self):
@@ -123,4 +131,4 @@ class CurrentGrade:
         Returns a letter grade as defined in the
         edX grading_policy (e.g. 'A' 'B' 'C' for 6.002x) or None
         """
-        return self.json.get('letter_grade')
+        return self.json.get("letter_grade")

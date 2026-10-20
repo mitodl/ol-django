@@ -4,7 +4,6 @@ from unittest.mock import Mock
 from urllib.parse import urljoin
 
 import pytest
-
 from edx_api.course_detail import CourseDetails, CourseModes
 from edx_api.course_detail.models import CourseDetail, CourseMode
 
@@ -151,7 +150,8 @@ class TestCourseModes:
         filtered_items = {
             k: v
             for k, v in test_data.items()
-            if k not in ["mode_slug", "mode_display_name", "currency", "expected_payload"]
+            if k
+            not in ["mode_slug", "mode_display_name", "currency", "expected_payload"]
         }
         # Then filter out None values
         kwargs = {k: v for k, v in filtered_items.items() if v is not None}

@@ -5,6 +5,7 @@ class Info:
     """
     Information about user
     """
+
     def __init__(self, json):
         self.json = json
 
@@ -14,19 +15,19 @@ class Info:
     @property
     def username(self):
         """Returns the username of the user."""
-        return self.json.get('username')
+        return self.json.get("username")
 
     @property
     def email(self):
         """Email for the user"""
-        return self.json.get('email')
+        return self.json.get("email")
 
     @property
     def name(self):
         """Name for the user"""
-        return self.json.get('name')
+        return self.json.get("name")
 
     @property
     def user_id(self):
         """Id for the user"""
-        return self.json.get('id')
+        return self.json.get("id")

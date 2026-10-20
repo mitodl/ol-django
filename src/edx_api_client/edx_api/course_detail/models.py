@@ -1,6 +1,7 @@
 """
 Business objects for the course detail API
 """
+
 from collections import namedtuple
 
 from dateutil import parser

@@ -1,14 +1,14 @@
 """test for change email settings"""
-import requests_mock
+
 from unittest import TestCase
 from urllib.parse import urljoin
 
+import requests_mock
 from edx_api.client import EdxApi
 from edx_api.email_settings import EmailSettings
 
 
 class TestEmailSettings(TestCase):
-
     @classmethod
     def setUpClass(cls):
         edx_base_url = "http://edx.example.com"
@@ -24,7 +24,7 @@ class TestEmailSettings(TestCase):
         response = self.email_settings.subscribe(self.course_id)
         self.assertDictEqual(
             mocked_request.last_request.json(),
-            {"course_id": self.course_id, "receive_emails": "on"}
+            {"course_id": self.course_id, "receive_emails": "on"},
         )
         self.assertTrue(response)
 

@@ -1,10 +1,11 @@
 """Client for user_validation API"""
+
 from urllib.parse import urljoin
 
 from .models import UserValidationResult
 
 
-class UserValidation(object):
+class UserValidation:
     """
     Open edX user validation client
     """

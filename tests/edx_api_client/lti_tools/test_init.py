@@ -29,8 +29,7 @@ class TestLTITools:
         result = self.client.fix_lti_user(email)
 
         self.requester.post.assert_called_once_with(
-            urljoin(self.base_url, '/api/lti-user-fix/'),
-            json={"email": email}
+            urljoin(self.base_url, "/api/lti-user-fix/"), json={"email": email}
         )
         assert result == expected_response
 
@@ -43,8 +42,7 @@ class TestLTITools:
         result = self.client.fix_lti_user(email)
 
         self.requester.post.assert_called_once_with(
-            urljoin(self.base_url, '/api/lti-user-fix/'),
-            json={"email": email}
+            urljoin(self.base_url, "/api/lti-user-fix/"), json={"email": email}
         )
         assert result == expected_response
 
@@ -55,7 +53,7 @@ class TestLTITools:
         self.client.fix_lti_user(email)
 
         call_args = self.requester.post.call_args
-        expected_url = urljoin(self.base_url, '/api/lti-user-fix/')
+        expected_url = urljoin(self.base_url, "/api/lti-user-fix/")
         assert call_args[0][0] == expected_url
 
     def test_fix_lti_user_request_data_format(self):
@@ -65,4 +63,4 @@ class TestLTITools:
         self.client.fix_lti_user(email)
 
         call_args = self.requester.post.call_args
-        assert call_args[1]['json'] == {"email": email}
+        assert call_args[1]["json"] == {"email": email}

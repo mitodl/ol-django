@@ -1,10 +1,12 @@
 """
 edX Course List REST API client class
 """
+
 from urllib.parse import urljoin
 
-from .constants import PAGE_SIZE, BATCH_SIZE
 from edx_api.course_detail.models import CourseDetail
+
+from .constants import BATCH_SIZE, PAGE_SIZE
 
 
 class CourseList:
@@ -12,7 +14,7 @@ class CourseList:
     API Client to interface with the course list API.
     """
 
-    course_list_url = '/api/courses/v1/courses/'
+    course_list_url = "/api/courses/v1/courses/"
 
     def __init__(self, requester, base_url):
         """
@@ -36,25 +38,31 @@ class CourseList:
         page = 1
         while True:
             request_params = params.copy()
-            request_params['page'] = page
+            request_params["page"] = page
 
             resp = self._requester.get(
-                urljoin(self._base_url, self.course_list_url),
-                params=request_params
+                urljoin(self._base_url, self.course_list_url), params=request_params
             )
             resp.raise_for_status()
 
             data = resp.json()
-            for course_data in data.get('results', []):
+            for course_data in data.get("results", []):
                 yield CourseDetail(course_data)
 
-            if data.get('pagination', {}).get('next'):
+            if data.get("pagination", {}).get("next"):
                 page += 1
             else:
                 break
 
-    def get_courses(self, course_keys=None, org=None, search_term=None,
-                    username=None, active_only=None, **kwargs):
+    def get_courses(
+        self,
+        course_keys=None,
+        org=None,
+        search_term=None,
+        username=None,
+        active_only=None,
+        **kwargs,
+    ):
         """
         Get a list of courses
 
@@ -75,24 +83,27 @@ class CourseList:
         """
 
         params = kwargs.copy()
-        params.update({
-            'org': org,
-            'search_term': search_term,
-            'username': username,
-            'active_only': active_only
-        })
+        params.update(
+            {
+                "org": org,
+                "search_term": search_term,
+                "username": username,
+                "active_only": active_only,
+            }
+        )
         params = {
-            key: value for key, value in params.items()
-            if value or (key == 'active_only' and value is not None)
+            key: value
+            for key, value in params.items()
+            if value or (key == "active_only" and value is not None)
         }
 
-        params['page_size'] = PAGE_SIZE
+        params["page_size"] = PAGE_SIZE
 
         if course_keys:
             for start_index in range(0, len(course_keys), BATCH_SIZE):
-                batch = course_keys[start_index:start_index + BATCH_SIZE]
+                batch = course_keys[start_index : start_index + BATCH_SIZE]
                 batch_params = params.copy()
-                batch_params['course_keys'] = batch
+                batch_params["course_keys"] = batch
 
                 for course in self._get_paginated_courses(batch_params):
                     yield course

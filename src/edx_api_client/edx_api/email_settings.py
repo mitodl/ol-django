@@ -1,6 +1,7 @@
 """
 API client for interacting with change email settings
 """
+
 import logging
 from urllib import parse
 
@@ -11,6 +12,7 @@ class EmailSettings:
     """
     API client for interacting with email settings
     """
+
     api_url = "/api/change_email_settings"
 
     def __init__(self, requester, base_url):
@@ -26,8 +28,7 @@ class EmailSettings:
             JSON response (dict)
         """
         response = self.requester.post(
-            parse.urljoin(self.base_url, self.api_url),
-            json=payload
+            parse.urljoin(self.base_url, self.api_url), json=payload
         )
 
         try:

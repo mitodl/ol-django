@@ -1,4 +1,5 @@
 """Client for user_info API"""
+
 from urllib.parse import urljoin
 
 from .models import Info
@@ -27,10 +28,7 @@ class UserInfo:
         """
         # the request is done in behalf of the current logged in user
         resp = self.requester.get(
-            urljoin(
-                self.base_url,
-                '/api/mobile/v0.5/my_user_info'
-            )
+            urljoin(self.base_url, "/api/mobile/v0.5/my_user_info")
         )
 
         resp.raise_for_status()
@@ -59,11 +57,9 @@ class UserInfo:
             }
         )
         resp = self.requester.patch(
-            urljoin(
-                self.base_url,
-                f'/api/user/v1/accounts/{username}'
-            ),
-            json=request_data)
+            urljoin(self.base_url, f"/api/user/v1/accounts/{username}"),
+            json=request_data,
+        )
         resp.raise_for_status()
 
         return Info(resp.json())

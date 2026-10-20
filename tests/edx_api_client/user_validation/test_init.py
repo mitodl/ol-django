@@ -2,9 +2,9 @@
 Test responses from user_validation api.
 """
 
-import pytest
 from urllib.parse import urljoin
 
+import pytest
 from edx_api.client import EdxApi
 from edx_api.user_validation.models import UserValidationResult
 
@@ -12,29 +12,27 @@ from edx_api.user_validation.models import UserValidationResult
 @pytest.mark.parametrize(
     "expected_validation_decisions, request_data, mock_response",
     [
+        ({"name": ""}, {"name": "test_name"}, {"validation_decisions": {"name": ""}}),
         (
-            {'name': ''},
-            {'name': 'test_name'},
-            {"validation_decisions": {"name": ""}}
+            {"name": "Invalid name"},
+            {"name": "http://test_name"},
+            {"validation_decisions": {"name": "Invalid name"}},
         ),
         (
-            {'name': 'Invalid name'},
-            {'name': 'http://test_name'},
-            {"validation_decisions": {"name": "Invalid name"}}
+            {"username": ""},
+            {"username": "test_username"},
+            {"validation_decisions": {"username": ""}},
         ),
         (
-            {'username': ''},
-            {'username': 'test_username'},
-            {"validation_decisions": {"username": ""}}
+            {"username": "Invalid username"},
+            {"username": "!test_username"},
+            {"validation_decisions": {"username": "Invalid username"}},
         ),
-        (
-            {'username': 'Invalid username'},
-            {'username': '!test_username'},
-            {"validation_decisions": {"username": "Invalid username"}}
-        ),
-    ]
+    ],
 )
-def test_validate_user_registration_info(requests_mock, expected_validation_decisions, request_data, mock_response):
+def test_validate_user_registration_info(
+    requests_mock, expected_validation_decisions, request_data, mock_response
+):
     """
     Test that validate_user_registration_info validates name and username.
     """
@@ -42,11 +40,12 @@ def test_validate_user_registration_info(requests_mock, expected_validation_deci
     client = EdxApi({"access_token": ""}, base_url)
 
     requests_mock.post(
-        urljoin(base_url, '/api/user/v1/validation/registration'),
-        json=mock_response
+        urljoin(base_url, "/api/user/v1/validation/registration"), json=mock_response
     )
 
-    validation_response = client.user_validation.validate_user_registration_info(request_data)
+    validation_response = client.user_validation.validate_user_registration_info(
+        request_data
+    )
 
     assert isinstance(validation_response, UserValidationResult)
     assert validation_response.validation_decisions == expected_validation_decisions

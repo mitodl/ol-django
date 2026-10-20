@@ -1,12 +1,13 @@
 """
 edX Enrollment REST API client class
 """
+
 from edx_api.constants import ENROLLMENT_MODE_AUDIT, ENROLLMENT_MODE_VERIFIED
 
 try:
-    from urlparse import urlparse, parse_qs
+    from urlparse import parse_qs, urlparse
 except ImportError:
-    from urllib.parse import urlparse, parse_qs
+    from urllib.parse import parse_qs, urlparse
 from urllib.parse import urljoin
 
 from .models import Enrollment, Enrollments
@@ -18,8 +19,8 @@ class CourseEnrollments:
     edX student enrollments client
     """
 
-    enrollment_url = '/api/enrollment/v1/enrollment'
-    enrollment_list_url = '/api/enrollment/v1/enrollments'
+    enrollment_url = "/api/enrollment/v1/enrollment"
+    enrollment_list_url = "/api/enrollment/v1/enrollments"
 
     def __init__(self, requester, base_url):
         """
@@ -46,14 +47,14 @@ class CourseEnrollments:
         resp = self.requester.get(req_url, params=params)
         resp.raise_for_status()
         resp_json = resp.json()
-        results = resp_json['results']
-        next_url_str = resp_json.get('next')
+        results = resp_json["results"]
+        next_url_str = resp_json.get("next")
         cursor = None
         qstr_cursor = None
         if next_url_str:
             next_url = urlparse(next_url_str)
             qstr = parse_qs(next_url.query)
-            qstr_cursor = qstr.get('cursor')
+            qstr_cursor = qstr.get("cursor")
 
         if qstr_cursor and isinstance(qstr_cursor, list):
             cursor = qstr_cursor[0]
@@ -92,9 +93,9 @@ class CourseEnrollments:
         """
         params = {}
         if course_id is not None:
-            params['course_id'] = course_id
+            params["course_id"] = course_id
         if usernames is not None and isinstance(usernames, list):
-            params['username'] = ','.join(usernames)
+            params["username"] = ",".join(usernames)
 
         done = False
         while not done:
@@ -103,7 +104,7 @@ class CourseEnrollments:
                 yield Enrollment(enrollment)
 
             if next_cursor:
-                params['cursor'] = next_cursor
+                params["cursor"] = next_cursor
             else:
                 done = True
 
@@ -115,18 +116,17 @@ class CourseEnrollments:
         Returns:
             Enrollments: object representing the student enrollments
         """
-        resp = self.requester.get(
-            urljoin(self.base_url, self.enrollment_url))
+        resp = self.requester.get(urljoin(self.base_url, self.enrollment_url))
         resp.raise_for_status()
         return Enrollments(resp.json())
 
     def create_student_enrollment(
-            self,
-            course_id,
-            mode=ENROLLMENT_MODE_AUDIT,
-            username=None,
-            enrollment_attributes=None,
-            force_enrollment=False
+        self,
+        course_id,
+        mode=ENROLLMENT_MODE_AUDIT,
+        username=None,
+        enrollment_attributes=None,
+        force_enrollment=False,
     ):
         """
         Creates an enrollment for the user in a given course
@@ -147,20 +147,16 @@ class CourseEnrollments:
         Returns:
             Enrollment: object representing the student enrollment in the provided course
         """
-        enrollment_data = {
-            "mode": mode,
-            "course_details": {"course_id": course_id}
-        }
+        enrollment_data = {"mode": mode, "course_details": {"course_id": course_id}}
         if username:
-            enrollment_data['user'] = username
+            enrollment_data["user"] = username
         if enrollment_attributes:
-            enrollment_data['enrollment_attributes'] = enrollment_attributes
+            enrollment_data["enrollment_attributes"] = enrollment_attributes
         # the request is done in behalf of the current logged in user
         if force_enrollment:
-            enrollment_data['force_enrollment'] = True
+            enrollment_data["force_enrollment"] = True
         resp = self.requester.post(
-            urljoin(self.base_url, self.enrollment_url),
-            json=enrollment_data
+            urljoin(self.base_url, self.enrollment_url), json=enrollment_data
         )
         resp.raise_for_status()
         return Enrollment(resp.json())
@@ -177,9 +173,7 @@ class CourseEnrollments:
             Enrollment: object representing the student enrollment in the provided course
         """
         return self.create_student_enrollment(
-            course_id,
-            mode=ENROLLMENT_MODE_AUDIT,
-            username=username
+            course_id, mode=ENROLLMENT_MODE_AUDIT, username=username
         )
 
     def create_verified_student_enrollment(self, course_id, username=None):
@@ -196,9 +190,7 @@ class CourseEnrollments:
         # Note: The Verified enrollment can be created only by Staff or any user that has API keys level access.
         # So this function should only be called on behalf of a Staff user
         return self.create_student_enrollment(
-            course_id,
-            mode=ENROLLMENT_MODE_VERIFIED,
-            username=username
+            course_id, mode=ENROLLMENT_MODE_VERIFIED, username=username
         )
 
     def deactivate_enrollment(self, course_id, username=None):
@@ -218,10 +210,9 @@ class CourseEnrollments:
             "is_active": False,
         }
         if username:
-            params['user'] = username
+            params["user"] = username
         resp = self.requester.post(
-            urljoin(self.base_url, self.enrollment_url),
-            json=params
+            urljoin(self.base_url, self.enrollment_url), json=params
         )
         resp.raise_for_status()
         return Enrollment(resp.json())

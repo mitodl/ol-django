@@ -1,6 +1,7 @@
 """
 Business objects for the certificates API
 """
+
 from dateutil import parser
 
 
@@ -10,6 +11,7 @@ class Certificates:
     This assumes that there can be only one certificate
     for a given course run and user.
     """
+
     def __init__(self, certificate_list):
         self.certificates = {}
         self.verified_certificates = {}
@@ -60,6 +62,7 @@ class Certificate:
     """
     The certificate object
     """
+
     def __init__(self, json):
         self.json = json
 
@@ -69,7 +72,7 @@ class Certificate:
     @property
     def is_verified(self):
         """Whether certificate_type is verified"""
-        return self.certificate_type == 'verified'
+        return self.certificate_type == "verified"
 
     @property
     def username(self):
@@ -104,12 +107,12 @@ class Certificate:
     @property
     def created(self):
         """Returns the created property"""
-        return parser.parse(self.json.get('created'))
+        return parser.parse(self.json.get("created"))
 
     @property
     def modified(self):
         """Returns the modified property"""
-        return parser.parse(self.json.get('modified'))
+        return parser.parse(self.json.get("modified"))
 
     @property
     def is_passing(self):

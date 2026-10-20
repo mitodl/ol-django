@@ -4,13 +4,11 @@ Tests for the content of the __init__ module in course_runs
 
 import json
 import os
-
-import pytest
-import requests_mock
-
 from unittest import TestCase
 from urllib.parse import urljoin
 
+import pytest
+import requests_mock
 from edx_api.client import EdxApi
 from edx_api.course_runs import CourseRuns
 

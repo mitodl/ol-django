@@ -198,4 +198,3 @@ Version 0.2.0 (Released April 26, 2016)
 - Added certificates client
 - Added additional helpers for enrollments
 - Added another helper method for enrollments
-

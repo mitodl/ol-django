@@ -1,6 +1,7 @@
 """
 Business objects for the enrollments API
 """
+
 from dateutil import parser
 
 # pylint: disable=too-few-public-methods
@@ -39,7 +40,7 @@ class Enrollments:
             generator of Enrollment objects
         """
         if not isinstance(course_id_list, (list, tuple)):
-            raise ValueError('course_id_list should be an instance of list or tuple')
+            raise ValueError("course_id_list should be an instance of list or tuple")
         for course_id in course_id_list:
             yield self.enrollments.get(course_id)
 
@@ -80,6 +81,7 @@ class Enrollment:
     """
     Single enrollment object representation
     """
+
     def __init__(self, json):
         self.json = json
 
@@ -89,48 +91,49 @@ class Enrollment:
     @property
     def course_id(self):
         """Shortcut for a nested property"""
-        return self.course_details.course_id or self.json.get('course_id')
+        return self.course_details.course_id or self.json.get("course_id")
 
     @property
     def created(self):
         """Returns a datetime object of the enrollment timestamp"""
         try:
-            return parser.parse(self.json.get('created'))
+            return parser.parse(self.json.get("created"))
         except (AttributeError, TypeError):
             return None
 
     @property
     def mode(self):
         """Returns the enrollment mode of the user in this course"""
-        return self.json.get('mode')
+        return self.json.get("mode")
 
     @property
     def is_active(self):
         """Returns whether the enrollment is currently active."""
-        return self.json.get('is_active') is True
+        return self.json.get("is_active") is True
 
     @property
     def course_details(self):
         """Returns a CourseDetails object"""
-        return CourseDetails(self.json.get('course_details', {}))
+        return CourseDetails(self.json.get("course_details", {}))
 
     @property
     def user(self):
         """Returns the username of the user."""
-        return self.json.get('user')
+        return self.json.get("user")
 
     @property
     def is_verified(self):
         """
         Checks if the mode is "verified"
         """
-        return self.mode == 'verified'
+        return self.mode == "verified"
 
 
 class CourseDetails:
     """
     Course enrollment info
     """
+
     def __init__(self, json):
         self.json = json
 
@@ -140,7 +143,7 @@ class CourseDetails:
     @property
     def course_id(self):
         """Returns the unique identifier for the course."""
-        return self.json.get('course_id')
+        return self.json.get("course_id")
 
     @property
     def course_start(self):
@@ -149,7 +152,7 @@ class CourseDetails:
         If None, the course opens immediately when it is created.
         """
         try:
-            return parser.parse(self.json.get('course_start'))
+            return parser.parse(self.json.get("course_start"))
         except (AttributeError, TypeError):
             return None
 
@@ -160,7 +163,7 @@ class CourseDetails:
         If None, the course never ends.
         """
         try:
-            return parser.parse(self.json.get('course_end'))
+            return parser.parse(self.json.get("course_end"))
         except (AttributeError, TypeError):
             return None
 
@@ -171,7 +174,7 @@ class CourseDetails:
         If None, enrollment opens immediately when the course is created.
         """
         try:
-            return parser.parse(self.json.get('enrollment_start'))
+            return parser.parse(self.json.get("enrollment_start"))
         except (AttributeError, TypeError):
             return None
 
@@ -182,7 +185,7 @@ class CourseDetails:
         If None, the enrollment period never ends.
         """
         try:
-            return parser.parse(self.json.get('enrollment_end'))
+            return parser.parse(self.json.get("enrollment_end"))
         except (AttributeError, TypeError):
             return None
 
@@ -192,7 +195,7 @@ class CourseDetails:
         Returns a boolean indicating whether students
         must be invited to enroll in the course.
         """
-        return self.json.get('invite_only') is True
+        return self.json.get("invite_only") is True
 
     @property
     def course_modes(self):
@@ -200,7 +203,7 @@ class CourseDetails:
         Returns a generator of data about the enrollment
         modes supported for the course.
         """
-        for course_mode_json in self.json.get('course_modes', []):
+        for course_mode_json in self.json.get("course_modes", []):
             yield CourseMode(course_mode_json)
 
 
@@ -208,6 +211,7 @@ class CourseMode:
     """
     Course enrollment mode
     """
+
     def __init__(self, json):
         self.json = json
 
@@ -217,12 +221,12 @@ class CourseMode:
     @property
     def currency(self):
         """Returns the currency of the listed prices."""
-        return self.json.get('currency')
+        return self.json.get("currency")
 
     @property
     def description(self):
         """Returns a description of this mode."""
-        return self.json.get('description')
+        return self.json.get("description")
 
     @property
     def expiration_datetime(self):
@@ -231,26 +235,26 @@ class CourseMode:
         cannot enroll in the course in this mode.
         """
         try:
-            return parser.parse(self.json.get('expiration_datetime'))
+            return parser.parse(self.json.get("expiration_datetime"))
         except (AttributeError, TypeError):
             return None
 
     @property
     def min_price(self):
         """Returns the minimum price for which a user can enroll in this mode."""
-        return self.json.get('min_price')
+        return self.json.get("min_price")
 
     @property
     def name(self):
         """Returns the full name of the enrollment mode."""
-        return self.json.get('name')
+        return self.json.get("name")
 
     @property
     def slug(self):
         """Returns the short name for the enrollment mode."""
-        return self.json.get('slug')
+        return self.json.get("slug")
 
     @property
     def suggested_prices(self):
         """Returns a list of suggested prices for this enrollment mode."""
-        return self.json.get('suggested_prices')
+        return self.json.get("suggested_prices")

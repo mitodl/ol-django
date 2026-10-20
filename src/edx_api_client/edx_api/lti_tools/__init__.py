@@ -1,4 +1,5 @@
 """Client for LTI Tools API"""
+
 from urllib.parse import urljoin
 
 
@@ -30,8 +31,5 @@ class LTITools:
 
         # the request is done on behalf of the current logged in user
         return self.requester.post(
-            urljoin(
-                self.base_url,
-                '/api/lti-user-fix/'
-            ),
-            json=request_data)
+            urljoin(self.base_url, "/api/lti-user-fix/"), json=request_data
+        )

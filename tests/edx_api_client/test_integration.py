@@ -32,36 +32,35 @@ GeneratedCertificateFactory.create(
 )
 ```
 """
-import os
 
+import os
 from unittest.mock import patch
-import pytest
-from requests.exceptions import HTTPError
-from requests import Response, Timeout
 from urllib.parse import urljoin
 
-from edx_api.constants import ENROLLMENT_MODE_AUDIT, ENROLLMENT_MODE_VERIFIED
+import pytest
 from edx_api.client import EdxApi
+from edx_api.constants import ENROLLMENT_MODE_AUDIT, ENROLLMENT_MODE_VERIFIED
+from requests import Response, Timeout
+from requests.exceptions import HTTPError
 
-
-ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
-BASE_URL = os.getenv('BASE_URL', 'http://localhost:18000/')
-ENROLLMENT_CREATION_COURSE_ID = os.getenv('ENROLLMENT_CREATION_COURSE_ID')
+ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
+BASE_URL = os.getenv("BASE_URL", "http://localhost:18000/")
+ENROLLMENT_CREATION_COURSE_ID = os.getenv("ENROLLMENT_CREATION_COURSE_ID")
 
 # pylint: disable=invalid-name
 require_integration_settings = pytest.mark.skipif(
-    not ACCESS_TOKEN or not BASE_URL,
-    reason="You must specify the credential env vars"
+    not ACCESS_TOKEN or not BASE_URL, reason="You must specify the credential env vars"
 )
 
 require_integration_settings_course_id = pytest.mark.skipif(
     not ACCESS_TOKEN or not BASE_URL or not ENROLLMENT_CREATION_COURSE_ID,
-    reason="You must specify the credential env vars and the alternate course id for enrollments"
+    reason="You must specify the credential env vars and the alternate course id for enrollments",
 )
 
 
 class FakeErroredResponse:
     """Fake requests response"""
+
     def __init__(self, status_code):
         """
         Build a fake error response
@@ -77,6 +76,7 @@ class FakeErroredResponse:
 
 class FakeTimeoutResponse:
     """Fake requests response"""
+
     def __init__(self, status_code):
         """
         Build a fake error response
@@ -91,10 +91,8 @@ class FakeTimeoutResponse:
 
     @staticmethod
     def json():
-        """dummy error json"""
-        return {
-            "message": "time out"
-        }
+        """Dummy error json"""
+        return {"message": "time out"}
 
 
 def mocked_timeout(url, *args, **kwargs):  # pylint: disable=unused-argument
@@ -110,21 +108,20 @@ def test_course_structure():
     Pull down the course structure and validate it has the correct entries.
     This test assumes that the used user can access the course.
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
-    structure = api.course_structure.course_blocks('course-v1:edX+DemoX+Demo_Course', 'staff')
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
+    structure = api.course_structure.course_blocks(
+        "course-v1:edX+DemoX+Demo_Course", "staff"
+    )
 
-    titles = [
-        block.title for block in structure.root.children
-        if block.visible
-    ]
+    titles = [block.title for block in structure.root.children if block.visible]
 
     assert titles == [
-        'Introduction',
-        'Example Week 1: Getting Started',
-        'Example Week 2: Get Interactive',
-        'Example Week 3: Be Social',
-        'About Exams and Certificates',
-        'holding section',
+        "Introduction",
+        "Example Week 1: Getting Started",
+        "Example Week 2: Get Interactive",
+        "Example Week 3: Be Social",
+        "About Exams and Certificates",
+        "holding section",
     ]
 
 
@@ -134,14 +131,14 @@ def test_enrollments():
     Enrolls the user in a course and then pulls down the enrollments for the user.
     This assumes that the course in the edX instance is available for enrollment.
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
 
     # the enrollment will be done manually until
     # a client to enroll the student is implemented
     requester = api.get_requester()
     requester.post(
-        urljoin(BASE_URL, '/api/enrollment/v1/enrollment'),
-        json={"course_details": {"course_id": 'course-v1:edX+DemoX+Demo_Course'}}
+        urljoin(BASE_URL, "/api/enrollment/v1/enrollment"),
+        json={"course_details": {"course_id": "course-v1:edX+DemoX+Demo_Course"}},
     )
 
     enrollments = api.enrollments.get_student_enrollments()
@@ -151,7 +148,7 @@ def test_enrollments():
         for enrolled_course in enrollments.enrolled_courses
     ]
 
-    assert 'course-v1:edX+DemoX+Demo_Course' in enrolled_courses
+    assert "course-v1:edX+DemoX+Demo_Course" in enrolled_courses
 
 
 @require_integration_settings_course_id
@@ -159,11 +156,11 @@ def test_create_verified_enrollment():
     """
     Integration test to enroll the user in a course with `verified` mode
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
     enrollment = api.enrollments.create_student_enrollment(
         course_id=ENROLLMENT_CREATION_COURSE_ID,
         mode=ENROLLMENT_MODE_VERIFIED,
-        username="staff"
+        username="staff",
     )
     assert enrollment.course_id == ENROLLMENT_CREATION_COURSE_ID
     assert enrollment.mode == ENROLLMENT_MODE_VERIFIED
@@ -174,11 +171,11 @@ def test_create_audit_enrollment():
     """
     Integration test to enroll the user in a course with `audit` mode
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
     enrollment = api.enrollments.create_student_enrollment(
         course_id=ENROLLMENT_CREATION_COURSE_ID,
         mode=ENROLLMENT_MODE_AUDIT,
-        username="staff"
+        username="staff",
     )
     assert enrollment.course_id == ENROLLMENT_CREATION_COURSE_ID
     assert enrollment.mode == ENROLLMENT_MODE_AUDIT
@@ -189,10 +186,9 @@ def test_deactivate_enrollment():
     """
     Integration test to enroll then deactivate a user in a course
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
     api.enrollments.create_student_enrollment(
-        course_id=ENROLLMENT_CREATION_COURSE_ID,
-        mode=ENROLLMENT_MODE_AUDIT
+        course_id=ENROLLMENT_CREATION_COURSE_ID, mode=ENROLLMENT_MODE_AUDIT
     )
     deactivated_enrollment = api.enrollments.deactivate_enrollment(
         course_id=ENROLLMENT_CREATION_COURSE_ID
@@ -204,11 +200,11 @@ def test_deactivate_enrollment():
 @require_integration_settings_course_id
 def test_create_enrollment_timeout():
     """
-     Asserts request timeout error on enrollment api
+    Asserts request timeout error on enrollment api
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
     enrollments = api.enrollments
-    with patch.object(enrollments.requester, 'post', autospec=True) as post:
+    with patch.object(enrollments.requester, "post", autospec=True) as post:
         post.side_effect = mocked_timeout
         with pytest.raises(Timeout):
             enrollments.create_student_enrollment(ENROLLMENT_CREATION_COURSE_ID)
@@ -220,8 +216,8 @@ def test_course_details():
     Pull down the course details.
     This test assumes that the used user is not anonymous.
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
-    details = api.course_detail.get_detail('course-v1:edX+DemoX+Demo_Course')
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
+    details = api.course_detail.get_detail("course-v1:edX+DemoX+Demo_Course")
 
     assert details.course_id == "course-v1:edX+DemoX+Demo_Course"
     assert details.name == "edX Demonstration Course"
@@ -230,15 +226,15 @@ def test_course_details():
 @require_integration_settings
 def test_course_details_timeout():
     """
-    assert timeout exception on get course_detail
+    Assert timeout exception on get course_detail
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
     course_detail = api.course_detail
 
-    with patch.object(course_detail._requester, 'get', autospec=True) as get:   # pylint: disable=protected-access
+    with patch.object(course_detail._requester, "get", autospec=True) as get:  # pylint: disable=protected-access
         get.side_effect = mocked_timeout
         with pytest.raises(Timeout):
-            course_detail.get_detail('course-v1:edX+DemoX+Demo_Course')
+            course_detail.get_detail("course-v1:edX+DemoX+Demo_Course")
 
 
 @require_integration_settings
@@ -247,16 +243,16 @@ def test_create_ccx():
     Creates a CCX for the demo course. This course *MUST* have ccx enabled in
     the advanced settings.
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
     ccx_id = api.ccx.create(
-        'course-v1:edX+DemoX+Demo_Course',
-        'verified@example.com',
+        "course-v1:edX+DemoX+Demo_Course",
+        "verified@example.com",
         100,
-        'My CCX from test_create_ccx integration test via edx-api-client.'
+        "My CCX from test_create_ccx integration test via edx-api-client.",
     )
 
     assert ccx_id is not None
-    assert '@' in ccx_id  # follows ccx format
+    assert "@" in ccx_id  # follows ccx format
 
 
 @require_integration_settings
@@ -265,17 +261,17 @@ def test_get_timeout_error_ccx():
     Asserts request timeout error on ccx
     """
 
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
     ccx = api.ccx
 
-    with patch.object(ccx.requester, 'post', autospec=True) as post:
+    with patch.object(ccx.requester, "post", autospec=True) as post:
         post.side_effect = mocked_timeout
         with pytest.raises(Timeout):
             ccx.create(
-                'course-v1:edX+DemoX+Demo_Course',
-                'verified@example.com',
+                "course-v1:edX+DemoX+Demo_Course",
+                "verified@example.com",
                 100,
-                'My CCX from test_create_ccx integration test via edx-api-client.'
+                "My CCX from test_create_ccx integration test via edx-api-client.",
             )
 
 
@@ -285,16 +281,17 @@ def test_get_certificate():
     Gets the certificate for the demo course.
     See this module docstring for the code to run to create one
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
     certificate = api.certificates.get_student_certificate(
-        'staff', 'course-v1:edX+DemoX+Demo_Course')
-    assert certificate.username == 'staff'
+        "staff", "course-v1:edX+DemoX+Demo_Course"
+    )
+    assert certificate.username == "staff"
     assert certificate.is_verified is True
 
-    certificates = api.certificates.get_student_certificates('staff')
+    certificates = api.certificates.get_student_certificates("staff")
     assert len(certificates.all_courses_certs) >= 1
-    assert 'course-v1:edX+DemoX+Demo_Course' in certificates.all_courses_certs
-    assert 'course-v1:edX+DemoX+Demo_Course' in certificates.all_courses_verified_certs
+    assert "course-v1:edX+DemoX+Demo_Course" in certificates.all_courses_certs
+    assert "course-v1:edX+DemoX+Demo_Course" in certificates.all_courses_verified_certs
 
 
 @require_integration_settings
@@ -303,9 +300,9 @@ def test_get_certificate_500_error():
     Asserts that a 500 error returned from EDX will be propagated
     """
 
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
-    username = 'staff'
-    course_key = 'course-v1:edX+DemoX+Demo_Course'
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
+    username = "staff"
+    course_key = "course-v1:edX+DemoX+Demo_Course"
 
     certificates = api.certificates
     old_requester_get = certificates.requester.get
@@ -314,16 +311,14 @@ def test_get_certificate_500_error():
         """
         Return an error for specific URLs
         """
-        if '/api/certificates/v0/certificates/' in url:
+        if "/api/certificates/v0/certificates/" in url:
             return FakeErroredResponse(status_code=500)
         return old_requester_get(url, *args, **kwargs)
 
-    with patch.object(certificates.requester, 'get', autospec=True) as get:
+    with patch.object(certificates.requester, "get", autospec=True) as get:
         get.side_effect = mocked_get
         with pytest.raises(HTTPError):
-            certificates.get_student_certificate(
-                username, course_key
-            )
+            certificates.get_student_certificate(username, course_key)
 
         with pytest.raises(HTTPError):
             certificates.get_student_certificates(username)
@@ -334,17 +329,15 @@ def test_get_certificate_timeout_error():
     """
     Asserts request timeout error on certificate apis
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
-    username = 'staff'
-    course_key = 'course-v1:edX+DemoX+Demo_Course'
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
+    username = "staff"
+    course_key = "course-v1:edX+DemoX+Demo_Course"
     certificates = api.certificates
 
-    with patch.object(certificates.requester, 'get', autospec=True) as get:
+    with patch.object(certificates.requester, "get", autospec=True) as get:
         get.side_effect = mocked_timeout
         with pytest.raises(Timeout):
-            certificates.get_student_certificate(
-                username, course_key
-            )
+            certificates.get_student_certificate(username, course_key)
 
         with pytest.raises(Timeout):
             certificates.get_student_certificates(username)
@@ -356,9 +349,9 @@ def test_get_certificate_404_error():
     Asserts that a 404 returned from EDX will be silenced for get_student_certificates
     """
 
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
-    username = 'staff'
-    course_key = 'course-v1:edX+DemoX+Demo_Course'
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
+    username = "staff"
+    course_key = "course-v1:edX+DemoX+Demo_Course"
 
     certificates = api.certificates
     old_requester_get = certificates.requester.get
@@ -367,16 +360,14 @@ def test_get_certificate_404_error():
         """
         Return an error for specific URLs
         """
-        if '/api/certificates/v0/certificates/' in url:
+        if "/api/certificates/v0/certificates/" in url:
             return FakeErroredResponse(status_code=404)
         return old_requester_get(url, *args, **kwargs)
 
-    with patch.object(certificates.requester, 'get', autospec=True) as get:
+    with patch.object(certificates.requester, "get", autospec=True) as get:
         get.side_effect = mocked_get
         with pytest.raises(HTTPError):
-            certificates.get_student_certificate(
-                username, course_key
-            )
+            certificates.get_student_certificate(username, course_key)
 
         # Note no error here, just empty list
         certs = certificates.get_student_certificates(username)
@@ -389,31 +380,36 @@ def test_get_current_grade():
     Gets the user current grade.
     If an user is enrolled in a course she has a current grade (probably with percent == 0.0)
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
     course_grade = api.current_grades.get_student_current_grade(
-        'staff', 'course-v1:edX+DemoX+Demo_Course')
-    assert course_grade.username == 'staff'
+        "staff", "course-v1:edX+DemoX+Demo_Course"
+    )
+    assert course_grade.username == "staff"
 
-    student_grades = api.current_grades.get_student_current_grades('staff')
+    student_grades = api.current_grades.get_student_current_grades("staff")
     assert len(student_grades.all_course_ids) >= 1
-    assert 'course-v1:edX+DemoX+Demo_Course' in student_grades.all_course_ids
+    assert "course-v1:edX+DemoX+Demo_Course" in student_grades.all_course_ids
 
-    course_grades = api.current_grades.get_course_current_grades('course-v1:edX+DemoX+Demo_Course')
+    course_grades = api.current_grades.get_course_current_grades(
+        "course-v1:edX+DemoX+Demo_Course"
+    )
     assert len(course_grades.all_usernames) >= 1
-    assert 'honor' in course_grades.all_usernames
+    assert "honor" in course_grades.all_usernames
 
 
 @require_integration_settings
 def test_get_current_grade_timeout():
     """
-    assert timeout exception on get current grade.
+    Assert timeout exception on get current grade.
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
     current_grades = api.current_grades
-    with patch.object(current_grades.requester, 'get', autospec=True) as get:
+    with patch.object(current_grades.requester, "get", autospec=True) as get:
         get.side_effect = mocked_timeout
         with pytest.raises(Timeout):
-            current_grades.get_student_current_grade('staff', 'course-v1:edX+DemoX+Demo_Course')
+            current_grades.get_student_current_grade(
+                "staff", "course-v1:edX+DemoX+Demo_Course"
+            )
 
 
 @require_integration_settings
@@ -421,22 +417,22 @@ def test_user_info():
     """
     Gets information about the logged in user
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
     info = api.user_info.get_user_info()
-    assert info.username == 'staff'
-    assert info.name == ''
-    assert info.email == 'staff@example.com'
+    assert info.username == "staff"
+    assert info.name == ""
+    assert info.email == "staff@example.com"
     assert isinstance(info.user_id, int)
 
 
 @require_integration_settings
 def test_user_info_timeout():
     """
-    assert timeout exception on user_info
+    Assert timeout exception on user_info
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
     user_info = api.user_info
-    with patch.object(user_info.requester, 'get', autospec=True) as get:
+    with patch.object(user_info.requester, "get", autospec=True) as get:
         get.side_effect = mocked_timeout
         with pytest.raises(Timeout):
             user_info.get_user_info()
@@ -448,7 +444,7 @@ def test_enrollments_list():
     Enrolls the user in a course and then pulls down the enrollments for the user.
     This assumes that the course in the edX instance is available for enrollment.
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
     enrollments = api.enrollments.get_enrollments()
 
     cnt = 0
@@ -472,8 +468,8 @@ def test_user_name_update():
     """
     Asserts that update user's name api updates the full name of the user correctly.
     """
-    api = EdxApi({'access_token': ACCESS_TOKEN}, base_url=BASE_URL)
-    user_name = 'Test Name'
-    updated_user = api.user_info.update_user_name('staff', user_name)
-    assert updated_user.username == 'staff'
+    api = EdxApi({"access_token": ACCESS_TOKEN}, base_url=BASE_URL)
+    user_name = "Test Name"
+    updated_user = api.user_info.update_user_name("staff", user_name)
+    assert updated_user.username == "staff"
     assert updated_user.name == user_name

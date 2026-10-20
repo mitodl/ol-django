@@ -1,4 +1,5 @@
 """edX api client"""
+
 # pylint: disable=fixme
 import requests
 
@@ -6,16 +7,16 @@ from . import DEFAULT_TIME_OUT
 from .bulk_user_retirement import BulkUserRetirement
 from .ccx import CCX
 from .certificates import UserCertificates
-from .course_list import CourseList
 from .course_detail import CourseDetails, CourseModes
+from .course_list import CourseList
 from .course_runs import CourseRuns
 from .course_structure import CourseStructure
-from .enrollments import CourseEnrollments
 from .email_settings import EmailSettings
+from .enrollments import CourseEnrollments
 from .grades import UserCurrentGrades
+from .lti_tools import LTITools
 from .user_info import UserInfo
 from .user_validation import UserValidation
-from .lti_tools import LTITools
 
 
 class EdxApi:
@@ -44,16 +45,14 @@ class EdxApi:
         # generating an EdxApi instance with the proper requester & credentials.
         session = requests.session()
         session.headers.update(
-            {
-                "Authorization": f"{token_type} {self.credentials['access_token']}"
-            }
+            {"Authorization": f"{token_type} {self.credentials['access_token']}"}
         )
 
         old_request = session.request
 
         def patched_request(*args, **kwargs):
             """
-            adds timeout param to session.request
+            Adds timeout param to session.request
             """
             return old_request(*args, timeout=self.timeout, **kwargs)
 
@@ -129,4 +128,3 @@ class EdxApi:
     def lti_tools(self):
         """LTI Tools API"""
         return LTITools(self.get_requester(), self.base_url)
-

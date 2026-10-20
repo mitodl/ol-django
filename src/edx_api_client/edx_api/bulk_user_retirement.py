@@ -1,6 +1,7 @@
 """
 API client for interacting with user retirement API
 """
+
 import logging
 from urllib import parse
 

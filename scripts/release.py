@@ -29,7 +29,9 @@ def prepare(ctx: Context, app: App, bump: str | None):
     # bumpver derives a date-based version on its own, but refuses to bump a
     # MAJOR.MINOR.PATCH one without being told which part.
     if app.is_semver and bump is None:
-        echo(f"{app.module_name} uses semantic versioning; pass --bump major|minor|patch")
+        echo(
+            f"{app.module_name} uses semantic versioning; pass --bump major|minor|patch"
+        )
         raise SystemExit(1)
     if not app.is_semver and bump is not None:
         echo(f"{app.module_name} uses date-based versioning; --bump does not apply")

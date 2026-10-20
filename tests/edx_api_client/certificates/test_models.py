@@ -1,8 +1,8 @@
 """Models Tests for the Certificates API"""
 
-from datetime import datetime
-import os.path
 import json
+import os.path
+from datetime import datetime
 from unittest import TestCase
 
 from edx_api.certificates.models import (
@@ -13,13 +13,17 @@ from edx_api.certificates.models import (
 
 class CertificatesTests(TestCase):
     """Tests for certificates object"""
+
     @classmethod
     def setUpClass(cls):
-        with open(os.path.join(os.path.dirname(__file__),
-                               'fixtures/certificates.json')) as file_obj:
+        with open(
+            os.path.join(os.path.dirname(__file__), "fixtures/certificates.json")
+        ) as file_obj:
             cls.certs_json = json.loads(file_obj.read())
 
-        cls.certificates = Certificates([Certificate(cert_json) for cert_json in cls.certs_json])
+        cls.certificates = Certificates(
+            [Certificate(cert_json) for cert_json in cls.certs_json]
+        )
 
     def test_str(self):
         """Test the __str__"""
@@ -28,14 +32,15 @@ class CertificatesTests(TestCase):
     def test_only_certificates(self):
         """Test that only certificates are allowed in the constructor"""
         with self.assertRaises(ValueError):
-            Certificates(['foo', 'bar'])
+            Certificates(["foo", "bar"])
         with self.assertRaises(ValueError):
-            Certificates([{'foo': 'bar'}])
+            Certificates([{"foo": "bar"}])
 
     def test_courses_cert(self):
         """Test for all_courses_certs"""
         assert sorted(list(self.certificates.all_courses_certs)) == sorted(
-            ["course-v1:edX+DemoX+Demo_Course", "course-v1:MITx+8.MechCX+2014_T1"])
+            ["course-v1:edX+DemoX+Demo_Course", "course-v1:MITx+8.MechCX+2014_T1"]
+        )
 
     def test_courses_verified_cert(self):
         """Test for all_courses_verified_certs"""
@@ -59,42 +64,52 @@ class CertificatesTests(TestCase):
 
     def test_get_certificate(self):
         """Test for get_cert"""
-        assert self.certificates.get_cert('foo_id') is None
+        assert self.certificates.get_cert("foo_id") is None
         assert isinstance(
-            self.certificates.get_cert("course-v1:MITx+8.MechCX+2014_T1"),
-            Certificate
+            self.certificates.get_cert("course-v1:MITx+8.MechCX+2014_T1"), Certificate
         )
 
     def test_get_verified_cert(self):
         """Test for get_verified_cert"""
-        assert self.certificates.get_verified_cert('foo_id') is None
-        assert self.certificates.get_verified_cert("course-v1:MITx+8.MechCX+2014_T1") is None
+        assert self.certificates.get_verified_cert("foo_id") is None
+        assert (
+            self.certificates.get_verified_cert("course-v1:MITx+8.MechCX+2014_T1")
+            is None
+        )
         cert = self.certificates.get_verified_cert("course-v1:edX+DemoX+Demo_Course")
         assert isinstance(cert, Certificate)
         assert cert.is_verified is True
 
     def test_has_verified_cert(self):
         """Test for has_verified_cert"""
-        assert self.certificates.has_verified_cert('foo_id') is False
-        assert self.certificates.has_verified_cert(
-            "course-v1:MITx+8.MechCX+2014_T1") is False
-        assert self.certificates.has_verified_cert("course-v1:edX+DemoX+Demo_Course") is True
+        assert self.certificates.has_verified_cert("foo_id") is False
+        assert (
+            self.certificates.has_verified_cert("course-v1:MITx+8.MechCX+2014_T1")
+            is False
+        )
+        assert (
+            self.certificates.has_verified_cert("course-v1:edX+DemoX+Demo_Course")
+            is True
+        )
 
 
 class CertificateTests(TestCase):
     """Tests for certificate object"""
+
     @classmethod
     def setUpClass(cls):
-        with open(os.path.join(os.path.dirname(__file__),
-                               'fixtures/certificates.json')) as file_obj:
+        with open(
+            os.path.join(os.path.dirname(__file__), "fixtures/certificates.json")
+        ) as file_obj:
             cls.certs_json = json.loads(file_obj.read())
 
         cls.certificate = Certificate(cls.certs_json[0])
 
     def test_str(self):
         """Test the __str__"""
-        assert str(self.certificate) == ("<Certificate for user bob for "
-                                         "course course-v1:edX+DemoX+Demo_Course>")
+        assert str(self.certificate) == (
+            "<Certificate for user bob for course course-v1:edX+DemoX+Demo_Course>"
+        )
 
     def test_is_verified(self):
         """Test for is_verified"""
@@ -130,14 +145,10 @@ class CertificateTests(TestCase):
 
     def test_created(self):
         """Test for created"""
-        expected = datetime.strptime(
-            "2015-07-31T00:00:00", "%Y-%m-%dT%H:%M:%S"
-        )
+        expected = datetime.strptime("2015-07-31T00:00:00", "%Y-%m-%dT%H:%M:%S")
         assert self.certificate.created == expected
 
     def test_modified(self):
         """Test for modified"""
-        expected = datetime.strptime(
-            "2015-08-31T00:00:00", "%Y-%m-%dT%H:%M:%S"
-        )
+        expected = datetime.strptime("2015-08-31T00:00:00", "%Y-%m-%dT%H:%M:%S")
         assert self.certificate.modified == expected

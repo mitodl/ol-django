@@ -1,9 +1,9 @@
 """
 API Client for interacting w/ CCXs
 """
+
 import logging
 from urllib import parse
-
 
 log = logging.getLogger(__name__)
 
@@ -12,12 +12,15 @@ class CCX:
     """
     API Client for interacting w/ CCXs
     """
+
     def __init__(self, requester, base_url):
         self.requester = requester
         self.base_url = base_url
 
     # pylint: disable=too-many-arguments
-    def create(self, master_course_id, coach_email, max_students_allowed, title, modules=None):
+    def create(
+        self, master_course_id, coach_email, max_students_allowed, title, modules=None
+    ):
         """
         Creates a CCX
 
@@ -32,18 +35,17 @@ class CCX:
            ccx_id (str): The ID of the ccx.
         """
         payload = {
-            'master_course_id': master_course_id,
-            'coach_email': coach_email,
-            'max_students_allowed': max_students_allowed,
-            'display_name': title,
+            "master_course_id": master_course_id,
+            "coach_email": coach_email,
+            "max_students_allowed": max_students_allowed,
+            "display_name": title,
         }
 
         if modules is not None:
-            payload['course_modules'] = modules
+            payload["course_modules"] = modules
 
         resp = self.requester.post(
-            parse.urljoin(self.base_url, '/api/ccx/v0/ccx/'),
-            json=payload
+            parse.urljoin(self.base_url, "/api/ccx/v0/ccx/"), json=payload
         )
 
         try:
@@ -52,4 +54,4 @@ class CCX:
             log.error(resp.json())
             raise
 
-        return resp.json()['ccx_course_id']
+        return resp.json()["ccx_course_id"]

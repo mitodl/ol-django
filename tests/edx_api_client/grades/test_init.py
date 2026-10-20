@@ -8,7 +8,6 @@ from unittest import TestCase
 from urllib.parse import urljoin
 
 import requests_mock
-
 from edx_api import enrollments, grades
 from edx_api.client import EdxApi
 

@@ -5,7 +5,6 @@ import os.path
 from unittest import TestCase
 
 from dateutil import parser
-
 from edx_api.course_runs.models import CourseRun, CourseRunList
 
 
