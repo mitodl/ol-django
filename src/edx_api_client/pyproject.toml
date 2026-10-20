@@ -43,5 +43,5 @@ include = ["CHANGELOG.md", "README.md", "RELEASE.rst", "LICENSE", "**/*.py"]
 exclude = ["BUILD", "pyproject.toml"]
 
 [tool.hatch.build.targets.wheel]
-include = ["edx_api/**/*.py"]
+include = ["edx_api/**/*"]
 exclude = ["BUILD", "pyproject.toml"]
