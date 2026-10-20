@@ -26,6 +26,7 @@ dependencies = [
   "mitol-django-scim[celery]",
   "mitol-django-apigateway",
   "mitol-django-observability",
+  "edx-api-client",
   # Metadata-only stand-in; see shims/urllib3-future/pyproject.toml.
   "urllib3-future",
 ]
@@ -62,6 +63,8 @@ dev = [
     "pytest-lazy-fixtures>=1",
     "pytest-mock==3.15.1",
     "responses==0.26.3",
+    # edx-api-client's tests mock HTTP with requests-mock rather than responses.
+    "requests-mock",
     "ruff",
     "scriv[toml]",
     "semver",
@@ -104,6 +107,7 @@ conflicts = [
 ]
 
 [tool.uv.exclude-newer-package]
+edx-api-client = "0d"
 mitol-django-apigateway = "0d"
 mitol-django-authentication = "0d"
 mitol-django-benchmark = "0d"
@@ -152,6 +156,7 @@ mitol-django-scim = { workspace = true }
 mitol-django-apigateway = { workspace = true }
 mitol-django-observability = { workspace = true }
 mitol-drf-lint = { workspace = true }
+edx-api-client = { workspace = true }
 urllib3-future = { path = "shims/urllib3-future" }
 
 [tool.hatch.build.targets.sdist]

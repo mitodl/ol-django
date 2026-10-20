@@ -1,0 +1,51 @@
+# edx-api-client
+Python interface for edX REST APIs
+
+## Installation
+
+To get the latest stable release from PyPi
+
+```bash
+pip install edx-api-client
+```
+
+To get the latest commit from GitHub
+
+```bash
+pip install "edx-api-client @ git+https://github.com/mitodl/ol-django.git#subdirectory=src/edx_api_client"
+```
+
+This package lives in the [ol-django](https://github.com/mitodl/ol-django) monorepo under `src/edx_api_client`. Its history before the move is in the archived [mitodl/edx-api-client](https://github.com/mitodl/edx-api-client) repository.
+
+
+## Tests
+
+The tests are in `tests/edx_api_client` at the root of ol-django and run with the rest of its suite (see the ol-django README). To run only these, from the repository root:
+
+```bash
+uv run pytest tests/edx_api_client
+```
+
+The integration tests in `tests/edx_api_client/test_integration.py` are skipped unless `ACCESS_TOKEN` and `BASE_URL` are set; `ACCESS_TOKEN` is described below.
+
+If you're going to run integration tests, you'll need to specify the
+`ACCESS_TOKEN` environment variable to a valid access token.
+
+You can create an access token (and the associated oauth app, and
+grant) through the edX admin.
+
+If you're going to run the integration tests against localhost, you'll
+additionally need to turn off TLS validation with the environment
+variable `OAUTHLIB_INSECURE_TRANSPORT=1`. This will skip the HTTPS
+validation which is required by the OAuth spec.
+
+Your edx demo course (course id `course-v1:edX+DemoX+Demo_Course`)
+must be enabled for CCX.
+
+The Course Enrollment integration tests have the following requirements:
+- The user assigned to that `ACCESS_TOKEN` must be an admin in the edX demo course.
+  Adding a user as an admin can be done in Studio (url: `<studio_url>/course_team/course-v1:edX+DemoX+Demo_Course`
+
+## Release Notes
+
+See `CHANGELOG.md`. Releases up to 1.14.0 are in `RELEASE.rst`.
