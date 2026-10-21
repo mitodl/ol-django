@@ -3,6 +3,8 @@
 from unittest import mock
 
 import pytest
+from django.core.exceptions import ImproperlyConfigured
+from django.test import override_settings
 from mitol.common.utils.config import SettingsRef, get_missing_settings
 
 SETTING = "MITOL_COMMON_TEST_SETTING"
@@ -12,6 +14,10 @@ class Configurable:
     """Stand-in for a class that configures itself from a setting"""
 
     value = SettingsRef(SETTING)
+
+
+# Built at import time, like the sheet config singletons this class is for.
+MODULE_LEVEL = Configurable()
 
 
 @pytest.fixture
@@ -91,6 +97,43 @@ def test_patch_object_roundtrips(configured):
 
     assert configured.value == "from_settings"
     assert "value" not in vars(configured)
+
+
+def test_delete_without_an_assignment_raises(configured):
+    """Deleting a value the instance never had raises, as a plain attribute does"""
+    with pytest.raises(AttributeError):
+        del configured.value
+
+
+def test_unconfigured_setting_raises(settings):
+    """A setting that isn't configured fails loudly rather than reading as absent"""
+    delattr(settings, SETTING)
+    instance = Configurable()
+
+    with pytest.raises(ImproperlyConfigured, match=SETTING):
+        _ = instance.value
+
+    # The error has to be something other than AttributeError, or these two
+    # would silently report the attribute as missing instead of propagating.
+    with pytest.raises(ImproperlyConfigured):
+        hasattr(instance, "value")
+
+    with pytest.raises(ImproperlyConfigured):
+        getattr(instance, "value", "default")
+
+
+def test_override_settings_reaches_a_module_level_instance():
+    """
+    override_settings reaches an instance built at import time
+
+    This is the case the class exists for, and the one a setting read in
+    __init__ or into a class attribute can never satisfy.
+    """
+    with override_settings(**{SETTING: "overridden"}):
+        assert MODULE_LEVEL.value == "overridden"
+
+    with pytest.raises(ImproperlyConfigured):
+        _ = MODULE_LEVEL.value
 
 
 def test_subclass_can_override_with_a_plain_attribute():

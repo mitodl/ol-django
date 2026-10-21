@@ -1,4 +1,7 @@
+from typing import Any
+
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 
 def get_missing_settings(required_settings: list[str]) -> list[str]:
@@ -20,13 +23,22 @@ class SettingsRef:
     a module-level singleton, means it can never reach it at all.
 
     This is a non-data descriptor, so an instance attribute shadows it by the
-    normal attribute lookup rules. Assigning works, as does deleting to fall
-    back to the setting, as does mock.patch.object on an instance.
+    normal attribute lookup rules. On a class with a __dict__ - which is to say
+    any class that doesn't define __slots__ - assigning works, as does deleting
+    to fall back to the setting, as does mock.patch.object on an instance.
 
-    Do not give this class __set__ or __set_name__. That would make it a data
-    descriptor, which takes precedence over the instance __dict__ and so has to
-    reimplement assignment by hand. Without a matching __delete__, del and
+    Do not give this class __set__. That would make it a data descriptor, which
+    takes precedence over the instance __dict__ and so has to reimplement
+    assignment by hand. Without a matching __delete__, del and
     mock.patch.object's teardown both raise AttributeError.
+
+    Two shapes this does not support, both because a non-data descriptor is
+    shadowed by anything already in the instance __dict__:
+
+        - a dataclass field, which takes the descriptor object itself as the
+          field default and writes it to every instance
+        - a class that defines __slots__, where there is no instance __dict__
+          to assign into
 
     Usage:
         class SheetConfig:
@@ -51,7 +63,7 @@ class SettingsRef:
         """
         return f"{type(self).__name__}({self.setting_name!r})"
 
-    def __get__(self, instance, owner=None):
+    def __get__(self, instance, owner=None) -> Any:
         """
         Read the setting, unless the instance has a value of its own
 
@@ -60,8 +72,21 @@ class SettingsRef:
             owner (type): the class the attribute was looked up on
 
         Returns:
-            object: the setting's value, or this descriptor on class access
+            Any: the setting's value, or this descriptor on class access
+
+        Raises:
+            ImproperlyConfigured:
+                If the setting is not configured
         """
         if instance is None:
             return self
-        return getattr(settings, self.setting_name)
+
+        try:
+            return getattr(settings, self.setting_name)
+        except AttributeError as exc:
+            # Letting the AttributeError out would be indistinguishable from
+            # this attribute not existing, so hasattr() would report False and
+            # getattr(obj, name, default) would quietly hand back the default.
+            raise ImproperlyConfigured(  # noqa: TRY003
+                f"{type(self).__name__} refers to {self.setting_name}, which is not a configured setting"  # noqa: EM102, E501
+            ) from exc
