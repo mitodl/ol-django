@@ -122,6 +122,7 @@ def test_unconfigured_setting_raises(settings):
         getattr(instance, "value", "default")
 
 
+@pytest.mark.usefixtures("configured")
 def test_override_settings_reaches_a_module_level_instance():
     """
     override_settings reaches an instance built at import time
@@ -132,8 +133,7 @@ def test_override_settings_reaches_a_module_level_instance():
     with override_settings(**{SETTING: "overridden"}):
         assert MODULE_LEVEL.value == "overridden"
 
-    with pytest.raises(ImproperlyConfigured):
-        _ = MODULE_LEVEL.value
+    assert MODULE_LEVEL.value == "from_settings"
 
 
 def test_subclass_can_override_with_a_plain_attribute():

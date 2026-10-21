@@ -23,9 +23,9 @@ class SettingsRef:
     a module-level singleton, means it can never reach it at all.
 
     This is a non-data descriptor, so an instance attribute shadows it by the
-    normal attribute lookup rules. On a class with a __dict__ - which is to say
-    any class that doesn't define __slots__ - assigning works, as does deleting
-    to fall back to the setting, as does mock.patch.object on an instance.
+    normal attribute lookup rules. Wherever the instance has a __dict__,
+    assigning works, as does deleting to fall back to the setting, as does
+    mock.patch.object on an instance.
 
     Do not give this class __set__. That would make it a data descriptor, which
     takes precedence over the instance __dict__ and so has to reimplement
@@ -36,9 +36,17 @@ class SettingsRef:
     shadowed by anything already in the instance __dict__:
 
         - a dataclass field, which takes the descriptor object itself as the
-          field default and writes it to every instance
-        - a class that defines __slots__, where there is no instance __dict__
-          to assign into
+          field default and writes it to every instance, so the setting is
+          never read and nothing raises to say so
+        - instances with no __dict__ at all, which takes the class and every
+          base between it and object defining __slots__ without including
+          "__dict__"; there assignment raises AttributeError
+
+    An unconfigured setting raises ImproperlyConfigured rather than
+    AttributeError, so it can't be mistaken for a missing attribute. That is
+    deliberate, and it means the error escapes callers that swallow
+    AttributeError specifically - a Django template rendering {{ obj.attr }}
+    and DRF's Field.get_attribute both raise through instead of falling back.
 
     Usage:
         class SheetConfig:
@@ -72,7 +80,8 @@ class SettingsRef:
             owner (type): the class the attribute was looked up on
 
         Returns:
-            Any: the setting's value, or this descriptor on class access
+            Any: the setting's value, which is whatever type the setting
+                holds, or this descriptor on class access
 
         Raises:
             ImproperlyConfigured:
