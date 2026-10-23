@@ -17,3 +17,10 @@ def test_instantiation_happypath():
     token = "asdf"
     client = EdxApi({"access_token": token})
     assert client.get_requester().headers["Authorization"] == f"Bearer {token}"
+
+
+def test_enrollments_v2_sends_jwt():
+    """The v2 enrollment API only accepts a JWT"""
+    token = "asdf"
+    client = EdxApi({"access_token": token})
+    assert client.enrollments_v2.requester.headers["Authorization"] == f"jwt {token}"
