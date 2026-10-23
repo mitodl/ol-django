@@ -4,6 +4,7 @@ import logging
 import warnings
 from typing import Union
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import FieldDoesNotExist
 from django.db import transaction
@@ -250,14 +251,28 @@ class UserAdapter(SCIMUser):
         name = d.get("name") or {}
 
         self.obj.is_active = d.get("active", True)
-        self.obj.username = username
+        self.set_username(username)
         self.obj.first_name = name.get("givenName") or ""
         self.obj.last_name = name.get("familyName") or ""
-        self.obj.scim_username = username
         self.obj.scim_external_id = d.get("externalId")
         # None, not "": global_id is unique, and NULLs are distinct where
         # empty strings are not - two users with no external id would collide.
         self.obj.global_id = self.obj.scim_external_id or None
+
+    def set_username(self, username: str | None):
+        """
+        Apply an inbound SCIM userName to the user.
+
+        scim_username always records what the client sent. username follows it
+        on create, and on update only when MITOL_SCIM_USERNAME_UPDATES_USERNAME
+        is set. An app whose username is its own value (e.g. a public handle)
+        turns that off so a client can't rewrite it.
+
+        :param username: the userName from the SCIM payload
+        """
+        self.obj.scim_username = username
+        if self.is_new_user or settings.MITOL_SCIM_USERNAME_UPDATES_USERNAME:
+            self.obj.username = username
 
     def _save_user(self):
         self.obj.save()
@@ -382,14 +397,14 @@ class UserAdapter(SCIMUser):
 
     def _handle_replace_nested_path(self, nested_path, nested_value):
         """Handle processing a nested path"""
-        if nested_path.first_path in self.ATTR_MAP:
-            written = self.set_mapped_attr(
-                self.ATTR_MAP[nested_path.first_path], nested_value
-            )
-            # from_dict keeps scim_username in step with userName on PUT and
-            # POST; only follow a write the guard let through
-            if written and nested_path.first_path == ("userName", None, None):
-                self.obj.scim_username = nested_value
+        # ahead of ATTR_MAP so a subclass mapping userName can't bypass it
+        if nested_path.first_path == ("userName", None, None):
+            # set_username skips set_mapped_attr, so apply its guard here: a
+            # null or blank userName would poison the unique username column
+            if isinstance(nested_value, str) and nested_value.strip():
+                self.set_username(nested_value)
+        elif nested_path.first_path in self.ATTR_MAP:
+            self.set_mapped_attr(self.ATTR_MAP[nested_path.first_path], nested_value)
         elif nested_path.first_path == ("emails", None, None):
             self.parse_emails(nested_value)
         else:

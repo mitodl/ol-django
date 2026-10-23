@@ -1,6 +1,7 @@
 import operator
 from collections.abc import Callable
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Model, Q
 from mitol.scim.parser import Filters, TermType
@@ -31,6 +32,12 @@ class FilterQuery:
 
     dj_negated_ops = ("ne", "pr")
 
+    #: Lookups for an alias path; aliases compare case-insensitively
+    dj_alias_op_mapping = {
+        "eq": "iexact",
+        "ne": "iexact",
+    }
+
     dj_op_mapping_per_field_overrides: dict[tuple[str, str | None], dict[str, str]] = {}
 
     @classmethod
@@ -46,6 +53,28 @@ class FilterQuery:
         raise ValueError(msg)
 
     @classmethod
+    def get_attr_aliases(
+        cls,
+        scim_keys: tuple[str, str | None],  # noqa: ARG003
+    ) -> tuple[tuple[str, ...], ...]:
+        """
+        Return extra model paths a SCIM attribute also matches.
+
+        A comparison matches if the attribute's ``attr_map`` path or any alias
+        matches.
+
+        :param scim_keys: the (attribute, sub-attribute) pair being compared
+        :returns: the alias paths, each a tuple of model field names
+        :rtype: tuple[tuple[str, ...], ...]
+        """
+        return ()
+
+    @classmethod
+    def _lookup(cls, fields: tuple[str | None, ...], dj_op: str, value) -> Q:
+        path = "__".join(part for part in (*fields, dj_op) if part is not None)
+        return Q(**{path: value})
+
+    @classmethod
     def _attr_expr(cls, parsed: ParseResults) -> Q:
         scim_keys = (parsed.attr_name, parsed.sub_attr)
 
@@ -54,18 +83,11 @@ class FilterQuery:
         op_name = parsed.comparison_operator.lower()
         dj_op = field_op_overrides.get(op_name, cls.dj_op_mapping[op_name])
 
-        path_parts = list(
-            filter(
-                lambda part: part is not None,
-                (
-                    *cls.attr_map.get(scim_keys, scim_keys),
-                    dj_op,
-                ),
-            )
-        )
-        path = "__".join(path_parts)
+        q = cls._lookup(cls.attr_map.get(scim_keys, scim_keys), dj_op, parsed.value)
 
-        q = Q(**{path: parsed.value})
+        alias_dj_op = cls.dj_alias_op_mapping.get(op_name, cls.dj_op_mapping[op_name])
+        for alias in cls.get_attr_aliases(scim_keys):
+            q |= cls._lookup(alias, alias_dj_op, parsed.value)
 
         if parsed.comparison_operator in cls.dj_negated_ops:
             q = ~q
@@ -143,3 +165,27 @@ class UserFilterQuery(FilterQuery):
     }
 
     model_cls = get_user_model()
+
+    @classmethod
+    def get_attr_aliases(
+        cls, scim_keys: tuple[str, str | None]
+    ) -> tuple[tuple[str, ...], ...]:
+        """
+        Match userName against MITOL_SCIM_USERNAME_FILTER_FIELDS too.
+
+        A SCIM client looks a user up by its own username. When the app's
+        username is a different value (e.g. a handle chosen before the client
+        managed the account), comparing against username alone finds nobody,
+        and the client then POSTs a duplicate that fails on uniqueness.
+
+        :param scim_keys: the (attribute, sub-attribute) pair being compared
+        :returns: the alias paths, each a tuple of model field names
+        :rtype: tuple[tuple[str, ...], ...]
+        """
+        if scim_keys == ("userName", None):
+            return tuple(
+                (field,)
+                for field in settings.MITOL_SCIM_USERNAME_FILTER_FIELDS
+                if field
+            )
+        return super().get_attr_aliases(scim_keys)

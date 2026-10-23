@@ -1,4 +1,4 @@
-from mitol.common.envs import get_int, get_string
+from mitol.common.envs import get_bool, get_delimited_list, get_int, get_string
 
 MITOL_SCIM_REQUESTS_TIMEOUT_SECONDS = get_int(
     name="MITOL_SCIM_REQUESTS_TIMEOUT_SECONDS",
@@ -35,6 +35,23 @@ MITOL_SCIM_KEYCLOAK_CLIENT_SECRET = get_string(
 MITOL_SCIM_KEYCLOAK_BASE_URL = get_string(
     name="MITOL_SCIM_KEYCLOAK_BASE_URL",
     description="The base url for the upstream Keycloak service",
+)
+
+MITOL_SCIM_USERNAME_FILTER_FIELDS = get_delimited_list(
+    name="MITOL_SCIM_USERNAME_FILTER_FIELDS",
+    default=[],
+    description=(
+        "User model fields a SCIM userName filter matches in addition to "
+        "username, compared case-insensitively"
+    ),
+)
+MITOL_SCIM_USERNAME_UPDATES_USERNAME = get_bool(
+    name="MITOL_SCIM_USERNAME_UPDATES_USERNAME",
+    default=True,
+    description=(
+        "Whether an inbound SCIM userName overwrites an existing user's "
+        "username. When false it only updates scim_username"
+    ),
 )
 
 SCIM_SERVICE_PROVIDER = {
