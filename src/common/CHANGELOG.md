@@ -6,6 +6,35 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.10.23'></a>
+## [2026.10.23] - 2026-10-23
+
+### Removed
+
+- Removed the `default_app_config` module attribute. Django deprecated it in 3.2 and dropped support in 4.1, so it has been dead for every version this package now supports.
+
+### Added
+
+- `mitol.common.utils.config.SettingsRef`, a non-data descriptor for class attributes that are backed by a Django setting. It reads the setting on access, so `override_settings` reaches an object that already exists, and wherever the instance has a `__dict__` an instance attribute still shadows it by the normal attribute lookup rules — assignment, `del` and `mock.patch.object` all behave as they do for a plain attribute.
+
+  Use it in place of reading a setting into a class attribute at import time or into an instance attribute in `__init__`. Both freeze the value; for a module-level singleton that means a test can never override it.
+
+  Two shapes it can't serve: a dataclass field, where the descriptor object becomes the field default and the setting is silently never read, and instances with no `__dict__`, where assignment raises. An unconfigured setting raises `ImproperlyConfigured` rather than surfacing as a missing attribute, which means it also raises through a Django template or a DRF serializer field instead of falling back.
+
+### Changed
+
+- Updated linter directives to handle new checks
+
+- Raised the minimum supported Django to 4.2. The previous `django>=3.0` had not been true for some time: CI's lowest matrix leg is already 4.2, and the last 3.x release (3.2 LTS) reached end-of-life in April 2024.
+
+- `UserGlobalIdMixin.global_id` is now `unique=True`, with unset stored as `NULL` (`null=True, default=None`) rather than `""`. It is the identity key an API gateway resolves users by, and without the constraint a get-then-create under concurrency silently forks an account in two. Unset has to be NULL because SQL treats NULLs as distinct under a unique constraint and empty strings as equal — keeping `""` would cap an estate at exactly one out-of-band user.
+
+  **Consumers need a migration, and it must be three steps, not one.** Widen the column to `null=True`, migrate `""` to `NULL`, then add the constraint — adding it in a single `AlterField` fails on any estate holding more than one unlinked user. See `testapp/users/migrations/0006_user_global_id_unique.py` for the shape.
+
+  **Check for duplicate non-empty `global_id`s before migrating.** Those are genuinely forked accounts; the constraint will refuse them, which is the point, but they need merging first rather than discovering it during a deploy.
+
+  Apps that already declare their own `global_id` are unaffected — mitxonline and mit-learn both already independently reached `null=True, unique=True`.
+
 <a id='changelog-2026.6.16.4'></a>
 ## [2026.6.16.4] - 2026-06-16
 
