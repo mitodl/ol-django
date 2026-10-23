@@ -4,8 +4,10 @@ import logging
 import warnings
 from typing import Union
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django_scim import exceptions
 from django_scim.adapters import SCIMUser
 from mitol.scim.constants import SchemaURI
 from scim2_filter_parser.attr_paths import AttrPath
@@ -165,14 +167,53 @@ class UserAdapter(SCIMUser):
         self.parse_emails(d.get("emails"))
 
         self.obj.is_active = d.get("active", True)
-        self.obj.username = d.get("userName")
+        self.set_username(d.get("userName"))
         self.obj.first_name = d.get("name", {}).get("givenName", "")
         self.obj.last_name = d.get("name", {}).get("familyName", "")
-        self.obj.scim_username = d.get("userName")
-        self.obj.scim_external_id = d.get("externalId")
+        self.set_external_id(d.get("externalId"))
+
+    def set_external_id(self, external_id: str | None):
+        """
+        Apply an inbound SCIM externalId to the user.
+
+        externalId becomes global_id, which is what SSO logs the user in by.
+        A PUT that would move an existing user's non-empty global_id to a
+        different value is refused: the IdP id for one person doesn't change,
+        so that PUT can only be the client having resolved the wrong user (e.g.
+        a userName lookup that matched a stale email), and applying it would
+        hand this account to another identity.
+
+        :param external_id: the externalId from the SCIM payload
+        :raises IntegrityError: the user is already bound to a different id
+        """
+        if (
+            not self.is_new_user
+            and self.obj.global_id
+            and external_id
+            and external_id != self.obj.global_id
+        ):
+            msg = "externalId does not match the existing user's externalId"
+            raise exceptions.IntegrityError(msg, scim_type="mutability")
+
+        self.obj.scim_external_id = external_id
         # None, not "": global_id is unique, and NULLs are distinct where
         # empty strings are not - two users with no external id would collide.
-        self.obj.global_id = self.obj.scim_external_id or None
+        self.obj.global_id = external_id or None
+
+    def set_username(self, username: str | None):
+        """
+        Apply an inbound SCIM userName to the user.
+
+        scim_username always records what the client sent. username follows it
+        on create, and on update only when MITOL_SCIM_USERNAME_UPDATES_USERNAME
+        is set. An app whose username is its own value (e.g. a public handle)
+        turns that off so a client can't rewrite it.
+
+        :param username: the userName from the SCIM payload
+        """
+        self.obj.scim_username = username
+        if self.is_new_user or settings.MITOL_SCIM_USERNAME_UPDATES_USERNAME:
+            self.obj.username = username
 
     def _save_user(self):
         self.obj.save()
@@ -218,7 +259,8 @@ class UserAdapter(SCIMUser):
             return
 
         if path.first_path == ("externalId", None, None):
-            self.obj.scim_external_id = value
+            self.set_external_id(value)
+            # PatchView doesn't save after the handlers run
             self.obj.save()
 
     def parse_scim_for_keycloak_payload(self, payload: str) -> dict:
@@ -271,7 +313,10 @@ class UserAdapter(SCIMUser):
 
     def _handle_replace_nested_path(self, nested_path, nested_value):
         """Handle processing a nested path"""
-        if nested_path.first_path in self.ATTR_MAP:
+        # ahead of ATTR_MAP so a subclass mapping userName can't bypass it
+        if nested_path.first_path == ("userName", None, None):
+            self.set_username(nested_value)
+        elif nested_path.first_path in self.ATTR_MAP:
             setattr(self.obj, self.ATTR_MAP[nested_path.first_path], nested_value)
         elif nested_path.first_path == ("emails", None, None):
             self.parse_emails(nested_value)
