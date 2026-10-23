@@ -19,14 +19,14 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
-certifi = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-google-sheets = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+edx-api-client = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-hubspot-api = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-django-olposthog = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-common = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-olposthog = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-google-sheets-deferrals = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-django-mail = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-oauth-toolkit-extensions = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-mail = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-payment-gateway = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-transcoding = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-google-sheets-refunds = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
@@ -34,14 +34,16 @@ mitol-django-apigateway = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-drf-lint = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-observability = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-authentication = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-django-openedx = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+certifi = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-benchmark = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-geoip = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-digital-credentials = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-openedx = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-scim = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 
 [manifest]
 members = [
+    "edx-api-client",
     "mitol-django-apigateway",
     "mitol-django-authentication",
     "mitol-django-benchmark",
@@ -1524,6 +1526,21 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/8c/8b/57666417c0f90f08bcafa776861060426765fdb422eb10212086fb811d26/dnspython-2.8.0.tar.gz", hash = "sha256:181d3c6996452cb1189c4046c61599b84a5a86e099562ffde77d26984ff26d0f", size = 368251, upload-time = "2025-09-07T18:58:00.022Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ba/5a/18ad964b0086c6e62e2e7500f7edc89e3faa45033c71c1893d34eed2b2de/dnspython-2.8.0-py3-none-any.whl", hash = "sha256:01d9bbc4a2d76bf0db7c1f729812ded6d912bd318d3b1cf81d30c0f845dbf3af", size = 331094, upload-time = "2025-09-07T18:57:58.071Z" },
+]
+
+[[package]]
+name = "edx-api-client"
+version = "1.14.0"
+source = { editable = "src/edx_api_client" }
+dependencies = [
+    { name = "python-dateutil" },
+    { name = "requests" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "python-dateutil", specifier = ">=2.5.3,<4.0.0" },
+    { name = "requests", specifier = ">=2.20.0" },
 ]
 
 [[package]]
@@ -3100,6 +3117,7 @@ name = "ol-django"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "edx-api-client" },
     { name = "mitol-django-apigateway" },
     { name = "mitol-django-authentication" },
     { name = "mitol-django-benchmark", extra = ["django", "drf", "factories", "postgres2"] },
@@ -3153,6 +3171,7 @@ dev = [
     { name = "pytest-lazy-fixtures" },
     { name = "pytest-mock" },
     { name = "pytest-responses" },
+    { name = "requests-mock" },
     { name = "responses" },
     { name = "ruff" },
     { name = "scriv" },
@@ -3178,6 +3197,7 @@ prek = [
 
 [package.metadata]
 requires-dist = [
+    { name = "edx-api-client", editable = "src/edx_api_client" },
     { name = "mitol-django-apigateway", editable = "src/apigateway" },
     { name = "mitol-django-authentication", editable = "src/authentication" },
     { name = "mitol-django-benchmark", extras = ["drf", "factories", "django", "postgres2"], editable = "src/benchmark" },
@@ -3231,6 +3251,7 @@ dev = [
     { name = "pytest-lazy-fixtures", specifier = ">=1" },
     { name = "pytest-mock", specifier = "==3.15.1" },
     { name = "pytest-responses", specifier = ">=0.5.1" },
+    { name = "requests-mock" },
     { name = "responses", specifier = "==0.26.3" },
     { name = "ruff" },
     { name = "scriv", extras = ["toml"] },
@@ -4299,6 +4320,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ac/c3/e2a2b89f2d3e2179abd6d00ebd70bff6273f37fb3e0cc209f48b39d00cbf/requests-2.34.2.tar.gz", hash = "sha256:f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed", size = 142856, upload-time = "2026-05-14T19:25:27.735Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl", hash = "sha256:2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0", size = 73075, upload-time = "2026-05-14T19:25:26.443Z" },
+]
+
+[[package]]
+name = "requests-mock"
+version = "1.12.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/92/32/587625f91f9a0a3d84688bf9cfc4b2480a7e8ec327cefd0ff2ac891fd2cf/requests-mock-1.12.1.tar.gz", hash = "sha256:e9e12e333b525156e82a3c852f22016b9158220d2f47454de9cae8a77d371401", size = 60901, upload-time = "2024-03-29T03:54:29.446Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/97/ec/889fbc557727da0c34a33850950310240f2040f3b1955175fdb2b36a8910/requests_mock-1.12.1-py2.py3-none-any.whl", hash = "sha256:b1e37054004cdd5e56c84454cc7df12b25f90f382159087f4b6915aaeef39563", size = 27695, upload-time = "2024-03-29T03:54:27.64Z" },
 ]
 
 [[package]]

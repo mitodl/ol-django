@@ -26,6 +26,7 @@ dependencies = [
   "mitol-django-scim[celery]",
   "mitol-django-apigateway",
   "mitol-django-observability",
+  "edx-api-client",
   # Metadata-only stand-in; see shims/urllib3-future/pyproject.toml.
   "urllib3-future",
 ]
@@ -62,6 +63,8 @@ dev = [
     "pytest-lazy-fixtures>=1",
     "pytest-mock==3.15.1",
     "responses==0.26.3",
+    # edx-api-client's tests mock HTTP with requests-mock rather than responses.
+    "requests-mock",
     "ruff",
     "scriv[toml]",
     "semver",
@@ -108,6 +111,7 @@ conflicts = [
 # eMudhra CA compromise (Oct 2026): certifi 2026.10.19 is inside the 7d cool-down.
 # Drop this once it clears the window (after 2026-10-27).
 certifi = "0d"
+edx-api-client = "0d"
 mitol-django-apigateway = "0d"
 mitol-django-authentication = "0d"
 mitol-django-benchmark = "0d"
@@ -156,6 +160,7 @@ mitol-django-scim = { workspace = true }
 mitol-django-apigateway = { workspace = true }
 mitol-django-observability = { workspace = true }
 mitol-drf-lint = { workspace = true }
+edx-api-client = { workspace = true }
 urllib3-future = { path = "shims/urllib3-future" }
 
 [tool.hatch.build.targets.sdist]
@@ -309,6 +314,18 @@ inline-quotes = "double"
   "N",
   "RUF012",
   "S101",
+]
+
+# Inherited from mitodl/edx-api-client, which was linted with flake8, not this
+# rule set. Burn these down separately; new code should not add to the list.
+"src/edx_api_client/**" = [
+   "BLE001", "C408", "D401", "E501", "EM101", "EM102", "FBT002", "FIX002", "PERF203",
+   "PERF401", "PLR0913", "PLR0917", "PLR2004", "PYI024", "S106", "S107", "SIM118",
+   "TD003", "TRY003", "TRY004", "TRY300", "TRY400",
+]
+"tests/edx_api_client/**" = [
+   "ARG001", "B017", "C414", "D401", "DTZ007", "E501", "PLR2004", "PT006", "PT009",
+   "PT011", "PT027", "PTH118", "PTH120", "PTH123", "S105", "SLF001",
 ]
 
 [tool.tox]

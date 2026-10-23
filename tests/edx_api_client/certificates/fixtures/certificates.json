@@ -1,0 +1,24 @@
+[
+	{
+	    "username": "bob",
+	    "course_id": "course-v1:edX+DemoX+Demo_Course",
+	    "certificate_type": "verified",
+	    "status": "downloadable",
+	    "download_url": "http://www.example.com/demo.pdf",
+	    "grade": "0.98",
+	    "created": "2015-07-31T00:00:00",
+	    "modified": "2015-08-31T00:00:00",
+	    "is_passing": true
+	},
+	{
+	    "username": "bob",
+	    "course_id": "course-v1:MITx+8.MechCX+2014_T1",
+	    "certificate_type": "honor",
+	    "status": "downloadable",
+	    "download_url": "http://www.example.com/mechcx.pdf",
+	    "grade": "0.88",
+	    "created": "2015-07-31T00:00:00",
+	    "modified": "2015-07-31T00:00:00",
+	    "is_passing": false
+	}
+]
