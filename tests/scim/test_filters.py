@@ -56,6 +56,21 @@ def test_username_matching_two_users_returns_both(settings, handle_user):
     assert set(_search('userName eq "john.doe@example.com"')) == {handle_user, other}
 
 
+@pytest.mark.parametrize(
+    "filter_query",
+    [
+        'userName co "DOE@EXAMPLE"',
+        'userName sw "JOHN.DOE"',
+        'userName ew "@EXAMPLE.COM"',
+    ],
+)
+def test_alias_substring_ops_ignore_case(settings, handle_user, filter_query):
+    """Substring comparisons against an alias are case-insensitive too"""
+    settings.MITOL_SCIM_USERNAME_FILTER_FIELDS = ["email"]
+
+    assert handle_user in _search(filter_query)
+
+
 @pytest.mark.usefixtures("handle_user")
 def test_aliases_do_not_apply_to_other_attributes(settings):
     """Only userName gets the configured aliases"""

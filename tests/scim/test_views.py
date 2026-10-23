@@ -1130,3 +1130,43 @@ def test_scim_user_patch_unmodeled_attributes(scim_client):
         user.first_name,
         user.last_name,
     )
+
+
+def _put_external_id(scim_client, user, external_id):
+    """PUT a user with the given externalId"""
+    return scim_client.put(
+        f"{reverse('scim:users')}/{user.scim_id}",
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.USER],
+                "emails": [{"value": user.email, "primary": True}],
+                "active": True,
+                "userName": user.username,
+                "externalId": external_id,
+            }
+        ),
+    )
+
+
+def test_scim_user_put_refuses_rebinding_global_id(scim_client):
+    """A PUT can't move a user to a different IdP identity"""
+    user = UserFactory.create(global_id="keycloak-1", scim_external_id="keycloak-1")
+
+    resp = _put_external_id(scim_client, user, "keycloak-2")
+
+    assert resp.status_code == HTTPStatus.CONFLICT, f"Error response: {resp.content}"
+    user.refresh_from_db()
+    assert (user.global_id, user.scim_external_id) == ("keycloak-1", "keycloak-1")
+
+
+@pytest.mark.parametrize("global_id", [None, "keycloak-1"])
+def test_scim_user_put_binds_matching_or_unset_global_id(scim_client, global_id):
+    """A PUT with the user's own id, or to a user with no id yet, applies"""
+    user = UserFactory.create(global_id=global_id)
+
+    resp = _put_external_id(scim_client, user, "keycloak-1")
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+    user.refresh_from_db()
+    assert (user.global_id, user.scim_external_id) == ("keycloak-1", "keycloak-1")
