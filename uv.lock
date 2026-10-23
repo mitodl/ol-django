@@ -66,6 +66,7 @@ members = [
     "ol-django",
     "testapp",
 ]
+constraints = [{ name = "certifi", specifier = ">=2026.10.19" }]
 
 [[package]]
 name = "aiofiles"
