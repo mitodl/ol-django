@@ -294,7 +294,7 @@ class CourseEnrollmentsV2(CourseEnrollments):
                 urljoin(self.base_url, self.enrollment_url), params
             )
             # A deleted course has no course_details, and v1 left it out.
-            if enrollment.get("course_details") is not None
+            if enrollment["course_details"] is not None
             and (include_inactive or enrollment["is_active"])
         ]
         return Enrollments(enrollments)
