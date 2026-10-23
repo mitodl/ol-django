@@ -11,7 +11,7 @@ from urllib.parse import urljoin
 import requests_mock
 from edx_api.client import EdxApi
 from edx_api.constants import ENROLLMENT_MODE_AUDIT, ENROLLMENT_MODE_VERIFIED
-from edx_api.enrollments import CourseEnrollments, CourseEnrollmentsV2
+from edx_api.enrollments import CourseEnrollments
 
 
 class EnrollmentsTest(TestCase):
@@ -198,12 +198,9 @@ class EnrollmentsV2Test(TestCase):
         ) as file_obj:
             cls.enrollments_list_json = json.loads(file_obj.read())
 
-        cls.enrollment_url = urljoin(
-            cls.base_edx_url, CourseEnrollmentsV2.enrollment_url
-        )
-        cls.enrollment_list_url = urljoin(
-            cls.base_edx_url, CourseEnrollmentsV2.enrollment_list_url
-        )
+        # Literal router paths, so a wrong URL on the client fails these tests.
+        cls.enrollment_url = f"{cls.base_edx_url}/api/enrollment/v2/enrollment/"
+        cls.enrollment_list_url = f"{cls.base_edx_url}/api/enrollment/v2/enrollments/"
         cls.enrollment_client = EdxApi(
             {"access_token": "foobar"}, cls.base_edx_url
         ).enrollments_v2
