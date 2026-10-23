@@ -216,3 +216,85 @@ class CourseEnrollments:
         )
         resp.raise_for_status()
         return Enrollment(resp.json())
+
+
+class CourseEnrollmentsV2(CourseEnrollments):
+    """
+    edX student enrollments client for the v2 Enrollment API
+
+    v2 accepts only JWT or session authentication, so the requester must send a
+    JWT (see ``EdxApi.enrollments_v2``). Its list endpoints use page-number
+    pagination instead of v1's cursor, and the per-user list returns inactive
+    enrollments and enrollments in deleted courses, which v1 filtered out.
+    """
+
+    enrollment_url = "/api/enrollment/v2/enrollment/"
+    enrollment_list_url = "/api/enrollment/v2/enrollments/"
+
+    def _get_all_pages(self, url, params):
+        """
+        Yield every result from a v2 paginated list, following its ``next`` links.
+
+        Args:
+            url (str): URL of the first page
+            params (dict): Query parameters for the first page. ``next`` links
+                already carry them.
+        """
+        while url:
+            resp = self.requester.get(url, params=params)
+            resp.raise_for_status()
+            resp_json = resp.json()
+            yield from resp_json["results"]
+            url = resp_json["next"]
+            params = None
+
+    def get_enrollments(self, course_id=None, usernames=None):
+        """
+        List all course enrollments. Requires an admin (``is_staff``) user.
+
+        Args:
+            course_id (str, optional): If used enrollments will be filtered to the specified
+                course id.
+            usernames (list, optional): List of usernames to filter enrollments.
+
+        Returns:
+            Generator with an instance of :class:`Enrollment` for each item.
+        """
+        params = {}
+        if course_id is not None:
+            params["course_key"] = course_id
+        if usernames is not None and isinstance(usernames, list):
+            params["username"] = ",".join(usernames)
+
+        for enrollment in self._get_all_pages(
+            urljoin(self.base_url, self.enrollment_list_url), params
+        ):
+            yield Enrollment(enrollment)
+
+    def get_student_enrollments(self, username=None, include_inactive=False):
+        """
+        Returns an Enrollments object with a user's enrollments.
+
+        Args:
+            username (str, optional): The user whose enrollments to list. Defaults to
+                the user the JWT was issued for. Listing another user's enrollments in
+                full requires a global staff user.
+            include_inactive (bool): Include inactive enrollments. Defaults to False,
+                which matches what v1 returned.
+
+        Returns:
+            Enrollments: object representing the student enrollments
+        """
+        params = {"page_size": 100}
+        if username is not None:
+            params["user"] = username
+        enrollments = [
+            enrollment
+            for enrollment in self._get_all_pages(
+                urljoin(self.base_url, self.enrollment_url), params
+            )
+            # A deleted course has no course_details, and v1 left it out.
+            if enrollment.get("course_details") is not None
+            and (include_inactive or enrollment["is_active"])
+        ]
+        return Enrollments(enrollments)

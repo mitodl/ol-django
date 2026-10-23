@@ -11,7 +11,7 @@ from urllib.parse import urljoin
 import requests_mock
 from edx_api.client import EdxApi
 from edx_api.constants import ENROLLMENT_MODE_AUDIT, ENROLLMENT_MODE_VERIFIED
-from edx_api.enrollments import CourseEnrollments
+from edx_api.enrollments import CourseEnrollments, CourseEnrollmentsV2
 
 
 class EnrollmentsTest(TestCase):
@@ -176,3 +176,135 @@ class EnrollmentsTest(TestCase):
             },
         )
         assert returned_enrollment.json == self.enrollments_json[0]
+
+
+class EnrollmentsV2Test(TestCase):
+    """
+    Tests for the v2 enrollments client
+    """
+
+    base_edx_url = "http://edx.example.com"
+
+    @classmethod
+    def setUpClass(cls):
+        """Load the fixtures and build a v2 client"""
+        with open(
+            os.path.join(os.path.dirname(__file__), "fixtures/user_enrollments.json")
+        ) as file_obj:
+            cls.enrollments_json = json.loads(file_obj.read())
+
+        with open(
+            os.path.join(os.path.dirname(__file__), "fixtures/enrollments_list.json")
+        ) as file_obj:
+            cls.enrollments_list_json = json.loads(file_obj.read())
+
+        cls.enrollment_url = urljoin(
+            cls.base_edx_url, CourseEnrollmentsV2.enrollment_url
+        )
+        cls.enrollment_list_url = urljoin(
+            cls.base_edx_url, CourseEnrollmentsV2.enrollment_list_url
+        )
+        cls.enrollment_client = EdxApi(
+            {"access_token": "foobar"}, cls.base_edx_url
+        ).enrollments_v2
+
+    @staticmethod
+    def _page(results, next_url=None):
+        """A v2 (ADR 0032) pagination envelope"""
+        return {
+            "count": len(results),
+            "num_pages": 1,
+            "current_page": 1,
+            "start": 0,
+            "next": next_url,
+            "previous": None,
+            "results": results,
+        }
+
+    @requests_mock.mock()
+    def test_create_enrollment(self, request_mock):
+        """
+        Enrollment is created through the v2 router URL, with the same body as v1
+        """
+        request_mock.post(self.enrollment_url, json=self.enrollments_json[0])
+        returned_enrollment = self.enrollment_client.create_student_enrollment(
+            "course_id",
+            mode=ENROLLMENT_MODE_VERIFIED,
+            username="user",
+            force_enrollment=True,
+        )
+        assert request_mock.last_request.json() == {
+            "course_details": {"course_id": "course_id"},
+            "mode": ENROLLMENT_MODE_VERIFIED,
+            "user": "user",
+            "force_enrollment": True,
+        }
+        assert request_mock.last_request.headers["Authorization"] == "jwt foobar"
+        assert returned_enrollment.json == self.enrollments_json[0]
+
+    @requests_mock.mock()
+    def test_deactivate_enrollment(self, request_mock):
+        """
+        Deactivation posts is_active=False to the v2 router URL
+        """
+        request_mock.post(self.enrollment_url, json=self.enrollments_json[0])
+        self.enrollment_client.deactivate_enrollment("course_id", username="user")
+        assert request_mock.last_request.json() == {
+            "course_details": {"course_id": "course_id"},
+            "is_active": False,
+            "user": "user",
+        }
+
+    @requests_mock.mock()
+    def test_get_enrollments(self, request_mock):
+        """
+        The admin list sends course_key and follows page-number next links
+        """
+        next_url = (
+            f"{self.enrollment_list_url}?course_key=course_id&page=2&username=a%2Cb"
+        )
+        request_mock.get(
+            self.enrollment_list_url,
+            json=self._page(self.enrollments_list_json[:2], next_url),
+        )
+        request_mock.get(next_url, json=self._page(self.enrollments_list_json[2:]))
+        enrollments = list(
+            self.enrollment_client.get_enrollments(
+                course_id="course_id", usernames=["a", "b"]
+            )
+        )
+        assert [
+            enrollment.json for enrollment in enrollments
+        ] == self.enrollments_list_json
+        first_request, second_request = request_mock.request_history
+        assert first_request.qs == {"course_key": ["course_id"], "username": ["a,b"]}
+        assert second_request.url == next_url
+
+    @requests_mock.mock()
+    def test_get_student_enrollments(self, request_mock):
+        """
+        The per-user list is collected across pages and drops what v1 left out
+        """
+        inactive = dict(self.enrollments_json[1], is_active=False)
+        deleted_course = dict(self.enrollments_json[0], course_details=None)
+        next_url = f"{self.enrollment_url}?page=2&page_size=100&user=user"
+        request_mock.get(
+            self.enrollment_url, json=self._page([self.enrollments_json[0]], next_url)
+        )
+        request_mock.get(next_url, json=self._page([inactive, deleted_course]))
+        enrollments = self.enrollment_client.get_student_enrollments(username="user")
+        assert request_mock.request_history[0].qs == {
+            "page_size": ["100"],
+            "user": ["user"],
+        }
+        assert [enrollment.json for enrollment in enrollments.enrolled_courses] == [
+            self.enrollments_json[0]
+        ]
+
+        enrollments = self.enrollment_client.get_student_enrollments(
+            username="user", include_inactive=True
+        )
+        assert [enrollment.json for enrollment in enrollments.enrolled_courses] == [
+            self.enrollments_json[0],
+            inactive,
+        ]
