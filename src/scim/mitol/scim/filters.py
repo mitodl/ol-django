@@ -36,6 +36,9 @@ class FilterQuery:
     dj_alias_op_mapping = {
         "eq": "iexact",
         "ne": "iexact",
+        "co": "icontains",
+        "sw": "istartswith",
+        "ew": "iendswith",
     }
 
     dj_op_mapping_per_field_overrides: dict[tuple[str, str | None], dict[str, str]] = {}

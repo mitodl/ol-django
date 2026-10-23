@@ -43,6 +43,9 @@ In the SCIM admin console, do the following:
   plugin's `userName eq` lookup finds them. If the app's `username` is its own
   value (e.g. a public handle), also set
   `MITOL_SCIM_USERNAME_UPDATES_USERNAME=false` so the plugin can't overwrite it.
+  The plugin resolves users this way after a 409 and then sends a full PUT,
+  so an adapter that overrides `from_dict()` has to call `set_username()` and
+  `set_external_id()` before either setting is turned on.
 - Go to the Synchronization tab and perform one:
   - Identifier attribute: email
   - Synchronization strategy: Search and Bulk
