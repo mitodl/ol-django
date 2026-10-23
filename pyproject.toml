@@ -93,6 +93,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.uv]
+constraint-dependencies = ["certifi>=2026.10.19"]  # eMudhra CA compromise: never resolve a certifi that trusts the compromised CAs
 managed = true
 default-groups = ["dev"]
 exclude-newer = "7d"
@@ -107,6 +108,9 @@ conflicts = [
 ]
 
 [tool.uv.exclude-newer-package]
+# eMudhra CA compromise (Oct 2026): certifi 2026.10.19 is inside the 7d cool-down.
+# Drop this once it clears the window (after 2026-10-27).
+certifi = "0d"
 edx-api-client = "0d"
 mitol-django-apigateway = "0d"
 mitol-django-authentication = "0d"
