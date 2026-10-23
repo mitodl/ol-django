@@ -104,6 +104,9 @@ conflicts = [
 ]
 
 [tool.uv.exclude-newer-package]
+# eMudhra CA compromise (Oct 2026): certifi 2026.10.19 is inside the 7d cool-down.
+# Drop this once it clears the window (after 2026-10-27).
+certifi = "0d"
 mitol-django-apigateway = "0d"
 mitol-django-authentication = "0d"
 mitol-django-benchmark = "0d"
