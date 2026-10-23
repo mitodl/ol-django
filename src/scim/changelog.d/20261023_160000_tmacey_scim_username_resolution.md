@@ -42,3 +42,6 @@
 
 - A PUT that would change an existing user's non-empty `global_id` to a
   different value now returns 409 instead of applying (see `set_external_id()`).
+
+- A PATCH `add` of `externalId` now goes through `set_external_id()`, so it
+  also sets `global_id` and gets the same 409 guard as a PUT.

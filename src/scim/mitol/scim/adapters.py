@@ -259,7 +259,8 @@ class UserAdapter(SCIMUser):
             return
 
         if path.first_path == ("externalId", None, None):
-            self.obj.scim_external_id = value
+            self.set_external_id(value)
+            # PatchView doesn't save after the handlers run
             self.obj.save()
 
     def parse_scim_for_keycloak_payload(self, payload: str) -> dict:
