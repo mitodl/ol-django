@@ -45,7 +45,7 @@ dev = [
     "click",
     "click-log",
     "cloup",
-    "coverage<=7.16.0",
+    "coverage<=7.16.2",
     "deepmerge>=2.0",
     "dj-database-url",
     "django-stubs[compatible-mypy]",
