@@ -45,3 +45,6 @@
 
 - A PATCH `add` of `externalId` now goes through `set_external_id()`, so it
   also sets `global_id` and gets the same 409 guard as a PUT.
+
+- The app now refuses to start when `MITOL_SCIM_USERNAME_FILTER_FIELDS` names
+  something that isn't a column on the user model. A typo would otherwise
