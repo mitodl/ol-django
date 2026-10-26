@@ -48,3 +48,8 @@
 
 - The app now refuses to start when `MITOL_SCIM_USERNAME_FILTER_FIELDS` names
   something that isn't a column on the user model. A typo would otherwise
+  surface as a 500 on the first `userName` lookup.
+
+- Only `eq`, `ne`, `co`, `sw` and `ew` comparisons on `userName` consult the
+  aliases. Ordering comparisons (`gt`, `ge`, `lt`, `le`) compare against
+  `username` alone.

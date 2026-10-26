@@ -71,6 +71,14 @@ def test_alias_substring_ops_ignore_case(settings, handle_user, filter_query):
     assert handle_user in _search(filter_query)
 
 
+def test_aliases_do_not_apply_to_ordering_ops(settings):
+    """An ordering comparison on userName compares against username alone"""
+    settings.MITOL_SCIM_USERNAME_FILTER_FIELDS = ["email"]
+    user = UserFactory.create(username="zzz", email="aaa@example.com")
+
+    assert user not in _search('userName lt "m"')
+
+
 @pytest.mark.usefixtures("handle_user")
 def test_aliases_do_not_apply_to_other_attributes(settings):
     """Only userName gets the configured aliases"""

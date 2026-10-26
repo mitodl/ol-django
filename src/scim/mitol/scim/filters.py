@@ -32,7 +32,8 @@ class FilterQuery:
 
     dj_negated_ops = ("ne", "pr")
 
-    #: Lookups for an alias path; aliases compare case-insensitively
+    #: Lookups for an alias path; aliases compare case-insensitively. Operators
+    #: not listed here compare against the ``attr_map`` path only.
     dj_alias_op_mapping = {
         "eq": "iexact",
         "ne": "iexact",
@@ -88,9 +89,10 @@ class FilterQuery:
 
         q = cls._lookup(cls.attr_map.get(scim_keys, scim_keys), dj_op, parsed.value)
 
-        alias_dj_op = cls.dj_alias_op_mapping.get(op_name, cls.dj_op_mapping[op_name])
-        for alias in cls.get_attr_aliases(scim_keys):
-            q |= cls._lookup(alias, alias_dj_op, parsed.value)
+        alias_dj_op = cls.dj_alias_op_mapping.get(op_name)
+        if alias_dj_op is not None:
+            for alias in cls.get_attr_aliases(scim_keys):
+                q |= cls._lookup(alias, alias_dj_op, parsed.value)
 
         if parsed.comparison_operator in cls.dj_negated_ops:
             q = ~q
