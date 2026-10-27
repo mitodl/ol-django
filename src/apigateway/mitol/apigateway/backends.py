@@ -10,45 +10,10 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import RemoteUserBackend
 from django.db import transaction
 from mitol.apigateway.api import decode_x_header
+from mitol.common.utils.config import SettingsRef
 
 log = logging.getLogger(__name__)
 User = get_user_model()
-
-
-class SettingDefault:
-    """
-    Attribute that reads a Django setting on access unless the instance sets it.
-
-    Reading on access lets ``override_settings`` take effect on a backend that
-    already exists, and assigning on the instance still works as it did when
-    these were plain attributes set in ``__init__``.
-    """
-
-    def __init__(self, setting_name: str):
-        """
-        :param setting_name: the Django setting that supplies the default
-        """
-        self.setting_name = setting_name
-
-    def __set_name__(self, owner, name):
-        """Record the attribute name used to store an instance override."""
-        self.override_name = f"_{name}_override"
-
-    def __get__(self, instance, owner=None):
-        """
-        Return the instance override if set, else the setting's value.
-
-        :returns: the attribute value, or this descriptor on class access
-        """
-        if instance is None:
-            return self
-        if self.override_name in instance.__dict__:
-            return instance.__dict__[self.override_name]
-        return getattr(settings, self.setting_name)
-
-    def __set__(self, instance, value):
-        """Override the setting for this instance."""
-        instance.__dict__[self.override_name] = value
 
 
 class RemoteUserCustomFieldBackend(RemoteUserBackend):
@@ -116,9 +81,9 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
     we'll want to toggle the user creation code with a setting.
     """
 
-    lookup_field = SettingDefault("MITOL_APIGATEWAY_USER_LOOKUP_FIELD")
-    create_unknown_user = SettingDefault("MITOL_APIGATEWAY_USERINFO_CREATE")
-    update_known_user = SettingDefault("MITOL_APIGATEWAY_USERINFO_UPDATE")
+    lookup_field = SettingsRef("MITOL_APIGATEWAY_USER_LOOKUP_FIELD")
+    create_unknown_user = SettingsRef("MITOL_APIGATEWAY_USERINFO_CREATE")
+    update_known_user = SettingsRef("MITOL_APIGATEWAY_USERINFO_UPDATE")
 
     def authenticate(self, request, remote_user):
         """
