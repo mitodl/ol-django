@@ -1,0 +1,33 @@
+# Metadata-only stand-in for the real `urllib3-future` distribution, used by this
+# workspace's own environment. It is not published.
+#
+# cybersource-rest-client-python >= 0.0.70 declares `Requires-Dist: urllib3-future`, and
+# CyberSource.api_client.ApiClient.__init__ calls
+# pkg_resources.require("cybersource-rest-client-python"), which resolves that
+# requirement against the installed distributions. So the name has to be installed or
+# every CyberSource API client raises pkg_resources.DistributionNotFound.
+#
+# The real package cannot be installed: its wheel ships a top-level `urllib3/` package
+# plus a .pth that copies it over site-packages/urllib3 at interpreter startup, replacing
+# the genuine urllib3 that requests, botocore, and sentry-sdk use. Tests would then run
+# against a urllib3 no consuming application runs.
+#
+# This distribution carries the name and nothing else. The SDK still passes
+# urllib3-future-only kwargs to urllib3.PoolManager; see
+# mitol/payment_gateway/cybersource_compat.py, which filters them out.
+#
+# If a dependency ever requires a *version* of urllib3-future, resolution fails here
+# rather than silently swapping urllib3 back out. Revisit this stand-in at that point.
+
+[project]
+name = "urllib3-future"
+version = "0.0.0"
+description = "Metadata-only stand-in: claims the urllib3-future name without shipping code."
+requires-python = ">=3.11"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = []

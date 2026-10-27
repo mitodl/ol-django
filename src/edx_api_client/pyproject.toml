@@ -1,0 +1,47 @@
+[project]
+name = "edx-api-client"
+version = "1.14.0"
+description = "Python interface to the edX REST APIs"
+authors = [
+    { name = "MIT Open Learning Engineering", email = "odl-devops@mit.edu" }
+]
+# Unlike the rest of ol-django, this package keeps the AGPL license it was
+# published under before it moved here.
+license = "AGPL-3.0-only"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+readme = "README.md"
+keywords = ["edx", "rest api"]
+dependencies = [
+    "python-dateutil>=2.5.3,<4.0.0",
+    "requests>=2.20.0",
+]
+
+[project.urls]
+Repository = "https://github.com/mitodl/ol-django"
+
+# Semantic versioning, not the date-based scheme the mitol-django-* packages
+# use: consumers pin semver versions of edx-api-client (for example >=1.14.0,<2).
+[tool.bumpver]
+current_version = "1.14.0"
+version_pattern = "MAJOR.MINOR.PATCH"
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    'version = "{version}"',
+]
+"edx_api/__init__.py" = [
+    '__version__ = "{version}"',
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+include = ["CHANGELOG.md", "README.md", "RELEASE.rst", "LICENSE", "**/*.py"]
+exclude = ["BUILD", "pyproject.toml"]
+
+[tool.hatch.build.targets.wheel]
+include = ["edx_api/**/*"]
+exclude = ["BUILD", "pyproject.toml"]

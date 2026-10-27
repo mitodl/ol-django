@@ -715,7 +715,7 @@ def create_transaction_detail_record():
                         "initiator": cs_models.TssV2TransactionsGet200ResponseProcessingInformationAuthorizationOptionsInitiator(  # noqa: E501
                             **{
                                 "credential_stored_on_file": None,
-                                "merchant_initiated_transaction": cs_models.Ptsv2paymentsProcessingInformationAuthorizationOptionsInitiatorMerchantInitiatedTransaction(  # noqa: E501
+                                "merchant_initiated_transaction": cs_models.ProcessingInfoAuthorizationOptionsInitiatorMerchantInitiatedTransaction(  # noqa: E501
                                     **{
                                         "original_authorized_amount": None,
                                         "previous_transaction_id": None,

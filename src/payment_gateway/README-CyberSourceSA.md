@@ -33,3 +33,41 @@ The below settings come from the CyberSource business center, under Payment Conf
 Values that do not come from CyberSource account directly:
 
 - ```MITOL_PAYMENT_GATEWAY_CYBERSOURCE_REST_API_ENVIRONMENT``` - The current default value for this is `apitest.cybersource.com`. The possible values are `apitest.cybersource.com` for Test CyberSource REST API and `api.cybersource.com` for Production CyberSource REST API.
+
+**Keeping the genuine urllib3**
+
+`cybersource-rest-client-python` depends on `urllib3-future` rather than `urllib3`. The `urllib3-future` wheel ships a top-level `urllib3` package and a `.pth` file that copies it over `site-packages/urllib3` whenever the interpreter starts, so installing it replaces the urllib3 that requests, botocore, and sentry-sdk use for the whole environment.
+
+To keep the genuine urllib3, install a metadata-only `urllib3-future` in its place. The name has to be installed, because the SDK's `ApiClient` calls `pkg_resources.require("cybersource-rest-client-python")`, which checks every declared requirement. With uv, add a local project that declares the name and ships no code:
+
+```toml
+# shims/urllib3-future/pyproject.toml
+[project]
+name = "urllib3-future"
+version = "0.0.0"
+requires-python = ">=3.11"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = []
+```
+
+and point your project at it:
+
+```toml
+[project]
+dependencies = [
+    # ...
+    "urllib3-future",
+]
+
+[tool.uv.sources]
+urllib3-future = { path = "shims/urllib3-future" }
+```
+
+Copy the `shims/` directory into your image before `uv sync`. ol-django's own workspace does the same (see `shims/urllib3-future/pyproject.toml` at the repo root).
+
+The SDK also passes `keepalive_delay` and `keepalive_idle_window` to `urllib3.PoolManager`, and only urllib3-future accepts those. `PaymentGatewayApp.ready()` applies `mitol.payment_gateway.cybersource_compat.apply_cybersource_urllib3_compat()`, which removes those arguments before they reach urllib3, so no application code is needed for that part. Applications that carried their own copy of this patch can delete it.

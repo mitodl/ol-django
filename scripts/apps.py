@@ -40,6 +40,21 @@ class App:
     def version_git_tag(self):
         return f"{self.name}/v{self.version}"
 
+    @property
+    def version_files(self) -> list[str]:
+        """App-relative paths of the files bumpver rewrites when the version changes
+
+        Read from ``[tool.bumpver.file_patterns]`` rather than assumed, because not
+        every app keeps its code under ``mitol/<appname>/`` (edx-api-client's is
+        ``edx_api/``).
+        """
+        return list(self.pyproject["tool"]["bumpver"]["file_patterns"])
+
+    @property
+    def is_semver(self) -> bool:
+        """Whether the app versions with MAJOR.MINOR.PATCH instead of a date"""
+        return "MAJOR" in self.pyproject["tool"]["bumpver"]["version_pattern"]
+
     @cached_property
     def absolute_path(self) -> Path:
         return get_app_dir(self.module_name).absolute()

@@ -22,18 +22,20 @@ def version(ctx: Context):
 def _declared_versions(app: App) -> dict[str, str | None]:
     """Map each place an app declares its version to the value found there"""
     pyproject = app.pyproject
-    init_path = app.absolute_path / "mitol" / app.module_name / "__init__.py"
-    match = DUNDER_VERSION.search(init_path.read_text())
-
-    return {
+    declared = {
         "pyproject.toml [project] version": pyproject["project"]["version"],
         "pyproject.toml [tool.bumpver] current_version": pyproject["tool"]["bumpver"][
             "current_version"
         ],
-        f"mitol/{app.module_name}/__init__.py __version__": (
-            match.group("version") if match else None
-        ),
     }
+
+    for path in app.version_files:
+        if path == "pyproject.toml":
+            continue
+        match = DUNDER_VERSION.search((app.absolute_path / path).read_text())
+        declared[f"{path} __version__"] = match.group("version") if match else None
+
+    return declared
 
 
 @version.command("check")

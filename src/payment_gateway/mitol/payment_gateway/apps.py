@@ -20,3 +20,12 @@ class PaymentGatewayApp(BaseApp):
 
     # necessary because this is a namespaced app
     path = os.path.dirname(os.path.abspath(__file__))  # noqa: PTH100, PTH120
+
+    def ready(self):
+        """Patch the CyberSource SDK so it runs against the genuine urllib3"""
+        from mitol.payment_gateway.cybersource_compat import (  # noqa: PLC0415
+            apply_cybersource_urllib3_compat,
+        )
+
+        super().ready()
+        apply_cybersource_urllib3_compat()

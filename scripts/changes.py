@@ -110,8 +110,7 @@ class Changes:
         # version. Everything else under the app is code, and code ships in its
         # own PR with its own changelog fragment.
         version_declarations = {
-            str(app.relative_path / "pyproject.toml"),
-            str(app.relative_path / "mitol" / app.module_name / "__init__.py"),
+            str(app.relative_path / path) for path in app.version_files
         }
 
         code_changes = [
