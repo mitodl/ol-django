@@ -25,8 +25,8 @@ mitol-django-hubspot-api = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-common = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-olposthog = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-google-sheets-deferrals = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-django-oauth-toolkit-extensions = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-mail = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-oauth-toolkit-extensions = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-payment-gateway = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-transcoding = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-google-sheets-refunds = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
@@ -34,15 +34,17 @@ mitol-django-apigateway = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-drf-lint = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-observability = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-authentication = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-openedx = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-benchmark = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-geoip = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-digital-credentials = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-django-openedx = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-scim = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-dependency-floors = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 
 [manifest]
 members = [
     "edx-api-client",
+    "mitol-dependency-floors",
     "mitol-django-apigateway",
     "mitol-django-authentication",
     "mitol-django-benchmark",
@@ -2412,6 +2414,17 @@ wheels = [
 ]
 
 [[package]]
+name = "mitol-dependency-floors"
+version = "2026.10.28"
+source = { editable = "src/dependency_floors" }
+dependencies = [
+    { name = "packaging" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "packaging", specifier = ">=23.0" }]
+
+[[package]]
 name = "mitol-django-apigateway"
 version = "2026.9.8"
 source = { editable = "src/apigateway" }
@@ -3157,6 +3170,7 @@ dev = [
     { name = "freezegun" },
     { name = "gitpython" },
     { name = "ipdb" },
+    { name = "mitol-dependency-floors" },
     { name = "mitol-drf-lint" },
     { name = "more-itertools" },
     { name = "mypy" },
@@ -3237,6 +3251,7 @@ dev = [
     { name = "freezegun", specifier = ">=1.5.1" },
     { name = "gitpython" },
     { name = "ipdb" },
+    { name = "mitol-dependency-floors", editable = "src/dependency_floors" },
     { name = "mitol-drf-lint", editable = "src/drf_lint" },
     { name = "more-itertools", specifier = ">=10.6.0" },
     { name = "mypy" },

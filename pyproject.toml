@@ -74,6 +74,7 @@ dev = [
     "more-itertools>=10.6.0",
     "deepdiff>=8.5.0",
     "mitol-drf-lint",
+    "mitol-dependency-floors",
 ]
 django42 = [
   "Django>=4.2,<5.0"
@@ -127,6 +128,7 @@ mitol-django-openedx = "0d"
 mitol-django-payment-gateway = "0d"
 mitol-django-scim = "0d"
 mitol-django-transcoding = "0d"
+mitol-dependency-floors = "0d"
 mitol-drf-lint = "0d"
 
 [tool.hatch.metadata]
@@ -157,6 +159,7 @@ mitol-django-scim = { workspace = true }
 mitol-django-apigateway = { workspace = true }
 mitol-django-observability = { workspace = true }
 mitol-drf-lint = { workspace = true }
+mitol-dependency-floors = { workspace = true }
 edx-api-client = { workspace = true }
 urllib3-future = { path = "shims/urllib3-future" }
 
@@ -299,6 +302,10 @@ inline-quotes = "double"
 "tests/**" = ["S101"]
 "test_*.py" = ["S101"]
 "**/migrations/**" = ["ARG001", "D100", "D101", "E501"]
+# The dependency-floors fixture factory describes a whole synthetic repository
+# — floors, lockfile, members, constraints — so its knobs are the interface,
+# not an accident.
+"tests/dependency_floors/conftest.py" = ["PLR0913"]
 # drf-lint's cross-file fixtures are inputs to the linter, not code that runs.
 # They deliberately contain undeclared relations, unused arguments and other
 # shapes a real project would flag.
