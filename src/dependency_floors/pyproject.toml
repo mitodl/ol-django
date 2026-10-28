@@ -1,0 +1,47 @@
+[project]
+name = "mitol-dependency-floors"
+version = "2026.10.28"
+description = "Checks that a repository's manifests and lockfile enforce the dependency version floors it declares"
+authors = [
+    { name = "MIT Open Learning Engineering", email = "odl-devops@mit.edu" }
+]
+license = "BSD-3-Clause"
+requires-python = ">=3.11"
+readme = "README.md"
+dependencies = [
+    "packaging>=23.0",
+]
+
+[project.scripts]
+dependency-floors = "mitol.dependency_floors.cli:main"
+# Same entry point under the distribution name, so `uvx mitol-dependency-floors`
+# resolves. Without it uv refuses — it looks for an executable matching the
+# package name and tells you to use `uvx --from ... dependency-floors` instead.
+mitol-dependency-floors = "mitol.dependency_floors.cli:main"
+
+[project.urls]
+Repository = "https://github.com/mitodl/ol-django"
+
+[tool.bumpver]
+current_version = "2026.10.28"
+version_pattern = "YYYY.MM.DD[.INC0]"
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    'version = "{version}"',
+]
+"mitol/dependency_floors/__init__.py" = [
+    '__version__ = "{version}"',
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]
+exclude = ["BUILD", "pyproject.toml"]
+
+[tool.hatch.build.targets.wheel]
+include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py"]
+exclude = ["BUILD", "pyproject.toml"]
