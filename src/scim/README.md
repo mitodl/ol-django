@@ -37,15 +37,6 @@ In the SCIM admin console, do the following:
   - Add an `emailVerified` attribute (using the option specific to this in the
     dropdown)
 - On the Realm Assignments tab, assign to the `olapps` realm
-- If users can exist in the app before Keycloak provisions them, and their
-  `username` isn't their Keycloak username (in the `olapps` realm that's the
-  email), set `MITOL_SCIM_USERNAME_FILTER_FIELDS=scim_username,email` so the
-  plugin's `userName eq` lookup finds them. If the app's `username` is its own
-  value (e.g. a public handle), also set
-  `MITOL_SCIM_USERNAME_UPDATES_USERNAME=false` so the plugin can't overwrite it.
-  The plugin resolves users this way after a 409 and then sends a full PUT,
-  so an adapter that overrides `from_dict()` has to call `set_username()` and
-  `set_external_id()` before either setting is turned on.
 - Go to the Synchronization tab and perform one:
   - Identifier attribute: email
   - Synchronization strategy: Search and Bulk
