@@ -6,6 +6,7 @@ readme = "README.md"
 license = "BSD-3-Clause"
 requires-python = ">=3.11"
 dependencies = [
+    "certifi>=2026.10.19",
     "django>=4.2",
     "mitol-django-common",
     "opentelemetry-api>=1.31.0",

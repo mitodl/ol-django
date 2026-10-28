@@ -4,6 +4,7 @@ version = "2026.4.2"
 description = "MIT Open Learning django app extensions for mail"
 dependencies = [
 "beautifulsoup4>=4.6.0",
+"certifi>=2026.10.19",
 "django-anymail>=6.0",
 "django-stubs>=1.13.1",
 "django>=4.2",

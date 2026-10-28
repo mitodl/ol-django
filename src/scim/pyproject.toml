@@ -3,6 +3,7 @@ name = "mitol-django-scim"
 version = "2026.10.9"
 description = "Django application for SCIM integrations"
 dependencies = [
+  "certifi>=2026.10.19",
   "django-stubs>=1.13.1",
   "django>=4.2",
   "django_scim2>=0.19.1",

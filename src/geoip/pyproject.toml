@@ -7,7 +7,7 @@ dependencies = [
 "django>=4.2",
 "factory-boy~=3.2",
 "faker>=4.17.1",
-"mitol-django-common"
+"mitol-django-common>=2026.10.29"
 ]
 readme = "README.md"
 license = "BSD-3-Clause"
