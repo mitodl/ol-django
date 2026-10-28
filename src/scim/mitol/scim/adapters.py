@@ -4,7 +4,6 @@ import logging
 import warnings
 from typing import Union
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django_scim import exceptions
@@ -167,9 +166,10 @@ class UserAdapter(SCIMUser):
         self.parse_emails(d.get("emails"))
 
         self.obj.is_active = d.get("active", True)
-        self.set_username(d.get("userName"))
+        self.obj.username = d.get("userName")
         self.obj.first_name = d.get("name", {}).get("givenName", "")
         self.obj.last_name = d.get("name", {}).get("familyName", "")
+        self.obj.scim_username = d.get("userName")
         self.set_external_id(d.get("externalId"))
 
     def set_external_id(self, external_id: str | None):
@@ -199,21 +199,6 @@ class UserAdapter(SCIMUser):
         # None, not "": global_id is unique, and NULLs are distinct where
         # empty strings are not - two users with no external id would collide.
         self.obj.global_id = external_id or None
-
-    def set_username(self, username: str | None):
-        """
-        Apply an inbound SCIM userName to the user.
-
-        scim_username always records what the client sent. username follows it
-        on create, and on update only when MITOL_SCIM_USERNAME_UPDATES_USERNAME
-        is set. An app whose username is its own value (e.g. a public handle)
-        turns that off so a client can't rewrite it.
-
-        :param username: the userName from the SCIM payload
-        """
-        self.obj.scim_username = username
-        if self.is_new_user or settings.MITOL_SCIM_USERNAME_UPDATES_USERNAME:
-            self.obj.username = username
 
     def _save_user(self):
         self.obj.save()
@@ -313,10 +298,7 @@ class UserAdapter(SCIMUser):
 
     def _handle_replace_nested_path(self, nested_path, nested_value):
         """Handle processing a nested path"""
-        # ahead of ATTR_MAP so a subclass mapping userName can't bypass it
-        if nested_path.first_path == ("userName", None, None):
-            self.set_username(nested_value)
-        elif nested_path.first_path in self.ATTR_MAP:
+        if nested_path.first_path in self.ATTR_MAP:
             setattr(self.obj, self.ATTR_MAP[nested_path.first_path], nested_value)
         elif nested_path.first_path == ("emails", None, None):
             self.parse_emails(nested_value)
