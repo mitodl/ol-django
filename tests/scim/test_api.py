@@ -375,3 +375,93 @@ def test_sync_users_to_scim_remote_keeps_matching_binding(responses: RequestsMoc
     assert state.success
     assert state.external_id == "keycloak-1"
     assert (user.global_id, user.scim_external_id) == ("keycloak-1", "keycloak-1")
+
+
+SEARCH_URL = "https://keycloak:8080/realms/ol-local/scim/v2/Users/.search"
+
+
+def _mock_search_pages(responses: RequestsMock, *pages: list[tuple[str, "User"]]):
+    """Mock a search response per page of (Keycloak id, user) hits, then an empty one"""
+    for page in [*pages, []]:
+        responses.post(
+            SEARCH_URL,
+            json={
+                "schemas": [SchemaURI.LIST_RESPONSE],
+                "Resources": [
+                    {
+                        "id": external_id,
+                        "emails": [{"value": user.email.lower(), "primary": True}],
+                    }
+                    for external_id, user in page
+                ],
+            },
+        )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("global_id", [None, "keycloak-1"])
+@pytest.mark.usefixtures("mock_client_init_requests")
+def test_sync_users_to_scim_remote_single_hit(responses: RequestsMock, global_id):
+    """One search hit binds an unbound user and keeps a matching binding"""
+    user = UserFactory.create(global_id=global_id, scim_external_id=global_id)
+    _mock_search_pages(responses, [("keycloak-1", user)])
+
+    [state] = api.sync_users_to_scim_remote([user])
+
+    user.refresh_from_db()
+    assert state.success
+    assert state.external_id == "keycloak-1"
+    assert (user.global_id, user.scim_external_id) == ("keycloak-1", "keycloak-1")
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("split_pages", [False, True])
+@pytest.mark.usefixtures("mock_client_init_requests")
+def test_sync_users_to_scim_remote_refuses_duplicate_hits(
+    responses: RequestsMock, split_pages
+):
+    """An unbound user matching two Keycloak users gets one error and no binding"""
+    user = UserFactory.create(global_id=None, scim_external_id=None)
+    hits = [("keycloak-1", user), ("keycloak-2", user)]
+    pages = [[hit] for hit in hits] if split_pages else [hits]
+    _mock_search_pages(responses, *pages)
+
+    [state] = api.sync_users_to_scim_remote([user])
+
+    user.refresh_from_db()
+    assert state.success is False
+    assert state.error == {
+        "detail": (
+            f"Multiple Keycloak users match the email {user.email.lower()}: "
+            "keycloak-1, keycloak-2"
+        )
+    }
+    assert (user.global_id, user.scim_external_id) == (None, None)
+    assert not any(call.request.url.endswith("/Users/Bulk") for call in responses.calls)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("split_pages", [False, True])
+@pytest.mark.usefixtures("mock_client_init_requests")
+def test_sync_users_to_scim_remote_keeps_binding_among_duplicate_hits(
+    responses: RequestsMock, mocker, split_pages
+):
+    """A bound user whose binding is among several hits keeps it, with a warning"""
+    mock_log = mocker.patch("mitol.scim.api.log")
+    user = UserFactory.create(global_id="keycloak-2", scim_external_id="keycloak-2")
+    hits = [("keycloak-1", user), ("keycloak-2", user), ("keycloak-3", user)]
+    pages = [[hit] for hit in hits] if split_pages else [hits]
+    _mock_search_pages(responses, *pages)
+
+    [state] = api.sync_users_to_scim_remote([user])
+
+    user.refresh_from_db()
+    assert state.success
+    assert state.external_id == "keycloak-2"
+    assert (user.global_id, user.scim_external_id) == ("keycloak-2", "keycloak-2")
+    mock_log.warning.assert_called_once_with(
+        "User %s matched Keycloak ids %s besides its global_id %s",
+        user.id,
+        ["keycloak-1", "keycloak-3"],
+        "keycloak-2",
+    )

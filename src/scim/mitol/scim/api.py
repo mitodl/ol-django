@@ -121,8 +121,15 @@ def _user_search_by_email(
 def _user_search_by_email_batch(
     session: OAuth2Session, users: list["User"]
 ) -> StateOrOperationGenerator:
-    """Perform a search for a set of users by email"""
+    """
+    Perform a search for a set of users by email.
+
+    Every page is read before anything is yielded, so that a user whose email
+    matches more than one Keycloak user produces one result, not one per hit.
+    """
     users_by_email = {user.email.lower(): user for user in users}
+    # dicts as ordered sets, keeping Keycloak's result order
+    ids_by_email: dict[str, dict[str, None]] = {}
 
     payload = {
         "schemas": [SchemaURI.SERACH_REQUEST],  # typo in upstream lib
@@ -166,12 +173,54 @@ def _user_search_by_email_batch(
                     "Received an email in search results that does not match: %s", email
                 )
             else:
-                yield UserState(users_by_email[email], resource["id"])
+                ids_by_email.setdefault(email, {})[resource["id"]] = None
 
         if not resources:
             break
 
         start_index += len(resources)
+
+    for email, ids in ids_by_email.items():
+        yield _resolve_search_hits(users_by_email[email], list(ids))
+
+
+def _resolve_search_hits(user: "User", external_ids: list[str]) -> UserState:
+    """
+    Pick the Keycloak user a local user's email search resolves to.
+
+    More than one hit leaves no way to tell which identity is the user's, so it
+    is an error, unless the user is already bound to one of them.
+    """
+    if len(external_ids) == 1:
+        return UserState(user, external_ids[0])
+
+    if user.global_id in external_ids:
+        log.warning(
+            "User %s matched Keycloak ids %s besides its global_id %s",
+            user.id,
+            [
+                external_id
+                for external_id in external_ids
+                if external_id != user.global_id
+            ],
+            user.global_id,
+        )
+        return UserState(user, user.global_id)
+
+    log.error(
+        "Not binding user %s, its email matches Keycloak ids %s",
+        user.id,
+        external_ids,
+    )
+    return UserState(
+        user,
+        error={
+            "detail": (
+                f"Multiple Keycloak users match the email {user.email.lower()}: "
+                f"{', '.join(external_ids)}"
+            ),
+        },
+    )
 
 
 def _parse_external_id_from_location(location: str) -> str:
