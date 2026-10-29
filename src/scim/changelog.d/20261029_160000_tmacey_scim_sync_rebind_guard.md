@@ -13,3 +13,7 @@
   a separate result and whichever Keycloak listed last was written to
   `global_id`. A user already bound to one of the matches keeps that binding,
   and the other ids are logged at `WARNING`.
+- A Keycloak id that another user already holds as `global_id` is now an
+  error result for the user it would have bound, and that user is left
+  unbound. Before, the write broke the unique constraint and the
+  `IntegrityError` aborted the rest of the sync.

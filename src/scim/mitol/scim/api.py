@@ -107,8 +107,9 @@ def sync_users_to_scim_remote(users: list["User"]) -> StateGenerator:
         )
         batch_size = settings.MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT
         for batch in chunked(states, batch_size):
-            _update_users(batch)
-            yield from batch
+            checked = _refuse_taken_global_ids(batch)
+            _update_users(checked)
+            yield from checked
 
 
 def _user_search_by_email(
@@ -379,6 +380,44 @@ def _refuse_rebinding(state: UserState) -> UserState:
             },
         )
     return state
+
+
+def _refuse_taken_global_ids(states: list[UserState]) -> list[UserState]:
+    """
+    Turn a result whose Keycloak id is another user's global_id into an error.
+
+    global_id is unique, so writing it would fail the whole bulk_update, and the
+    id already belongs to the identity another user logs in with.
+    """
+    incoming_ids = [state.external_id for state in states if state.success]
+    holders_by_id = dict(
+        User.objects.filter(global_id__in=incoming_ids).values_list("global_id", "pk")
+    )
+    return [_refuse_taken_global_id(state, holders_by_id) for state in states]
+
+
+def _refuse_taken_global_id(
+    state: UserState, holders_by_id: dict[str, int]
+) -> UserState:
+    holder_id = holders_by_id.get(state.external_id)
+    if not state.success or holder_id is None or holder_id == state.user.pk:
+        return state
+
+    log.error(
+        "Not binding user %s to %s, already the global_id of user %s",
+        state.user.id,
+        state.external_id,
+        holder_id,
+    )
+    return UserState(
+        state.user,
+        error={
+            "detail": (
+                f"Keycloak user id {state.external_id} is already "
+                "another user's global_id"
+            ),
+        },
+    )
 
 
 def _update_users(states: list[UserState]):

@@ -465,3 +465,28 @@ def test_sync_users_to_scim_remote_keeps_binding_among_duplicate_hits(
         ["keycloak-1", "keycloak-3"],
         "keycloak-2",
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("mock_client_init_requests")
+def test_sync_users_to_scim_remote_refuses_taken_global_id(responses: RequestsMock):
+    """A hit that is another user's global_id is an error, and the batch still syncs"""
+    bound = UserFactory.create(global_id="keycloak-1", scim_external_id="keycloak-1")
+    colliding = UserFactory.create(global_id=None, scim_external_id=None)
+    other = UserFactory.create(global_id=None, scim_external_id=None)
+    _mock_search_pages(responses, [("keycloak-1", colliding), ("keycloak-2", other)])
+
+    states = list(api.sync_users_to_scim_remote([colliding, other]))
+    states_by_user_id = {state.user.id: state for state in states}
+
+    for user in (bound, colliding, other):
+        user.refresh_from_db()
+    assert sorted(state.user.id for state in states) == sorted([colliding.id, other.id])
+    assert states_by_user_id[colliding.id].success is False
+    assert states_by_user_id[colliding.id].error == {
+        "detail": "Keycloak user id keycloak-1 is already another user's global_id"
+    }
+    assert (colliding.global_id, colliding.scim_external_id) == (None, None)
+    assert (bound.global_id, bound.scim_external_id) == ("keycloak-1", "keycloak-1")
+    assert states_by_user_id[other.id].external_id == "keycloak-2"
+    assert (other.global_id, other.scim_external_id) == ("keycloak-2", "keycloak-2")
