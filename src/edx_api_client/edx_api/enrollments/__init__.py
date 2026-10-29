@@ -252,6 +252,11 @@ class CourseEnrollmentsV2(CourseEnrollments):
         """
         List all course enrollments. Requires an admin (``is_staff``) user.
 
+        Each page of 100 enrollments is one request, and v2's list endpoint is always
+        throttled at 120 requests a minute for staff. Unlike v1, it lacks
+        ``@can_disable_rate_limit``, so ``RateLimitConfiguration`` cannot lift the
+        limit. A long iteration raises ``HTTPError`` (429) partway through.
+
         Args:
             course_id (str, optional): If used enrollments will be filtered to the specified
                 course id.
