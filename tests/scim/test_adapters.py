@@ -94,6 +94,28 @@ def test_attr_map_paths_still_applied():
     assert user.first_name == "New"
 
 
+def test_null_replace_blanks_a_text_field():
+    """A null for a NOT NULL text field that allows blank is written as ''"""
+    user = UserFactory.create(first_name="Old")
+    adapter = UserAdapter(user)
+
+    _replace(adapter, "name.givenName", None)
+
+    user.refresh_from_db()
+    assert user.first_name == ""
+
+
+def test_null_replace_keeps_the_username():
+    """A null userName can't unassign a required, unique field"""
+    user = UserFactory.create(username="kept")
+    adapter = UserAdapter(user)
+
+    _replace(adapter, "userName", None)
+
+    user.refresh_from_db()
+    assert user.username == "kept"
+
+
 def test_unmapped_path_is_ignored_without_error():
     """An unmapped path is dropped rather than raising"""
     user = UserFactory.create()
