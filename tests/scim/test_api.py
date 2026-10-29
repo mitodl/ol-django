@@ -345,3 +345,33 @@ def test_sync_users_to_scim_remote_does_not_recreate_bound_user(
     }
     assert (user.global_id, user.scim_external_id) == ("keycloak-1", "keycloak-1")
     assert not any(call.request.url.endswith("/Users/Bulk") for call in responses.calls)
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("mock_client_init_requests")
+def test_sync_users_to_scim_remote_keeps_matching_binding(responses: RequestsMock):
+    """A search hit matching the user's global_id is still a success"""
+    user = UserFactory.create(global_id="keycloak-1", scim_external_id="keycloak-1")
+    responses.post(
+        "https://keycloak:8080/realms/ol-local/scim/v2/Users/.search",
+        json={
+            "schemas": [SchemaURI.LIST_RESPONSE],
+            "Resources": [
+                {
+                    "id": "keycloak-1",
+                    "emails": [{"value": user.email.lower(), "primary": True}],
+                }
+            ],
+        },
+    )
+    responses.post(
+        "https://keycloak:8080/realms/ol-local/scim/v2/Users/.search",
+        json={"schemas": [SchemaURI.LIST_RESPONSE], "Resources": []},
+    )
+
+    [state] = api.sync_users_to_scim_remote([user])
+
+    user.refresh_from_db()
+    assert state.success
+    assert state.external_id == "keycloak-1"
+    assert (user.global_id, user.scim_external_id) == ("keycloak-1", "keycloak-1")
