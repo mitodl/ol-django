@@ -102,7 +102,9 @@ def sync_users_to_scim_remote(users: list["User"]) -> StateGenerator:
     with get_session() as session:
         found_users = _user_search_by_email(session, users)
         state_or_operations = _get_sync_operations(users, found_users)
-        states = _perform_sync_operations(session, state_or_operations)
+        states = map(
+            _refuse_rebinding, _perform_sync_operations(session, state_or_operations)
+        )
         batch_size = settings.MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT
         for batch in chunked(states, batch_size):
             _update_users(batch)
@@ -193,6 +195,20 @@ def _get_sync_operations(
         yield user_resource
 
     for user in missing_users:
+        if user.global_id:
+            # Bound, but no Keycloak user has this email. Creating one would
+            # duplicate the identity the user already logs in with.
+            log.error(
+                "Not creating a Keycloak user for user %s, already bound to %s",
+                user.id,
+                user.global_id,
+            )
+            yield UserState(
+                user,
+                error={"detail": "No Keycloak user matches the user's email"},
+            )
+            continue
+
         bulk_id = str(user.id)
         adapter = UserAdapter(
             # The request is only necessary because `SCIMUser.location` accesses
@@ -282,6 +298,30 @@ def _perform_sync_operations(
                 external_id=external_id,
                 response_body=operation.get("response"),
             )
+
+
+def _refuse_rebinding(state: UserState) -> UserState:
+    """
+    Turn a result that would move a bound user to another Keycloak id into an error.
+
+    The search matches Keycloak users by email, so a stale email here can match
+    a different person's account, and global_id is what SSO logs the user in by.
+    """
+    user = state.user
+    if state.success and user.global_id and user.global_id != state.external_id:
+        log.error(
+            "Refusing to rebind user %s from global_id %s to %s",
+            user.id,
+            user.global_id,
+            state.external_id,
+        )
+        return UserState(
+            user,
+            error={
+                "detail": "Keycloak user id does not match the user's global_id",
+            },
+        )
+    return state
 
 
 def _update_users(states: list[UserState]):
