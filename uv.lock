@@ -1529,7 +1529,7 @@ wheels = [
 
 [[package]]
 name = "edx-api-client"
-version = "1.14.0"
+version = "1.15.0"
 source = { editable = "src/edx_api_client" }
 dependencies = [
     { name = "python-dateutil" },
