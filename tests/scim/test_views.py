@@ -505,6 +505,45 @@ def test_scim_user_patch(scim_client):
     assert user_updated.last_name == "Bob"
 
 
+def test_scim_user_patch_with_null_attributes(scim_client):
+    """A remove sent as a null replace must not 500 on NOT NULL columns.
+
+    scim-for-keycloak turns a queued remove into a path-less replace whose
+    value sets the attribute to null.
+    """
+    user = UserFactory.create(username="kept", first_name="Billy")
+
+    resp = scim_client.patch(
+        f"{reverse('scim:users')}/{user.scim_id}",
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.PATCH_OP],
+                "Operations": [
+                    {
+                        "op": "replace",
+                        "value": json.dumps(
+                            {
+                                "schemas": [constants.SchemaURI.USER],
+                                "userName": None,
+                                "active": None,
+                                "name": {"givenName": None},
+                            }
+                        ),
+                    }
+                ],
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+
+    user.refresh_from_db()
+    assert user.username == "kept"
+    assert user.is_active is True
+    assert user.first_name == ""
+
+
 def test_scim_user_post_is_atomic(scim_client, mocker):
     """A failed POST must not leave a partial user in the DB"""
     user_count = User.objects.count()
