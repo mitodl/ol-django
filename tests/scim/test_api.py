@@ -313,7 +313,11 @@ def test_sync_users_to_scim_remote_refuses_rebinding(responses: RequestsMock):
 
     user.refresh_from_db()
     assert state.success is False
-    assert state.error is not None
+    assert state.error == {
+        "detail": (
+            "Keycloak user id keycloak-2 does not match the user's global_id keycloak-1"
+        )
+    }
     assert (user.global_id, user.scim_external_id) == ("keycloak-1", "keycloak-1")
 
 
@@ -333,6 +337,11 @@ def test_sync_users_to_scim_remote_does_not_recreate_bound_user(
 
     user.refresh_from_db()
     assert state.success is False
-    assert state.error is not None
+    assert state.error == {
+        "detail": (
+            f"No Keycloak user matches the email {user.email.lower()}, "
+            "user is bound to global_id keycloak-1"
+        )
+    }
     assert (user.global_id, user.scim_external_id) == ("keycloak-1", "keycloak-1")
     assert not any(call.request.url.endswith("/Users/Bulk") for call in responses.calls)

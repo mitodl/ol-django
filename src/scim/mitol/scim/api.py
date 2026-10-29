@@ -205,7 +205,12 @@ def _get_sync_operations(
             )
             yield UserState(
                 user,
-                error={"detail": "No Keycloak user matches the user's email"},
+                error={
+                    "detail": (
+                        f"No Keycloak user matches the email {user.email.lower()}, "
+                        f"user is bound to global_id {user.global_id}"
+                    ),
+                },
             )
             continue
 
@@ -318,7 +323,10 @@ def _refuse_rebinding(state: UserState) -> UserState:
         return UserState(
             user,
             error={
-                "detail": "Keycloak user id does not match the user's global_id",
+                "detail": (
+                    f"Keycloak user id {state.external_id} does not match "
+                    f"the user's global_id {user.global_id}"
+                ),
             },
         )
     return state
