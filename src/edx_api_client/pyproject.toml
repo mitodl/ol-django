@@ -1,6 +1,6 @@
 [project]
 name = "edx-api-client"
-version = "1.14.0"
+version = "1.15.1"
 description = "Python interface to the edX REST APIs"
 authors = [
     { name = "MIT Open Learning Engineering", email = "odl-devops@mit.edu" }
@@ -13,6 +13,7 @@ requires-python = ">=3.11"
 readme = "README.md"
 keywords = ["edx", "rest api"]
 dependencies = [
+    "certifi>=2026.10.19",
     "python-dateutil>=2.5.3,<4.0.0",
     "requests>=2.20.0",
 ]
@@ -23,7 +24,7 @@ Repository = "https://github.com/mitodl/ol-django"
 # Semantic versioning, not the date-based scheme the mitol-django-* packages
 # use: consumers pin semver versions of edx-api-client (for example >=1.14.0,<2).
 [tool.bumpver]
-current_version = "1.14.0"
+current_version = "1.15.1"
 version_pattern = "MAJOR.MINOR.PATCH"
 
 [tool.bumpver.file_patterns]

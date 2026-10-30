@@ -1,20 +1,20 @@
 [project]
 name = "mitol-django-geoip"
-version = "2026.4.2"
+version = "2026.10.30"
 description = "Django application to handle IP-based geolocation"
 dependencies = [
 "django-stubs>=1.13.1",
 "django>=4.2",
 "factory-boy~=3.2",
 "faker>=4.17.1",
-"mitol-django-common"
+"mitol-django-common>=2026.10.29"
 ]
 readme = "README.md"
 license = "BSD-3-Clause"
 requires-python = ">=3.11"
 
 [tool.bumpver]
-current_version = "2026.4.2"
+current_version = "2026.10.30"
 version_pattern = "YYYY.MM.DD[.INC0]"
 
 [tool.bumpver.file_patterns]

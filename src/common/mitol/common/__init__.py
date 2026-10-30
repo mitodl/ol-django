@@ -1,4 +1,4 @@
 """mitol.common"""
 
-__version__ = "2026.10.23"
+__version__ = "2026.10.29"
 __distributionname__ = "mitol-django-common"

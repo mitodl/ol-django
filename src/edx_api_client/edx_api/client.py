@@ -12,7 +12,7 @@ from .course_list import CourseList
 from .course_runs import CourseRuns
 from .course_structure import CourseStructure
 from .email_settings import EmailSettings
-from .enrollments import CourseEnrollments
+from .enrollments import CourseEnrollments, CourseEnrollmentsV2
 from .grades import UserCurrentGrades
 from .lti_tools import LTITools
 from .user_info import UserInfo
@@ -83,6 +83,11 @@ class EdxApi:
     def enrollments(self):
         """Course Enrollments API"""
         return CourseEnrollments(self.get_requester(), self.base_url)
+
+    @property
+    def enrollments_v2(self):
+        """Course Enrollments API, v2. Requires a JWT access token."""
+        return CourseEnrollmentsV2(self.get_requester(token_type="jwt"), self.base_url)
 
     @property
     def ccx(self):

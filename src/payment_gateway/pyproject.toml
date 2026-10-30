@@ -1,12 +1,13 @@
 [project]
 name = "mitol-django-payment-gateway"
-version = "2026.9.1"
+version = "2026.10.30"
 description = "Django application to handle payment processing"
 dependencies = [
     # Pinned to one SDK release: CyberSource renames generated model classes between
     # releases with no deprecation window, so take each bump deliberately rather than
     # via a lockfile refresh. 0.0.79 also caps setuptools<=81 because its api_client
     # still imports pkg_resources, which setuptools 82 removed.
+    "certifi>=2026.10.19",
     "cybersource-rest-client-python>=0.0.79,<0.0.80",
     "django-stubs>=1.13.1",
     "django>=4.2",
@@ -18,7 +19,7 @@ license = "BSD-3-Clause"
 requires-python = ">=3.11"
 
 [tool.bumpver]
-current_version = "2026.9.1"
+current_version = "2026.10.30"
 version_pattern = "YYYY.MM.DD[.INC0]"
 
 [tool.bumpver.file_patterns]

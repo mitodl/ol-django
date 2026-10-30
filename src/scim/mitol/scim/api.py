@@ -102,11 +102,14 @@ def sync_users_to_scim_remote(users: list["User"]) -> StateGenerator:
     with get_session() as session:
         found_users = _user_search_by_email(session, users)
         state_or_operations = _get_sync_operations(users, found_users)
-        states = _perform_sync_operations(session, state_or_operations)
+        states = map(
+            _refuse_rebinding, _perform_sync_operations(session, state_or_operations)
+        )
         batch_size = settings.MITOL_SCIM_KEYCLOAK_BULK_OPERATIONS_COUNT
         for batch in chunked(states, batch_size):
-            _update_users(batch)
-            yield from batch
+            checked = _refuse_taken_global_ids(batch)
+            _update_users(checked)
+            yield from checked
 
 
 def _user_search_by_email(
@@ -119,8 +122,15 @@ def _user_search_by_email(
 def _user_search_by_email_batch(
     session: OAuth2Session, users: list["User"]
 ) -> StateOrOperationGenerator:
-    """Perform a search for a set of users by email"""
+    """
+    Perform a search for a set of users by email.
+
+    Every page is read before anything is yielded, so that a user whose email
+    matches more than one Keycloak user produces one result, not one per hit.
+    """
     users_by_email = {user.email.lower(): user for user in users}
+    # dicts as ordered sets, keeping Keycloak's result order
+    ids_by_email: dict[str, dict[str, None]] = {}
 
     payload = {
         "schemas": [SchemaURI.SERACH_REQUEST],  # typo in upstream lib
@@ -164,12 +174,54 @@ def _user_search_by_email_batch(
                     "Received an email in search results that does not match: %s", email
                 )
             else:
-                yield UserState(users_by_email[email], resource["id"])
+                ids_by_email.setdefault(email, {})[resource["id"]] = None
 
         if not resources:
             break
 
         start_index += len(resources)
+
+    for email, ids in ids_by_email.items():
+        yield _resolve_search_hits(users_by_email[email], list(ids))
+
+
+def _resolve_search_hits(user: "User", external_ids: list[str]) -> UserState:
+    """
+    Pick the Keycloak user a local user's email search resolves to.
+
+    More than one hit leaves no way to tell which identity is the user's, so it
+    is an error, unless the user is already bound to one of them.
+    """
+    if len(external_ids) == 1:
+        return UserState(user, external_ids[0])
+
+    if user.global_id in external_ids:
+        log.warning(
+            "User %s matched Keycloak ids %s besides its global_id %s",
+            user.id,
+            [
+                external_id
+                for external_id in external_ids
+                if external_id != user.global_id
+            ],
+            user.global_id,
+        )
+        return UserState(user, user.global_id)
+
+    log.error(
+        "Not binding user %s, its email matches Keycloak ids %s",
+        user.id,
+        external_ids,
+    )
+    return UserState(
+        user,
+        error={
+            "detail": (
+                f"Multiple Keycloak users match the email {user.email.lower()}: "
+                f"{', '.join(external_ids)}"
+            ),
+        },
+    )
 
 
 def _parse_external_id_from_location(location: str) -> str:
@@ -193,6 +245,25 @@ def _get_sync_operations(
         yield user_resource
 
     for user in missing_users:
+        if user.global_id:
+            # Bound, but no Keycloak user has this email. Creating one would
+            # duplicate the identity the user already logs in with.
+            log.error(
+                "Not creating a Keycloak user for user %s, already bound to %s",
+                user.id,
+                user.global_id,
+            )
+            yield UserState(
+                user,
+                error={
+                    "detail": (
+                        f"No Keycloak user matches the email {user.email.lower()}, "
+                        f"user is bound to global_id {user.global_id}"
+                    ),
+                },
+            )
+            continue
+
         bulk_id = str(user.id)
         adapter = UserAdapter(
             # The request is only necessary because `SCIMUser.location` accesses
@@ -282,6 +353,71 @@ def _perform_sync_operations(
                 external_id=external_id,
                 response_body=operation.get("response"),
             )
+
+
+def _refuse_rebinding(state: UserState) -> UserState:
+    """
+    Turn a result that would move a bound user to another Keycloak id into an error.
+
+    The search matches Keycloak users by email, so a stale email here can match
+    a different person's account, and global_id is what SSO logs the user in by.
+    """
+    user = state.user
+    if state.success and user.global_id and user.global_id != state.external_id:
+        log.error(
+            "Refusing to rebind user %s from global_id %s to %s",
+            user.id,
+            user.global_id,
+            state.external_id,
+        )
+        return UserState(
+            user,
+            error={
+                "detail": (
+                    f"Keycloak user id {state.external_id} does not match "
+                    f"the user's global_id {user.global_id}"
+                ),
+            },
+        )
+    return state
+
+
+def _refuse_taken_global_ids(states: list[UserState]) -> list[UserState]:
+    """
+    Turn a result whose Keycloak id is another user's global_id into an error.
+
+    global_id is unique, so writing it would fail the whole bulk_update, and the
+    id already belongs to the identity another user logs in with.
+    """
+    incoming_ids = [state.external_id for state in states if state.success]
+    holders_by_id = dict(
+        User.objects.filter(global_id__in=incoming_ids).values_list("global_id", "pk")
+    )
+    return [_refuse_taken_global_id(state, holders_by_id) for state in states]
+
+
+def _refuse_taken_global_id(
+    state: UserState, holders_by_id: dict[str, int]
+) -> UserState:
+    holder_id = holders_by_id.get(state.external_id)
+    if not state.success or holder_id is None or holder_id == state.user.pk:
+        return state
+
+    log.error(
+        "Not binding user %s to %s, already the global_id of user %s",
+        state.user.id,
+        state.external_id,
+        holder_id,
+    )
+    return UserState(
+        state.user,
+        error={
+            "detail": (
+                f"Keycloak user id {state.external_id} is already "
+                "another user's global_id"
+            ),
+        },
+    )
 
 
 def _update_users(states: list[UserState]):
