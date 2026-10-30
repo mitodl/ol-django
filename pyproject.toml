@@ -131,6 +131,26 @@ mitol-django-transcoding = "0d"
 mitol-dependency-floors = "0d"
 mitol-drf-lint = "0d"
 
+# Checked by `uv run dependency-floors check` in CI. The constraint above
+# guards this repo's own resolution; these declare what the published
+# packages have to carry, which is the only thing a consumer ever sees.
+[tool.dependency-floors.options]
+members = "src/*"
+# Not published, so it propagates nothing and needs no floor.
+exclude = ["src/uvtestapp"]
+
+[tool.dependency-floors.floors.certifi]
+specifier = ">=2026.10.19"
+reason = "eMudhra CA compromise: 8 intermediate CA private keys are publicly recoverable"
+advisory = "https://github.com/advisories/GHSA-6q48-6c7w-9gw2"
+
+[tool.dependency-floors.floors.certifi.workspace]
+# Declare the floor only where a package reaches certifi through its own
+# dependencies. The rest inherit it from a sibling, and pin that sibling so
+# an older, pre-floor release cannot satisfy them.
+policy = "entry-point"
+providers = { mitol-django-common = "2026.10.28" }
+
 [tool.hatch.metadata]
 allow-direct-references = true
 
