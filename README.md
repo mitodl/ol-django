@@ -136,6 +136,18 @@ describes.
 
 3. Commit the result, open a PR, and merge it once CI is green.
 
+To cut every date-versioned app that has fragments waiting in one go, rather
+than naming them one at a time:
+
+```shell
+uv run scripts/release.py weekly --body-file pr_body.md --title-file pr_title.txt
+```
+
+It runs `prepare` for each of them and writes a pull request title and body
+describing what it cut, assembled from the `CHANGELOG.md` entries scriv just
+wrote. It writes neither file when nothing was waiting. `edx_api_client` is
+reported rather than cut, since only a person can say which part to bump.
+
 Once the checks pass on `main`, the `publish` job in
 [the CI workflow](.github/workflows/ci.yml) builds every package whose version
 is not yet on PyPI, uploads it, and then creates the version tag.
