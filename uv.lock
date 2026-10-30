@@ -39,10 +39,12 @@ mitol-django-benchmark = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-geoip = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-digital-credentials = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-scim = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-dependency-floors = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 
 [manifest]
 members = [
     "edx-api-client",
+    "mitol-dependency-floors",
     "mitol-django-apigateway",
     "mitol-django-authentication",
     "mitol-django-benchmark",
@@ -2412,6 +2414,17 @@ wheels = [
 ]
 
 [[package]]
+name = "mitol-dependency-floors"
+version = "2026.10.28"
+source = { editable = "src/dependency_floors" }
+dependencies = [
+    { name = "packaging" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "packaging", specifier = ">=23.0" }]
+
+[[package]]
 name = "mitol-django-apigateway"
 version = "2026.9.8"
 source = { editable = "src/apigateway" }
@@ -3161,6 +3174,7 @@ dev = [
     { name = "freezegun" },
     { name = "gitpython" },
     { name = "ipdb" },
+    { name = "mitol-dependency-floors" },
     { name = "mitol-drf-lint" },
     { name = "more-itertools" },
     { name = "mypy" },
@@ -3241,6 +3255,7 @@ dev = [
     { name = "freezegun", specifier = ">=1.5.1" },
     { name = "gitpython" },
     { name = "ipdb" },
+    { name = "mitol-dependency-floors", editable = "src/dependency_floors" },
     { name = "mitol-drf-lint", editable = "src/drf_lint" },
     { name = "more-itertools", specifier = ">=10.6.0" },
     { name = "mypy" },
