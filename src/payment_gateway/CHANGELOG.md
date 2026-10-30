@@ -6,6 +6,26 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.10.30'></a>
+## [2026.10.30] - 2026-10-30
+
+### Added
+
+- `PaymentGatewayApp.ready()` now patches the CyberSource SDK so it works against the genuine `urllib3`. From 0.0.70 the SDK depends on `urllib3-future`, which replaces `urllib3` for the whole environment, and passes it keepalive arguments that the genuine `urllib3` rejects on the first request (`TypeError: PoolKey.__new__() got an unexpected keyword argument 'key_keepalive_delay'`). Applications should install a metadata-only `urllib3-future` stand-in; see README-CyberSourceSA.md.
+
+### Changed
+
+- Raised `cybersource-rest-client-python` to `>=0.0.79,<0.0.80`. SDK releases up to 0.0.63 import `pkg_resources` unconditionally while declaring an unbounded `setuptools` requirement, so an application that resolved setuptools 82 or newer failed to import `mitol.payment_gateway.api`. 0.0.79 declares `setuptools<=81.0.0`, which keeps `pkg_resources` available.
+
+- Declare `certifi>=2026.10.19` as a direct dependency. certifi below that
+  release still trusts the eMudhra root CAs whose intermediate private keys
+  are publicly recoverable ([GHSA-6q48-6c7w-9gw2][advisory]). certifi arrives
+  here transitively, and a transitive dependency carries no floor of its own,
+  so without this declaration a consumer of this package can resolve a
+  vulnerable certifi.
+
+[advisory]: https://github.com/advisories/GHSA-6q48-6c7w-9gw2
+
 <a id='changelog-2026.9.1'></a>
 ## [2026.9.1] - 2026-09-01
 

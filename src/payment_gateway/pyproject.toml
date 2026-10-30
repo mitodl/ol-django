@@ -1,6 +1,6 @@
 [project]
 name = "mitol-django-payment-gateway"
-version = "2026.9.1"
+version = "2026.10.30"
 description = "Django application to handle payment processing"
 dependencies = [
     # Pinned to one SDK release: CyberSource renames generated model classes between
@@ -19,7 +19,7 @@ license = "BSD-3-Clause"
 requires-python = ">=3.11"
 
 [tool.bumpver]
-current_version = "2026.9.1"
+current_version = "2026.10.30"
 version_pattern = "YYYY.MM.DD[.INC0]"
 
 [tool.bumpver.file_patterns]

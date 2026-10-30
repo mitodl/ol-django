@@ -1,4 +1,4 @@
 """mitol.scim"""
 
-__version__ = "2026.10.9"
+__version__ = "2026.10.30"
 __distributionname__ = "mitol-django-scim"

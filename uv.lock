@@ -1529,7 +1529,7 @@ wheels = [
 
 [[package]]
 name = "edx-api-client"
-version = "1.15.0"
+version = "1.15.1"
 source = { editable = "src/edx_api_client" }
 dependencies = [
     { name = "certifi" },
@@ -2435,7 +2435,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-authentication"
-version = "2026.4.29"
+version = "2026.10.30"
 source = { editable = "src/authentication" }
 dependencies = [
     { name = "certifi" },
@@ -2568,7 +2568,7 @@ dev = [
 
 [[package]]
 name = "mitol-django-digital-credentials"
-version = "2026.4.2"
+version = "2026.10.30"
 source = { editable = "src/digitalcredentials" }
 dependencies = [
     { name = "certifi" },
@@ -2599,7 +2599,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-geoip"
-version = "2026.4.2"
+version = "2026.10.30"
 source = { editable = "src/geoip" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
@@ -2657,7 +2657,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-google-sheets-deferrals"
-version = "2026.4.2"
+version = "2026.10.30"
 source = { editable = "src/google_sheets_deferrals" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
@@ -2681,7 +2681,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-google-sheets-refunds"
-version = "2026.4.2"
+version = "2026.10.30"
 source = { editable = "src/google_sheets_refunds" }
 dependencies = [
     { name = "django", version = "4.2.30", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-9-ol-django-django42' or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django51') or (extra == 'group-9-ol-django-django50' and extra == 'group-9-ol-django-django52') or (extra == 'group-9-ol-django-django51' and extra == 'group-9-ol-django-django52')" },
@@ -2705,7 +2705,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-hubspot-api"
-version = "2026.7.9"
+version = "2026.10.30"
 source = { editable = "src/hubspot_api" }
 dependencies = [
     { name = "certifi" },
@@ -2738,7 +2738,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-keycloak"
-version = "2026.7.14"
+version = "2026.10.30"
 source = { editable = "src/keycloak" }
 dependencies = [
     { name = "certifi" },
@@ -2772,7 +2772,7 @@ dev = [
 
 [[package]]
 name = "mitol-django-mail"
-version = "2026.4.2"
+version = "2026.10.30"
 source = { editable = "src/mail" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -2805,7 +2805,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-oauth-toolkit-extensions"
-version = "2026.4.2"
+version = "2026.10.30"
 source = { editable = "src/oauth_toolkit_extensions" }
 dependencies = [
     { name = "certifi" },
@@ -2835,7 +2835,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-observability"
-version = "2026.8.19"
+version = "2026.10.30"
 source = { editable = "src/observability" }
 dependencies = [
     { name = "certifi" },
@@ -2890,7 +2890,7 @@ provides-extras = ["sentry", "celery", "django", "postgres"]
 
 [[package]]
 name = "mitol-django-olposthog"
-version = "2026.4.2"
+version = "2026.10.30"
 source = { editable = "src/olposthog" }
 dependencies = [
     { name = "certifi" },
@@ -2934,7 +2934,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-payment-gateway"
-version = "2026.9.1"
+version = "2026.10.30"
 source = { editable = "src/payment_gateway" }
 dependencies = [
     { name = "certifi" },
@@ -2960,7 +2960,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-scim"
-version = "2026.10.9"
+version = "2026.10.30"
 source = { editable = "src/scim" }
 dependencies = [
     { name = "certifi" },
@@ -2999,7 +2999,7 @@ provides-extras = ["celery"]
 
 [[package]]
 name = "mitol-django-transcoding"
-version = "2026.5.21.1"
+version = "2026.10.30"
 source = { editable = "src/transcoding" }
 dependencies = [
     { name = "boto3" },

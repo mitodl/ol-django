@@ -6,6 +6,29 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.10.30'></a>
+## [2026.10.30] - 2026-10-30
+
+### Removed
+
+- Removed the `default_app_config` module attribute. Django deprecated it in 3.2 and dropped support in 4.1, so it has been dead for every version this package now supports.
+
+### Changed
+
+- Updated linter directives to handle new checks
+
+- Raised the minimum supported Django to 4.2. The previous `django>=3.0` had not been true for some time: CI's lowest matrix leg is already 4.2, and the last 3.x release (3.2 LTS) reached end-of-life in April 2024.
+- Converted the admin registration from `admin.site.register(Model, ModelAdmin)` to the `@admin.register(Model)` decorator. No behaviour change.
+
+- Declare `certifi>=2026.10.19` as a direct dependency. certifi below that
+  release still trusts the eMudhra root CAs whose intermediate private keys
+  are publicly recoverable ([GHSA-6q48-6c7w-9gw2][advisory]). certifi arrives
+  here transitively, and a transitive dependency carries no floor of its own,
+  so without this declaration a consumer of this package can resolve a
+  vulnerable certifi.
+
+[advisory]: https://github.com/advisories/GHSA-6q48-6c7w-9gw2
+
 <a id='changelog-2026.7.9'></a>
 ## [2026.7.9] - 2026-07-09
 

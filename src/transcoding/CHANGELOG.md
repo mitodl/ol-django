@@ -6,6 +6,28 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.10.30'></a>
+## [2026.10.30] - 2026-10-30
+
+### Removed
+
+- Removed the `default_app_config` module attribute. Django deprecated it in 3.2 and dropped support in 4.1, so it has been dead for every version this package now supports.
+
+### Changed
+
+- Updated linter directives to handle new checks
+
+- Raised the minimum supported Django to 4.2. The previous `django>=3.0` had not been true for some time: CI's lowest matrix leg is already 4.2, and the last 3.x release (3.2 LTS) reached end-of-life in April 2024.
+
+- Require `mitol-django-common>=2026.10.29`, the first release that declares
+  the `certifi>=2026.10.19` floor for the eMudhra CA compromise
+  ([GHSA-6q48-6c7w-9gw2][advisory]). This package reaches certifi only through
+  `mitol-django-common`, so it inherits the floor rather than declaring one of
+  its own — but the dependency was previously unpinned, which an older release
+  predating the floor would have satisfied.
+
+[advisory]: https://github.com/advisories/GHSA-6q48-6c7w-9gw2
+
 <a id='changelog-2026.5.21.1'></a>
 ## [2026.5.21.1] - 2026-05-21
 

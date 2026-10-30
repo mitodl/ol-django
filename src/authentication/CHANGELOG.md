@@ -6,6 +6,26 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.10.30'></a>
+## [2026.10.30] - 2026-10-30
+
+### Removed
+
+- Removed Touchstone/SAML authentication support and the `[touchstone]` optional extra.
+
+### Changed
+
+- Raised the minimum supported Django to 4.2. The previous `django>=3.0` had not been true for some time: CI's lowest matrix leg is already 4.2, and the last 3.x release (3.2 LTS) reached end-of-life in April 2024.
+
+- Declare `certifi>=2026.10.19` as a direct dependency. certifi below that
+  release still trusts the eMudhra root CAs whose intermediate private keys
+  are publicly recoverable ([GHSA-6q48-6c7w-9gw2][advisory]). certifi arrives
+  here transitively, and a transitive dependency carries no floor of its own,
+  so without this declaration a consumer of this package can resolve a
+  vulnerable certifi.
+
+[advisory]: https://github.com/advisories/GHSA-6q48-6c7w-9gw2
+
 <a id='changelog-2026.4.29'></a>
 ## [2026.4.29] - 2026-04-29
 
