@@ -32,6 +32,9 @@ uv run scripts/changelog.py create --app <appname>
 
 # Prepare a release (bumps the version, folds changelog.d into CHANGELOG.md)
 uv run scripts/release.py prepare --app <appname>
+
+# Prepare every date-versioned app that has fragments waiting, with a PR body
+uv run scripts/release.py weekly --body-file pr_body.md --title-file pr_title.txt
 ```
 
 ## Architecture
