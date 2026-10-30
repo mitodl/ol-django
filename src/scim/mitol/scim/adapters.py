@@ -6,6 +6,7 @@ from typing import Union
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django_scim import exceptions
 from django_scim.adapters import SCIMUser
 from mitol.scim.constants import SchemaURI
 from scim2_filter_parser.attr_paths import AttrPath
@@ -169,10 +170,35 @@ class UserAdapter(SCIMUser):
         self.obj.first_name = d.get("name", {}).get("givenName", "")
         self.obj.last_name = d.get("name", {}).get("familyName", "")
         self.obj.scim_username = d.get("userName")
-        self.obj.scim_external_id = d.get("externalId")
+        self.set_external_id(d.get("externalId"))
+
+    def set_external_id(self, external_id: str | None):
+        """
+        Apply an inbound SCIM externalId to the user.
+
+        externalId becomes global_id, which is what SSO logs the user in by.
+        A PUT that would move an existing user's non-empty global_id to a
+        different value is refused: the IdP id for one person doesn't change,
+        so that PUT can only be the client having resolved the wrong user (e.g.
+        a userName lookup that matched a stale email), and applying it would
+        hand this account to another identity.
+
+        :param external_id: the externalId from the SCIM payload
+        :raises IntegrityError: the user is already bound to a different id
+        """
+        if (
+            not self.is_new_user
+            and self.obj.global_id
+            and external_id
+            and external_id != self.obj.global_id
+        ):
+            msg = "externalId does not match the existing user's externalId"
+            raise exceptions.IntegrityError(msg, scim_type="mutability")
+
+        self.obj.scim_external_id = external_id
         # None, not "": global_id is unique, and NULLs are distinct where
         # empty strings are not - two users with no external id would collide.
-        self.obj.global_id = self.obj.scim_external_id or None
+        self.obj.global_id = external_id or None
 
     def _save_user(self):
         self.obj.save()
@@ -218,7 +244,8 @@ class UserAdapter(SCIMUser):
             return
 
         if path.first_path == ("externalId", None, None):
-            self.obj.scim_external_id = value
+            self.set_external_id(value)
+            # PatchView doesn't save after the handlers run
             self.obj.save()
 
     def parse_scim_for_keycloak_payload(self, payload: str) -> dict:
