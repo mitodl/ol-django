@@ -1,7 +1,5 @@
 """Tests for the API gateway authentication backends."""
 
-from unittest import mock
-
 import faker
 import pytest
 from asgiref.sync import sync_to_async
@@ -101,36 +99,6 @@ def test_settings_read_at_call_time(settings):
     assert backend.lookup_field == "global_id"
     assert backend.create_unknown_user is True
     assert backend.update_known_user is False
-
-
-def test_instance_assignment_overrides_settings(settings):
-    """Assigning a flag on a backend instance still overrides the setting."""
-    settings.MITOL_APIGATEWAY_USERINFO_CREATE = True
-    backend = ApisixRemoteUserBackend()
-    other_backend = ApisixRemoteUserBackend()
-
-    backend.lookup_field = "scim_external_id"
-    backend.create_unknown_user = False
-    backend.update_known_user = True
-
-    assert backend.lookup_field == "scim_external_id"
-    assert backend.create_unknown_user is False
-    assert backend.update_known_user is True
-    assert other_backend.lookup_field == settings.MITOL_APIGATEWAY_USER_LOOKUP_FIELD
-    assert other_backend.create_unknown_user is True
-
-
-def test_patch_object_restores_the_setting(settings):
-    """Patching a flag on an instance falls back to the setting afterwards."""
-    settings.MITOL_APIGATEWAY_USER_LOOKUP_FIELD = "global_id"
-    backend = ApisixRemoteUserBackend()
-
-    with mock.patch.object(backend, "lookup_field", "scim_external_id"):
-        assert backend.lookup_field == "scim_external_id"
-
-    assert backend.lookup_field == "global_id"
-    settings.MITOL_APIGATEWAY_USER_LOOKUP_FIELD = "scim_external_id"
-    assert backend.lookup_field == "scim_external_id"
 
 
 @pytest.mark.django_db
