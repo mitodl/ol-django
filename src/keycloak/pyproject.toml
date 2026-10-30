@@ -3,6 +3,7 @@ name = "mitol-django-keycloak"
 description = "MIT Open Learning django app extensions for keycloak integration"
 version = "2026.7.14"
 dependencies = [
+  "certifi>=2026.10.19",
   "django>=4.2",
   "pydantic",
   "python-keycloak>=7.1.1,<8",

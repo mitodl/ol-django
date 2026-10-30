@@ -3,6 +3,7 @@ name = "mitol-django-digital-credentials"
 version = "2026.4.2"
 description = "Django application to support digital credentials"
 dependencies = [
+"certifi>=2026.10.19",
 "django-oauth-toolkit>=1.3.3",
 "django-stubs>=1.13.1",
 "django>=4.2",
