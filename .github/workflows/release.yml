@@ -1,0 +1,168 @@
+---
+# Cuts the weekly release: prepares every package with changelog fragments
+# waiting, then opens or updates one pull request carrying all of them.
+#
+# The push must not use GITHUB_TOKEN. GitHub suppresses workflow triggers for
+# refs pushed with it, so neither `ci.yml` nor `autofix.yml` would run on the
+# result and the required `ci-gate` and `prek` checks would never start -
+# leaving a pull request that cannot merge. A GitHub App installation token
+# carries no such suppression, which is the whole reason this job mints one.
+name: Weekly release
+
+on:
+  schedule:
+    # Monday 13:00 UTC (09:00 ET): the pull request is waiting at the start of
+    # the week, and offset from Renovate's midnight run.
+  - cron: '0 13 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-release
+  cancel-in-progress: false
+
+env:
+  RELEASE_BRANCH: release/weekly
+
+jobs:
+  cut-release:
+    name: Cut the weekly release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # Gates the App private key behind this environment's branch policy, so a
+    # workflow pushed to any other branch cannot read it. `ci.yml` runs on
+    # every push and this repository grants push to two teams, so a
+    # repository-level secret would be readable by anyone who can push a
+    # branch - which is how `PYPI_TOKEN` sits today.
+    environment: release-bot
+    steps:
+    - name: Mint an App installation token
+      id: app-token
+      uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      with:
+        # `client-id`, not `app-id`: v3 of this action deprecates the
+        # latter. Neither is sensitive, so it lives in a variable.
+        client-id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
+        private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+        # `owner` and `repositories` are left at their defaults, which scope
+        # the token to this repository alone. The permissions are narrowed
+        # here as well, so the token stays limited to pushing a branch and
+        # opening a pull request even if the App is ever granted more.
+        permission-contents: write
+        permission-pull-requests: write
+
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 0   # `prepare` reads the repository through GitPython
+        persist-credentials: false
+
+    - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+
+    - name: Install dependencies
+      run: uv sync
+
+    # The commit below is `git add --all`, so anything setup leaves behind
+    # would ship inside the release pull request. Fail instead.
+    - name: Tree is clean before the release is prepared
+      run: |
+        set -euo pipefail
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "::error::Setup left changes in the working tree, and they" \
+            "would be committed into the release."
+          git status --porcelain
+          exit 1
+        fi
+
+    - name: Prepare the release
+      id: prepare
+      env:
+        BODY_FILE: ${{ runner.temp }}/pr_body.md
+        TITLE_FILE: ${{ runner.temp }}/pr_title.txt
+      run: |
+        set -euo pipefail
+        # Written outside the checkout on purpose, for the same reason.
+        uv run scripts/release.py weekly \
+          --body-file "$BODY_FILE" \
+          --title-file "$TITLE_FILE"
+
+        # `weekly` writes neither file when nothing was waiting, so their
+        # absence is the signal rather than anything parsed out of its output.
+        if [ -f "$TITLE_FILE" ]; then
+          echo "prepared=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "prepared=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    # The branch is force-pushed, so a commit someone added by hand to get a
+    # release green would be destroyed without this. autofix.ci legitimately
+    # pushes fixes onto pull request branches, so bots pass.
+    - name: Refuse to force-push over a person's commit
+      if: steps.prepare.outputs.prepared == 'true'
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        REPOSITORY: ${{ github.repository }}
+        BOT_LOGIN: ${{ steps.app-token.outputs.app-slug }}[bot]
+      run: |
+        set -euo pipefail
+        # Compare the API's author login, not the commit address: people here
+        # commit under `users.noreply.github.com` addresses too, so an address
+        # test would read a person as a bot.
+        login="$(gh api "repos/${REPOSITORY}/commits/${RELEASE_BRANCH}" \
+          --jq '.author.login // ""' 2>/dev/null || true)"
+
+        case "$login" in
+          # No branch yet, or our own last push.
+          "" | "$BOT_LOGIN") ;;
+          # Quoted, so the brackets are literal rather than a glob class.
+          *"[bot]") ;;
+          *)
+            echo "::error::${RELEASE_BRANCH} was last pushed by ${login}," \
+              "not a bot. Refusing to force-push over someone's work -" \
+              "merge or delete that branch, then re-run."
+            exit 1
+            ;;
+        esac
+
+    - name: Commit, push, and open or update the pull request
+      if: steps.prepare.outputs.prepared == 'true'
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        BODY_FILE: ${{ runner.temp }}/pr_body.md
+        TITLE_FILE: ${{ runner.temp }}/pr_title.txt
+      run: |
+        set -euo pipefail
+        title="$(cat "$TITLE_FILE")"
+
+        git config user.name 'odl-bot'
+        git config user.email 'odl-devops@mit.edu'
+        git checkout -B "$RELEASE_BRANCH"
+        git add --all
+        git commit --message "$title"
+
+        # The helper's own shell expands GH_TOKEN at call time, so the token
+        # never lands in argv, in .git/config, or in a git error message
+        # echoing the remote URL. That deferral is exactly why the helper is
+        # single-quoted here, so the expansion shellcheck wants is wrong.
+        # shellcheck disable=SC2016
+        git -c credential.helper='!f() { echo "username=x-access-token"; echo "password=$GH_TOKEN"; }; f' \
+          push --force origin "HEAD:refs/heads/${RELEASE_BRANCH}"
+
+        # Cut from `main` every run, so the open pull request is updated in
+        # place rather than duplicated.
+        number="$(gh pr list --head "$RELEASE_BRANCH" --state open \
+          --json number --jq '.[0].number // empty')"
+
+        if [ -z "$number" ]; then
+          gh pr create --base main --head "$RELEASE_BRANCH" \
+            --title "$title" --body-file "$BODY_FILE"
+        else
+          gh pr edit "$number" --title "$title" --body-file "$BODY_FILE"
+        fi
+
+    - name: Nothing to release
+      if: steps.prepare.outputs.prepared != 'true'
+      run: |
+        echo "No package had changelog fragments waiting." \
+          >> "$GITHUB_STEP_SUMMARY"
