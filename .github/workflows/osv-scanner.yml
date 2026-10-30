@@ -1,0 +1,55 @@
+---
+name: OSV-Scanner
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+  - cron: '30 12 * * 1'
+
+permissions: {}
+
+jobs:
+  # Gates the pull request. Scans the base branch and the head, and fails only
+  # on vulnerabilities the pull request *introduces* — including a downgrade
+  # into a vulnerable version, which is how a dependency cooldown silently
+  # walks a lockfile back under a security floor.
+  #
+  # Deliberately not a whole-lockfile gate: this repo has standing advisories
+  # tracked separately, and a full scan would be red on day one and stay red,
+  # which trains everyone to ignore it. `scan-scheduled` reports those instead.
+  scan-pr:
+    name: Scan pull request for new vulnerabilities
+    if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+    permissions:
+      actions: read   # required by the SARIF upload to code scanning
+      security-events: write
+      contents: read
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@b1d267aea5211fa648d9d442fa64b90dbdcbdd36   # v2.7.0
+    with:
+      runs-on: ubuntu-24.04
+      # Scanned explicitly rather than with `-r ./`, so the gate reads the one
+      # file that describes what this repo actually resolves, and cannot start
+      # reporting on build output under dist/ or on the shims/ stand-in.
+      scan-args: |-
+        --lockfile=uv.lock
+
+  # Reports the standing state of the whole lockfile to Security > Code
+  # Scanning. Does not gate: `fail-on-vuln: false`, so a pre-existing advisory
+  # never blocks an unrelated change.
+  scan-scheduled:
+    name: Scan lockfile and report
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+    permissions:
+      actions: read
+      security-events: write
+      contents: read
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@b1d267aea5211fa648d9d442fa64b90dbdcbdd36   # v2.7.0
+    with:
+      runs-on: ubuntu-24.04
+      fail-on-vuln: false
+      scan-args: |-
+        --lockfile=uv.lock
