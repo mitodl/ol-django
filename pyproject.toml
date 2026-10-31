@@ -36,7 +36,7 @@ requires-python = ">= 3.11"
 [dependency-groups]
 # 0.5.4 is the fleet pin, but it is newer than `exclude-newer = "7d"` allows.
 # Renovate bumps this once the release clears the window.
-prek = ["prek==0.5.3"]
+prek = ["prek==0.5.5"]
 dev = [
     {include-group = "prek"},
     "GitPython",
