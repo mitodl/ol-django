@@ -8,7 +8,7 @@ dependencies = [
     # via a lockfile refresh. 0.0.79 also caps setuptools<=81 because its api_client
     # still imports pkg_resources, which setuptools 82 removed.
     "certifi>=2026.10.19",
-    "cybersource-rest-client-python>=0.0.79,<0.0.80",
+    "cybersource-rest-client-python>=0.0.80,<0.0.81",
     "django-stubs>=1.13.1",
     "django>=4.2",
     "mitol-django-common",
