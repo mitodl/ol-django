@@ -9,7 +9,7 @@ from contextlib import suppress
 from typing import ClassVar, TypeVar, Union
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db import transaction
 from django.db.models import (
     PROTECT,
@@ -321,10 +321,18 @@ class CachedPropertiesMixin:
         """
         names = cls.__dict__.get("_cached_property_names")
         if names is None:
+            # Only the definition that actually wins attribute lookup counts.
+            # `__mro__` is ordered most-derived first, so the first binding of
+            # a name is the effective one; a subclass that overrides a cached
+            # property with a plain one must not leave the name behind, or
+            # clearing it would be accepted and then quietly do nothing.
+            effective: dict[str, object] = {}
+            for klass in cls.__mro__:
+                for name, attr in vars(klass).items():
+                    effective.setdefault(name, attr)
             names = frozenset(
                 name
-                for klass in cls.__mro__
-                for name, attr in vars(klass).items()
+                for name, attr in effective.items()
                 if isinstance(attr, _CACHED_PROPERTY_CLASSES)
             )
             unmatched = sorted(set(cls.cached_property_sources) - names)
@@ -335,7 +343,11 @@ class CachedPropertiesMixin:
                     f"on {cls.__name__}. A narrowed refresh_from_db would "
                     f"never clear it."
                 )
-                raise AttributeError(msg)
+                # Not AttributeError: this runs from `refresh_from_db`, which
+                # `DeferredAttribute.__get__` reaches, so a surrounding
+                # `hasattr`/`getattr` would swallow it and turn a
+                # misconfiguration into a silently wrong default.
+                raise ImproperlyConfigured(msg)
             cls._cached_property_names = names
         return names
 
@@ -381,13 +393,15 @@ class CachedPropertiesMixin:
 
         A full refresh clears every cached property. A refresh narrowed with
         `fields` clears only the cached properties that declare one of those
-        fields in `cached_property_sources`, which matches Django's own
-        contract for `fields` - it drops only the prefetch entries named in
-        `fields` and clears only relations where `rel.name in fields`.
-        Narrowing matters because `DeferredAttribute.__get__` calls
-        `refresh_from_db(fields=[field_name])` for every deferred-field access
-        on a `.only()`/`.defer()` instance, where an unconditional clear would
-        add queries to the paths most likely to have been tuned.
+        fields in `cached_property_sources`. Narrowing matters because
+        `DeferredAttribute.__get__` calls `refresh_from_db(fields=[field_name])`
+        for every deferred-field access on a `.only()`/`.defer()` instance,
+        where an unconditional clear would add queries to the paths most likely
+        to have been tuned. From Django 5.1 it also mirrors what Django itself
+        does with `fields`: drop only the prefetch entries named in `fields`,
+        clear only the relations where `rel.name in fields`. Django 4.2 and 5.0
+        clear every cached relation on any refresh, narrowed or not, so there
+        the narrowing is ours alone.
 
         `using` and `fields` are named explicitly and the rest passed through
         because `from_queryset` only exists from Django 5.1 and this package
@@ -395,11 +409,21 @@ class CachedPropertiesMixin:
         `sync_to_async` on every supported version, so the async path needs no
         separate override.
         """
-        # Django before 5.1 removes prefetch-cache names from the very list it
-        # was handed, so snapshot what was asked for before delegating.
+        # `fields` is documented as any iterable, so it gets read exactly once:
+        # consuming it here and passing the original on would drain a one-shot
+        # iterator and leave Django with nothing to refresh - a silent no-op,
+        # the very failure this mixin exists to prevent.
         requested = None if fields is None else list(fields)
 
-        super().refresh_from_db(using=using, fields=fields, **kwargs)
+        # Django before 5.1 removes prefetch-cache names from whatever list it
+        # is handed, so it gets a throwaway copy: the caller's object is left
+        # alone (a tuple or set would crash its .remove()), and `requested`
+        # survives intact for the narrowing below.
+        super().refresh_from_db(
+            using=using,
+            fields=None if requested is None else list(requested),
+            **kwargs,
+        )
 
         if requested is None:
             self.clear_cached_properties()

@@ -1,11 +1,13 @@
 """Tests for common models"""
 
 from datetime import datetime, timedelta
+from functools import cached_property
 from random import choice, randint, sample
 
 import pytest
 import pytz
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ImproperlyConfigured
 from django.db import IntegrityError, transaction
 from freezegun import freeze_time
 from libraries.models import Author, Book, Media
@@ -212,15 +214,54 @@ def test_clear_cached_properties_rejects_an_unknown_name(cached_property_instanc
 
 
 def test_cached_property_sources_must_name_real_cached_properties():
-    """A source declared for a property that does not exist raises"""
+    """
+    A source declared for a property that does not exist raises.
+
+    `ImproperlyConfigured` rather than `AttributeError`, because this fires
+    from `refresh_from_db`, which `DeferredAttribute.__get__` reaches: a
+    surrounding `hasattr`/`getattr` would swallow an `AttributeError` and turn
+    the misconfiguration into a silently wrong default.
+    """
 
     class Misdeclared(CachedPropertiesMixin):
         """Test-only class declaring a source for a nonexistent property"""
 
         cached_property_sources = {"typoed_name": {"owner"}}
 
-    with pytest.raises(AttributeError, match="typoed_name"):
+    with pytest.raises(ImproperlyConfigured, match="typoed_name"):
         Misdeclared.get_cached_property_names()
+
+
+def test_discovery_honors_a_shadowed_cached_property():
+    """
+    A name is only reported when the winning definition is a cached property.
+
+    Unioning the whole MRO would keep reporting the parent's cached property,
+    so `clear_cached_properties` would accept the name and then do nothing -
+    the plain `property` has no deleter, so the `del` raises `AttributeError`
+    and the guard swallows it.
+    """
+
+    class Base(CachedPropertiesMixin):
+        """Test-only parent defining `label` as a cached property"""
+
+        @cached_property
+        def label(self):
+            """Cached on the parent"""
+            return "parent"
+
+    class Shadowed(Base):
+        """Test-only child overriding `label` with a plain property"""
+
+        @property
+        def label(self):
+            """Not cached on the child"""
+            return "child"
+
+    assert "label" in Base.get_cached_property_names()
+    assert "label" not in Shadowed.get_cached_property_names()
+    with pytest.raises(AttributeError, match="label"):
+        Shadowed().clear_cached_properties("label")
 
 
 def test_refresh_from_db_clears_every_cached_property(cached_property_instance):
@@ -293,6 +334,37 @@ def test_refresh_from_db_with_a_prefetch_name_clears_its_dependents(
     instance.refresh_from_db(fields=["children"])
 
     assert instance.child_count == INITIAL_CHILD_COUNT + 1
+
+
+@pytest.mark.parametrize("wrap", [iter, tuple, set, list])
+def test_refresh_from_db_accepts_any_iterable_for_fields(
+    cached_property_instance, wrap
+):
+    """
+    `fields` is documented as any iterable, and the refresh still has to happen.
+
+    Reading a one-shot iterator for the narrowing and then handing the drained
+    original to Django made the refresh a silent no-op; a tuple or set reached
+    a `.remove()` call on Django before 5.1.
+    """
+    CachedPropertyModel.objects.filter(pk=cached_property_instance.pk).update(
+        note="changed"
+    )
+
+    cached_property_instance.refresh_from_db(fields=wrap(["note"]))
+
+    assert cached_property_instance.note == "changed"
+
+
+def test_refresh_from_db_does_not_mutate_the_callers_fields(
+    cached_property_instance,
+):
+    """Django before 5.1 removes prefetch-cache names from the list it is given"""
+    fields = ["children"]
+
+    cached_property_instance.refresh_from_db(fields=fields)
+
+    assert fields == ["children"]
 
 
 def test_deferred_field_access_clears_nothing(
