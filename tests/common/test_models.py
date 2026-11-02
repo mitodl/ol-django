@@ -343,9 +343,10 @@ def test_refresh_from_db_accepts_any_iterable_for_fields(
     """
     `fields` is documented as any iterable, and the refresh still has to happen.
 
-    Reading a one-shot iterator for the narrowing and then handing the drained
-    original to Django made the refresh a silent no-op; a tuple or set reached
-    a `.remove()` call on Django before 5.1.
+    `iter` is the regression guard: reading a one-shot iterable for the
+    narrowing and then handing the drained original to Django made the whole
+    refresh a silent no-op. The other three are signature coverage and pass
+    either way.
     """
     CachedPropertyModel.objects.filter(pk=cached_property_instance.pk).update(
         note="changed"
@@ -356,15 +357,30 @@ def test_refresh_from_db_accepts_any_iterable_for_fields(
     assert cached_property_instance.note == "changed"
 
 
-def test_refresh_from_db_does_not_mutate_the_callers_fields(
-    cached_property_instance,
+@pytest.mark.parametrize("wrap", [list, tuple, set])
+def test_refresh_from_db_leaves_the_callers_fields_alone(
+    cached_property_instance, wrap
 ):
-    """Django before 5.1 removes prefetch-cache names from the list it is given"""
-    fields = ["children"]
+    """
+    Django before 5.1 strips prefetch-cache names from the sequence it is
+    handed - `.remove()` crashes on a tuple and mutates a list or set
+    mid-iteration - and the narrowing still has to fire afterwards.
 
-    cached_property_instance.refresh_from_db(fields=fields)
+    This has to go through a prefetched instance. The `.remove()` sits behind
+    `if field in _prefetched_objects_cache`, so a plainly loaded instance
+    never reaches it and the assertions would hold with or without the fix.
+    """
+    instance = CachedPropertyModel.objects.prefetch_related("children").get(
+        pk=cached_property_instance.pk
+    )
+    assert instance.child_count == INITIAL_CHILD_COUNT
+    CachedPropertyChild.objects.create(parent=instance, name="c")
+    fields = wrap(["children"])
 
-    assert fields == ["children"]
+    instance.refresh_from_db(fields=fields)
+
+    assert fields == wrap(["children"])
+    assert instance.child_count == INITIAL_CHILD_COUNT + 1
 
 
 def test_deferred_field_access_clears_nothing(

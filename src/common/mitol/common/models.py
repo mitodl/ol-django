@@ -415,10 +415,12 @@ class CachedPropertiesMixin:
         # the very failure this mixin exists to prevent.
         requested = None if fields is None else list(fields)
 
-        # Django before 5.1 removes prefetch-cache names from whatever list it
-        # is handed, so it gets a throwaway copy: the caller's object is left
-        # alone (a tuple or set would crash its .remove()), and `requested`
-        # survives intact for the narrowing below.
+        # Django before 5.1 strips names it resolves out of the instance's
+        # prefetch cache from whatever sequence it was handed - `.remove()`,
+        # which crashes on a tuple and mutates a list or set mid-iteration.
+        # That branch is exactly where `fields=[<prefetched relation>]` lands,
+        # so super() gets a throwaway copy: the caller's object is left alone
+        # and `requested` survives intact for the narrowing below.
         super().refresh_from_db(
             using=using,
             fields=None if requested is None else list(requested),
