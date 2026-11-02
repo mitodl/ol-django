@@ -12,10 +12,14 @@ from libraries.models import Author, Book, Media
 from main.models import (
     AuditableTestModel,
     AuditableTestModelAudit,
+    CachedPropertyChild,
+    CachedPropertyModel,
+    CachedPropertyOwner,
     Root,
     Updateable,
 )
 from mitol.common.factories import UserFactory
+from mitol.common.models import CachedPropertiesMixin
 from mitol.common.utils.serializers import serialize_model_object
 
 pytestmark = pytest.mark.django_db
@@ -130,3 +134,188 @@ def test_global_id_is_unique_but_allows_many_unset():
         User.objects.create(
             username="fork", email="fork@example.com", global_id="a-global-id"
         )
+
+
+# How many children the cached_property_instance fixture starts with.
+INITIAL_CHILD_COUNT = 2
+
+
+@pytest.fixture
+def cached_property_instance():
+    """Build a CachedPropertyModel with children, read back out of the database"""
+    owner = CachedPropertyOwner.objects.create(name="first owner")
+    instance = CachedPropertyModel.objects.create(title="T", note="a note", owner=owner)
+    CachedPropertyChild.objects.create(parent=instance, name="a")
+    CachedPropertyChild.objects.create(parent=instance, name="b")
+    return CachedPropertyModel.objects.get(pk=instance.pk)
+
+
+def test_clear_cached_properties_on_a_cold_cache_is_a_noop(cached_property_instance):
+    """Clearing a property that was never read does nothing rather than raising"""
+    assert "child_count" not in cached_property_instance.__dict__
+
+    cached_property_instance.clear_cached_properties()
+    cached_property_instance.clear_cached_properties("child_count")
+
+    # the guard must not have read the property into existence
+    assert "child_count" not in cached_property_instance.__dict__
+
+
+def test_clear_cached_properties_forces_a_requery(
+    cached_property_instance, django_assert_num_queries
+):
+    """A cleared property is recomputed on the next read"""
+    with django_assert_num_queries(1):
+        assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
+    with django_assert_num_queries(0):
+        assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
+
+    CachedPropertyChild.objects.create(parent=cached_property_instance, name="c")
+    cached_property_instance.clear_cached_properties("child_count")
+
+    with django_assert_num_queries(1):
+        assert cached_property_instance.child_count == INITIAL_CHILD_COUNT + 1
+
+
+def test_discovery_finds_both_cached_property_flavors():
+    """
+    Discover cached properties of both flavors.
+
+    `functools.cached_property` and `django.utils.functional.cached_property`
+    are distinct classes, and this org uses both.
+    """
+    names = CachedPropertyModel.get_cached_property_names()
+
+    assert "child_count" in names  # functools
+    assert "child_names" in names  # django.utils.functional
+    # nothing Django puts on a model class should be picked up as well
+    assert names == frozenset(
+        {"child_count", "child_names", "owner_name", "inherited_label"}
+    )
+
+
+def test_discovery_finds_cached_properties_from_base_classes():
+    """A cached property reachable only through the MRO is discovered"""
+    assert "inherited_label" not in vars(CachedPropertyModel)
+    assert "inherited_label" in CachedPropertyModel.get_cached_property_names()
+
+
+def test_clear_cached_properties_rejects_an_unknown_name(cached_property_instance):
+    """An unrecognised name raises - a silent miss is how staleness returns"""
+    assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
+
+    with pytest.raises(AttributeError, match="child_cont"):
+        cached_property_instance.clear_cached_properties("child_cont", "child_count")
+
+    # nothing was cleared: the call failed before touching any cache
+    assert cached_property_instance.__dict__["child_count"] == INITIAL_CHILD_COUNT
+
+
+def test_cached_property_sources_must_name_real_cached_properties():
+    """A source declared for a property that does not exist raises"""
+
+    class Misdeclared(CachedPropertiesMixin):
+        """Test-only class declaring a source for a nonexistent property"""
+
+        cached_property_sources = {"typoed_name": {"owner"}}
+
+    with pytest.raises(AttributeError, match="typoed_name"):
+        Misdeclared.get_cached_property_names()
+
+
+def test_refresh_from_db_clears_every_cached_property(cached_property_instance):
+    """A full refresh drops all of them"""
+    assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
+    assert cached_property_instance.child_names == ["a", "b"]
+    assert cached_property_instance.owner_name == "first owner"
+    assert cached_property_instance.inherited_label == "<T>"
+
+    CachedPropertyChild.objects.create(parent=cached_property_instance, name="c")
+    cached_property_instance.refresh_from_db()
+
+    assert not (
+        set(cached_property_instance.__dict__)
+        & CachedPropertyModel.get_cached_property_names()
+    )
+    assert cached_property_instance.child_count == INITIAL_CHILD_COUNT + 1
+
+
+def test_refresh_from_db_with_fields_leaves_unrelated_properties_alone(
+    cached_property_instance,
+):
+    """A narrowed refresh clears nothing that does not declare that field"""
+    assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
+    assert cached_property_instance.child_names == ["a", "b"]
+    CachedPropertyChild.objects.create(parent=cached_property_instance, name="c")
+
+    cached_property_instance.refresh_from_db(fields=["note"])
+
+    # child_count declares `children`, child_names declares nothing at all
+    assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
+    assert cached_property_instance.child_names == ["a", "b"]
+
+
+def test_refresh_from_db_with_fields_clears_declared_dependents(
+    cached_property_instance, django_assert_num_queries
+):
+    """A narrowed refresh clears the properties declaring one of those fields"""
+    assert cached_property_instance.owner_name == "first owner"
+    assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
+
+    other = CachedPropertyOwner.objects.create(name="second owner")
+    CachedPropertyModel.objects.filter(pk=cached_property_instance.pk).update(
+        owner=other
+    )
+
+    cached_property_instance.refresh_from_db(fields=["owner"])
+
+    assert cached_property_instance.owner_name == "second owner"
+    # child_count declares `children`, not `owner`, so it survived
+    with django_assert_num_queries(0):
+        assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
+
+
+def test_refresh_from_db_with_a_prefetch_name_clears_its_dependents(
+    cached_property_instance,
+):
+    """
+    Django resolves a prefetched name out of `fields` before doing anything
+    else - and before 5.1 it does so by mutating the list it was handed, then
+    returns early once that list is empty. The dependents still have to be
+    cleared, so the request is snapshotted before delegating.
+    """
+    instance = CachedPropertyModel.objects.prefetch_related("children").get(
+        pk=cached_property_instance.pk
+    )
+    assert instance.child_count == INITIAL_CHILD_COUNT
+
+    CachedPropertyChild.objects.create(parent=instance, name="c")
+    instance.refresh_from_db(fields=["children"])
+
+    assert instance.child_count == INITIAL_CHILD_COUNT + 1
+
+
+def test_deferred_field_access_clears_nothing(
+    cached_property_instance, django_assert_num_queries
+):
+    """
+    DeferredAttribute.__get__ refreshes with fields=[<deferred field>], so an
+    unconditional clear would add queries to every .only()/.defer() instance.
+    """
+    instance = CachedPropertyModel.objects.only("id", "title", "owner").get(
+        pk=cached_property_instance.pk
+    )
+    assert instance.child_count == INITIAL_CHILD_COUNT
+
+    with django_assert_num_queries(1):
+        # one query for the deferred field itself, and nothing evicted
+        assert instance.note == "a note"
+    with django_assert_num_queries(0):
+        assert instance.child_count == INITIAL_CHILD_COUNT
+
+
+def test_discovery_is_memoized_and_issues_no_queries(django_assert_num_queries):
+    """Discovery is a class-level walk, so it is free at runtime"""
+    with django_assert_num_queries(0):
+        names = CachedPropertyModel.get_cached_property_names()
+        assert CachedPropertyModel.get_cached_property_names() is names

@@ -3,8 +3,10 @@ Common model classes
 """
 
 import copy
+import functools
 from collections.abc import Iterable
-from typing import TypeVar, Union
+from contextlib import suppress
+from typing import ClassVar, TypeVar, Union
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -19,7 +21,14 @@ from django.db.models import (
     prefetch_related_objects,
 )
 from django.db.models.query import QuerySet
+from django.utils.functional import cached_property as django_cached_property
 from mitol.common.utils.datetime import now_in_utc
+
+# functools.cached_property and django.utils.functional.cached_property are
+# distinct classes and this org uses both, sometimes in the same codebase, so
+# an isinstance check against only one silently no-ops on the other - which is
+# the failure mode CachedPropertiesMixin exists to prevent.
+_CACHED_PROPERTY_CLASSES = (functools.cached_property, django_cached_property)
 
 
 class TimestampedModelQuerySet(QuerySet):
@@ -273,3 +282,130 @@ class UserGlobalIdMixin(Model):
 
     class Meta:
         abstract = True
+
+
+class CachedPropertiesMixin:
+    """
+    Makes a model's cached properties invalidatable, and teaches
+    `refresh_from_db` to drop them.
+
+    `Model.refresh_from_db` clears `_prefetched_objects_cache`, cached foreign
+    keys, cached reverse one-to-ones and cached generic foreign keys, but it
+    cannot know about a `functools` or `django.utils.functional` cache, so it
+    leaves those populated. A cached property derived from a relation
+    therefore stays stale after the relation changes, and every call site
+    invents its own eviction instead.
+
+    This is a plain mixin, not an abstract model: it adds no fields and no
+    Meta, so it composes onto any model. It must precede `Model` in the bases
+    so that this `refresh_from_db` wins the MRO:
+
+        class Enrollment(CachedPropertiesMixin, TimestampedModel):
+            ...
+    """
+
+    # Optional map of {cached property name: {field/relation names it derives
+    # from}}. Consulted only to narrow `refresh_from_db(fields=...)`; a
+    # property that is not declared here is never cleared by a narrowed
+    # refresh.
+    cached_property_sources: ClassVar[dict[str, set[str]]] = {}
+
+    @classmethod
+    def get_cached_property_names(cls) -> frozenset[str]:
+        """
+        Every cached property defined on this class or any of its bases.
+
+        Memoized on the class - read out of `cls.__dict__` rather than by
+        attribute lookup, so a subclass computes its own answer instead of
+        inheriting its parent's.
+        """
+        names = cls.__dict__.get("_cached_property_names")
+        if names is None:
+            names = frozenset(
+                name
+                for klass in cls.__mro__
+                for name, attr in vars(klass).items()
+                if isinstance(attr, _CACHED_PROPERTY_CLASSES)
+            )
+            unmatched = sorted(set(cls.cached_property_sources) - names)
+            if unmatched:
+                msg = (
+                    f"{cls.__name__}.cached_property_sources declares "
+                    f"{', '.join(unmatched)}, which is not a cached property "
+                    f"on {cls.__name__}. A narrowed refresh_from_db would "
+                    f"never clear it."
+                )
+                raise AttributeError(msg)
+            cls._cached_property_names = names
+        return names
+
+    def clear_cached_properties(self, *names: str) -> None:
+        """
+        Drop the named cached properties, or all of them when given none.
+
+        An unrecognised name raises rather than quietly doing nothing: a
+        silent no-op is how a renamed property becomes a reintroduced
+        staleness bug.
+        """
+        known = self.get_cached_property_names()
+        unknown = sorted(set(names) - known)
+        if unknown:
+            msg = (
+                f"{type(self).__name__} has no cached property named: "
+                f"{', '.join(unknown)}"
+            )
+            raise AttributeError(msg)
+
+        for name in names or known:
+            # cached_property defines only __set_name__ and __get__, so `del`
+            # falls through to object.__delattr__, which pops the instance
+            # __dict__ entry and raises AttributeError on a cold cache.
+            # hasattr() is not usable as the guard: it calls __get__ and so
+            # populates the very cache being cleared.
+            with suppress(AttributeError):
+                delattr(self, name)
+
+    @classmethod
+    def _cached_properties_deriving_from(cls, fields: Iterable[str]) -> set[str]:
+        """Find the cached properties declaring any of `fields` as a source"""
+        refreshed = set(fields)
+        return {
+            name
+            for name, sources in cls.cached_property_sources.items()
+            if refreshed & set(sources)
+        }
+
+    def refresh_from_db(self, using=None, fields=None, **kwargs):
+        """
+        Reload field values from the database and drop stale cached properties.
+
+        A full refresh clears every cached property. A refresh narrowed with
+        `fields` clears only the cached properties that declare one of those
+        fields in `cached_property_sources`, which matches Django's own
+        contract for `fields` - it drops only the prefetch entries named in
+        `fields` and clears only relations where `rel.name in fields`.
+        Narrowing matters because `DeferredAttribute.__get__` calls
+        `refresh_from_db(fields=[field_name])` for every deferred-field access
+        on a `.only()`/`.defer()` instance, where an unconditional clear would
+        add queries to the paths most likely to have been tuned.
+
+        `using` and `fields` are named explicitly and the rest passed through
+        because `from_queryset` only exists from Django 5.1 and this package
+        supports Django 4.2. `arefresh_from_db` delegates to this method via
+        `sync_to_async` on every supported version, so the async path needs no
+        separate override.
+        """
+        # Django before 5.1 removes prefetch-cache names from the very list it
+        # was handed, so snapshot what was asked for before delegating.
+        requested = None if fields is None else list(fields)
+
+        super().refresh_from_db(using=using, fields=fields, **kwargs)
+
+        if requested is None:
+            self.clear_cached_properties()
+            return
+        stale = self._cached_properties_deriving_from(requested)
+        # Guarded: clear_cached_properties() with no names clears everything,
+        # which is the opposite of what a narrowed refresh should do.
+        if stale:
+            self.clear_cached_properties(*stale)
