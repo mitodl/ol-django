@@ -1209,6 +1209,44 @@ def test_set_mapped_attr_writes_null_to_nullable_field(db):  # noqa: ARG001
     assert adapter.obj.global_id is None
 
 
+@pytest.mark.parametrize("blank", ["", "   "])
+@pytest.mark.parametrize(
+    "operation",
+    [
+        lambda blank: {"op": "replace", "value": json.dumps({"userName": blank})},
+        lambda blank: {"op": "replace", "path": "userName", "value": blank},
+    ],
+)
+def test_scim_user_patch_blank_username_is_ignored(scim_client, operation, blank):
+    """
+    A blank userName must not be written. username is unique, so a second user
+    would get an IntegrityError (500).
+    """
+    user = UserFactory.create()
+    original = user.username
+
+    resp = _patch_ops(scim_client, user, [operation(blank)])
+
+    assert resp.status_code == HTTPStatus.OK, f"Response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert user.username == original
+
+
+def test_scim_user_patch_blank_name_clears_name(scim_client):
+    """first_name is blank=True, so an empty string is a legitimate clear"""
+    user = UserFactory.create(first_name="Jimmy")
+
+    resp = _patch_replace(scim_client, user, {"name.givenName": ""})
+
+    assert resp.status_code == HTTPStatus.OK, f"Response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert user.first_name == ""
+
+
 def test_scim_user_put_null_name_clears_names(scim_client):
     """A PUT with a null name object clears the names rather than erroring"""
     user = UserFactory.create()
