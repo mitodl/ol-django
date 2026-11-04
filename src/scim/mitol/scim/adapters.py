@@ -168,6 +168,26 @@ class UserAdapter(SCIMUser):
         except FieldDoesNotExist:
             return True
 
+    def allows_blank(self, attname: str) -> bool:
+        """
+        Return whether a model field accepts an empty string.
+
+        Uses ``blank`` rather than ``null`` because a unique, non-blank field
+        such as ``username`` is poisoned by ``""`` (the second user to receive
+        it violates the unique constraint) while ``first_name`` and
+        ``last_name`` legitimately take ``""`` to clear a name. ``global_id``
+        is ``null=True, blank=True, unique=True``, so a future ``ATTR_MAP``
+        entry for it is handled by the same rule.
+
+        :param attname: name of the field on the model
+        :returns: True if the field accepts an empty string
+        :rtype: bool
+        """
+        try:
+            return self.obj._meta.get_field(attname).blank  # noqa: SLF001
+        except FieldDoesNotExist:
+            return True
+
     def set_mapped_attr(self, attname: str, value) -> None:
         """
         Assign a value from a SCIM payload to a field on the user.
@@ -175,14 +195,23 @@ class UserAdapter(SCIMUser):
         A SCIM client can send an explicit ``null`` for an attribute it has no
         value for. Writing that to a NOT NULL column raises an IntegrityError,
         which django_scim turns into a 500, and a client that treats 500 as
-        retryable will resend the same payload forever. Leave the existing
-        value in place instead.
+        retryable will resend the same payload forever. A blank or
+        whitespace-only string for a field that is not ``blank`` has the same
+        effect on a unique column. Leave the existing value in place instead.
 
         :param attname: name of the field on the model
         :param value: value from the SCIM payload
         """
         if value is None and not self.is_nullable(attname):
             logger.debug("Ignoring null SCIM value for %s", attname)
+            return
+
+        if (
+            isinstance(value, str)
+            and not value.strip()
+            and not self.allows_blank(attname)
+        ):
+            logger.debug("Ignoring blank SCIM value for %s", attname)
             return
 
         setattr(self.obj, attname, value)
@@ -205,9 +234,9 @@ class UserAdapter(SCIMUser):
 
         if not username:
             # userName is REQUIRED per RFC 7643 section 4.1.1. Without this the
-            # write fails on the NOT NULL column and django_scim answers with a
-            # 409 carrying the raw database error, which tells the client
-            # nothing about what in its payload was wrong.
+            # write fails on the NOT NULL column. POST gets a 409 carrying the
+            # raw database error (PostView wraps save() in IntegrityError);
+            # PUT gets a retryable 500. Neither says what was wrong.
             msg = "userName is required and may not be null"
             raise exceptions.BadRequestError(msg)
 
