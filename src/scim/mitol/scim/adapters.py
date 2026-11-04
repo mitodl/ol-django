@@ -322,21 +322,21 @@ class UserAdapter(SCIMUser):
         self, path: str | None, value: Union[str, list, dict]
     ) -> list:
         """Parse the incoming value(s)"""
-        no_path_msg = "A PATCH operation with no path must carry an object value"
-
         if isinstance(value, str) and path is None:
             # scim-for-keycloak sends the whole resource as a noncompliant
             # JSON-encoded string with no path at all
             try:
                 value = json.loads(value)
             except json.JSONDecodeError as exc:
-                raise exceptions.BadRequestError(no_path_msg) from exc
+                msg = "The value of a PATCH operation with no path is not valid JSON"
+                raise exceptions.BadRequestError(msg) from exc
 
         if not isinstance(value, dict):
             # a spec-compliant client names the attribute in `path` and sends the
             # bare value, which may be a scalar, a list or an explicit null
             if path is None:
-                raise exceptions.BadRequestError(no_path_msg)
+                msg = "A PATCH operation with no path must carry an object value"
+                raise exceptions.BadRequestError(msg)
 
             return [(self.split_path(path), value)]
 
@@ -425,7 +425,18 @@ class UserAdapter(SCIMUser):
             # Restructure for use in loop below.
             value = {path: value}
 
-        for nested_path, nested_value in (value or {}).items():
+        items = list((value or {}).items())
+
+        # Reject before writing anything: a filtered path would otherwise be
+        # dropped below and the client would be told it succeeded.
+        for nested_path, _ in items:
+            if nested_path.is_complex:
+                msg = (
+                    f"PATCH with a filtered path is not supported: {nested_path.filter}"
+                )
+                raise exceptions.NotImplementedError(msg)
+
+        for nested_path, nested_value in items:
             if (
                 not self._dispatch_replace_nested_path(nested_path, nested_value)
                 and nested_path.first_path not in self.IGNORED_PATHS
