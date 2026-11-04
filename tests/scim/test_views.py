@@ -1234,6 +1234,49 @@ def test_scim_user_patch_blank_username_is_ignored(scim_client, operation, blank
     assert user.username == original
 
 
+def test_scim_user_patch_filtered_path_is_not_implemented(scim_client):
+    """A filtered path can't be applied, so it must not come back as a 200"""
+    user = UserFactory.create()
+    email = user.email
+
+    resp = _patch_ops(
+        scim_client,
+        user,
+        [
+            {
+                "op": "replace",
+                "path": 'emails[type eq "work"].value',
+                "value": "new@example.com",
+            }
+        ],
+    )
+
+    assert resp.status_code == HTTPStatus.NOT_IMPLEMENTED, f"Response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert user.email == email
+
+
+@pytest.mark.parametrize(
+    ("operation", "message"),
+    [
+        ({"op": "replace", "value": "{not json"}, "not valid JSON"),
+        ({"op": "replace", "value": None}, "must carry an object value"),
+    ],
+)
+def test_scim_user_patch_no_path_errors_name_the_failure(
+    scim_client, operation, message
+):
+    """Each way a path-less PATCH can be malformed reports its own cause"""
+    user = UserFactory.create()
+
+    resp = _patch_ops(scim_client, user, [operation])
+
+    assert resp.status_code == HTTPStatus.BAD_REQUEST, f"Response: {resp.content}"
+    assert message in resp.content.decode()
+
+
 def test_scim_user_patch_blank_name_clears_name(scim_client):
     """first_name is blank=True, so an empty string is a legitimate clear"""
     user = UserFactory.create(first_name="Jimmy")
