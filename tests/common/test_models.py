@@ -356,6 +356,35 @@ def test_refresh_from_db_accepts_any_iterable_for_fields(
     assert cached_property_instance.note == "changed"
 
 
+def test_refresh_from_db_narrows_from_a_one_shot_iterator(
+    cached_property_instance, django_assert_num_queries
+):
+    """
+    The narrowing has to survive a one-shot `fields`, not just the reload.
+
+    The test above covers the other half - Django gets the names and the row
+    is refreshed. Reading `fields` straight through instead of snapshotting it
+    passes that one, because Django consumes the iterator itself and reloads
+    correctly; what is left drained is the copy the narrowing then reads, so
+    no property declares a source, nothing is evicted, and the refresh hands
+    back the stale value it was called to replace.
+    """
+    assert cached_property_instance.owner_name == "first owner"
+    assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
+
+    other = CachedPropertyOwner.objects.create(name="second owner")
+    CachedPropertyModel.objects.filter(pk=cached_property_instance.pk).update(
+        owner=other
+    )
+
+    cached_property_instance.refresh_from_db(fields=iter(["owner"]))
+
+    assert cached_property_instance.owner_name == "second owner"
+    # child_count declares `children`, not `owner`, so it survived
+    with django_assert_num_queries(0):
+        assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
+
+
 def test_deferred_field_access_clears_nothing(
     cached_property_instance, django_assert_num_queries
 ):
