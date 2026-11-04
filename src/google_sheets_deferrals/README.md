@@ -20,9 +20,7 @@ INSTALLED_APPS = [
 
 
 ```python
-MITOL_GOOGLE_SHEETS_DEFERRALS_PLUGINS = [
-    "ecommerce.plugins.DeferralPlugin"
-]
+MITOL_GOOGLE_SHEETS_DEFERRALS_PLUGINS = ["ecommerce.plugins.DeferralPlugin"]
 ```
 
 #### In `ecommerce/plugins.py`
@@ -94,6 +92,7 @@ Here are two main ways that we are currently getting our Google Sheets Deferrals
 ```python
 from mitol.google_sheets_deferrals.api import DeferralRequestHandler
 from main.celery import app
+
 
 @app.task
 def process_deferral_requests():
