@@ -387,7 +387,7 @@ class CachedPropertiesMixin:
             if refreshed & set(sources)
         }
 
-    def refresh_from_db(self, using=None, fields=None, **kwargs):
+    def refresh_from_db(self, using=None, fields=None, from_queryset=None):
         """
         Reload field values from the database and drop stale cached properties.
 
@@ -397,17 +397,12 @@ class CachedPropertiesMixin:
         `DeferredAttribute.__get__` calls `refresh_from_db(fields=[field_name])`
         for every deferred-field access on a `.only()`/`.defer()` instance,
         where an unconditional clear would add queries to the paths most likely
-        to have been tuned. From Django 5.1 it also mirrors what Django itself
-        does with `fields`: drop only the prefetch entries named in `fields`,
-        clear only the relations where `rel.name in fields`. Django 4.2 and 5.0
-        clear every cached relation on any refresh, narrowed or not, so there
-        the narrowing is ours alone.
+        to have been tuned. It also mirrors what Django itself does with
+        `fields`: drop only the prefetch entries named in `fields`, clear only
+        the relations where `rel.name in fields`.
 
-        `using` and `fields` are named explicitly and the rest passed through
-        because `from_queryset` only exists from Django 5.1 and this package
-        supports Django 4.2. `arefresh_from_db` delegates to this method via
-        `sync_to_async` on every supported version, so the async path needs no
-        separate override.
+        `arefresh_from_db` delegates here via `sync_to_async`, so the async
+        path needs no separate override.
         """
         # `fields` is documented as any iterable, so it gets read exactly once:
         # consuming it here and passing the original on would drain a one-shot
@@ -415,16 +410,10 @@ class CachedPropertiesMixin:
         # the very failure this mixin exists to prevent.
         requested = None if fields is None else list(fields)
 
-        # Django before 5.1 strips names it resolves out of the instance's
-        # prefetch cache from whatever sequence it was handed - `.remove()`,
-        # which crashes on a tuple and mutates a list or set mid-iteration.
-        # That branch is exactly where `fields=[<prefetched relation>]` lands,
-        # so super() gets a throwaway copy: the caller's object is left alone
-        # and `requested` survives intact for the narrowing below.
         super().refresh_from_db(
             using=using,
-            fields=None if requested is None else list(requested),
-            **kwargs,
+            fields=requested,
+            from_queryset=from_queryset,
         )
 
         if requested is None:

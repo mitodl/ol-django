@@ -51,7 +51,7 @@ enrollment.refresh_from_db(fields=["user"])   # drops openedx_user
 enrollment.refresh_from_db(fields=["title"])  # drops nothing
 ```
 
-This is deliberate rather than conservative-by-accident. `DeferredAttribute.__get__` calls `refresh_from_db(fields=[field_name])` for every deferred-field access on a `.only()`/`.defer()` instance, so an unconditional clear would add queries to the paths most likely to have been tuned. From Django 5.1 it also mirrors what Django itself does with `fields`: drop only the prefetch entries named in `fields`, clear only the relations where `rel.name in fields`. Django 4.2 and 5.0 clear every cached relation on any refresh, narrowed or not, so on those versions the narrowing is this mixin's alone.
+This is deliberate rather than conservative-by-accident. `DeferredAttribute.__get__` calls `refresh_from_db(fields=[field_name])` for every deferred-field access on a `.only()`/`.defer()` instance, so an unconditional clear would add queries to the paths most likely to have been tuned. It also mirrors what Django itself does with `fields`: drop only the prefetch entries named in `fields`, clear only the relations where `rel.name in fields`.
 
 The names in `cached_property_sources` are matched against the strings a caller passes to `fields` - there is no resolution against the model's fields. So declare whichever spelling your callers use: `refresh_from_db(fields=["user"])` and `refresh_from_db(fields=["user_id"])` are both legal for the same foreign key, and only the declared one matches. A source name that is never passed is silently never matched.
 

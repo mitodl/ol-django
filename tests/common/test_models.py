@@ -321,9 +321,8 @@ def test_refresh_from_db_with_a_prefetch_name_clears_its_dependents(
 ):
     """
     Django resolves a prefetched name out of `fields` before doing anything
-    else - and before 5.1 it does so by mutating the list it was handed, then
-    returns early once that list is empty. The dependents still have to be
-    cleared, so the request is snapshotted before delegating.
+    else, and returns early once nothing is left. The dependents still have to
+    be cleared, so the request is snapshotted before delegating.
     """
     instance = CachedPropertyModel.objects.prefetch_related("children").get(
         pk=cached_property_instance.pk
@@ -355,32 +354,6 @@ def test_refresh_from_db_accepts_any_iterable_for_fields(
     cached_property_instance.refresh_from_db(fields=wrap(["note"]))
 
     assert cached_property_instance.note == "changed"
-
-
-@pytest.mark.parametrize("wrap", [list, tuple, set])
-def test_refresh_from_db_leaves_the_callers_fields_alone(
-    cached_property_instance, wrap
-):
-    """
-    Django before 5.1 strips prefetch-cache names from the sequence it is
-    handed - `.remove()` crashes on a tuple and mutates a list or set
-    mid-iteration - and the narrowing still has to fire afterwards.
-
-    This has to go through a prefetched instance. The `.remove()` sits behind
-    `if field in _prefetched_objects_cache`, so a plainly loaded instance
-    never reaches it and the assertions would hold with or without the fix.
-    """
-    instance = CachedPropertyModel.objects.prefetch_related("children").get(
-        pk=cached_property_instance.pk
-    )
-    assert instance.child_count == INITIAL_CHILD_COUNT
-    CachedPropertyChild.objects.create(parent=instance, name="c")
-    fields = wrap(["children"])
-
-    instance.refresh_from_db(fields=fields)
-
-    assert fields == wrap(["children"])
-    assert instance.child_count == INITIAL_CHILD_COUNT + 1
 
 
 def test_deferred_field_access_clears_nothing(
