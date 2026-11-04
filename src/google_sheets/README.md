@@ -63,6 +63,7 @@ Add this to your settings file:
 ```python
 # import_settings_module, imports the default settings defined in mitol-google-sheets app
 from mitol.common.envs import import_settings_modules
+
 import_settings_modules(globals(), "mitol.google-sheets.settings.google_sheets")
 ```
 
