@@ -10,7 +10,7 @@ dependencies = [
     "certifi>=2026.10.19",
     "cybersource-rest-client-python>=0.0.79,<0.0.80",
     "django-stubs>=1.13.1",
-    "django>=4.2",
+    "django>=5.2",
     "mitol-django-common",
     "stripe>=15.3.0",
 ]
