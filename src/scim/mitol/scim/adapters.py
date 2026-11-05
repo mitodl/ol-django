@@ -269,10 +269,47 @@ class UserAdapter(SCIMUser):
 
         return results
 
+    def validate_op_replace(self, path, value, operation):
+        """
+        Validate a replace, leaving nulls to _unassign_field.
+
+        django_scim type-checks "active" as a bool, and for a replace with no
+        "path" (how scim-for-keycloak sends them) its error message raises a
+        KeyError on operation["path"], so a null "active" would 500.
+        """
+        if value is not None:
+            self._default_validate_op(path, value, operation)
+
+    def _unassign_field(self, field_name):
+        """
+        Apply a SCIM null (an unassigned attribute) to a mapped model field.
+
+        scim-for-keycloak sends a remove as a replace that sets the attribute
+        to null. Writing None to a NOT NULL column fails the save with a 500,
+        and the client retries the same op forever. A text field that allows
+        blank becomes "". A required or unique field (e.g. username) keeps its
+        value, since it can't be unassigned and "" would collide.
+        """
+        field = self.obj._meta.get_field(field_name)  # noqa: SLF001
+        if field.null:
+            setattr(self.obj, field_name, None)
+        elif field.empty_strings_allowed and field.blank and not field.unique:
+            setattr(self.obj, field_name, "")
+        else:
+            logger.warning(
+                "Ignoring SCIM null for required field %s on user id=%s",
+                field_name,
+                self.obj.id,
+            )
+
     def _handle_replace_nested_path(self, nested_path, nested_value):
         """Handle processing a nested path"""
         if nested_path.first_path in self.ATTR_MAP:
-            setattr(self.obj, self.ATTR_MAP[nested_path.first_path], nested_value)
+            field_name = self.ATTR_MAP[nested_path.first_path]
+            if nested_value is None:
+                self._unassign_field(field_name)
+            else:
+                setattr(self.obj, field_name, nested_value)
         elif nested_path.first_path == ("emails", None, None):
             self.parse_emails(nested_value)
         else:
