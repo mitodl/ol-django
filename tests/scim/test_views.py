@@ -1030,3 +1030,338 @@ def test_in_memory_request_uppercases_the_method(method):
     request = InMemoryHttpRequest.stub(method=method)
 
     assert request.method == "PUT"
+
+
+def _patch_ops(scim_client, user, operations):
+    """Send a PATCH with the given operations for a single user"""
+    return scim_client.patch(
+        f"{reverse('scim:users')}/{user.scim_id}",
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.PATCH_OP],
+                "Operations": operations,
+            }
+        ),
+    )
+
+
+def _patch_replace(scim_client, user, value):
+    """Send a scim-for-keycloak style PATCH replace for a single user"""
+    return _patch_ops(
+        scim_client,
+        user,
+        [
+            {
+                "op": "replace",
+                # no `path`, and the value is a JSON-encoded string inside JSON
+                "value": json.dumps({"schemas": [constants.SchemaURI.USER], **value}),
+            }
+        ],
+    )
+
+
+@pytest.mark.parametrize(
+    ("value", "attname"),
+    [
+        ({"name": {"givenName": None}}, "first_name"),
+        ({"name": {"familyName": None}}, "last_name"),
+        ({"userName": None}, "username"),
+    ],
+)
+def test_scim_user_patch_null_leaves_non_nullable_field(scim_client, value, attname):
+    """A replace carrying null must not blank a NOT NULL column"""
+    user = UserFactory.create()
+    original = getattr(user, attname)
+
+    resp = _patch_replace(scim_client, user, value)
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert getattr(user, attname) == original
+
+
+def test_scim_user_patch_null_does_not_block_other_attrs(scim_client):
+    """The rest of a replace still applies when one attribute is null"""
+    user = UserFactory.create()
+    first_name = user.first_name
+
+    resp = _patch_replace(
+        scim_client, user, {"name": {"givenName": None, "familyName": "Bob"}}
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert user.first_name == first_name
+    assert user.last_name == "Bob"
+
+
+@pytest.mark.parametrize(
+    ("path", "attname", "value"),
+    [
+        ("userName", "username", "renamed"),
+        ("name.givenName", "first_name", "Billy"),
+        ("name.familyName", "last_name", "Bob"),
+    ],
+)
+def test_scim_user_patch_with_path_replaces_value(scim_client, path, attname, value):
+    """The spec-compliant form, a path plus a bare value, has to work"""
+    user = UserFactory.create()
+
+    resp = _patch_ops(
+        scim_client, user, [{"op": "replace", "path": path, "value": value}]
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert getattr(user, attname) == value
+
+
+@pytest.mark.parametrize(
+    ("path", "attname"),
+    [
+        ("userName", "username"),
+        ("name.givenName", "first_name"),
+        ("name.familyName", "last_name"),
+    ],
+)
+def test_scim_user_patch_with_path_null_leaves_non_nullable_field(
+    scim_client, path, attname
+):
+    """A null against an explicit path must not blank a NOT NULL column"""
+    user = UserFactory.create()
+    original = getattr(user, attname)
+
+    resp = _patch_ops(
+        scim_client, user, [{"op": "replace", "path": path, "value": None}]
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert getattr(user, attname) == original
+
+
+def test_scim_user_patch_without_path_needs_an_object_value(scim_client):
+    """A bare value and no path names no attribute, so it is a client error"""
+    user = UserFactory.create()
+
+    resp = _patch_ops(scim_client, user, [{"op": "replace", "value": None}])
+
+    assert resp.status_code == HTTPStatus.BAD_REQUEST, f"Response: {resp.content}"
+
+
+def test_scim_user_patch_null_active_is_bad_request(scim_client):
+    """
+    django_scim requires `active` to be a bool. Its type error must surface as
+    a 400 even though scim-for-keycloak sends no `path` in the operation.
+    """
+    user = UserFactory.create(is_active=True)
+
+    resp = _patch_replace(scim_client, user, {"active": None})
+
+    assert resp.status_code == HTTPStatus.BAD_REQUEST, f"Response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert user.is_active is True
+
+
+def test_scim_user_put_null_active_is_bad_request(scim_client):
+    """django_scim rejects a non-bool `active` on the PUT path too"""
+    user = UserFactory.create(is_active=True)
+
+    resp = scim_client.put(
+        f"{reverse('scim:users')}/{user.scim_id}",
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.USER],
+                "emails": [{"value": user.email, "primary": True}],
+                "active": None,
+                "userName": user.username,
+                "name": {"givenName": "Jimmy", "familyName": "Smith"},
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.BAD_REQUEST, f"Response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert user.is_active is True
+
+
+def test_set_mapped_attr_writes_null_to_nullable_field(db):  # noqa: ARG001
+    """A null for a field that does accept NULL is still applied"""
+    user = UserFactory.create(global_id="abc123")
+
+    adapter = UserAdapter(user, lock_user=False)
+    adapter.set_mapped_attr("global_id", None)
+
+    assert adapter.obj.global_id is None
+
+
+@pytest.mark.parametrize("blank", ["", "   "])
+@pytest.mark.parametrize(
+    "operation",
+    [
+        lambda blank: {"op": "replace", "value": json.dumps({"userName": blank})},
+        lambda blank: {"op": "replace", "path": "userName", "value": blank},
+    ],
+)
+def test_scim_user_patch_blank_username_is_ignored(scim_client, operation, blank):
+    """
+    A blank userName must not be written. username is unique, so a second user
+    would get an IntegrityError (500).
+    """
+    user = UserFactory.create()
+    original = user.username
+
+    resp = _patch_ops(scim_client, user, [operation(blank)])
+
+    assert resp.status_code == HTTPStatus.OK, f"Response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert user.username == original
+
+
+def test_scim_user_patch_filtered_path_is_not_implemented(scim_client):
+    """A filtered path can't be applied, so it must not come back as a 200"""
+    user = UserFactory.create()
+    email = user.email
+
+    resp = _patch_ops(
+        scim_client,
+        user,
+        [
+            {
+                "op": "replace",
+                "path": 'emails[type eq "work"].value',
+                "value": "new@example.com",
+            }
+        ],
+    )
+
+    assert resp.status_code == HTTPStatus.NOT_IMPLEMENTED, f"Response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert user.email == email
+
+
+@pytest.mark.parametrize(
+    ("operation", "message"),
+    [
+        ({"op": "replace", "value": "{not json"}, "not valid JSON"),
+        ({"op": "replace", "value": None}, "must carry an object value"),
+    ],
+)
+def test_scim_user_patch_no_path_errors_name_the_failure(
+    scim_client, operation, message
+):
+    """Each way a path-less PATCH can be malformed reports its own cause"""
+    user = UserFactory.create()
+
+    resp = _patch_ops(scim_client, user, [operation])
+
+    assert resp.status_code == HTTPStatus.BAD_REQUEST, f"Response: {resp.content}"
+    assert message in resp.content.decode()
+
+
+def test_scim_user_patch_blank_name_clears_name(scim_client):
+    """first_name is blank=True, so an empty string is a legitimate clear"""
+    user = UserFactory.create(first_name="Jimmy")
+
+    resp = _patch_replace(scim_client, user, {"name.givenName": ""})
+
+    assert resp.status_code == HTTPStatus.OK, f"Response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert user.first_name == ""
+
+
+def test_scim_user_put_null_name_clears_names(scim_client):
+    """A PUT with a null name object clears the names rather than erroring"""
+    user = UserFactory.create()
+
+    resp = scim_client.put(
+        f"{reverse('scim:users')}/{user.scim_id}",
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.USER],
+                "emails": [{"value": user.email, "primary": True}],
+                "active": True,
+                "userName": user.username,
+                "externalId": "1",
+                "name": None,
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert user.first_name == ""
+    assert user.last_name == ""
+
+
+@pytest.mark.parametrize("username", [None, ""])
+def test_scim_user_put_without_username_is_bad_request(scim_client, username):
+    """A PUT missing the required userName is a client error, not a 500"""
+    user = UserFactory.create()
+    original = user.username
+
+    resp = scim_client.put(
+        f"{reverse('scim:users')}/{user.scim_id}",
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.USER],
+                "emails": [{"value": user.email, "primary": True}],
+                "active": True,
+                "userName": username,
+                "name": {"givenName": "Jimmy", "familyName": "Smith"},
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.BAD_REQUEST, f"Response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert user.username == original
+
+
+@pytest.mark.django_db
+def test_scim_user_post_without_username_is_bad_request(scim_client):
+    """A POST missing the required userName is a client error, not a 500"""
+    user_count = User.objects.count()
+
+    resp = scim_client.post(
+        reverse("scim:users"),
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.USER],
+                "emails": [{"value": "nousername@example.com", "primary": True}],
+                "active": True,
+                "userName": None,
+                "name": {"givenName": "No", "familyName": "Username"},
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.BAD_REQUEST, f"Response: {resp.content}"
+    assert User.objects.count() == user_count
