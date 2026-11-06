@@ -23,12 +23,12 @@ jobs:
       run: uv sync
 
     - name: Changelog
-      run: uv run scripts/changelog.py check
+      run: uv run ol-release changelog check
 
       # A version bump merged to main is what publishes a release, so the
       # declarations that feed it have to agree before it lands.
     - name: Versions
-      run: uv run scripts/version.py check
+      run: uv run ol-release version check
 
 
   tests:
@@ -161,7 +161,7 @@ jobs:
     - name: Detect
       id: detect
       run: |
-        matrix="$(uv run scripts/publish.py matrix)"
+        matrix="$(uv run ol-release publish matrix)"
         count="$(printf '%s' "$matrix" | jq '.include | length')"
 
         printf '%s' "$matrix" | jq .

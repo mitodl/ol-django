@@ -95,14 +95,26 @@ CI runs the same hooks in the `prek` check (`.github/workflows/autofix.yml`), an
 
 We maintain changelogs in `changelog.d/` directories with each app. To create a new changelog for your changes, run:
 
-- `uv run scripts/changelog.py create --app APPNAME`
+- `uv run ol-release changelog create --app APPNAME`
   - `APPNAME`: the name of an application directory
 
 You will need to adjust permissions/ownership on the new file if you're using the Compose setup.
 
 Then fill out the new file that was generated with information about your changes. **Do this before you put up a PR for your changes.**
 
-A fragment ships in the same PR as the code it describes, and that PR must not touch the app's `CHANGELOG.md`. Folding fragments into `CHANGELOG.md` is what cutting a release does, and it happens in its own PR — see below. `uv run scripts/changelog.py check` enforces the split, so a reviewer reading a code PR only ever has to read the new fragments.
+A fragment ships in the same PR as the code it describes, and that PR must not touch the app's `CHANGELOG.md`. Folding fragments into `CHANGELOG.md` is what cutting a release does, and it happens in its own PR — see below. `uv run ol-release changelog check` enforces the split, so a reviewer reading a code PR only ever has to read the new fragments.
+
+### Which packages are managed
+
+`ol-release` reads `[tool.uv.workspace] members` from the root `pyproject.toml`,
+so adding a workspace member is all it takes for the tooling to see it. Two
+members are deliberately out of scope, listed in `[tool.ol-release] exclude`:
+`uvtestapp` (the skeleton you copy to make a new app) and `testapp` (the Django
+project the test suite runs against). Those get no changelog checks, no version
+checks, and are never published.
+
+A package that should stay managed but never reach PyPI declares the standard
+`Private :: Do Not Upload` classifier instead; `testapp` carries both.
 
 ### Releases
 
@@ -124,7 +136,7 @@ describes.
 2. Prepare the release on a branch:
 
    ```shell
-   uv run scripts/release.py prepare --app APPNAME
+   uv run ol-release prepare --app APPNAME
    ```
 
    For `edx_api_client`, say which part to bump:
@@ -147,7 +159,7 @@ that declare its version.
 If you would rather not use `prepare`, editing the version by hand works too —
 the workflow only reads `[project] version` from the app's `pyproject.toml`. Keep
 the other declarations (`[tool.bumpver] current_version` and the files in
-`[tool.bumpver.file_patterns]`, normally `mitol/APPNAME/__init__.py`) in step, or `uv run scripts/version.py check` fails
+`[tool.bumpver.file_patterns]`, normally `mitol/APPNAME/__init__.py`) in step, or `uv run ol-release version check` fails
 CI.
 
 #### How the workflow decides what to publish

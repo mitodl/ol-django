@@ -298,7 +298,7 @@ references looks flat. A hand-rolled cache is the other candidate.
 
 Standard repository conventions apply: `uv run pytest tests/benchmark`,
 `uv run ruff check --fix .`, and a changelog fragment via
-`uv run scripts/changelog.py create --app benchmark` before any PR.
+`uv run ol-release changelog create --app benchmark` before any PR.
 
 The tests run against the `libraries` app in `testapp/`, which exists to give
 this tooling something realistically shaped to work on. `benchmarks/` in the

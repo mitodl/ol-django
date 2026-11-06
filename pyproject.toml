@@ -39,12 +39,7 @@ requires-python = ">= 3.11"
 prek = ["prek==0.5.7"]
 dev = [
     {include-group = "prek"},
-    "GitPython",
     "anys>=0.3.1",
-    "bumpver",
-    "click",
-    "click-log",
-    "cloup",
     "coverage<=7.16.2",
     "deepmerge>=2.0",
     "dj-database-url",
@@ -66,14 +61,12 @@ dev = [
     # edx-api-client's tests mock HTTP with requests-mock rather than responses.
     "requests-mock",
     "ruff",
-    "scriv[toml]",
-    "semver",
-    "toml",
     "typing-extensions",
     "pytest-responses>=0.5.1",
     "more-itertools>=10.6.0",
     "deepdiff>=8.5.0",
     "mitol-drf-lint",
+    "mitol-release-tools",
 ]
 django52 = [
   "Django>=5.2,<5.3"
@@ -111,12 +104,20 @@ mitol-django-payment-gateway = "0d"
 mitol-django-scim = "0d"
 mitol-django-transcoding = "0d"
 mitol-drf-lint = "0d"
+mitol-release-tools = "0d"
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.uv.workspace]
 members = ["src/*", "testapp"]
+
+# Workspace members `ol-release` does not manage: no changelog is required of
+# them, no version consistency enforced, and they are never published.
+# `uvtestapp` is the skeleton to copy when adding an app; `testapp` is the
+# Django project the test suite runs against.
+[tool.ol-release]
+exclude = ["uvtestapp", "testapp"]
 
 [tool.uv.sources]
 mitol-django-common = { workspace = true }
@@ -140,6 +141,7 @@ mitol-django-scim = { workspace = true }
 mitol-django-apigateway = { workspace = true }
 mitol-django-observability = { workspace = true }
 mitol-drf-lint = { workspace = true }
+mitol-release-tools = { workspace = true }
 edx-api-client = { workspace = true }
 urllib3-future = { path = "shims/urllib3-future" }
 
