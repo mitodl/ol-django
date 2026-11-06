@@ -10,6 +10,7 @@ members, it fails here rather than silently releasing the wrong set.
 
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -22,6 +23,10 @@ REPO = Path(__file__).parents[2]
 pytestmark = pytest.mark.skipif(
     shutil.which("uv") is None, reason="needs the uv binary"
 )
+
+
+#: uv counts the workspace root as a member; `members` never globs it.
+ROOT_PACKAGE = "ol-django"
 
 
 def uv_member_names() -> set[str]:
@@ -40,6 +45,17 @@ def uv_member_names() -> set[str]:
     for member in _member_dirs():
         with (member / "pyproject.toml").open("rb") as handle:
             by_dist[tomllib.load(handle)["project"]["name"]] = member.name
+
+    # Fail rather than drop. `by_dist` comes from the same glob expansion as
+    # production discovery, so skipping what it cannot map would hide exactly
+    # the divergence this test exists to catch: a member uv sees and the
+    # globs miss would vanish from both sides and the assertion would pass.
+    unmapped = set(listed) - set(by_dist) - {ROOT_PACKAGE}
+
+    assert not unmapped, (
+        f"uv lists {sorted(unmapped)}, which the configured member globs do "
+        f"not reach. Discovery and uv disagree about the workspace."
+    )
 
     return {by_dist[name] for name in listed if name in by_dist}
 
@@ -68,3 +84,22 @@ def test_the_exclusions_actually_exclude_something():
     assert excluded
     assert excluded <= uv_member_names()
     assert not (excluded & set(list_app_names()))
+
+
+def test_an_unmapped_uv_member_fails_rather_than_being_dropped(monkeypatch):
+    """The guard that makes the parity assertion mean something
+
+    `by_dist` is built from the same globs as production discovery, so
+    anything they miss is missing from both sides. Dropping it silently would
+    let the comparison pass in exactly the case it is meant to catch, which is
+    what this simulates by hiding one real member from the mapping.
+    """
+    full = _member_dirs()
+    monkeypatch.setattr(
+        sys.modules[__name__],
+        "_member_dirs",
+        lambda: [path for path in full if path.name != "common"],
+    )
+
+    with pytest.raises(AssertionError, match="mitol-django-common"):
+        uv_member_names()
