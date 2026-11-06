@@ -4,7 +4,7 @@ version = "2026.10.30"
 description = "Library to handle Deferral requests using Google Sheets integrations in Django"
 dependencies = [
 "django-stubs>=1.13.1",
-"django>=4.2",
+"django>=5.2",
 "mitol-django-common>=2026.10.29",
 "mitol-django-google-sheets",
 "pluggy>0.13.1",

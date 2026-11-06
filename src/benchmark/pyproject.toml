@@ -9,7 +9,7 @@ license = "BSD-3-Clause"
 requires-python = ">=3.11"
 readme = "README.md"
 dependencies = [
-    "django>=4.2",
+    "django>=5.2",
     # DATABASE_URL parsing when a step points Django at the scratch database.
     "dj-database-url>=2",
     "opentelemetry-api>=1.31.0",

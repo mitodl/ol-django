@@ -75,7 +75,7 @@ Run `uv run pytest`. This should run all the tests. If you want to run a specifi
 
 #### Testing with tox
 
-If you want to run the full test suite for the CI Python/Django matrix (Python 3.11-3.13 and Django 4.2, 5.0, 5.1, 5.2), install tox and run:
+If you want to run the full test suite for the CI Python/Django matrix (Python 3.11-3.13 and Django 5.2), install tox and run:
 
 ```shell
 uv tool install tox --with tox-uv

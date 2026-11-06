@@ -7,7 +7,7 @@ dependencies = [
   "mitol-django-common",
   "django-anymail>=6.0",
   "django-stubs>=1.13.1",
-  "django>=4.2",
+  "django>=5.2",
   "djangorestframework>=3.0.0",
   "djoser==2.3.4",
   "mitol-django-common",

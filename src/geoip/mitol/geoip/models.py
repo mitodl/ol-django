@@ -1,10 +1,6 @@
 """MaxMind models"""
 
-import django
 from django.db import models
-
-# CheckConstraint renamed 'check' to 'condition' in Django 5.1; 'check' removed in 5.2
-_CONSTRAINT_CONDITION_KWARG = "condition" if django.VERSION >= (5, 1) else "check"
 
 
 class Geoname(models.Model):
@@ -95,11 +91,9 @@ class NetBlock(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                **{
-                    _CONSTRAINT_CONDITION_KWARG: models.Q(geoname_id__isnull=False)
-                    | models.Q(registered_country_geoname_id__isnull=False)
-                    | models.Q(represented_country_geoname_id__isnull=False)
-                },
+                condition=models.Q(geoname_id__isnull=False)
+                | models.Q(registered_country_geoname_id__isnull=False)
+                | models.Q(represented_country_geoname_id__isnull=False),
                 name="at_least_one_geoname_id",
             )
         ]
