@@ -1017,7 +1017,7 @@ wheels = [
 
 [[package]]
 name = "cybersource-rest-client-python"
-version = "0.0.79"
+version = "0.0.80"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -1031,7 +1031,7 @@ dependencies = [
     { name = "standard-imghdr", marker = "python_full_version >= '3.13'" },
     { name = "urllib3-future" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7f/d7/1c6c5bd378f7bce1d35ac4a336ebc4a49180ce163d3f535af7dc1c27c6dd/cybersource_rest_client_python-0.0.79.tar.gz", hash = "sha256:a6a63062b5dc3c9a79d201a8465d5ebc9fe08a35150bf8fe03077062bb95d013", size = 1894661, upload-time = "2026-09-15T05:20:53.13Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b9/98/51c4c8c71187bf8c9cdfd613f095716d404fcc7b6e2200181f3d6733cc9d/cybersource_rest_client_python-0.0.80.tar.gz", hash = "sha256:8eeebb5db8a372141b533741041c044f1d8c9441b63d587b41afb4082d3c3b0d", size = 1913825, upload-time = "2026-10-05T09:48:25.069Z" }
 
 [[package]]
 name = "datetime"
@@ -2685,7 +2685,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "certifi", specifier = ">=2026.10.19" },
-    { name = "cybersource-rest-client-python", specifier = ">=0.0.79,<0.0.80" },
+    { name = "cybersource-rest-client-python", specifier = ">=0.0.80,<0.0.81" },
     { name = "django", specifier = ">=5.2" },
     { name = "django-stubs", specifier = ">=1.13.1" },
     { name = "mitol-django-common", editable = "src/common" },
