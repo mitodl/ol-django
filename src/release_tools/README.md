@@ -8,7 +8,7 @@ branch**. Nothing is tagged or uploaded by hand: CI compares each package's
 `[project] version` against PyPI and publishes whatever is missing there.
 
 ```
-ol-release init                        bootstrap a repo for the commands below
+ol-release init --versioning date      bootstrap a repo for the commands below
 ol-release changelog create --app X    write a new changelog fragment
 ol-release changelog check             fail a PR with missing or misplaced fragments
 ol-release version check               fail a PR whose version declarations disagree
@@ -49,8 +49,16 @@ fragments, a `CHANGELOG.md` carrying scriv's insert marker, and a
 `[tool.bumpver]` table whose `file_patterns` name every file declaring the
 version. Repo-wide: a shared entry-title template at `.scriv/entry_title.md.j2`.
 
-`ol-release init` creates whatever is missing, and `ol-release init --check`
-reports it without writing, which makes it usable as a CI step. Both are
+`ol-release init` creates whatever is missing, and `init --check` reports it
+without writing, which makes it usable as a CI step.
+
+`--versioning date|semver` is required. It says which bumpver pattern to
+configure for packages that have no `[tool.bumpver]` table yet, and it is not
+inferred: `2024.10.24` is a valid `MAJOR.MINOR.PATCH` and a valid date both, so
+a version string cannot say which scheme produced it. Packages that already
+have the table keep the scheme declared there, and the flag does not touch
+them. Run `init` once per scheme, scoped with `--app`, in a repo whose packages
+disagree. Both are
 idempotent and neither rewrites content it did not write.
 
 Changelog fragments are markdown in every repository. A package that already

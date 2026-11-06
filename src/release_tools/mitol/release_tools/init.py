@@ -476,7 +476,10 @@ def init(  # noqa: PLR0913, PLR0917
         echo(f"{_describe(action.path, project)} - {action.summary}")
 
     if check:
-        echo(f"\n{len(planned)} item(s) missing. Run `ol-release init` to create them.")
+        echo(
+            f"\n{len(planned)} item(s) missing. Run `ol-release init "
+            f"--versioning {versioning}` to create them."
+        )
         ctx.exit(1)
 
     if dry_run:
