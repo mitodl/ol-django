@@ -1294,7 +1294,7 @@ wheels = [
 
 [[package]]
 name = "djoser"
-version = "2.3.4"
+version = "2.3.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
@@ -1302,9 +1302,9 @@ dependencies = [
     { name = "djangorestframework-simplejwt" },
     { name = "social-auth-app-django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d0/6a/7b09b8101f4cd60ec226add5576cf9ddf3ec740f327f2576f5a97459c523/djoser-2.3.4.tar.gz", hash = "sha256:1d077fd670f710d11743e7bd1c121bd3484f4d0ebea9e12a83737f9c77e8739f", size = 33006, upload-time = "2026-08-01T16:14:53.615Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0e/0c/776b9501f04f34fbf87018c4f9b13e0076c54e47be1804a057ae217edb57/djoser-2.3.5.tar.gz", hash = "sha256:861487c21da73563da5c81ea61c3790f433d3e6ea80f4b2c2e9783ea9016c298", size = 33811, upload-time = "2026-10-12T11:20:36.77Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/b5/958765e354e14b0d1c179526064f7193bce1e29e6ac89f976acd5e799daa/djoser-2.3.4-py3-none-any.whl", hash = "sha256:251e4a8973f95d1d770413fd219599413a4affb6dcf04d1ea6479258a133a919", size = 72074, upload-time = "2026-08-01T16:14:52.606Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/b7/0d8ab682dea33a92caf83f55eb689028c0ba15cbc448b65446a5f213aeed/djoser-2.3.5-py3-none-any.whl", hash = "sha256:4c662040702840f10ed74f5938d13025e177331994c52f7b9fb03cfd32cdaa57", size = 73048, upload-time = "2026-10-12T11:20:35.694Z" },
 ]
 
 [[package]]
@@ -2243,7 +2243,7 @@ requires-dist = [
     { name = "django-anymail", specifier = ">=6.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
     { name = "djangorestframework", specifier = ">=3.0.0" },
-    { name = "djoser", specifier = "==2.3.4" },
+    { name = "djoser", specifier = "==2.3.5" },
     { name = "mitol-django-common", editable = "src/common" },
     { name = "mitol-django-mail", editable = "src/mail" },
 ]
