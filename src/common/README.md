@@ -18,7 +18,7 @@ This is the Open Learning Django Common app. It provides common functionality us
 
 `CachedPropertiesMixin` makes those caches invalidatable and teaches `refresh_from_db()` to drop them.
 
-**It must precede `Model` in the bases**, or its `refresh_from_db()` loses the MRO and silently does nothing:
+**It must precede `Model` in the bases**, or its `refresh_from_db()` loses the MRO. Getting the order wrong raises `TypeError` at the `class` statement:
 
 ```python
 from mitol.common.models import CachedPropertiesMixin, TimestampedModel
@@ -55,4 +55,4 @@ This is deliberate rather than conservative-by-accident. `DeferredAttribute.__ge
 
 The names in `cached_property_sources` are matched against the strings a caller passes to `fields` - there is no resolution against the model's fields. So declare whichever spelling your callers use: `refresh_from_db(fields=["user"])` and `refresh_from_db(fields=["user_id"])` are both legal for the same foreign key, and only the declared one matches. A source name that is never passed is silently never matched.
 
-A key that is not a cached property on the model raises `ImproperlyConfigured` - not the `AttributeError` that an unknown name passed to `clear_cached_properties()` gets, and not a subclass of it, so catching both takes two `except` clauses. The two differ on purpose: this check can fire from a deferred-field access, where an `AttributeError` would be swallowed by a surrounding `hasattr`/`getattr` and hand back a silently wrong default.
+A key that is not a cached property on the model raises `TypeError` at the `class` statement, alongside the base-order check. Both are mistakes in the class definition rather than in any deployment's settings, and neither is specific to Django - the same shapes break any class that relies on evicting a `cached_property`. The values side is not validated: nothing resolves a source name against the model's fields, and at class-definition time there are no fields on the class to resolve against.

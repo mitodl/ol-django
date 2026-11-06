@@ -7,8 +7,7 @@ from random import choice, randint, sample
 import pytest
 import pytz
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ImproperlyConfigured
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, models, transaction
 from freezegun import freeze_time
 from libraries.models import Author, Book, Media
 from main.models import (
@@ -21,7 +20,7 @@ from main.models import (
     Updateable,
 )
 from mitol.common.factories import UserFactory
-from mitol.common.models import CachedPropertiesMixin
+from mitol.common.models import CachedPropertiesMixin, TimestampedModel
 from mitol.common.utils.serializers import serialize_model_object
 
 pytestmark = pytest.mark.django_db
@@ -217,19 +216,76 @@ def test_cached_property_sources_must_name_real_cached_properties():
     """
     A source declared for a property that does not exist raises.
 
-    `ImproperlyConfigured` rather than `AttributeError`, because this fires
-    from `refresh_from_db`, which `DeferredAttribute.__get__` reaches: a
-    surrounding `hasattr`/`getattr` would swallow an `AttributeError` and turn
-    the misconfiguration into a silently wrong default.
+    At the `class` statement, not on the first refresh: a typo that only
+    surfaces when some caller happens to narrow a refresh is a typo that ships.
     """
+    with pytest.raises(TypeError, match="typoed_name"):
 
-    class Misdeclared(CachedPropertiesMixin):
-        """Test-only class declaring a source for a nonexistent property"""
+        class Misdeclared(CachedPropertiesMixin):
+            """Test-only class declaring a source for a nonexistent property"""
 
-        cached_property_sources = {"typoed_name": {"owner"}}
+            cached_property_sources = {"typoed_name": {"owner"}}
 
-    with pytest.raises(ImproperlyConfigured, match="typoed_name"):
-        Misdeclared.get_cached_property_names()
+
+def test_mixin_must_precede_model_in_the_bases():
+    """
+    A class that lists `Model` first raises rather than silently not clearing.
+
+    `Model.refresh_from_db` would win the MRO, so every refresh on such a
+    model would reload its fields and leave every cached property populated -
+    no error, no eviction, exactly the staleness this mixin exists to remove.
+    """
+    with pytest.raises(TypeError, match="CachedPropertiesMixin"):
+
+        class Backwards(models.Model, CachedPropertiesMixin):
+            """Test-only model with the bases the wrong way round"""
+
+            class Meta:
+                abstract = True
+
+
+def test_base_order_is_checked_against_the_whole_mro():
+    """
+    `Model` reached through an abstract base still counts as preceding.
+
+    This is the likelier spelling of the mistake - nobody inherits `Model`
+    directly - and the one a `__bases__` check misses: `Model` is not among
+    this class's own bases, so such a check would find nothing to compare and
+    wave it through.
+    """
+    with pytest.raises(TypeError, match="CachedPropertiesMixin"):
+
+        class Backwards(TimestampedModel, CachedPropertiesMixin):
+            """Test-only model inheriting Model through an abstract base"""
+
+            class Meta:
+                abstract = True
+
+
+def test_a_subclass_that_names_the_mixin_nowhere_is_accepted():
+    """A subclass inherits the order through the MRO and is left alone"""
+
+    class Correct(CachedPropertiesMixin, models.Model):
+        """Test-only model with the bases in the documented order"""
+
+        cached_property_sources = {"label": {"title"}}
+
+        class Meta:
+            abstract = True
+
+        @cached_property
+        def label(self):
+            """Cached, and declared as deriving from `title`"""
+            return "correct"
+
+    class Grandchild(Correct):
+        """Test-only subclass that names `CachedPropertiesMixin` nowhere"""
+
+        class Meta:
+            abstract = True
+
+    assert CachedPropertiesMixin not in Grandchild.__bases__
+    assert Grandchild.get_cached_property_names() == frozenset({"label"})
 
 
 def test_discovery_honors_a_shadowed_cached_property():

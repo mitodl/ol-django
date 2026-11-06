@@ -9,7 +9,7 @@ from contextlib import suppress
 from typing import ClassVar, TypeVar, Union
 
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import (
     PROTECT,
@@ -298,7 +298,9 @@ class CachedPropertiesMixin:
 
     This is a plain mixin, not an abstract model: it adds no fields and no
     Meta, so it composes onto any model. It must precede `Model` in the bases
-    so that this `refresh_from_db` wins the MRO:
+    so that this `refresh_from_db` wins the MRO, and a class that gets the
+    order wrong raises at the `class` statement rather than losing its
+    evictions silently:
 
         class Enrollment(CachedPropertiesMixin, TimestampedModel):
             ...
@@ -310,6 +312,46 @@ class CachedPropertiesMixin:
     # refresh.
     cached_property_sources: ClassVar[dict[str, set[str]]] = {}
 
+    def __init_subclass__(cls, **kwargs):
+        """
+        Reject a malformed subclass at the `class` statement.
+
+        Both failures below are silent at runtime: the model imports, migrates
+        and refreshes, and the caches it promised to drop stay populated. They
+        are mistakes in the class definition rather than in any deployment's
+        settings, and neither is specific to Django - the same shapes break
+        any class that relies on evicting a `cached_property` - so they raise
+        `TypeError`, as Python does for a bad base order itself.
+
+        `ModelBase.__new__` hands everything without a `contribute_to_class`
+        straight to `type.__new__`, so by the time this runs `__mro__` is set
+        and the cached properties and `cached_property_sources` are on the
+        class. Model fields are not yet, which is why the source names on the
+        values side still go unvalidated.
+        """
+        super().__init_subclass__(**kwargs)
+
+        mro = cls.__mro__
+        if Model in mro and mro.index(Model) < mro.index(CachedPropertiesMixin):
+            msg = (
+                f"{cls.__name__} lists Model before CachedPropertiesMixin, so "
+                f"Model.refresh_from_db wins the MRO and no cached property is "
+                f"ever cleared. Put CachedPropertiesMixin first in the bases."
+            )
+            raise TypeError(msg)
+
+        unmatched = sorted(
+            set(cls.cached_property_sources) - cls.get_cached_property_names()
+        )
+        if unmatched:
+            msg = (
+                f"{cls.__name__}.cached_property_sources declares "
+                f"{', '.join(unmatched)}, which is not a cached property on "
+                f"{cls.__name__}. A narrowed refresh_from_db would never "
+                f"clear it."
+            )
+            raise TypeError(msg)
+
     @classmethod
     def get_cached_property_names(cls) -> frozenset[str]:
         """
@@ -317,7 +359,8 @@ class CachedPropertiesMixin:
 
         Memoized on the class - read out of `cls.__dict__` rather than by
         attribute lookup, so a subclass computes its own answer instead of
-        inheriting its parent's.
+        inheriting its parent's. `__init_subclass__` primes it, so every
+        runtime caller hits the memo.
         """
         names = cls.__dict__.get("_cached_property_names")
         if names is None:
@@ -335,19 +378,6 @@ class CachedPropertiesMixin:
                 for name, attr in effective.items()
                 if isinstance(attr, _CACHED_PROPERTY_CLASSES)
             )
-            unmatched = sorted(set(cls.cached_property_sources) - names)
-            if unmatched:
-                msg = (
-                    f"{cls.__name__}.cached_property_sources declares "
-                    f"{', '.join(unmatched)}, which is not a cached property "
-                    f"on {cls.__name__}. A narrowed refresh_from_db would "
-                    f"never clear it."
-                )
-                # Not AttributeError: this runs from `refresh_from_db`, which
-                # `DeferredAttribute.__get__` reaches, so a surrounding
-                # `hasattr`/`getattr` would swallow it and turn a
-                # misconfiguration into a silently wrong default.
-                raise ImproperlyConfigured(msg)
             cls._cached_property_names = names
         return names
 
