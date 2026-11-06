@@ -3,7 +3,7 @@ import re
 from bumpver import cli
 from click import echo
 from cloup import Context, group, pass_context
-from mitol.release_tools.apps import App, list_apps
+from mitol.release_tools.apps import App, require_apps
 from mitol.release_tools.decorators import app_option
 from mitol.release_tools.project import Project
 
@@ -41,9 +41,11 @@ def _declared_versions(app: App) -> dict[str, str | None]:
 def check(ctx: Context):
     """Verify each app declares the same version in every place it records one"""
     project = ctx.ensure_object(Project)
+    apps = require_apps(project)
+
     is_error = False
 
-    for app in list_apps(project):
+    for app in apps:
         declared = _declared_versions(app)
 
         if len(set(declared.values())) > 1:
@@ -59,7 +61,8 @@ def check(ctx: Context):
         )
         raise SystemExit(1)
 
-    echo(f"Version declarations agree for all {len(list_apps(project))} apps.")
+    plural = "" if len(apps) == 1 else "s"
+    echo(f"Version declarations agree for {len(apps)} package{plural}.")
 
 
 version.add_command(app_option(cli.grep))

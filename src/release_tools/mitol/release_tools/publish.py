@@ -8,7 +8,7 @@ from http import HTTPStatus
 
 from click import echo
 from cloup import Context, group, pass_context
-from mitol.release_tools.apps import PRIVATE_CLASSIFIER, App, list_apps
+from mitol.release_tools.apps import PRIVATE_CLASSIFIER, App, require_apps
 from mitol.release_tools.project import Project
 
 PYPI_RELEASE_URL = "https://pypi.org/pypi/{name}/{version}/json"
@@ -69,7 +69,7 @@ def matrix(ctx: Context):
 
     publishable = []
 
-    for app in list_apps(project):
+    for app in require_apps(project):
         if app.is_private:
             # Reported on stderr: stdout is the matrix, and CI pipes it to jq.
             echo(f"Skipping {app.name}: {PRIVATE_CLASSIFIER}", err=True)

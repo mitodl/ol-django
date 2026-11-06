@@ -46,6 +46,7 @@ def test_prepare_collects_against_the_bumped_version(
     )
     write(package / "changelog.d" / "scriv.ini", "[scriv]\nformat = md\n")
     write(package / "changelog.d" / "20260101_note.md", "### Added\n\n- A thing\n")
+    write(repo_root / "uv.lock", "version = 1\n")
     refresh_app_choices()
 
     collected = {}
@@ -70,3 +71,30 @@ def test_prepare_collects_against_the_bumped_version(
     # bump and belongs in the same commit.
     assert run_subprocess.call_args.args[0] == ["uv", "lock"]
     assert "Prepared alpha/v2026.1.2" in result.output
+
+
+@patch("subprocess.run")
+def test_prepare_skips_the_lockfile_when_there_is_none(
+    run_subprocess, repo_root, monkeypatch
+):
+    """A repo without a lockfile is not necessarily a uv repo
+
+    Failing here would leave the version already bumped and the fragments
+    already collected, so the tree would be half-prepared.
+    """
+    package = add_package(
+        repo_root, "alpha", dist_name="alpha", version="2026.1.1", module="alpha"
+    )
+    write(package / "changelog.d" / "scriv.ini", "[scriv]\nformat = md\n")
+    write(package / "changelog.d" / "20260101_note.md", "### Added\n\n- A thing\n")
+    refresh_app_choices()
+
+    update = version.version.commands["update"]
+    monkeypatch.setattr(update, "callback", lambda **_: None)
+    monkeypatch.setattr(changelog.collect, "callback", lambda **_: None)
+
+    result = CliRunner().invoke(cli, ["prepare", "--app", "alpha"], obj=Project())
+
+    assert result.exit_code == 0, result.output
+    assert "skipping the lockfile refresh" in result.output
+    run_subprocess.assert_not_called()

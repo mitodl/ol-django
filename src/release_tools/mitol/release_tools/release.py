@@ -4,6 +4,7 @@ from click import Choice, echo, option
 from cloup import Context, command, pass_context
 from mitol.release_tools import changelog, version
 from mitol.release_tools.apps import App
+from mitol.release_tools.changes import LOCKFILE
 from mitol.release_tools.decorators import app_option, pass_app
 
 
@@ -45,8 +46,13 @@ def prepare(ctx: Context, app: App, bump: str | None):
     ctx.invoke(changelog.collect, version=app.version, keep=False)
 
     # The lockfile pins every workspace member's version, so it moves with the
-    # bump and belongs in the same commit.
-    subprocess.run(["uv", "lock"], check=True, cwd=app.project.path)  # noqa: S607
+    # bump and belongs in the same commit. A repo without one is not
+    # necessarily a uv repo at all, and failing here would leave the version
+    # bumped and the fragments already collected.
+    if (app.project.path / LOCKFILE).exists():
+        subprocess.run(["uv", "lock"], check=True, cwd=app.project.path)  # noqa: S607
+    else:
+        echo(f"No {LOCKFILE}; skipping the lockfile refresh.")
 
     echo(
         f"\nPrepared {app.version_git_tag}.\n\n"
