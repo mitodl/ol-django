@@ -16,13 +16,17 @@ from pathlib import Path
 import pytest
 import tomllib
 from mitol.release_tools.apps import list_app_names
-from mitol.release_tools.config import load
+from mitol.release_tools.config import Layout, load
 
 REPO = Path(__file__).parents[2]
 
-pytestmark = pytest.mark.skipif(
-    shutil.which("uv") is None, reason="needs the uv binary"
-)
+pytestmark = [
+    pytest.mark.skipif(shutil.which("uv") is None, reason="needs the uv binary"),
+    pytest.mark.skipif(
+        load(REPO).layout is not Layout.WORKSPACE,
+        reason="a single-package repo has no workspace for uv to list",
+    ),
+]
 
 
 #: uv counts the workspace root as a member; `members` never globs it.

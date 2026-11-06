@@ -133,3 +133,45 @@ def write_workspace(
         {excludes}""",
     )
     clear_caches()
+
+
+def make_single_package(root: Path, *, dist_name: str, version: str) -> None:
+    """Build a repo whose root pyproject IS the package
+
+    Includes a `.venv` holding importable directories, because the version
+    module scan starts at the root here and walking one is the difference
+    between instant and minutes.
+    """
+    module = f"src/{dist_name.replace('-', '_')}"
+    write(
+        root / "pyproject.toml",
+        f"""\
+        [project]
+        name = "{dist_name}"
+        version = "{version}"
+
+        [tool.ol-release]
+        layout = "single"
+
+        [tool.bumpver]
+        current_version = "{version}"
+        version_pattern = "MAJOR.MINOR.PATCH"
+
+        [tool.bumpver.file_patterns]
+        "pyproject.toml" = ['version = "{{version}}"']
+        "{module}/__init__.py" = ['__version__ = "{{version}}"']
+        """,
+    )
+    write(root / module / "__init__.py", f'__version__ = "{version}"\n')
+    write(root / "changelog.d" / "scriv.ini", "[scriv]\nformat = md\n")
+    write(root / ".venv" / "lib" / "site-packages" / "junk" / "__init__.py", "")
+    write(root / "build" / "lib" / "junk" / "__init__.py", "")
+    clear_caches()
+
+
+@pytest.fixture
+def single_package_repo(repo_root):
+    """Build a single-package repo at version 1.2.3, named `my-package`"""
+    make_single_package(repo_root, dist_name="my-package", version="1.2.3")
+
+    return repo_root
