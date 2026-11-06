@@ -1,6 +1,7 @@
 """Tests for the SCIM user adapter"""
 
 import pytest
+from django_scim import exceptions
 from main.factories import UserFactory
 from mitol.scim.adapters import UserAdapter
 
@@ -103,3 +104,31 @@ def test_unmapped_path_is_ignored_without_error():
 
     user.refresh_from_db()
     assert not hasattr(user, "fullName")
+
+
+def _add(adapter, path, value):
+    """Run a single add operation through the adapter"""
+    adapter.handle_add(adapter.split_path(path), value, {"op": "add"})
+
+
+def test_add_external_id_refuses_rebinding_global_id():
+    """An add of externalId is held to the same guard as a PUT"""
+    user = UserFactory.create(global_id="keycloak-1", scim_external_id="keycloak-1")
+    adapter = UserAdapter(user)
+
+    with pytest.raises(exceptions.IntegrityError):
+        _add(adapter, "externalId", "keycloak-2")
+
+    user.refresh_from_db()
+    assert (user.global_id, user.scim_external_id) == ("keycloak-1", "keycloak-1")
+
+
+def test_add_external_id_binds_unset_global_id():
+    """An add of externalId binds a user that has no global_id yet"""
+    user = UserFactory.create(global_id=None)
+    adapter = UserAdapter(user)
+
+    _add(adapter, "externalId", "keycloak-1")
+
+    user.refresh_from_db()
+    assert (user.global_id, user.scim_external_id) == ("keycloak-1", "keycloak-1")
