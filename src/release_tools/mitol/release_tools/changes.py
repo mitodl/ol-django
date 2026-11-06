@@ -1,10 +1,20 @@
 from dataclasses import dataclass
-from fnmatch import fnmatch
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, TypeAlias
 
 from git import Commit, Diff
+
+#: Names that are changelog bookkeeping rather than a package's source.
+CHANGELOG_DIR = "changelog.d"
+CHANGELOG_FILE = "CHANGELOG.md"
+SCRIV_CONFIG = "scriv.ini"
+#: Counted towards a changelog being present, never against its absence.
+LOCKFILE = "uv.lock"
+#: Where `init` puts the shared changelog template. In a single-package repo
+#: that lands inside the distribution's own tree, so it needs the same
+#: treatment as `changelog.d`.
+TEMPLATE_DIR = ".scriv"
 
 if TYPE_CHECKING:
     from mitol.release_tools.apps import App
@@ -80,10 +90,13 @@ class Changes:
         all_changes = base_commit.diff(target_commit)
         # we count these towards a changelog being present
         # but not against the absence of one
-        top_level_dependency_changes = base_commit.diff(
-            target_commit, paths=["uv.lock"]
-        )
+        top_level_dependency_changes = base_commit.diff(target_commit, paths=[LOCKFILE])
 
+        # For a single-package repo `relative_path` is `.`, which git reads as
+        # an empty pathspec matching the whole repository - correct here,
+        # since the repo is the package, but it does mean every root-level
+        # file is that package's source. `_is_source_excluded` is what keeps
+        # the changelog and the lockfile out of it.
         source_changes = [
             change
             for change in base_commit.diff(target_commit, paths=[app.relative_path])
@@ -94,14 +107,14 @@ class Changes:
         changelogd_changes = [
             change
             for change in base_commit.diff(
-                target_commit, paths=[app.relative_path / "changelog.d"]
+                target_commit, paths=[app.relative_path / CHANGELOG_DIR]
             )
             if not _is_changelog_excluded(change.a_path)
             and not _is_changelog_excluded(change.b_path)
         ]
 
         changelog_md_changes = base_commit.diff(
-            target_commit, paths=[app.relative_path / "CHANGELOG.md"]
+            target_commit, paths=[app.relative_path / CHANGELOG_FILE]
         )
 
         # Collecting fragments into CHANGELOG.md is what cutting a release
@@ -136,13 +149,27 @@ def _is_version_declaration(change: Diff, version_declarations: set[str]) -> boo
 
 
 def _is_source_excluded(path: str | None) -> bool:
-    """Return True if the source path is excluded"""
+    """Return True if the source path is excluded
+
+    Matched on path components rather than globs: ``*/CHANGELOG.md`` needs a
+    leading directory, so it silently fails to match the root package's own
+    ``CHANGELOG.md`` and every release then looks like a code change. Comparing
+    components is also what stops a directory named ``mychangelog.d`` matching.
+    """
     if path is None:
         return False
 
-    excluded_paths = ["*/changelog.d/*", "*/CHANGELOG.md"]
+    parts = Path(path).parts
 
-    return any(fnmatch(path, exclude) for exclude in excluded_paths)
+    return (
+        CHANGELOG_DIR in parts
+        or TEMPLATE_DIR in parts
+        or parts[-1:] == (CHANGELOG_FILE,)
+        # Only the root lockfile. A nested one is a real dependency change
+        # that `top_level_dependency_changes` does not see either, so
+        # exempting it by name would hide it from the gate entirely.
+        or path == LOCKFILE
+    )
 
 
 def _is_changelog_excluded(path: str | None) -> bool:
@@ -150,6 +177,4 @@ def _is_changelog_excluded(path: str | None) -> bool:
     if path is None:
         return False
 
-    excluded_paths = ["*/scriv.ini"]
-
-    return any(fnmatch(path, exclude) for exclude in excluded_paths)
+    return Path(path).name == SCRIV_CONFIG

@@ -1,7 +1,8 @@
 # mitol-release-tools
 
-Changelog, version and PyPI release management for a monorepo of Python
-packages, as `ol-release`.
+Changelog, version and PyPI release management for Python packages, as
+`ol-release`. Works on a monorepo of many packages or on a repository that is
+a single package.
 
 The model is that **a release is a version change merged to the default
 branch**. Nothing is tagged or uploaded by hand: CI compares each package's
@@ -16,10 +17,45 @@ ol-release prepare --app X             bump the version and collect the fragment
 ol-release publish matrix              emit the packages that are not yet on PyPI
 ```
 
+## Layout
+
+A repository that is one package says so, and gets the conventions that come
+with that - tags without a package prefix, and `--app` optional since there is
+only one answer:
+
+```toml
+[project]
+name = "my-package"
+version = "1.2.3"
+
+[tool.ol-release]
+layout = "single"
+```
+
+The default is `layout = "workspace"`, so a monorepo needs nothing. Layout is
+stated rather than inferred: a repo can have both a root `[project]` and a
+workspace, and guessing wrong changes what gets tagged and published.
+
+`tag-format` overrides the default for either layout - `{name}/v{version}` for
+a workspace, `v{version}` for a single package:
+
+```toml
+[tool.ol-release]
+tag-format = "release-{version}"
+```
+
+In single layout the whole repository is the package, so anything at the root
+counts as a change to it - except `CHANGELOG.md`, `changelog.d/` and the
+lockfile. `init` writes `.scriv/` and `changelog.d/` into that same tree, so
+exclude both from your build backend's sdist and wheel configuration.
+
+CI for a single-package repo builds with a bare `uv build`: `--package` only
+means something inside a workspace and is rejected outside one.
+
 ## Where it looks for packages
 
-Packages come from the uv workspace the repo already declares, so there is no
-second place to keep that list in step:
+In the default workspace layout, packages come from the uv workspace the repo
+already declares, so there is no second place to keep that list in step:
 
 ```toml
 [tool.uv.workspace]
