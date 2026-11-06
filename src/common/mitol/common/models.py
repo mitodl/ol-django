@@ -3,7 +3,9 @@ Common model classes
 """
 
 import copy
+import functools
 from collections.abc import Iterable
+from contextlib import suppress
 from typing import TypeVar, Union
 
 from django.conf import settings
@@ -19,7 +21,14 @@ from django.db.models import (
     prefetch_related_objects,
 )
 from django.db.models.query import QuerySet
+from django.utils.functional import cached_property as django_cached_property
 from mitol.common.utils.datetime import now_in_utc
+
+# functools.cached_property and django.utils.functional.cached_property are
+# distinct classes and this org uses both, sometimes in the same codebase, so
+# an isinstance check against only one silently no-ops on the other - which is
+# the failure mode CachedPropertiesMixin exists to prevent.
+_CACHED_PROPERTY_CLASSES = (functools.cached_property, django_cached_property)
 
 
 class TimestampedModelQuerySet(QuerySet):
@@ -273,3 +282,150 @@ class UserGlobalIdMixin(Model):
 
     class Meta:
         abstract = True
+
+
+class CachedPropertiesMixin:
+    """
+    Makes a model's cached properties invalidatable, and teaches
+    `refresh_from_db` to drop them.
+
+    `Model.refresh_from_db` clears `_prefetched_objects_cache`, cached foreign
+    keys, cached reverse one-to-ones and cached generic foreign keys, but it
+    cannot know about a `functools` or `django.utils.functional` cache, so it
+    leaves those populated. A cached property derived from a relation
+    therefore stays stale after the relation changes, and every call site
+    invents its own eviction instead.
+
+    This is a plain mixin, not an abstract model: it adds no fields and no
+    Meta, so it composes onto any model. It must precede `Model` in the bases
+    so that this `refresh_from_db` wins the MRO, and a class that gets the
+    order wrong raises at the `class` statement rather than losing its
+    evictions silently:
+
+        class Enrollment(CachedPropertiesMixin, TimestampedModel):
+            ...
+    """
+
+    def __init_subclass__(cls, **kwargs):
+        """
+        Reject a bad base order at the `class` statement.
+
+        The failure is silent at runtime: the model imports, migrates and
+        refreshes, and the caches it promised to drop stay populated. It is a
+        mistake in the class definition rather than in any deployment's
+        settings, and it is not specific to Django - the same shape breaks
+        any class that relies on evicting a `cached_property` - so it raises
+        `TypeError`, as Python does for a bad base order itself.
+
+        `ModelBase.__new__` hands everything without a `contribute_to_class`
+        straight to `type.__new__`, so by the time this runs `__mro__` is set.
+        """
+        super().__init_subclass__(**kwargs)
+
+        mro = cls.__mro__
+        if Model in mro and mro.index(Model) < mro.index(CachedPropertiesMixin):
+            msg = (
+                f"{cls.__name__} lists Model before CachedPropertiesMixin, so "
+                f"Model.refresh_from_db wins the MRO and no cached property is "
+                f"ever cleared. Put CachedPropertiesMixin first in the bases."
+            )
+            raise TypeError(msg)
+
+    @classmethod
+    def get_cached_property_names(cls) -> frozenset[str]:
+        """
+        Every cached property defined on this class or any of its bases.
+
+        Memoized on the class - read out of `cls.__dict__` rather than by
+        attribute lookup, so a subclass computes its own answer instead of
+        inheriting its parent's. The memo fills on the first call and every
+        caller after it is free.
+        """
+        names = cls.__dict__.get("_cached_property_names")
+        if names is None:
+            # Only the definition that actually wins attribute lookup counts.
+            # `__mro__` is ordered most-derived first, so the first binding of
+            # a name is the effective one; a subclass that overrides a cached
+            # property with a plain one must not leave the name behind, or
+            # clearing it would be accepted and then quietly do nothing.
+            effective: dict[str, object] = {}
+            for klass in cls.__mro__:
+                for name, attr in vars(klass).items():
+                    effective.setdefault(name, attr)
+            names = frozenset(
+                name
+                for name, attr in effective.items()
+                if isinstance(attr, _CACHED_PROPERTY_CLASSES)
+            )
+            cls._cached_property_names = names
+        return names
+
+    def clear_cached_properties(self, *names: str) -> None:
+        """
+        Drop the named cached properties, or all of them when given none.
+
+        An unrecognised name raises rather than quietly doing nothing: a
+        silent no-op is how a renamed property becomes a reintroduced
+        staleness bug.
+        """
+        known = self.get_cached_property_names()
+        unknown = sorted(set(names) - known)
+        if unknown:
+            msg = (
+                f"{type(self).__name__} has no cached property named: "
+                f"{', '.join(unknown)}"
+            )
+            raise AttributeError(msg)
+
+        for name in names or known:
+            # cached_property defines only __set_name__ and __get__, so `del`
+            # falls through to object.__delattr__, which pops the instance
+            # __dict__ entry and raises AttributeError on a cold cache.
+            # hasattr() is not usable as the guard: it calls __get__ and so
+            # populates the very cache being cleared.
+            with suppress(AttributeError):
+                delattr(self, name)
+
+    def refresh_from_db(self, using=None, fields=None, from_queryset=None):
+        """
+        Reload field values from the database and drop stale cached properties.
+
+        Every refresh clears every cached property, with one exception: a
+        refresh whose named fields were all still deferred clears nothing,
+        because nothing could have read them. Reading a deferred field is
+        what loads it, so a field still absent from the instance is proof no
+        cached property on that instance derives from it.
+
+        The exception is what makes `.only()`/`.defer()` usable here.
+        `DeferredAttribute.__get__` calls `refresh_from_db(fields=[attname])`
+        on every deferred-field access, and clearing there would add
+        recomputation to the paths most likely to have been tuned.
+
+        `arefresh_from_db` delegates here via `sync_to_async`, so the async
+        path needs no separate override.
+        """
+        # `fields` is documented as any iterable, so it gets read exactly once:
+        # consuming it here and passing the original on would drain a one-shot
+        # iterator and leave Django with nothing to refresh - a silent no-op,
+        # the very failure this mixin exists to prevent. Django also mutates
+        # the list it is given, removing prefetch names it has handled.
+        requested = None if fields is None else list(fields)
+
+        # Read before delegating, while the fields are still absent from
+        # `__dict__`. A subset, not an intersection: one loaded name among
+        # the deferred ones means something could have read it. Relation
+        # names never qualify - `get_deferred_fields` returns concrete
+        # attnames - and an empty `fields` is a subset of anything, which
+        # clears nothing and matches Django's early return.
+        first_load = (
+            requested is not None and set(requested) <= self.get_deferred_fields()
+        )
+
+        super().refresh_from_db(
+            using=using,
+            fields=requested,
+            from_queryset=from_queryset,
+        )
+
+        if not first_load:
+            self.clear_cached_properties()
