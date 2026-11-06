@@ -18,7 +18,7 @@ This is the Open Learning Django Common app. It provides common functionality us
 
 `CachedPropertiesMixin` makes those caches invalidatable and teaches `refresh_from_db()` to drop them.
 
-**It must precede `Model` in the bases**, or its `refresh_from_db()` loses the MRO. Getting the order wrong raises `TypeError` at the `class` statement:
+**It must precede `Model` in the bases**, or its `refresh_from_db()` loses the MRO and every eviction it promised silently stops happening. Getting the order wrong raises `TypeError` at the `class` statement - it is a mistake in the class definition rather than in any deployment's settings, and it is not specific to Django, since the same shape breaks any class that relies on evicting a `cached_property`:
 
 ```python
 from mitol.common.models import CachedPropertiesMixin, TimestampedModel
@@ -40,19 +40,20 @@ Both `cached_property` flavors are discovered, as are ones inherited from a base
 
 #### Narrowed refreshes
 
-A refresh narrowed with `fields` clears only the cached properties that declare one of those fields in the optional `cached_property_sources` map, and clears nothing when the map is empty:
+Every refresh clears every cached property, including one narrowed with `fields`:
 
 ```python
-class Enrollment(CachedPropertiesMixin, TimestampedModel):
-    cached_property_sources = {"openedx_user": {"user"}}
-
-
-enrollment.refresh_from_db(fields=["user"])   # drops openedx_user
-enrollment.refresh_from_db(fields=["title"])  # drops nothing
+enrollment.refresh_from_db(fields=["user"])   # drops all of them
 ```
 
-This is deliberate rather than conservative-by-accident. `DeferredAttribute.__get__` calls `refresh_from_db(fields=[field_name])` for every deferred-field access on a `.only()`/`.defer()` instance, so an unconditional clear would add queries to the paths most likely to have been tuned. It also mirrors what Django itself does with `fields`: drop only the prefetch entries named in `fields`, clear only the relations where `rel.name in fields`.
+The one exception is a refresh whose named fields were *all* still deferred, which clears nothing. Reading a deferred field is what loads it, so a field still absent from the instance cannot have been read by any cached property on it:
 
-The names in `cached_property_sources` are matched against the strings a caller passes to `fields` - there is no resolution against the model's fields. So declare whichever spelling your callers use: `refresh_from_db(fields=["user"])` and `refresh_from_db(fields=["user_id"])` are both legal for the same foreign key, and only the declared one matches. A source name that is never passed is silently never matched.
+```python
+enrollment = Enrollment.objects.only("id", "user").get(pk=pk)
+enrollment.openedx_user                       # cached
+enrollment.title                              # loads the deferred field, drops nothing
+```
 
-A key that is not a cached property on the model raises `TypeError` at the `class` statement, alongside the base-order check. Both are mistakes in the class definition rather than in any deployment's settings, and neither is specific to Django - the same shapes break any class that relies on evicting a `cached_property`. The values side is not validated: nothing resolves a source name against the model's fields, and at class-definition time there are no fields on the class to resolve against.
+That carve-out is what keeps `.only()`/`.defer()` usable: `DeferredAttribute.__get__` calls `refresh_from_db(fields=[attname])` on every deferred-field access, and clearing there would add recomputation to the paths most likely to have been tuned. It is a subset test rather than an intersection - one already-loaded name among the deferred ones is enough to clear - and relation names never qualify, because `get_deferred_fields()` returns concrete attnames only.
+
+So a narrowed `refresh_from_db` is never a way to preserve a specific cached property. If recomputing one is expensive enough to matter, read it back after the refresh rather than trying to keep it.

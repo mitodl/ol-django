@@ -212,21 +212,6 @@ def test_clear_cached_properties_rejects_an_unknown_name(cached_property_instanc
     assert cached_property_instance.__dict__["child_count"] == INITIAL_CHILD_COUNT
 
 
-def test_cached_property_sources_must_name_real_cached_properties():
-    """
-    A source declared for a property that does not exist raises.
-
-    At the `class` statement, not on the first refresh: a typo that only
-    surfaces when some caller happens to narrow a refresh is a typo that ships.
-    """
-    with pytest.raises(TypeError, match="typoed_name"):
-
-        class Misdeclared(CachedPropertiesMixin):
-            """Test-only class declaring a source for a nonexistent property"""
-
-            cached_property_sources = {"typoed_name": {"owner"}}
-
-
 def test_mixin_must_precede_model_in_the_bases():
     """
     A class that lists `Model` first raises rather than silently not clearing.
@@ -268,14 +253,12 @@ def test_a_subclass_that_names_the_mixin_nowhere_is_accepted():
     class Correct(CachedPropertiesMixin, models.Model):
         """Test-only model with the bases in the documented order"""
 
-        cached_property_sources = {"label": {"title"}}
-
         class Meta:
             abstract = True
 
         @cached_property
         def label(self):
-            """Cached, and declared as deriving from `title`"""
+            """Cached on the parent"""
             return "correct"
 
     class Grandchild(Correct):
@@ -337,25 +320,15 @@ def test_refresh_from_db_clears_every_cached_property(cached_property_instance):
     assert cached_property_instance.child_count == INITIAL_CHILD_COUNT + 1
 
 
-def test_refresh_from_db_with_fields_leaves_unrelated_properties_alone(
+def test_refresh_from_db_with_a_loaded_field_clears_every_cached_property(
     cached_property_instance,
 ):
-    """A narrowed refresh clears nothing that does not declare that field"""
-    assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
-    assert cached_property_instance.child_names == ["a", "b"]
-    CachedPropertyChild.objects.create(parent=cached_property_instance, name="c")
+    """
+    Narrowing the reload does not narrow the eviction.
 
-    cached_property_instance.refresh_from_db(fields=["note"])
-
-    # child_count declares `children`, child_names declares nothing at all
-    assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
-    assert cached_property_instance.child_names == ["a", "b"]
-
-
-def test_refresh_from_db_with_fields_clears_declared_dependents(
-    cached_property_instance, django_assert_num_queries
-):
-    """A narrowed refresh clears the properties declaring one of those fields"""
+    The named field was loaded, so any cached property could have read it and
+    there is nothing on the instance that says which ones did.
+    """
     assert cached_property_instance.owner_name == "first owner"
     assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
 
@@ -363,22 +336,75 @@ def test_refresh_from_db_with_fields_clears_declared_dependents(
     CachedPropertyModel.objects.filter(pk=cached_property_instance.pk).update(
         owner=other
     )
+    CachedPropertyChild.objects.create(parent=cached_property_instance, name="c")
 
     cached_property_instance.refresh_from_db(fields=["owner"])
 
     assert cached_property_instance.owner_name == "second owner"
-    # child_count declares `children`, not `owner`, so it survived
+    assert cached_property_instance.child_count == INITIAL_CHILD_COUNT + 1
+
+
+def test_refresh_from_db_with_one_loaded_field_among_deferred_ones_clears(
+    cached_property_instance,
+):
+    """
+    The deferred test is a subset, not an intersection.
+
+    One loaded name among the deferred ones is enough: a cached property
+    could have read that one, and the skip has no way to tell.
+    """
+    instance = CachedPropertyModel.objects.only("id", "title", "owner").get(
+        pk=cached_property_instance.pk
+    )
+    assert instance.get_deferred_fields() == {"note"}
+    assert instance.child_count == INITIAL_CHILD_COUNT
+
+    CachedPropertyChild.objects.create(parent=instance, name="c")
+    instance.refresh_from_db(fields=["note", "title"])
+
+    assert instance.child_count == INITIAL_CHILD_COUNT + 1
+
+
+def test_refresh_from_db_clears_a_field_that_is_no_longer_deferred(
+    cached_property_instance,
+):
+    """
+    The skip tracks deferredness, not the field name.
+
+    Once the field has been loaded, a cached property could have read it, so
+    the second refresh of the same name has to clear.
+    """
+    instance = CachedPropertyModel.objects.only("id", "title", "owner").get(
+        pk=cached_property_instance.pk
+    )
+    assert instance.note == "a note"  # loads it, so it is no longer deferred
+    assert instance.child_count == INITIAL_CHILD_COUNT
+
+    CachedPropertyChild.objects.create(parent=instance, name="c")
+    instance.refresh_from_db(fields=["note"])
+
+    assert instance.child_count == INITIAL_CHILD_COUNT + 1
+
+
+def test_refresh_from_db_with_no_fields_clears_nothing(
+    cached_property_instance, django_assert_num_queries
+):
+    """An empty `fields` is Django's early return, and evicts nothing"""
+    assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
+
     with django_assert_num_queries(0):
+        cached_property_instance.refresh_from_db(fields=[])
         assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
 
 
-def test_refresh_from_db_with_a_prefetch_name_clears_its_dependents(
+def test_refresh_from_db_with_a_prefetch_name_clears_the_cached_properties(
     cached_property_instance,
 ):
     """
     Django resolves a prefetched name out of `fields` before doing anything
-    else, and returns early once nothing is left. The dependents still have to
-    be cleared, so the request is snapshotted before delegating.
+    else, mutating the list it was handed and returning early once nothing is
+    left. The eviction still has to happen, so whether to evict is decided
+    before delegating.
     """
     instance = CachedPropertyModel.objects.prefetch_related("children").get(
         pk=cached_property_instance.pk
@@ -412,21 +438,18 @@ def test_refresh_from_db_accepts_any_iterable_for_fields(
     assert cached_property_instance.note == "changed"
 
 
-def test_refresh_from_db_narrows_from_a_one_shot_iterator(
-    cached_property_instance, django_assert_num_queries
+def test_refresh_from_db_decides_to_evict_from_a_one_shot_iterator(
+    cached_property_instance,
 ):
     """
-    The narrowing has to survive a one-shot `fields`, not just the reload.
+    The eviction decision has to survive a one-shot `fields` too.
 
     The test above covers the other half - Django gets the names and the row
-    is refreshed. Reading `fields` straight through instead of snapshotting it
-    passes that one, because Django consumes the iterator itself and reloads
-    correctly; what is left drained is the copy the narrowing then reads, so
-    no property declares a source, nothing is evicted, and the refresh hands
-    back the stale value it was called to replace.
+    is refreshed. Reading `fields` straight through to decide whether to
+    evict would drain it before Django ever saw it, and the row would come
+    back unchanged.
     """
     assert cached_property_instance.owner_name == "first owner"
-    assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
 
     other = CachedPropertyOwner.objects.create(name="second owner")
     CachedPropertyModel.objects.filter(pk=cached_property_instance.pk).update(
@@ -436,9 +459,6 @@ def test_refresh_from_db_narrows_from_a_one_shot_iterator(
     cached_property_instance.refresh_from_db(fields=iter(["owner"]))
 
     assert cached_property_instance.owner_name == "second owner"
-    # child_count declares `children`, not `owner`, so it survived
-    with django_assert_num_queries(0):
-        assert cached_property_instance.child_count == INITIAL_CHILD_COUNT
 
 
 def test_deferred_field_access_clears_nothing(
@@ -447,6 +467,8 @@ def test_deferred_field_access_clears_nothing(
     """
     DeferredAttribute.__get__ refreshes with fields=[<deferred field>], so an
     unconditional clear would add queries to every .only()/.defer() instance.
+    Skipping is safe because reading a deferred field is what loads it: the
+    field is still absent here, so no cached property can derive from it.
     """
     instance = CachedPropertyModel.objects.only("id", "title", "owner").get(
         pk=cached_property_instance.pk

@@ -80,13 +80,6 @@ class CachedPropertyParent:
 class CachedPropertyModel(CachedPropertiesMixin, CachedPropertyParent, models.Model):
     """Test-only model exercising CachedPropertiesMixin"""
 
-    # `child_names` and `inherited_label` are deliberately left undeclared: a
-    # narrowed refresh must not clear a property that has not opted in.
-    cached_property_sources = {
-        "owner_name": {"owner"},
-        "child_count": {"children"},
-    }
-
     title = models.CharField(max_length=100)
     note = models.TextField(default="")
     owner = models.ForeignKey(CachedPropertyOwner, on_delete=models.CASCADE)
@@ -103,7 +96,7 @@ class CachedPropertyModel(CachedPropertiesMixin, CachedPropertyParent, models.Mo
 
     @cached_property
     def owner_name(self):
-        """Read through the `owner` relation it declares as its source"""
+        """Read through a forward relation"""
         return self.owner.name
 
 
