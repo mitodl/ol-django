@@ -30,6 +30,13 @@ jobs:
     - name: Versions
       run: uv run scripts/version.py check
 
+      # A floor that is declared but not published propagates nothing, and a
+      # package that gains a floored dependency indirectly needs a floor it
+      # never had. Both are invisible to a vulnerability scanner, because the
+      # version this repo resolves is fine either way.
+    - name: Dependency floors
+      run: uv run dependency-floors check
+
 
   tests:
     runs-on: ubuntu-24.04
