@@ -31,7 +31,7 @@ def prepare(ctx: Context, app: App, bump: str | None):
 
     if not _fragment_paths(app):
         echo(
-            f"No changelog fragments found in {app.module_name}/changelog.d.\n"
+            f"No changelog fragments found in {app.relative_path / 'changelog.d'}.\n"
             "CI requires a changelog entry for a release, so add one with:\n"
             f"  ol-release changelog create --app {app.module_name}"
         )

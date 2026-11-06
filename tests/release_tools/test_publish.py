@@ -1,11 +1,17 @@
 """Deciding which versions still need uploading"""
 
+import json
 import urllib.error
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
 import pytest
+from click.testing import CliRunner
+from mitol.release_tools.cli import cli
+from mitol.release_tools.project import Project
 from mitol.release_tools.publish import ATTEMPTS, is_published
+
+from tests.release_tools.conftest import add_package, write_workspace
 
 # `new=` rather than a bare @patch so the sleep is not injected as an argument:
 # the tests care that retrying happens, not how long it waits.
@@ -68,3 +74,56 @@ def test_an_unreachable_pypi_raises_rather_than_guessing(urlopen, error):
         is_published("mitol-django-common", "2026.10.30")
 
     assert urlopen.call_count == ATTEMPTS
+
+
+@patch("mitol.release_tools.publish.is_published", new=lambda *_: False)
+def test_a_private_distribution_is_never_in_the_matrix(repo_root):
+    """`Private :: Do Not Upload` means never upload, whatever PyPI says
+
+    The already-published check cannot catch this: an unpublished private
+    package looks exactly like one that is due for release.
+    """
+    add_package(
+        repo_root,
+        "alpha",
+        dist_name="alpha",
+        version="1.0.0",
+        module="alpha",
+        bumpver=False,
+        extra='classifiers = ["Private :: Do Not Upload"]\n',
+    )
+    add_package(
+        repo_root,
+        "beta",
+        dist_name="beta",
+        version="1.0.0",
+        module="beta",
+        bumpver=False,
+    )
+    write_workspace(repo_root, ["src/*"])
+
+    result = CliRunner().invoke(cli, ["publish", "matrix"], obj=Project())
+
+    assert result.exit_code == 0, result.output
+    assert [e["package"] for e in json.loads(result.stdout)["include"]] == ["beta"]
+
+
+@patch("mitol.release_tools.publish.is_published", new=lambda *_: False)
+def test_the_skip_is_reported_without_corrupting_the_matrix(repo_root):
+    """CI pipes stdout to jq, so the explanation has to go to stderr"""
+    add_package(
+        repo_root,
+        "alpha",
+        dist_name="alpha",
+        version="1.0.0",
+        module="alpha",
+        bumpver=False,
+        extra='classifiers = ["Private :: Do Not Upload"]\n',
+    )
+    write_workspace(repo_root, ["src/*"])
+
+    # click 8.5 keeps the streams separate; there is no mix_stderr any more.
+    result = CliRunner().invoke(cli, ["publish", "matrix"], obj=Project())
+
+    assert json.loads(result.stdout) == {"include": []}
+    assert "Private :: Do Not Upload" in result.stderr

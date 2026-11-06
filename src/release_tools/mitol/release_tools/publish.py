@@ -8,7 +8,7 @@ from http import HTTPStatus
 
 from click import echo
 from cloup import Context, group, pass_context
-from mitol.release_tools.apps import App, list_apps
+from mitol.release_tools.apps import PRIVATE_CLASSIFIER, App, list_apps
 from mitol.release_tools.project import Project
 
 PYPI_RELEASE_URL = "https://pypi.org/pypi/{name}/{version}/json"
@@ -67,14 +67,15 @@ def matrix(ctx: Context):
     """Emit a GitHub Actions matrix of the packages that need publishing"""
     project = ctx.ensure_object(Project)
 
-    echo(
-        json.dumps(
-            {
-                "include": [
-                    _matrix_entry(app)
-                    for app in list_apps(project)
-                    if not is_published(app.name, app.version)
-                ]
-            }
-        )
-    )
+    publishable = []
+
+    for app in list_apps(project):
+        if app.is_private:
+            # Reported on stderr: stdout is the matrix, and CI pipes it to jq.
+            echo(f"Skipping {app.name}: {PRIVATE_CLASSIFIER}", err=True)
+            continue
+
+        if not is_published(app.name, app.version):
+            publishable.append(_matrix_entry(app))
+
+    echo(json.dumps({"include": publishable}))

@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 from git import Repo
-from mitol.release_tools import apps
+from mitol.release_tools import apps, config
 from mitol.release_tools import project as project_module
 from mitol.release_tools.apps import App
 from mitol.release_tools.init import (
@@ -18,7 +18,7 @@ from mitol.release_tools.init import (
 )
 from mitol.release_tools.project import Project
 
-from tests.release_tools.conftest import add_package, write
+from tests.release_tools.conftest import add_package, clear_caches, write
 
 LEGACY_RST = """\
 Change Log
@@ -332,6 +332,8 @@ def test_a_checkout_under_a_docs_directory_still_resolves(tmp_path, monkeypatch)
     Repo.init(root)
     monkeypatch.setattr(project_module, "PROJECT_ROOT", root)
     monkeypatch.setattr(apps, "PROJECT_ROOT", root)
+    monkeypatch.setattr(config, "PROJECT_ROOT", root)
+    clear_caches()
     monkeypatch.chdir(root)
 
     add_package(

@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from click import Choice
 from git import Repo
-from mitol.release_tools import apps, project
+from mitol.release_tools import apps, config, project
 from mitol.release_tools.cli import cli
 
 NAMESPACED = "namespaced"
@@ -30,9 +30,14 @@ def add_package(  # noqa: PLR0913
     module: str,
     bumpver: bool = True,
     extra: str = "",
+    under: str = "src",
 ) -> Path:
-    """Create one package under `root/src/`, optionally already configured"""
-    package = root / "src" / directory
+    """Create one package under `root/<under>/`, optionally already configured
+
+    `under=""` places it at the repo root, the shape of a workspace member
+    declared by bare name rather than matched by a `src/*` glob.
+    """
+    package = root / under / directory if under else root / directory
     # A version starting with the current millennium is date-based; anything
     # else is semver. Crude, but it keeps the fixtures to one argument.
     is_dated = version.startswith("2026.")
@@ -96,6 +101,35 @@ def repo_root(tmp_path, monkeypatch):
 
     monkeypatch.setattr(project, "PROJECT_ROOT", root)
     monkeypatch.setattr(apps, "PROJECT_ROOT", root)
+    monkeypatch.setattr(config, "PROJECT_ROOT", root)
+    # Both are keyed on the root, but tests rewrite the config under a root
+    # they keep, so a stale entry would be served.
+    clear_caches()
     monkeypatch.chdir(root)
 
     return root
+
+
+def clear_caches() -> None:
+    """Drop the memoised discovery and config, which are keyed on the root"""
+    apps._discover_in.cache_clear()  # noqa: SLF001
+    config._load.cache_clear()  # noqa: SLF001
+
+
+def write_workspace(
+    root: Path, members: list[str], exclude: list[str] | None = None
+) -> None:
+    """Declare a uv workspace at the repo root, as discovery reads it"""
+    excludes = f"exclude = {exclude!r}\n" if exclude else ""
+    write(
+        root / "pyproject.toml",
+        f"""\
+        [project]
+        name = "root"
+        version = "0.0.0"
+
+        [tool.uv.workspace]
+        members = {members!r}
+        {excludes}""",
+    )
+    clear_caches()

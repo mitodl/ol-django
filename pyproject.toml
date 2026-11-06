@@ -112,6 +112,13 @@ allow-direct-references = true
 [tool.uv.workspace]
 members = ["src/*", "testapp"]
 
+# Workspace members `ol-release` does not manage: no changelog is required of
+# them, no version consistency enforced, and they are never published.
+# `uvtestapp` is the skeleton to copy when adding an app; `testapp` is the
+# Django project the test suite runs against.
+[tool.ol-release]
+exclude = ["uvtestapp", "testapp"]
+
 [tool.uv.sources]
 mitol-django-common = { workspace = true }
 mitol-django-mail = { workspace = true }

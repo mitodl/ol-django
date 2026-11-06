@@ -20,12 +20,11 @@ def version(ctx: Context):
 
 def _declared_versions(app: App) -> dict[str, str | None]:
     """Map each place an app declares its version to the value found there"""
-    pyproject = app.pyproject
     declared = {
-        "pyproject.toml [project] version": pyproject["project"]["version"],
-        "pyproject.toml [tool.bumpver] current_version": pyproject["tool"]["bumpver"][
+        "pyproject.toml [project] version": app.pyproject["project"]["version"],
+        "pyproject.toml [tool.bumpver] current_version": app.bumpver.get(
             "current_version"
-        ],
+        ),
     }
 
     for path in app.version_files:

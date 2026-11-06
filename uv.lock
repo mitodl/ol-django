@@ -2787,7 +2787,6 @@ dependencies = [
     { name = "cloup" },
     { name = "gitpython" },
     { name = "scriv" },
-    { name = "toml" },
     { name = "tomlkit" },
 ]
 
@@ -2799,7 +2798,6 @@ requires-dist = [
     { name = "cloup", specifier = ">=4.0.0" },
     { name = "gitpython", specifier = ">=3.1.62" },
     { name = "scriv", extras = ["toml"], specifier = ">=1.8.0" },
-    { name = "toml", specifier = ">=0.10.2" },
     { name = "tomlkit", specifier = ">=0.13.3" },
 ]
 
