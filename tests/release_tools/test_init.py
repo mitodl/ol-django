@@ -485,3 +485,30 @@ def test_the_stated_scheme_is_what_gets_written(repo_root, scheme, version, patt
 
     assert run("--versioning", scheme).exit_code == 0
     assert f'version_pattern = "{pattern}"' in (package / "pyproject.toml").read_text()
+
+
+@pytest.mark.parametrize("quoted", ["'1.0.0'", '"1.0.0"'])
+def test_the_version_matches_the_pattern_written_beside_it(repo_root, quoted):
+    """Tomlkit keeps the file's own quoting, but the pattern always uses `"`
+
+    A single-quoted version left as-is means bumpver's `version = "{version}"`
+    pattern never matches, so `prepare` bumps every other declaration and
+    leaves [project] version behind - silently, since bumpver does not treat
+    a non-matching pattern as an error.
+    """
+    package = repo_root / "src" / "alpha"
+    write(
+        package / "pyproject.toml",
+        f'[project]\nname = "alpha"\nversion = {quoted}\n',
+    )
+    write(package / "alpha" / "__init__.py", "")
+    clear_caches()
+
+    assert run("--versioning", "semver").exit_code == 0
+
+    lines = (package / "pyproject.toml").read_text().splitlines()
+    rendered = 'version = "{version}"'.replace("{version}", "1.0.0")
+
+    # Whole line, not a substring: `current_version = "1.0.0"` in the bumpver
+    # table ends with the same text and would match either way.
+    assert rendered in lines

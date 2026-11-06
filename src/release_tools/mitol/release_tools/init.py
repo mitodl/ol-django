@@ -263,6 +263,14 @@ def _plan_bumpver(app: App, scheme: str, version_module: Path) -> list[Action]:
     # tomlkit rather than the toml used for reading: round-tripping through
     # toml would strip every comment in the file it rewrites.
     document = tomlkit.parse(pyproject.read_text())
+    # The pattern written below quotes the version with `"`, and tomlkit keeps
+    # whatever quoting the file already used. A `version = 'x'` would then
+    # never match, so bumpver would silently leave [project] version alone.
+    project = document.get("project")
+
+    if isinstance(project, dict) and isinstance(project.get("version"), str):
+        project["version"] = tomlkit.string(str(project["version"]))
+
     added = tomlkit.parse(_bumpver_tables(app, scheme, version_module))
     # Assign the two sub-tables one at a time. `document.update()` would take
     # the whole `[tool]` table from `added` and overwrite the existing one,
