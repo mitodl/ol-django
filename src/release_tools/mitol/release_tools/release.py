@@ -1,21 +1,13 @@
 import subprocess
 
 from click import Choice, echo, option
-from cloup import Context, group, pass_context
-
-from scripts import changelog, version
-from scripts.apps import App
-from scripts.decorators import app_option, pass_app
-from scripts.project import Project
+from cloup import Context, command, pass_context
+from mitol.release_tools import changelog, version
+from mitol.release_tools.apps import App
+from mitol.release_tools.decorators import app_option, pass_app
 
 
-@group()
-@pass_context
-def release(ctx: Context):
-    ctx.ensure_object(Project)
-
-
-@release.command()
+@command()
 @app_option
 @option(
     "--bump",
@@ -41,7 +33,7 @@ def prepare(ctx: Context, app: App, bump: str | None):
         echo(
             f"No changelog fragments found in {app.module_name}/changelog.d.\n"
             "CI requires a changelog entry for a release, so add one with:\n"
-            f"  uv run scripts/changelog.py create --app {app.module_name}"
+            f"  ol-release changelog create --app {app.module_name}"
         )
         raise SystemExit(1)
 
@@ -76,7 +68,3 @@ def _fragment_paths(app: App) -> list:
         and path.name != "scriv.ini"
         and not path.name.startswith(("README", "."))
     ]
-
-
-if __name__ == "__main__":
-    release()

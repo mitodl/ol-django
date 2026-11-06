@@ -1,14 +1,13 @@
-from ast import TypeAlias
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 from git import Commit, Diff
 
 if TYPE_CHECKING:
-    from scripts.apps import App
+    from mitol.release_tools.apps import App
 else:
     App: TypeAlias = None
 

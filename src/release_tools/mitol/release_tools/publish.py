@@ -8,9 +8,8 @@ from http import HTTPStatus
 
 from click import echo
 from cloup import Context, group, pass_context
-
-from scripts.apps import App, list_apps
-from scripts.project import Project
+from mitol.release_tools.apps import App, list_apps
+from mitol.release_tools.project import Project
 
 PYPI_RELEASE_URL = "https://pypi.org/pypi/{name}/{version}/json"
 REQUEST_TIMEOUT = 30
@@ -79,7 +78,3 @@ def matrix(ctx: Context):
             }
         )
     )
-
-
-if __name__ == "__main__":
-    publish()

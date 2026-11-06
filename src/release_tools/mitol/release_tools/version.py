@@ -3,10 +3,9 @@ import re
 from bumpver import cli
 from click import echo
 from cloup import Context, group, pass_context
-
-from scripts.apps import App, list_apps
-from scripts.decorators import app_option
-from scripts.project import Project
+from mitol.release_tools.apps import App, list_apps
+from mitol.release_tools.decorators import app_option
+from mitol.release_tools.project import Project
 
 DUNDER_VERSION = re.compile(r'^__version__\s*=\s*"(?P<version>[^"]+)"', re.MULTILINE)
 
@@ -56,7 +55,7 @@ def check(ctx: Context):
 
     if is_error:
         echo(
-            "\nBump versions with `uv run scripts/release.py prepare --app APPNAME`, "
+            "\nBump versions with `ol-release prepare --app APPNAME`, "
             "which updates every declaration at once."
         )
         raise SystemExit(1)
@@ -69,7 +68,3 @@ version.add_command(app_option(cli.init))
 version.add_command(app_option(cli.show))
 version.add_command(cli.test)  # this doesn't require config so doesn't require --app
 version.add_command(app_option(cli.update))
-
-
-if __name__ == "__main__":
-    version()

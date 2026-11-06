@@ -1,4 +1,4 @@
-from os import makedirs
+from contextlib import chdir
 from pathlib import Path
 from textwrap import dedent, indent
 
@@ -6,15 +6,13 @@ from click import echo
 from click_log import simple_verbosity_option
 from cloup import Context, group, option, pass_context
 from git.diff import Diff
+from mitol.release_tools.apps import App, list_apps
+from mitol.release_tools.changes import Changes
+from mitol.release_tools.decorators import app_option, pass_app, pass_project
+from mitol.release_tools.project import Project
 from scriv.collect import collect
 from scriv.create import create
 from scriv.scriv import Scriv
-
-from scripts.apps import App, list_apps
-from scripts.changes import Changes
-from scripts.contextlibs import chdir
-from scripts.decorators import app_option, pass_app, pass_project
-from scripts.project import Project
 
 
 @group("changelog")
@@ -22,8 +20,6 @@ from scripts.project import Project
 def changelog(ctx):
     """Manage application changelogs"""
     ctx.ensure_object(Project)
-
-    makedirs("changelog.d", exist_ok=True)  # noqa: PTH103
 
 
 changelog.add_command(app_option(create))
@@ -191,7 +187,3 @@ def create_renovate(project: Project, message: str):
                 - {message}"""
             )
             frag.write()
-
-
-if __name__ == "__main__":
-    changelog()

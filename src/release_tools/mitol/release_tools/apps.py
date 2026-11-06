@@ -1,15 +1,13 @@
 """Utilities around library django apps"""
 
-from contextlib import contextmanager
+from contextlib import chdir, contextmanager
 from functools import cached_property
 from pathlib import Path
 
 import toml
 from git import Commit
-
-from scripts.changes import Changes
-from scripts.contextlibs import chdir
-from scripts.project import Project
+from mitol.release_tools.changes import Changes
+from mitol.release_tools.project import PROJECT_ROOT, Project
 
 
 class App:
@@ -76,7 +74,7 @@ class App:
 
 def get_source_dir() -> Path:
     """Get the source directory"""
-    return Path(__file__).parent.parent / "src"
+    return PROJECT_ROOT / "src"
 
 
 def get_app_dir(path: str) -> Path:
@@ -85,10 +83,20 @@ def get_app_dir(path: str) -> Path:
 
 
 def list_app_paths() -> list[Path]:
-    """List the apps in the repo"""
+    """List the apps in the repo
+
+    Empty rather than an error when there is no ``src/``: the ``--app`` choices
+    are built at import time, so a missing source directory would otherwise
+    make ``--help`` unavailable outside a checkout.
+    """
+    source_dir = get_source_dir()
+
+    if not source_dir.is_dir():
+        return []
+
     return sorted(
         dir_path
-        for dir_path in get_source_dir().iterdir()
+        for dir_path in source_dir.iterdir()
         if dir_path.is_dir()
         and (dir_path / "pyproject.toml").exists()
         and dir_path.stem != "uvtestapp"

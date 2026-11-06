@@ -1,0 +1,52 @@
+[project]
+name = "mitol-release-tools"
+version = "2026.11.6"
+description = "Changelog, version and PyPI release management for a monorepo of Python packages"
+authors = [
+    { name = "MIT Open Learning Engineering", email = "odl-devops@mit.edu" }
+]
+license = "BSD-3-Clause"
+requires-python = ">=3.11"
+readme = "README.md"
+dependencies = [
+    "GitPython>=3.1.62",
+    "bumpver>=2026.1132",
+    "click>=8.5.0",
+    "click-log>=0.4.0",
+    "cloup>=4.0.0",
+    "scriv[toml]>=1.8.0",
+    "toml>=0.10.2",
+    "tomlkit>=0.13.3",
+]
+
+[project.scripts]
+ol-release = "mitol.release_tools.cli:cli"
+
+[project.urls]
+Repository = "https://github.com/mitodl/ol-django"
+
+[tool.bumpver]
+current_version = "2026.11.6"
+version_pattern = "YYYY.MM.DD[.INC0]"
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    'version = "{version}"',
+]
+"mitol/release_tools/__init__.py" = [
+    '__version__ = "{version}"',
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# `init` writes .scriv/entry_title.md.j2 out of the installed package, so the
+# template has to be in the distribution alongside the code.
+[tool.hatch.build.targets.sdist]
+include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py", "**/*.j2"]
+exclude = ["BUILD", "pyproject.toml"]
+
+[tool.hatch.build.targets.wheel]
+include = ["CHANGELOG.md", "README.md", "py.typed", "**/*.py", "**/*.j2"]
+exclude = ["BUILD", "pyproject.toml"]
