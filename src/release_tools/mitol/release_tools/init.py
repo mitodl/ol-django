@@ -12,7 +12,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import tomlkit
-from click import Choice, echo, option
+from click import Choice, UsageError, echo, option
 from cloup import Context, command, pass_context
 from mitol.release_tools.apps import App, list_apps
 from mitol.release_tools.project import Project
@@ -353,6 +353,31 @@ def _resolve_module(app: App, version_file: str | None) -> Path:
     return _version_module(app)
 
 
+def _require_versioning(apps: list[App], versioning: str | None) -> None:
+    """Demand a scheme only from packages that have no bumpver table
+
+    A package that already declares `[tool.bumpver]` carries its scheme in
+    `version_pattern`, and `init` does not rewrite it. Only a package being
+    bootstrapped needs the answer, and it cannot be read off the version
+    string: `2024.10.24` is a valid `MAJOR.MINOR.PATCH` and a valid date both.
+    """
+    if versioning is not None:
+        return
+
+    unconfigured = [app.module_name for app in apps if not app.bumpver]
+
+    if not unconfigured:
+        return
+
+    listed = ", ".join(sorted(unconfigured))
+    choices = "|".join(sorted(VERSION_PATTERNS))
+    message = (
+        f"Missing option '--versioning' ({choices}). "
+        f"No [tool.bumpver] table in: {listed}."
+    )
+    raise UsageError(message)
+
+
 def _select_apps(
     project: Project, app_names: tuple[str, ...], *, version_file: str | None
 ) -> list[App]:
@@ -421,12 +446,11 @@ def _describe(path: Path, project: Project) -> str:
 )
 @option(
     "--versioning",
-    required=True,
     type=Choice(sorted(VERSION_PATTERNS)),
     help=(
-        "Version scheme to configure for packages that have no "
-        "[tool.bumpver] table yet. Required: a version string does not say "
-        "which scheme produced it."
+        "Version scheme to configure. Required only for packages with no "
+        "[tool.bumpver] table yet, since a version string does not say which "
+        "scheme produced it."
     ),
 )
 @option(
@@ -454,6 +478,7 @@ def init(  # noqa: PLR0913, PLR0917
     """Create the changelog and version files the other commands expect"""
     project = ctx.ensure_object(Project)
     apps = _select_apps(project, app_names, version_file=version_file)
+    _require_versioning(apps, versioning)
     planned = _plan_repo(project)
 
     for app in apps:
@@ -476,10 +501,8 @@ def init(  # noqa: PLR0913, PLR0917
         echo(f"{_describe(action.path, project)} - {action.summary}")
 
     if check:
-        echo(
-            f"\n{len(planned)} item(s) missing. Run `ol-release init "
-            f"--versioning {versioning}` to create them."
-        )
+        flag = f" --versioning {versioning}" if versioning else ""
+        echo(f"\n{len(planned)} item(s) missing. Run `ol-release init{flag}`.")
         ctx.exit(1)
 
     if dry_run:

@@ -512,3 +512,27 @@ def test_the_version_matches_the_pattern_written_beside_it(repo_root, quoted):
     # Whole line, not a substring: `current_version = "1.0.0"` in the bumpver
     # table ends with the same text and would match either way.
     assert rendered in lines
+
+
+def test_an_already_configured_repo_needs_no_scheme(repo_root):
+    """`[tool.bumpver]` already says which scheme the package uses
+
+    Demanding the flag here would mean typing an answer that is then ignored,
+    which is the common case on a repo that has been managed for a while.
+    """
+    add_package(repo_root, "alpha", dist_name="alpha", version="1.0.0", module="alpha")
+
+    assert run_bare().exit_code == 0
+
+
+def test_the_error_names_the_packages_that_need_a_scheme(repo_root):
+    add_package(repo_root, "configured", dist_name="c", version="1.0.0", module="c")
+    add_package(
+        repo_root, "bare", dist_name="b", version="1.0.0", module="b", bumpver=False
+    )
+
+    result = run_bare()
+
+    assert result.exit_code == USAGE_ERROR
+    assert "bare" in result.output
+    assert "configured" not in result.output
