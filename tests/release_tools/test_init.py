@@ -20,6 +20,9 @@ from mitol.release_tools.project import Project
 
 from tests.release_tools.conftest import add_package, clear_caches, write
 
+#: click's exit code for a usage error, such as a missing required option.
+USAGE_ERROR = 2
+
 LEGACY_RST = """\
 Change Log
 ----------
@@ -49,6 +52,15 @@ def plugin(repo_root):
 
 
 def run(*args):
+    """Invoke `init`, supplying the required scheme unless the test sets one"""
+    if "--versioning" not in args:
+        args = ("--versioning", "semver", *args)
+
+    return CliRunner().invoke(init, list(args), obj=Project())
+
+
+def run_bare(*args):
+    """Invoke `init` exactly as given, with nothing added"""
     return CliRunner().invoke(init, list(args), obj=Project())
 
 
@@ -423,3 +435,53 @@ def test_an_existing_module_keeps_its_code(repo_root):
     assert (package / "alpha" / "__init__.py").read_text() == (
         'FOO = 1\n\n__version__ = "1.0.0"\n'
     )
+
+
+@pytest.mark.parametrize(
+    "version",
+    ["2026.11.6", "2024.10.24", "2026.11.6.1", "1.0", "0.1.0a1"],
+)
+def test_the_versioning_scheme_is_never_guessed(repo_root, version):
+    """A version string does not say which scheme produced it
+
+    `2024.10.24` and `2026.11.6` are valid X.Y.Z and valid dates both, so the
+    old regex called them semver and `--bump patch` would have advanced
+    `2024.10.24` to the invented date `2024.10.25`. `1.0` and `0.1.0a1` went
+    the other way and got a date pattern bumpver rejects outright - at the
+    first release, long after `init` exited 0.
+    """
+    add_package(
+        repo_root,
+        "alpha",
+        dist_name="alpha",
+        version=version,
+        module="alpha",
+        bumpver=False,
+    )
+
+    result = run_bare()
+
+    assert result.exit_code == USAGE_ERROR
+    assert "--versioning" in result.output
+
+
+@pytest.mark.parametrize(
+    ("scheme", "version", "pattern"),
+    [
+        ("date", "2024.10.24", "YYYY.MM.DD[.INC0]"),
+        ("semver", "1.0", "MAJOR.MINOR.PATCH"),
+    ],
+)
+def test_the_stated_scheme_is_what_gets_written(repo_root, scheme, version, pattern):
+    """Both of these are mis-classified by a regex over the version string"""
+    package = add_package(
+        repo_root,
+        "alpha",
+        dist_name="alpha",
+        version=version,
+        module="alpha",
+        bumpver=False,
+    )
+
+    assert run("--versioning", scheme).exit_code == 0
+    assert f'version_pattern = "{pattern}"' in (package / "pyproject.toml").read_text()

@@ -6,7 +6,6 @@ insert marker, a ``[tool.bumpver]`` table, and a ``__version__`` for bumpver to
 rewrite. ``init`` creates whatever is missing and leaves everything else alone.
 """
 
-import re
 from dataclasses import dataclass
 from importlib.resources import files
 from pathlib import Path
@@ -36,7 +35,6 @@ ENTRY_START = ("<a id='changelog-", '<a id="changelog-', "## ")
 #: Directories that hold `__init__.py` files which are never the package's own.
 NOT_THE_PACKAGE = frozenset({"tests", "test", "docs", "migrations"})
 
-SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
 
 VERSION_PATTERNS = {
     "semver": "MAJOR.MINOR.PATCH",
@@ -128,14 +126,6 @@ def _version_module(app: App) -> Path:
         f"{app.relative_path}."
     )
     raise ValueError(message)
-
-
-def _versioning_scheme(app: App, override: str | None) -> str:
-    """Resolve which version pattern to configure for an app"""
-    if override:
-        return override
-
-    return "semver" if SEMVER.match(app.version) else "date"
 
 
 def _scriv_ini(app: App, version_module: Path) -> str:
@@ -423,8 +413,13 @@ def _describe(path: Path, project: Project) -> str:
 )
 @option(
     "--versioning",
+    required=True,
     type=Choice(sorted(VERSION_PATTERNS)),
-    help="Version scheme to configure. Inferred per package when omitted.",
+    help=(
+        "Version scheme to configure for packages that have no "
+        "[tool.bumpver] table yet. Required: a version string does not say "
+        "which scheme produced it."
+    ),
 )
 @option(
     "--version-file",
@@ -456,12 +451,14 @@ def init(  # noqa: PLR0913, PLR0917
     for app in apps:
         try:
             module = _resolve_module(app, version_file)
-            scheme = _versioning_scheme(app, versioning)
-        except (KeyError, ValueError) as error:
+            # `app.version` is read in here, so a package with no static
+            # version surfaces as a named message rather than a traceback.
+            planned.extend(_plan_app(app, versioning, module))
+        # Per-package so the message can name which one; the handler exits,
+        # so the loop runs it at most once.
+        except (KeyError, ValueError) as error:  # noqa: PERF203
             echo(_explain(app, error))
             raise SystemExit(1) from error
-
-        planned.extend(_plan_app(app, scheme, module))
 
     if not planned:
         echo(f"Already configured: {len(apps)} package(s), nothing to do.")
