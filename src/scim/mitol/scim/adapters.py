@@ -188,7 +188,7 @@ class UserAdapter(SCIMUser):
         except FieldDoesNotExist:
             return True
 
-    def set_mapped_attr(self, attname: str, value) -> None:
+    def set_mapped_attr(self, attname: str, value) -> bool:
         """
         Assign a value from a SCIM payload to a field on the user.
 
@@ -201,10 +201,12 @@ class UserAdapter(SCIMUser):
 
         :param attname: name of the field on the model
         :param value: value from the SCIM payload
+        :returns: True if the value was written, False if it was skipped
+        :rtype: bool
         """
         if value is None and not self.is_nullable(attname):
             logger.debug("Ignoring null SCIM value for %s", attname)
-            return
+            return False
 
         if (
             isinstance(value, str)
@@ -212,9 +214,10 @@ class UserAdapter(SCIMUser):
             and not self.allows_blank(attname)
         ):
             logger.debug("Ignoring blank SCIM value for %s", attname)
-            return
+            return False
 
         setattr(self.obj, attname, value)
+        return True
 
     def from_dict(self, d):
         """
@@ -378,7 +381,13 @@ class UserAdapter(SCIMUser):
     def _handle_replace_nested_path(self, nested_path, nested_value):
         """Handle processing a nested path"""
         if nested_path.first_path in self.ATTR_MAP:
-            self.set_mapped_attr(self.ATTR_MAP[nested_path.first_path], nested_value)
+            written = self.set_mapped_attr(
+                self.ATTR_MAP[nested_path.first_path], nested_value
+            )
+            # from_dict keeps scim_username in step with userName on PUT and
+            # POST; only follow a write the guard let through
+            if written and nested_path.first_path == ("userName", None, None):
+                self.obj.scim_username = nested_value
         elif nested_path.first_path == ("emails", None, None):
             self.parse_emails(nested_value)
         else:

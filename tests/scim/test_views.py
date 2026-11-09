@@ -1224,6 +1224,7 @@ def test_scim_user_patch_blank_username_is_ignored(scim_client, operation, blank
     """
     user = UserFactory.create()
     original = user.username
+    original_scim_username = user.scim_username
 
     resp = _patch_ops(scim_client, user, [operation(blank)])
 
@@ -1232,6 +1233,28 @@ def test_scim_user_patch_blank_username_is_ignored(scim_client, operation, blank
     user.refresh_from_db()
 
     assert user.username == original
+    assert user.scim_username == original_scim_username
+
+
+@pytest.mark.parametrize(
+    "operation",
+    [
+        {"op": "replace", "value": json.dumps({"userName": "renamed"})},
+        {"op": "replace", "path": "userName", "value": "renamed"},
+    ],
+)
+def test_scim_user_patch_username_updates_scim_username(scim_client, operation):
+    """from_dict keeps scim_username in step with username, so PATCH must too"""
+    user = UserFactory.create()
+
+    resp = _patch_ops(scim_client, user, [operation])
+
+    assert resp.status_code == HTTPStatus.OK, f"Response: {resp.content}"
+
+    user.refresh_from_db()
+
+    assert user.username == "renamed"
+    assert user.scim_username == "renamed"
 
 
 @pytest.mark.parametrize(
