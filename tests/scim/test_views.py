@@ -1234,24 +1234,31 @@ def test_scim_user_patch_blank_username_is_ignored(scim_client, operation, blank
     assert user.username == original
 
 
-def test_scim_user_patch_filtered_path_is_not_implemented(scim_client):
+@pytest.mark.parametrize(
+    "operation",
+    [
+        {
+            "op": "replace",
+            "path": 'emails[type eq "work"].value',
+            "value": "new@example.com",
+        },
+        {
+            "op": "replace",
+            "value": json.dumps({'emails[type eq "work"].value': "new@example.com"}),
+        },
+    ],
+)
+def test_scim_user_patch_filtered_path_is_not_implemented(scim_client, operation):
     """A filtered path can't be applied, so it must not come back as a 200"""
     user = UserFactory.create()
     email = user.email
 
-    resp = _patch_ops(
-        scim_client,
-        user,
-        [
-            {
-                "op": "replace",
-                "path": 'emails[type eq "work"].value',
-                "value": "new@example.com",
-            }
-        ],
-    )
+    resp = _patch_ops(scim_client, user, [operation])
 
     assert resp.status_code == HTTPStatus.NOT_IMPLEMENTED, f"Response: {resp.content}"
+    assert resp.json()["detail"] == (
+        'PATCH with a filtered path is not supported: emails[type eq "work"].value'
+    )
 
     user.refresh_from_db()
 

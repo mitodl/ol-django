@@ -432,9 +432,10 @@ class UserAdapter(SCIMUser):
         # dropped below and the client would be told it succeeded.
         for nested_path, _ in items:
             if nested_path.is_complex:
-                msg = (
-                    f"PATCH with a filtered path is not supported: {nested_path.filter}"
-                )
+                # split_path appends ' eq ""' to make the path parse as a
+                # filter; strip it so the detail quotes the path as sent
+                sent_path = nested_path.filter.removesuffix(' eq ""')
+                msg = f"PATCH with a filtered path is not supported: {sent_path}"
                 raise exceptions.NotImplementedError(msg)
 
         for nested_path, nested_value in items:
