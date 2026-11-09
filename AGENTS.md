@@ -28,10 +28,10 @@ uv run prek run --all-files
 uv run testapp/manage.py <command>
 
 # Create a changelog entry (required before every PR)
-uv run scripts/changelog.py create --app <appname>
+uv run ol-release changelog create --app <appname>
 
 # Prepare a release (bumps the version, folds changelog.d into CHANGELOG.md)
-uv run scripts/release.py prepare --app <appname>
+uv run ol-release prepare --app <appname>
 ```
 
 ## Architecture
@@ -66,19 +66,21 @@ pyproject.toml          # Root: workspace config, pytest config, ruff config, de
 
 **Factories**: Use `factory-boy`. Common fixtures (`learner`, `staff_user`, `user_client`, etc.) are in root `conftest.py`. App-level factories live in `mitol/<appname>/factories/`.
 
-**Changelogs**: Each app has a `changelog.d/` directory. A new changelog entry is **required** before submitting a PR. Use `uv run scripts/changelog.py create --app <appname>`. A fragment ships in the same PR as the code it describes, and that PR must not touch the app's `CHANGELOG.md` — collecting fragments into `CHANGELOG.md` is a release, and releases are separate PRs. `scripts/changelog.py check` fails a PR that does both.
+**Changelogs**: Each app has a `changelog.d/` directory. A new changelog entry is **required** before submitting a PR. Use `uv run ol-release changelog create --app <appname>`. A fragment ships in the same PR as the code it describes, and that PR must not touch the app's `CHANGELOG.md` — collecting fragments into `CHANGELOG.md` is a release, and releases are separate PRs. `ol-release changelog check` fails a PR that does both.
 
-**Versioning**: Date-based scheme `YYYY.MM.DD[.INC0]`, except `edx-api-client`, which uses semver (`MAJOR.MINOR.PATCH`) because its consumers pin semver versions (for example `>=1.14.0,<2`). Tags follow `{package-name}/v{version}` and are created by CI, never by hand. Each app declares its version in `[project] version`, `[tool.bumpver] current_version`, and every file listed in `[tool.bumpver.file_patterns]` (normally `mitol/<appname>/__init__.py`); `uv run scripts/release.py prepare` updates all of them and `uv run scripts/version.py check` enforces that they agree.
+**Versioning**: Date-based scheme `YYYY.MM.DD[.INC0]`, except `edx-api-client`, which uses semver (`MAJOR.MINOR.PATCH`) because its consumers pin semver versions (for example `>=1.14.0,<2`). Tags follow `{package-name}/v{version}` and are created by CI, never by hand. Each app declares its version in `[project] version`, `[tool.bumpver] current_version`, and every file listed in `[tool.bumpver.file_patterns]` (normally `mitol/<appname>/__init__.py`); `uv run ol-release prepare` updates all of them and `uv run ol-release version check` enforces that they agree.
 
-**Releases**: A release is a version change merged to `main`, and it is always its own PR containing nothing else. `uv run scripts/release.py prepare --app <appname>` (add `--bump major|minor|patch` for a semver app) bumps the version, folds `changelog.d/` fragments into `CHANGELOG.md`, and refreshes `uv.lock`. The `detect-releases` and `publish` jobs in `.github/workflows/ci.yml` then build every app whose `pyproject.toml` version is not yet on PyPI, publish it via Trusted Publishing (OIDC, no API token), and create the tag. PyPI is the source of truth for what is already released, so re-runs are safe and multi-app bumps work. Never add a tag-triggered publish step, and keep publishing in `ci.yml` rather than a `workflow_run` workflow (zizmor rejects that trigger).
+**Packages `ol-release` manages**: everything matched by `[tool.uv.workspace] members` that has a `pyproject.toml`, minus `[tool.ol-release] exclude` (`uvtestapp`, the skeleton to copy; `testapp`, the Django project the tests run against). A distribution classified `Private :: Do Not Upload` is still managed but never published.
 
-**Adding a new app**: Copy `src/uvtestapp`, update names throughout, add to root `pyproject.toml` under `[project].dependencies` and `[tool.uv.sources]`, add to `testapp/main/settings/shared.py` (`INSTALLED_APPS` + `import_settings_modules`), and create `tests/<appname>/__init__.py`. Before its first release, a PyPI owner must register `mitol-django-<appname>` as a pending Trusted Publisher (owner `mitodl`, repo `ol-django`, workflow `ci.yml`, environment `pypi`). Without it the publish job fails with `400 Non-user identities cannot create new projects`; see README "PyPI Trusted Publishing".
+**Releases**: A release is a version change merged to `main`, and it is always its own PR containing nothing else. `uv run ol-release prepare --app <appname>` (add `--bump major|minor|patch` for a semver app) bumps the version, folds `changelog.d/` fragments into `CHANGELOG.md`, and refreshes `uv.lock`. The `detect-releases` and `publish` jobs in `.github/workflows/ci.yml` then build every app whose `pyproject.toml` version is not yet on PyPI, publish it via Trusted Publishing (OIDC, no API token), and create the tag. PyPI is the source of truth for what is already released, so re-runs are safe and multi-app bumps work. Never add a tag-triggered publish step, and keep publishing in `ci.yml` rather than a `workflow_run` workflow (zizmor rejects that trigger).
+
+**Adding a new app**: Copy `src/uvtestapp`, update names throughout, add to root `pyproject.toml` under `[project].dependencies` and `[tool.uv.sources]` (`ol-release` picks it up from `[tool.uv.workspace] members`, so there is no separate list to update), add to `testapp/main/settings/shared.py` (`INSTALLED_APPS` + `import_settings_modules`), and create `tests/<appname>/__init__.py`. Before its first release, a PyPI owner must register `mitol-django-<appname>` as a pending Trusted Publisher (owner `mitodl`, repo `ol-django`, workflow `ci.yml`, environment `pypi`). Without it the publish job fails with `400 Non-user identities cannot create new projects`; see README "PyPI Trusted Publishing".
 
 ## CI
 
 CI (`.github/workflows/ci.yml`) runs on every push across Python 3.11–3.13 and Django 5.2 with a PostgreSQL service container. It checks:
-1. Changelog presence (`uv run scripts/changelog.py check`)
-2. Version consistency (`uv run scripts/version.py check`)
+1. Changelog presence (`uv run ol-release changelog check`)
+2. Version consistency (`uv run ol-release version check`)
 3. Tests (`uv run pytest`)
 
 On `main`, the `detect-releases` and `publish` jobs then release any app whose version is not yet on PyPI, building with `uv build --package <pypi-name>`. Build by PyPI project name rather than directory: `mitol-drf-lint` does not follow the `mitol-django-<dir>` convention.
