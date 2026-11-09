@@ -1,7 +1,7 @@
 """Reading the repo's configuration out of the root pyproject.toml"""
 
 from mitol.release_tools import config
-from mitol.release_tools.config import DEFAULT_MEMBERS, Config, load
+from mitol.release_tools.config import DEFAULT_MEMBERS, Config, Layout, load
 
 from tests.release_tools.conftest import clear_caches, write
 
@@ -93,3 +93,56 @@ def test_root_is_resolved_at_call_time(repo_root, monkeypatch):
     clear_caches()
 
     assert load().exclude == frozenset({"gamma"})
+
+
+def test_an_unrecognised_layout_is_recorded_not_swallowed(repo_root):
+    """A typo must not silently mean "workspace", and so zero packages
+
+    Loading cannot raise - it runs during import - so the declared value is
+    kept for a command to report.
+    """
+    write(repo_root / "pyproject.toml", '[tool.ol-release]\nlayout = "signle"\n')
+    clear_caches()
+    settings = load(repo_root)
+
+    assert settings.layout is Layout.WORKSPACE
+    assert settings.unknown_layout == "signle"
+
+
+def test_a_valid_layout_records_no_complaint(repo_root):
+    write(repo_root / "pyproject.toml", '[tool.ol-release]\nlayout = "single"\n')
+    clear_caches()
+
+    assert load(repo_root).unknown_layout is None
+
+
+def test_an_unrenderable_tag_format_is_rejected(repo_root):
+    """Otherwise it raises from `prepare`, after the release is half cut"""
+    write(
+        repo_root / "pyproject.toml",
+        '[tool.ol-release]\ntag-format = "v{verison}"\n',
+    )
+    clear_caches()
+
+    assert load(repo_root).tag_format is None
+
+
+def test_a_renderable_tag_format_is_kept(repo_root):
+    write(
+        repo_root / "pyproject.toml",
+        '[tool.ol-release]\ntag-format = "release-{version}"\n',
+    )
+    clear_caches()
+
+    assert load(repo_root).tag_format == "release-{version}"
+
+
+def test_an_unrenderable_tag_format_is_recorded(repo_root):
+    """Discarding it silently leaves the user thinking their override applied"""
+    write(
+        repo_root / "pyproject.toml",
+        '[tool.ol-release]\ntag-format = "v{verison}"\n',
+    )
+    clear_caches()
+
+    assert load(repo_root).unknown_tag_format == "v{verison}"

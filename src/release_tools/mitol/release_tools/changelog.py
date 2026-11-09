@@ -6,7 +6,7 @@ from click import echo
 from click_log import simple_verbosity_option
 from cloup import Context, group, option, pass_context
 from git.diff import Diff
-from mitol.release_tools.apps import App, list_apps
+from mitol.release_tools.apps import App, require_apps
 from mitol.release_tools.changes import Changes
 from mitol.release_tools.decorators import app_option, pass_app, pass_project
 from mitol.release_tools.project import Project
@@ -128,7 +128,7 @@ def check(ctx: Context, project: Project, base: str, target: str):
 
     is_error = False
 
-    for app in list_apps(project):
+    for app in require_apps(project):
         changes = app.get_changes(base_commit=base_commit, target_commit=target_commit)
 
         if changes.has_source_changes and not changes.has_changelogd_changes:

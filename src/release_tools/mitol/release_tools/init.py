@@ -33,7 +33,23 @@ INSERT_MARKER = "<!-- scriv-insert-here -->"
 ENTRY_START = ("<a id='changelog-", '<a id="changelog-', "## ")
 
 #: Directories that hold `__init__.py` files which are never the package's own.
-NOT_THE_PACKAGE = frozenset({"tests", "test", "docs", "migrations"})
+#: In a single-package repo the scan starts at the repo root, so this has to
+#: cover build and environment trees too - a `.venv` alone contributes
+#: hundreds of candidates and takes minutes to walk.
+NOT_THE_PACKAGE = frozenset(
+    {
+        "tests",
+        "test",
+        "docs",
+        "migrations",
+        "build",
+        "dist",
+        "node_modules",
+        "site-packages",
+        "venv",
+        "__pycache__",
+    }
+)
 
 
 VERSION_PATTERNS = {
@@ -90,6 +106,74 @@ def _template_source() -> str:
     )
 
 
+def _module_named_after(app: App) -> Path | None:
+    """Find the module whose name matches the distribution, if there is one
+
+    Tried before the structural scan because it is exact and cheap. It does
+    not always hold - `mitol-django-common` lives in `mitol/common/` - so a
+    miss just falls through.
+    """
+    stem = app.name.replace("-", "_")
+
+    for candidate in (Path("src") / stem, Path(stem)):
+        if (app.absolute_path / candidate / "__init__.py").exists():
+            return candidate / "__init__.py"
+
+    return None
+
+
+def _is_package(directory: Path) -> bool:
+    """Whether a directory holds an ``__init__.py``
+
+    `Path.exists()` propagates `PermissionError` on 3.13, so an unreadable
+    directory anywhere under the scan would otherwise abort `init`.
+    """
+    try:
+        return (directory / "__init__.py").exists()
+    except OSError:
+        return False
+
+
+def _package_dirs(root: Path) -> list[Path]:
+    """Outermost importable directories, pruning rather than walking into junk
+
+    Pruned during the walk, not filtered afterwards: `rglob` would descend
+    into `.venv` and every hidden directory before anything could discard
+    them, which on a repo root does not finish in any reasonable time.
+    """
+    found: list[Path] = []
+    queue = [root]
+
+    while queue:
+        current = queue.pop()
+
+        try:
+            children = sorted(current.iterdir())
+        except OSError:
+            # An unreadable directory is not a package; `rglob` skipped these
+            # silently and a traceback out of `init` would be a regression.
+            continue
+
+        for child in children:
+            if (
+                # `is_dir()` follows symlinks, and a link pointing at an
+                # ancestor walks forever. `rglob` never followed them either.
+                child.is_symlink()
+                or not child.is_dir()
+                or child.name.startswith(".")
+                or child.name in NOT_THE_PACKAGE
+            ):
+                continue
+
+            # Outermost only: a package's own subpackages are not candidates.
+            if _is_package(child):
+                found.append(child.relative_to(root))
+            else:
+                queue.append(child)
+
+    return found
+
+
 def _version_module(app: App) -> Path:
     """Find the importable package that should own the app's ``__version__``
 
@@ -100,16 +184,12 @@ def _version_module(app: App) -> Path:
     ``ol_openedx_chat/`` alike. Ambiguity is an error rather than a guess:
     naming the wrong module means bumpver silently rewrites nothing.
     """
-    # Filter on the path *within* the package. Matching against the absolute
-    # path would discard every candidate in a checkout that happens to live
-    # under a directory called `docs` or `tests`.
-    inside = (
-        path.relative_to(app.absolute_path)
-        for path in app.absolute_path.rglob("__init__.py")
-    )
-    found = sorted(
-        path.parent for path in inside if not NOT_THE_PACKAGE.intersection(path.parts)
-    )
+    named = _module_named_after(app)
+
+    if named is not None:
+        return named
+
+    found = sorted(_package_dirs(app.absolute_path))
     outermost = [
         candidate
         for candidate in found
@@ -136,7 +216,10 @@ def _scriv_ini(app: App, version_module: Path) -> str:
     a base for any path starting ``../`` and falls back to the process's
     working directory, which every command has already chdir'd to the package.
     """
-    up = "../" * len(app.relative_path.parts)
+    # "./" rather than "" for a root package: scriv probes the fragment
+    # directory before the cwd, so a bare name would resolve only by
+    # falling through that first candidate.
+    up = "../" * len(app.relative_path.parts) or "./"
     template = f"{up}{TEMPLATE_DIR}/entry_title.${{config:format}}.j2"
 
     return dedent(

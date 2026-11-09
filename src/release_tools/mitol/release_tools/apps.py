@@ -15,6 +15,10 @@ from mitol.release_tools.project import PROJECT_ROOT, Project
 PRIVATE_CLASSIFIER = "Private :: Do Not Upload"
 
 
+class NoPackagesError(Exception):
+    """Raised when a command needs packages and discovery found none"""
+
+
 class App:
     module_name: str | None = None
     project: Project | None = None
@@ -41,7 +45,16 @@ class App:
 
     @property
     def version_git_tag(self):
-        return f"{self.name}/v{self.version}"
+        """The git tag for this app's current version
+
+        A monorepo has to say which package a tag belongs to; a
+        single-package repo conventionally does not. Either default can be
+        overridden with ``[tool.ol-release] tag-format``.
+        """
+        settings = config.load()
+        template = settings.tag_format or config.TAG_FORMATS[settings.layout]
+
+        return template.format(name=self.name, version=self.version)
 
     @property
     def is_private(self) -> bool:
@@ -132,6 +145,10 @@ def _discover_in(root: Path) -> tuple[dict[str, Path], dict[str, list[Path]]]:
     choices are built at import and a raise would take ``--help`` with it.
     """
     settings = config.load(root)
+
+    if settings.layout is config.Layout.SINGLE:
+        return _discover_single(root), {}
+
     found: dict[str, Path] = {}
     clashes: dict[str, list[Path]] = {}
 
@@ -156,6 +173,28 @@ def _discover_in(root: Path) -> tuple[dict[str, Path], dict[str, list[Path]]]:
             found[path.name] = path
 
     return found, clashes
+
+
+def _discover_single(root: Path) -> dict[str, Path]:
+    """Treat the repo root as the one package
+
+    Keyed on the distribution name rather than the directory name: the
+    directory is whatever the checkout happens to be called, which differs
+    between machines and CI runners and would make ``--app`` unreproducible.
+    """
+    try:
+        with (root / "pyproject.toml").open("rb") as handle:
+            data = tomllib.load(handle)
+    except (OSError, tomllib.TOMLDecodeError, ValueError):
+        return {}
+
+    project = data.get("project")
+    name = project.get("name") if isinstance(project, dict) else None
+
+    # Same discipline as the config loader: this runs while `decorators` is
+    # being imported to build the --app choices, so anything unexpected has to
+    # mean "no packages" rather than take `ol-release --help` down with it.
+    return {name: root} if isinstance(name, str) and name else {}
 
 
 def get_app_dir(name: str) -> Path:
@@ -195,3 +234,29 @@ def list_app_names() -> list[str]:
 def list_apps(project: Project) -> list[App]:
     """Get a list of App instances"""
     return [App.create(project, name) for name in list_app_names()]
+
+
+def require_apps(project: Project) -> list[App]:
+    """List the repo's packages, refusing to carry on when there are none
+
+    A gate that iterates nothing and reports success is indistinguishable
+    from one that passed, which is how a misconfigured repo silently never
+    releases. Every command that checks or publishes goes through here.
+    """
+    apps = list_apps(project)
+
+    if apps:
+        return apps
+
+    settings = config.load()
+
+    if settings.layout is config.Layout.SINGLE:
+        detail = "the root pyproject.toml declares no [project] name"
+    else:
+        detail = (
+            "check [tool.uv.workspace] members, or set\n"
+            '[tool.ol-release] layout = "single" if this repo is one package'
+        )
+
+    message = f"No packages found: {detail}."
+    raise NoPackagesError(message)
