@@ -234,9 +234,10 @@ class UserAdapter(SCIMUser):
 
         if not username:
             # userName is REQUIRED per RFC 7643 section 4.1.1. Without this the
-            # write fails on the NOT NULL column. POST gets a 409 carrying the
-            # raw database error (PostView wraps save() in IntegrityError);
-            # PUT gets a retryable 500. Neither says what was wrong.
+            # write fails on the NOT NULL column. PostView wraps save() in
+            # IntegrityError, and PutView does from django-scim2 0.22.0, so the
+            # client gets a 409 carrying the raw database error (a 500 for PUT
+            # on older releases). Neither says what was wrong.
             msg = "userName is required and may not be null"
             raise exceptions.BadRequestError(msg)
 
