@@ -81,7 +81,7 @@ constraint-dependencies = ["certifi>=2026.10.19"]  # eMudhra CA compromise: neve
 managed = true
 default-groups = ["dev"]
 exclude-newer = "7d"
-required-version = ">=0.9.17"
+required-version = ">=0.9.17,<0.12.22"
 
 [tool.uv.exclude-newer-package]
 edx-api-client = "0d"
