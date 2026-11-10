@@ -1347,7 +1347,7 @@ def test_scim_user_put_null_name_clears_names(scim_client):
     assert user.last_name == ""
 
 
-@pytest.mark.parametrize("username", [None, ""])
+@pytest.mark.parametrize("username", [None, "", "   "])
 def test_scim_user_put_without_username_is_bad_request(scim_client, username):
     """A PUT missing the required userName is a client error, not a 500"""
     user = UserFactory.create()
@@ -1375,7 +1375,8 @@ def test_scim_user_put_without_username_is_bad_request(scim_client, username):
 
 
 @pytest.mark.django_db
-def test_scim_user_post_without_username_is_bad_request(scim_client):
+@pytest.mark.parametrize("username", [None, "", "   "])
+def test_scim_user_post_without_username_is_bad_request(scim_client, username):
     """A POST missing the required userName is a client error, not a 500"""
     user_count = User.objects.count()
 
@@ -1387,7 +1388,7 @@ def test_scim_user_post_without_username_is_bad_request(scim_client):
                 "schemas": [constants.SchemaURI.USER],
                 "emails": [{"value": "nousername@example.com", "primary": True}],
                 "active": True,
-                "userName": None,
+                "userName": username,
                 "name": {"givenName": "No", "familyName": "Username"},
             }
         ),
