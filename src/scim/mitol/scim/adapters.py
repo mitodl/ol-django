@@ -5,7 +5,9 @@ import warnings
 from typing import Union
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import FieldDoesNotExist
 from django.db import transaction
+from django_scim import exceptions
 from django_scim.adapters import SCIMUser
 from mitol.scim.constants import SchemaURI
 from scim2_filter_parser.attr_paths import AttrPath
@@ -150,6 +152,73 @@ class UserAdapter(SCIMUser):
             "meta": self.meta,
         }
 
+    def is_nullable(self, attname: str) -> bool:
+        """
+        Return whether a model field accepts NULL.
+
+        Anything that isn't a concrete field is reported as nullable, since
+        there is no column constraint to reason about.
+
+        :param attname: name of the field on the model
+        :returns: True if the field accepts NULL
+        :rtype: bool
+        """
+        try:
+            return self.obj._meta.get_field(attname).null  # noqa: SLF001
+        except FieldDoesNotExist:
+            return True
+
+    def allows_blank(self, attname: str) -> bool:
+        """
+        Return whether a model field accepts an empty string.
+
+        Uses ``blank`` rather than ``null`` because a unique, non-blank field
+        such as ``username`` is poisoned by ``""`` (the second user to receive
+        it violates the unique constraint) while ``first_name`` and
+        ``last_name`` legitimately take ``""`` to clear a name. ``global_id``
+        is ``null=True, blank=True, unique=True``, so a future ``ATTR_MAP``
+        entry for it is handled by the same rule.
+
+        :param attname: name of the field on the model
+        :returns: True if the field accepts an empty string
+        :rtype: bool
+        """
+        try:
+            return self.obj._meta.get_field(attname).blank  # noqa: SLF001
+        except FieldDoesNotExist:
+            return True
+
+    def set_mapped_attr(self, attname: str, value) -> bool:
+        """
+        Assign a value from a SCIM payload to a field on the user.
+
+        A SCIM client can send an explicit ``null`` for an attribute it has no
+        value for. Writing that to a NOT NULL column raises an IntegrityError,
+        which django_scim turns into a 500, and a client that treats 500 as
+        retryable will resend the same payload forever. A blank or
+        whitespace-only string for a field that is not ``blank`` has the same
+        effect on a unique column. Leave the existing value in place instead.
+
+        :param attname: name of the field on the model
+        :param value: value from the SCIM payload
+        :returns: True if the value was written, False if it was skipped
+        :rtype: bool
+        """
+        if value is None and not self.is_nullable(attname):
+            logger.debug("Ignoring null SCIM value for %s", attname)
+            return False
+
+        if (
+            isinstance(value, str)
+            and not value.strip()
+            and not self.allows_blank(attname)
+        ):
+            logger.debug("Ignoring blank SCIM value for %s", attname)
+            return False
+
+        setattr(self.obj, attname, value)
+        return True
+
     def from_dict(self, d):
         """
         Consume a ``dict`` conforming to the SCIM User Schema, updating the
@@ -164,11 +233,27 @@ class UserAdapter(SCIMUser):
         """
         self.parse_emails(d.get("emails"))
 
+        username = d.get("userName")
+
+        if not isinstance(username, str) or not username.strip():
+            # userName is REQUIRED per RFC 7643 section 4.1.1. Without this the
+            # write fails on the NOT NULL column. PostView wraps save() in
+            # IntegrityError, and PutView does from django-scim2 0.22.0, so the
+            # client gets a 409 carrying the raw database error (a 500 for PUT
+            # on older releases). Neither says what was wrong. A blank or
+            # whitespace-only value is rejected too: it saves, and the next
+            # user to receive the same value hits the unique constraint.
+            msg = "userName is required and may not be null or blank"
+            raise exceptions.BadRequestError(msg)
+
+        # a null `name` is equivalent to an absent one: both clear the fields
+        name = d.get("name") or {}
+
         self.obj.is_active = d.get("active", True)
-        self.obj.username = d.get("userName")
-        self.obj.first_name = d.get("name", {}).get("givenName", "")
-        self.obj.last_name = d.get("name", {}).get("familyName", "")
-        self.obj.scim_username = d.get("userName")
+        self.obj.username = username
+        self.obj.first_name = name.get("givenName") or ""
+        self.obj.last_name = name.get("familyName") or ""
+        self.obj.scim_username = username
         self.obj.scim_external_id = d.get("externalId")
         # None, not "": global_id is unique, and NULLs are distinct where
         # empty strings are not - two users with no external id would collide.
@@ -243,19 +328,27 @@ class UserAdapter(SCIMUser):
         self, path: str | None, value: Union[str, list, dict]
     ) -> list:
         """Parse the incoming value(s)"""
-        if isinstance(value, str):
-            # scim-for-keycloak sends this as a noncompliant JSON-encoded string
+        if isinstance(value, str) and path is None:
+            # scim-for-keycloak sends the whole resource as a noncompliant
+            # JSON-encoded string with no path at all
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError as exc:
+                msg = "The value of a PATCH operation with no path is not valid JSON"
+                raise exceptions.BadRequestError(msg) from exc
+
+        if not isinstance(value, dict):
+            # a spec-compliant client names the attribute in `path` and sends the
+            # bare value, which may be a scalar, a list or an explicit null
             if path is None:
-                val = json.loads(value)
-            else:
-                msg = "Called with a non-null path and a str value"
-                raise ValueError(msg)
-        else:
-            val = value
+                msg = "A PATCH operation with no path must carry an object value"
+                raise exceptions.BadRequestError(msg)
+
+            return [(self.split_path(path), value)]
 
         results = []
 
-        for attr_path, attr_value in val.items():
+        for attr_path, attr_value in value.items():
             if isinstance(attr_value, dict):
                 # nested object, we want to recursively flatten it to `first.second`
                 results.extend(self.parse_path_and_values(attr_path, attr_value))
@@ -263,16 +356,40 @@ class UserAdapter(SCIMUser):
                 flattened_path = (
                     f"{path}.{attr_path}" if path is not None else attr_path
                 )
-                new_path = self.split_path(flattened_path)
-                new_value = attr_value
-                results.append((new_path, new_value))
+                results.append((self.split_path(flattened_path), attr_value))
 
         return results
+
+    def _default_validate_op(self, path, value, operation):
+        """
+        Validate an operation before it is handled.
+
+        scim-for-keycloak omits ``path`` and carries the attribute names in
+        ``value``. django_scim builds its validation error message from
+        ``operation["path"]``, so an invalid value raises a KeyError there and
+        the client gets a retryable 500 in place of the intended 400.
+        """
+        if path is not None and not operation.get("path"):
+            # first_path is (attr_name, sub_attr, schema_uri); the URI is not
+            # part of the name the client sent
+            attr_name, sub_attr, _ = path.first_path
+            operation = {
+                **operation,
+                "path": ".".join(part for part in (attr_name, sub_attr) if part),
+            }
+
+        super()._default_validate_op(path, value, operation)
 
     def _handle_replace_nested_path(self, nested_path, nested_value):
         """Handle processing a nested path"""
         if nested_path.first_path in self.ATTR_MAP:
-            setattr(self.obj, self.ATTR_MAP[nested_path.first_path], nested_value)
+            written = self.set_mapped_attr(
+                self.ATTR_MAP[nested_path.first_path], nested_value
+            )
+            # from_dict keeps scim_username in step with userName on PUT and
+            # POST; only follow a write the guard let through
+            if written and nested_path.first_path == ("userName", None, None):
+                self.obj.scim_username = nested_value
         elif nested_path.first_path == ("emails", None, None):
             self.parse_emails(nested_value)
         else:
@@ -320,7 +437,19 @@ class UserAdapter(SCIMUser):
             # Restructure for use in loop below.
             value = {path: value}
 
-        for nested_path, nested_value in (value or {}).items():
+        items = list((value or {}).items())
+
+        # Reject before writing anything: a filtered path would otherwise be
+        # dropped below and the client would be told it succeeded.
+        for nested_path, _ in items:
+            if nested_path.is_complex:
+                # split_path appends ' eq ""' to make the path parse as a
+                # filter; strip it so the detail quotes the path as sent
+                sent_path = nested_path.filter.removesuffix(' eq ""')
+                msg = f"PATCH with a filtered path is not supported: {sent_path}"
+                raise exceptions.NotImplementedError(msg)
+
+        for nested_path, nested_value in items:
             if (
                 not self._dispatch_replace_nested_path(nested_path, nested_value)
                 and nested_path.first_path not in self.IGNORED_PATHS
