@@ -79,7 +79,10 @@ jobs:
       run: uv python pin ${{ matrix.python-version }}
 
     - name: Install tox
-      run: uv tool install tox --with tox-uv
+      # tox-uv vendors its own uv, which resolves independently of the one
+      # setup-uv installs. Hold it to the same range as `required-version` so
+      # the tox-driven `uv venv` does not trip the constraint.
+      run: uv tool install tox --with tox-uv --with 'uv>=0.9.17,<0.12.22'
 
     - name: Install dependencies
       run: uv sync
