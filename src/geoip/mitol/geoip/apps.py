@@ -8,6 +8,8 @@ from mitol.common.apps import BaseApp
 class GeoIPApp(BaseApp):
     """Default configuration for the GeoIP app"""
 
+    default_auto_field = "django.db.models.BigAutoField"
+
     name = "mitol.geoip"
     label = "geoip"
     verbose_name = "GeoIP"
