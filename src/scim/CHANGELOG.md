@@ -6,6 +6,50 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.11.13'></a>
+## [2026.11.13] - 2026-11-13
+
+### Changed
+
+- `mitol.scim.views` logs to `mitol.scim.views` rather than to the root logger. The new integrity-error record carries the database text, including whatever user data the driver put in it, and on the root logger a consumer had no way to route or filter it separately.
+
+- Raised the minimum supported Django to 5.2. Django 4.2 reached end of life on
+  2026-04-07, and 5.0 and 5.1 before it (2025-04-02 and 2025-12-03), leaving
+  5.2 as the only supported LTS, so the 4.2, 5.0 and 5.1 CI legs are gone.
+
+### Fixed
+
+- A SCIM `PATCH` replace carrying `null` for an attribute in `ATTR_MAP` wrote `None` straight onto the model. Where the target field is `NOT NULL` that raised an `IntegrityError`, which `django_scim` returns as a 500, and a client that treats 500 as retryable resends the same payload forever. The new `UserAdapter.set_mapped_attr` leaves the existing value in place when the incoming value is `null` and the field does not accept `NULL`. A blank or whitespace-only string is skipped the same way for a field that is not `blank` (`username`), since `""` on a unique column makes the second user fail with a 500. `first_name` and `last_name` are `blank=True` and still accept `""` to clear a name.
+- `UserAdapter.from_dict` wrote `None` into `username`, `first_name` and `last_name` when the PUT/POST payload carried an explicit `null`, and raised `AttributeError` on a `null` `name` object. A `null` `name` now clears the name fields, as an absent one already did, and a missing or `null` `userName` raises a 400 instead of failing on the column constraint. A blank or whitespace-only `userName` is a 400 as well, where it used to save and leave the next user sent the same value failing on the unique constraint.
+- An invalid value in a `PATCH` operation with no `path` key (what `scim-for-keycloak` sends) raised `KeyError` while `django_scim` built its validation error message, turning the intended 400 into a 500.
+- `parse_path_and_values` assumed every operation value was an object, so the spec-compliant `PATCH` form (an attribute named in `path` with a bare value alongside it) raised `ValueError` or `AttributeError` and came back as a 500 for any value, null or not. A value against an explicit `path` is now applied, and an operation that carries neither a `path` nor an object value is a 400.
+- A `PATCH` replace whose `path` carries a filter (e.g. `emails[type eq "work"].value`) was dropped silently, so the client got a 200 and no write. It now returns 501 before anything is written. An invalid no-path value is reported as invalid JSON or as a missing object value, as the case may be.
+- A `PATCH` replace of `userName` updated `username` but not `scim_username`, which `from_dict` keeps in step on `PUT` and `POST`, so a rename through `PATCH` left the two divergent. `scim_username` now follows the `username` write, and stays as it is when a blank `userName` is skipped. `set_mapped_attr` returns whether it wrote the value.
+
+Note that `null` does not mean the same thing on both verbs. A `PUT` is a full replacement, so a null (or absent) `name` clears the name fields; a `PATCH` replace carrying a null for a `NOT NULL` field leaves the existing value alone rather than failing the request. The skipped write is logged at `DEBUG`.
+
+- A SCIM write that failed a database constraint returned the driver's error text in the 409 body. On Postgres that includes the `DETAIL` line, which echoes the colliding key for a unique violation and the entire failing row (email, names, flags, timestamps) for a `NOT NULL` one. `EXPOSE_SCIM_EXCEPTIONS` did not gate it, because `django_scim` casts the error to `django_scim.exceptions.IntegrityError`, which is already a `SCIMException` and so skips the redacting branch in `SCIMView.dispatch`. Writes now answer with a fixed detail string and log the database text at `ERROR` instead. Set `EXPOSE_SCIM_EXCEPTIONS` to `True` to get the old behaviour, which is what that setting means everywhere else.
+- An integrity error on `PATCH` was a 500. `django_scim`'s `PatchView` has no `IntegrityError` handling at all, so it reached `dispatch` as an unhandled exception. It is now the same 409 as `POST` and `PUT`, which matters because `scim-for-keycloak` retries a 500 and a payload that violates a constraint never succeeds on a retry.
+- `mitol.scim.urls` mounts `django_scim.urls` alongside its own patterns, so `/Groups` was served by the stock `django_scim` view and leaked the same way. It now goes through a `GroupsView` of ours, which also brings group writes under the transaction wrapping that user writes already had. `/Groups/.search` still resolves to `django_scim`'s `GroupSearchView`.
+
+- `sync_users_to_scim_remote` no longer moves a user to a different Keycloak
+  identity. It matches Keycloak users by email and wrote the match's id to
+  `global_id` unconditionally, so a stale email could bind the account to
+  someone else's Keycloak user (`global_id` is what SSO logs the user in by).
+  A result whose id differs from the user's existing `global_id` is now
+  returned as an error and the user is left unchanged. A bound user that the
+  email search doesn't find is also returned as an error, instead of being
+  created again in Keycloak as a second identity.
+- A user whose email matches more than one Keycloak user is now one error
+  result listing every matching id, and is left unbound. Before, each hit was
+  a separate result and whichever Keycloak listed last was written to
+  `global_id`. A user already bound to one of the matches keeps that binding,
+  and the other ids are logged at `WARNING`.
+- A Keycloak id that another user already holds as `global_id` is now an
+  error result for the user it would have bound, and that user is left
+  unbound. Before, the write broke the unique constraint and the
+  `IntegrityError` aborted the rest of the sync.
+
 <a id='changelog-2026.10.30'></a>
 ## [2026.10.30] - 2026-10-30
 
