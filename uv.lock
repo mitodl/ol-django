@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -9,31 +9,31 @@ resolution-markers = [
 ]
 
 [options]
-exclude-newer = "2026-11-06T19:15:46.357650197Z"
+exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
-mitol-django-google-sheets = { timestamp = "2026-11-13T19:15:46.357693197Z", span = "PT0S" }
-edx-api-client = { timestamp = "2026-11-13T19:15:46.357686072Z", span = "PT0S" }
-mitol-django-hubspot-api = { timestamp = "2026-11-13T19:15:46.357694072Z", span = "PT0S" }
-mitol-django-common = { timestamp = "2026-11-13T19:15:46.357692488Z", span = "PT0S" }
-mitol-django-olposthog = { timestamp = "2026-11-13T19:15:46.357694988Z", span = "PT0S" }
-mitol-django-google-sheets-deferrals = { timestamp = "2026-11-13T19:15:46.357693613Z", span = "PT0S" }
-mitol-django-mail = { timestamp = "2026-11-13T19:15:46.35769428Z", span = "PT0S" }
-mitol-django-oauth-toolkit-extensions = { timestamp = "2026-11-13T19:15:46.35769453Z", span = "PT0S" }
-mitol-django-payment-gateway = { timestamp = "2026-11-13T19:15:46.357696363Z", span = "PT0S" }
-mitol-django-transcoding = { timestamp = "2026-11-13T19:15:46.357696822Z", span = "PT0S" }
-mitol-release-tools = { timestamp = "2026-11-13T19:15:46.357697238Z", span = "PT0S" }
-mitol-django-google-sheets-refunds = { timestamp = "2026-11-13T19:15:46.357693863Z", span = "PT0S" }
-mitol-django-apigateway = { timestamp = "2026-11-13T19:15:46.357691447Z", span = "PT0S" }
-mitol-drf-lint = { timestamp = "2026-11-13T19:15:46.35769703Z", span = "PT0S" }
-mitol-django-observability = { timestamp = "2026-11-13T19:15:46.35769478Z", span = "PT0S" }
-mitol-django-authentication = { timestamp = "2026-11-13T19:15:46.35769178Z", span = "PT0S" }
-mitol-django-openedx = { timestamp = "2026-11-13T19:15:46.357696113Z", span = "PT0S" }
-mitol-django-benchmark = { timestamp = "2026-11-13T19:15:46.357692072Z", span = "PT0S" }
-mitol-django-geoip = { timestamp = "2026-11-13T19:15:46.357692947Z", span = "PT0S" }
-mitol-django-digital-credentials = { timestamp = "2026-11-13T19:15:46.35769278Z", span = "PT0S" }
-mitol-django-scim = { timestamp = "2026-11-13T19:15:46.357696572Z", span = "PT0S" }
+edx-api-client = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-apigateway = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-authentication = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-benchmark = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-common = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-digital-credentials = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-geoip = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-google-sheets = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-google-sheets-deferrals = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-google-sheets-refunds = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-hubspot-api = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-mail = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-oauth-toolkit-extensions = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-observability = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-olposthog = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-openedx = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-payment-gateway = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-scim = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-transcoding = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-drf-lint = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-release-tools = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 
 [manifest]
 members = [
@@ -1181,15 +1181,16 @@ wheels = [
 
 [[package]]
 name = "django-redis"
-version = "6.0.0"
+version = "7.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "redis" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/08/53/dbcfa1e528e0d6c39947092625b2c89274b5d88f14d357cee53c4d6dbbd4/django_redis-6.0.0.tar.gz", hash = "sha256:2d9cb12a20424a4c4dde082c6122f486628bae2d9c2bee4c0126a4de7fda00dd", size = 56904, upload-time = "2025-06-17T18:15:46.376Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fb/78/203a0cdc0f1c083a5407d01f77b58099a120bb8a5a04562f56a9bb341314/django_redis-7.0.0.tar.gz", hash = "sha256:e48491c862f4350b0747ceb1016700686fb93c4f4e0fb9c490fe6c6658ffd933", size = 64601, upload-time = "2026-06-02T14:17:48.819Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7e/79/055dfcc508cfe9f439d9f453741188d633efa9eab90fc78a67b0ab50b137/django_redis-6.0.0-py3-none-any.whl", hash = "sha256:20bf0063a8abee567eb5f77f375143c32810c8700c0674ced34737f8de4e36c0", size = 33687, upload-time = "2025-06-17T18:15:34.165Z" },
+    { url = "https://files.pythonhosted.org/packages/7e/9f/09cdb9a1eebe8533b02a7694ca787acfc1e4d93b5b6175ff99366d4e6d64/django_redis-7.0.0-py3-none-any.whl", hash = "sha256:4b23aa6e0cd0937bb1242e9a463809e6004de3ca2150f34e986306bb6220d688", size = 38932, upload-time = "2026-06-02T14:17:47.281Z" },
 ]
 
 [[package]]
@@ -2329,7 +2330,7 @@ requires-dist = [
     { name = "celery", marker = "extra == 'celery'", specifier = ">=5.5.0" },
     { name = "certifi", specifier = ">=2026.10.19" },
     { name = "django", specifier = ">=5.2" },
-    { name = "django-redis", specifier = "~=6.0" },
+    { name = "django-redis", specifier = "~=7.0" },
     { name = "django-stubs", specifier = ">=1.13.1" },
     { name = "django-webpack-loader", specifier = ">=0.7.0" },
     { name = "pytz", specifier = ">=2020.4" },
