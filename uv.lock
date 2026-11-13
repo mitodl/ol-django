@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -9,31 +9,31 @@ resolution-markers = [
 ]
 
 [options]
-exclude-newer = "2026-11-06T19:15:46.357650197Z"
+exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
-mitol-django-google-sheets = { timestamp = "2026-11-13T19:15:46.357693197Z", span = "PT0S" }
-edx-api-client = { timestamp = "2026-11-13T19:15:46.357686072Z", span = "PT0S" }
-mitol-django-hubspot-api = { timestamp = "2026-11-13T19:15:46.357694072Z", span = "PT0S" }
-mitol-django-common = { timestamp = "2026-11-13T19:15:46.357692488Z", span = "PT0S" }
-mitol-django-olposthog = { timestamp = "2026-11-13T19:15:46.357694988Z", span = "PT0S" }
-mitol-django-google-sheets-deferrals = { timestamp = "2026-11-13T19:15:46.357693613Z", span = "PT0S" }
-mitol-django-mail = { timestamp = "2026-11-13T19:15:46.35769428Z", span = "PT0S" }
-mitol-django-oauth-toolkit-extensions = { timestamp = "2026-11-13T19:15:46.35769453Z", span = "PT0S" }
-mitol-django-payment-gateway = { timestamp = "2026-11-13T19:15:46.357696363Z", span = "PT0S" }
-mitol-django-transcoding = { timestamp = "2026-11-13T19:15:46.357696822Z", span = "PT0S" }
-mitol-release-tools = { timestamp = "2026-11-13T19:15:46.357697238Z", span = "PT0S" }
-mitol-django-google-sheets-refunds = { timestamp = "2026-11-13T19:15:46.357693863Z", span = "PT0S" }
-mitol-django-apigateway = { timestamp = "2026-11-13T19:15:46.357691447Z", span = "PT0S" }
-mitol-drf-lint = { timestamp = "2026-11-13T19:15:46.35769703Z", span = "PT0S" }
-mitol-django-observability = { timestamp = "2026-11-13T19:15:46.35769478Z", span = "PT0S" }
-mitol-django-authentication = { timestamp = "2026-11-13T19:15:46.35769178Z", span = "PT0S" }
-mitol-django-openedx = { timestamp = "2026-11-13T19:15:46.357696113Z", span = "PT0S" }
-mitol-django-benchmark = { timestamp = "2026-11-13T19:15:46.357692072Z", span = "PT0S" }
-mitol-django-geoip = { timestamp = "2026-11-13T19:15:46.357692947Z", span = "PT0S" }
-mitol-django-digital-credentials = { timestamp = "2026-11-13T19:15:46.35769278Z", span = "PT0S" }
-mitol-django-scim = { timestamp = "2026-11-13T19:15:46.357696572Z", span = "PT0S" }
+edx-api-client = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-apigateway = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-authentication = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-benchmark = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-common = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-digital-credentials = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-geoip = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-google-sheets = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-google-sheets-deferrals = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-google-sheets-refunds = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-hubspot-api = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-mail = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-oauth-toolkit-extensions = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-observability = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-olposthog = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-openedx = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-payment-gateway = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-scim = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-transcoding = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-drf-lint = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-release-tools = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 
 [manifest]
 members = [
@@ -1420,14 +1420,14 @@ wheels = [
 
 [[package]]
 name = "gitpython"
-version = "3.1.62"
+version = "3.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "gitdb" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e0/db/3ca813cbacb23ab6fe46ff38a9b5ef8e73e970c8051f2ce903aacafe0446/gitpython-3.1.62.tar.gz", hash = "sha256:1791de66309bc0c7cfca40bf8d2e3de7ca091cbf94e6051be1ad0722c61062af", size = 231728, upload-time = "2026-09-07T02:57:21.155Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c0/ff/fee293f1ec3e1b64db6eb270e00964f29c086d769201474cedb8d1608930/gitpython-3.2.1.tar.gz", hash = "sha256:0f1229ec5c057bdabdeeda8bda4f17bda679ab33dbccc00f24e6a480553c8613", size = 241688, upload-time = "2026-10-14T12:20:20.589Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d6/0b/29d7965215f8ef830a7ca1f42997fe13e5693d85e9edb18f938d063ef5f2/gitpython-3.1.62-py3-none-any.whl", hash = "sha256:7002251225e10e29d2e1f49e6532613fe5d5d9f0b6f1f02997a52b38fe56899e", size = 222753, upload-time = "2026-09-07T02:57:19.762Z" },
+    { url = "https://files.pythonhosted.org/packages/6b/50/2a923c4dc02522ff9567f07c67ed1deca6d5fa9474f4708168b8088dfa37/gitpython-3.2.1-py3-none-any.whl", hash = "sha256:d66b0832aa8755c1a84892937282df0befb16c97e5a64aeebd68be9c5e323f53", size = 231548, upload-time = "2026-10-14T12:20:18.844Z" },
 ]
 
 [[package]]
