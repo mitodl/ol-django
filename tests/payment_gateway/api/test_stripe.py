@@ -20,10 +20,12 @@ from mitol.payment_gateway.exceptions import (
 )
 from mitol.payment_gateway.factories import (
     StripeCheckoutSessionWithPIEventFactory,
+    StripePaymentMethodTypeFactory,
     StripeSimpleCheckoutSessionFactory,
     StripeWebhookSecretRouteFactory,
 )
 from mitol.payment_gateway.fixtures import stripe_event
+from mitol.payment_gateway.models import PaymentMethodType
 
 FAKE = faker.Factory.create()
 pytestmark = [pytest.mark.django_db]
@@ -70,7 +72,8 @@ def stripe_gateway():
     return api.PaymentGateway.get_gateway_class(constants.MITOL_PAYMENT_GATEWAY_STRIPE)
 
 
-def test_start_payment(mocker):
+@pytest.mark.parametrize("enable_payment_method_types", [True, False])
+def test_start_payment(mocker, settings, enable_payment_method_types):
     """
     Test that calling start_payment generates the proper payload for Stripe.
 
@@ -81,6 +84,12 @@ def test_start_payment(mocker):
 
     receipt_url = FAKE.url()
     cancel_url = FAKE.url()
+
+    settings.MITOL_PAYMENT_GATEWAY_STRIPE_ENABLE_PAYMENT_METHOD_TYPES = (
+        enable_payment_method_types
+    )
+    custom_method = StripePaymentMethodTypeFactory.create()
+    builtin_method = StripePaymentMethodTypeFactory.create(builtin=True)
 
     order = OrderFactory.create()
     item = CartItemFactory.create()
@@ -113,6 +122,10 @@ def test_start_payment(mocker):
         "cancel_url": cancel_url,
         "metadata": {},
     }
+
+    if enable_payment_method_types:
+        stripe_session_data["custom_payment_method_types"] = [custom_method.stripe_id]
+        stripe_session_data["payment_method_types"] = [builtin_method.stripe_id]
 
     mocked_stripe_session_create = mocker.patch(
         "stripe.checkout._session_service.SessionService.create",
@@ -607,3 +620,108 @@ def test_checkout_session_status_calculation(  # noqa: PLR0913, PLR0917
 
     mocked_cs_v1_retrieve.assert_called()
     assert calculated_status.status == expected_status
+
+
+@pytest.fixture
+def payment_method_types_enabled(settings):
+    """Enable payment method types for the Stripe gateway."""
+
+    settings.MITOL_PAYMENT_GATEWAY_STRIPE_ENABLE_PAYMENT_METHOD_TYPES = True
+
+
+@pytest.mark.usefixtures("payment_method_types_enabled")
+def test_payment_method_types_defaults(stripe_gateway):
+    """Test that only default Stripe payment method types are used by default."""
+
+    custom = StripePaymentMethodTypeFactory.create_batch(2)
+    builtin = StripePaymentMethodTypeFactory.create(
+        builtin=True, gateway_data={"type": "builtin", "id": "card"}
+    )
+    StripePaymentMethodTypeFactory.create(is_default=False)
+    PaymentMethodType.objects.create(
+        name="not stripe",
+        gateway=constants.MITOL_PAYMENT_GATEWAY_CYBERSOURCE,
+        gateway_data={"type": "custom", "id": "cpmt_cybersource"},
+        is_default=True,
+    )
+
+    assert stripe_gateway._generate_payment_method_types(None) == {  # noqa: SLF001
+        "custom_payment_method_types": [method.stripe_id for method in custom],
+        "payment_method_types": [builtin.stripe_id],
+    }
+
+
+@pytest.mark.usefixtures("payment_method_types_enabled")
+def test_payment_method_types_empty_list(stripe_gateway):
+    """Test that an empty list adds no payment method types, even with defaults."""
+
+    StripePaymentMethodTypeFactory.create()
+
+    assert stripe_gateway._generate_payment_method_types([]) == {}  # noqa: SLF001
+
+
+@pytest.mark.usefixtures("payment_method_types_enabled")
+def test_payment_method_types_no_defaults(stripe_gateway):
+    """Test that nothing is added if there are no default payment method types."""
+
+    StripePaymentMethodTypeFactory.create(is_default=False)
+
+    assert stripe_gateway._generate_payment_method_types(None) == {}  # noqa: SLF001
+
+
+@pytest.mark.usefixtures("payment_method_types_enabled")
+def test_payment_method_types_explicit(stripe_gateway):
+    """Test an explicit list of objects and IDs, which ignores the defaults."""
+
+    StripePaymentMethodTypeFactory.create()
+    custom = StripePaymentMethodTypeFactory.create(is_default=False)
+
+    result = stripe_gateway._generate_payment_method_types(  # noqa: SLF001
+        [custom, "cpmt_explicit", "card", custom.stripe_id, "card"]
+    )
+
+    assert result == {
+        "custom_payment_method_types": [custom.stripe_id, "cpmt_explicit"],
+        "payment_method_types": ["card"],
+    }
+
+
+@pytest.mark.usefixtures("payment_method_types_enabled")
+@pytest.mark.parametrize(
+    "gateway_data",
+    [{}, {"type": "custom"}, {"type": "nope", "id": "cpmt_abc"}, {"id": "card"}],
+)
+def test_payment_method_types_bad_data(stripe_gateway, caplog, gateway_data):
+    """Test that payment method types with bad gateway data are skipped."""
+
+    good = StripePaymentMethodTypeFactory.create()
+    StripePaymentMethodTypeFactory.create(gateway_data=gateway_data)
+
+    with caplog.at_level(logging.WARNING):
+        result = stripe_gateway._generate_payment_method_types(None)  # noqa: SLF001
+
+    assert result == {"custom_payment_method_types": [good.stripe_id]}
+    assert "invalid gateway data" in caplog.text
+
+
+@pytest.mark.usefixtures("payment_method_types_enabled")
+def test_payment_method_types_bad_type(stripe_gateway):
+    """Test that unsupported list items raise an error."""
+
+    with pytest.raises(TypeError):
+        stripe_gateway._generate_payment_method_types([1])  # noqa: SLF001
+
+
+def test_payment_method_types_disabled(stripe_gateway, settings, caplog):
+    """Test that nothing is added when payment method types are disabled."""
+
+    settings.MITOL_PAYMENT_GATEWAY_STRIPE_ENABLE_PAYMENT_METHOD_TYPES = False
+    method = StripePaymentMethodTypeFactory.create()
+
+    assert stripe_gateway._generate_payment_method_types(None) == {}  # noqa: SLF001
+    assert not caplog.text
+
+    with caplog.at_level(logging.WARNING):
+        assert stripe_gateway._generate_payment_method_types([method]) == {}  # noqa: SLF001
+
+    assert "ignoring" in caplog.text

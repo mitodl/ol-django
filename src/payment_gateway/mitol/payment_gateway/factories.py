@@ -5,8 +5,12 @@ import pytz
 from django.conf import settings
 from factory import Factory, LazyAttribute, SubFactory, Trait
 from factory.django import DjangoModelFactory
-from mitol.payment_gateway import fixtures
-from mitol.payment_gateway.models import StripeWebhookSecret, StripeWebhookSecretRoute
+from mitol.payment_gateway import constants, fixtures
+from mitol.payment_gateway.models import (
+    StripePaymentMethodType,
+    StripeWebhookSecret,
+    StripeWebhookSecretRoute,
+)
 
 FAKE = faker.Factory.create()
 
@@ -36,6 +40,37 @@ class StripeWebhookSecretRouteFactory(DjangoModelFactory):
         """Factory meta opts"""
 
         model = StripeWebhookSecretRoute
+
+
+class StripePaymentMethodTypeFactory(DjangoModelFactory):
+    """Factory for Stripe payment method types (custom by default)"""
+
+    name = LazyAttribute(lambda _: f"{FAKE.word()} {FAKE.uuid4()}")
+    gateway = constants.MITOL_PAYMENT_GATEWAY_STRIPE
+    is_default = True
+    gateway_data = LazyAttribute(
+        lambda _: {
+            "type": constants.STRIPE_PAYMENT_METHOD_TYPE_CUSTOM,
+            "id": f"cpmt_{FAKE.pystr(min_chars=24, max_chars=24)}",
+        }
+    )
+
+    class Meta:
+        """Factory meta opts"""
+
+        model = StripePaymentMethodType
+
+    class Params:
+        """Allow creating builtin payment methods."""
+
+        builtin = Trait(
+            gateway_data=LazyAttribute(
+                lambda _: {
+                    "type": constants.STRIPE_PAYMENT_METHOD_TYPE_BUILTIN,
+                    "id": FAKE.word(),
+                }
+            )
+        )
 
 
 class StripeAbstractEventFactory(Factory):

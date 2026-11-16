@@ -50,7 +50,7 @@ from mitol.payment_gateway.exceptions import (
     NoStripeWebhookSecretError,
     RefundDuplicateException,
 )
-from mitol.payment_gateway.models import StripeWebhookSecret
+from mitol.payment_gateway.models import StripePaymentMethodType, StripeWebhookSecret
 from mitol.payment_gateway.payment_utils import (
     clean_request_data,
     quantize_decimal,
@@ -1003,12 +1003,98 @@ class StripePaymentGateway(
 
         return payload_json["id"]
 
+    def _decode_payment_method_type(
+        self, method: StripePaymentMethodType | str
+    ) -> tuple[str, bool] | None:
+        """
+        Return the Stripe ID for the payment method and whether it's custom.
+
+        Strings are treated as Stripe IDs; IDs starting with "cpmt_" are custom.
+        Returns None (and logs) for a StripePaymentMethodType with bad data.
+        """
+
+        if isinstance(method, str):
+            return (
+                method,
+                method.startswith(constants.STRIPE_CUSTOM_PAYMENT_METHOD_ID_PREFIX),
+            )
+
+        if not isinstance(method, StripePaymentMethodType):
+            msg = (
+                "payment_method_types must contain StripePaymentMethodType "
+                f"objects or strings, got {type(method).__name__}"
+            )
+            raise TypeError(msg)
+
+        if (
+            not method.stripe_id
+            or method.stripe_type not in constants.STRIPE_PAYMENT_METHOD_TYPES
+        ):
+            log.warning(
+                "prepare_checkout: skipping payment method type %s (%s): "
+                "invalid gateway data",
+                method.name,
+                method.id,
+            )
+            return None
+
+        return method.stripe_id, method.is_custom
+
+    def _generate_payment_method_types(
+        self, payment_method_types: list[StripePaymentMethodType | str] | None
+    ) -> dict:
+        """
+        Generate the payment method type data for the checkout session.
+
+        Custom payment methods go in `custom_payment_method_types` and builtin
+        ones go in `payment_method_types`. Keys are only included if there's
+        something in them, since sending `payment_method_types` overrides the
+        payment methods configured in the Stripe dashboard.
+        """
+
+        if not settings.MITOL_PAYMENT_GATEWAY_STRIPE_ENABLE_PAYMENT_METHOD_TYPES:
+            if payment_method_types:
+                log.warning(
+                    "prepare_checkout: payment method types specified but "
+                    "MITOL_PAYMENT_GATEWAY_STRIPE_ENABLE_PAYMENT_METHOD_TYPES is "
+                    "off, ignoring"
+                )
+            return {}
+
+        if payment_method_types is None:
+            payment_method_types = StripePaymentMethodType.objects.filter(
+                is_default=True
+            ).order_by("id")
+
+        builtin = []
+        custom = []
+
+        for method in payment_method_types:
+            decoded = self._decode_payment_method_type(method)
+            if decoded is None:
+                continue
+
+            method_id, is_custom = decoded
+            target = custom if is_custom else builtin
+            if method_id not in target:
+                target.append(method_id)
+
+        session_data = {}
+        if custom:
+            session_data["custom_payment_method_types"] = custom
+        if builtin:
+            session_data["payment_method_types"] = builtin
+
+        return session_data
+
     def prepare_checkout(
         self,
         order: Order,
         receipt_url: str | None = None,
         cancel_url: str | None = None,
         backoffice_post_url: str | None = None,
+        *,
+        payment_method_types: list[StripePaymentMethodType | str] | None = None,
         **kwargs,
     ):
         """
@@ -1027,6 +1113,13 @@ class StripePaymentGateway(
         the backoffice URL (webhook target URL) cannot be set here and will
         generate a warning message in the log if set. For more information, see
         README-Stripe.md.
+
+        If MITOL_PAYMENT_GATEWAY_STRIPE_ENABLE_PAYMENT_METHOD_TYPES is set,
+        payment method types are added to the session. Pass `payment_method_types`
+        to choose them: a list of StripePaymentMethodType objects or Stripe IDs
+        (IDs starting with "cpmt_" are treated as custom payment methods). If it
+        is not passed, the default StripePaymentMethodTypes are used. Pass an
+        empty list to add none.
         """
 
         if backoffice_post_url:
@@ -1046,6 +1139,7 @@ class StripePaymentGateway(
             "success_url": receipt_url,
             "cancel_url": cancel_url,
             "metadata": merchant_fields if isinstance(merchant_fields, dict) else None,
+            **self._generate_payment_method_types(payment_method_types),
         }
 
         response = self.stripe_client.v1.checkout.sessions.create(stripe_session_data)

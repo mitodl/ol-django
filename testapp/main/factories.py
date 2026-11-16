@@ -63,7 +63,7 @@ class OrderFactory(Factory):
     reference = fuzzy.FuzzyText(length=6)
     username = FAKE.safe_email()
     email = FAKE.safe_email()
-    items = []
+    items = LazyAttribute(lambda _: [])
 
 
 class RefundFactory(Factory):
