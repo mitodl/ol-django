@@ -689,7 +689,16 @@ def test_payment_method_types_explicit(stripe_gateway):
 @pytest.mark.usefixtures("payment_method_types_enabled")
 @pytest.mark.parametrize(
     "gateway_data",
-    [{}, {"type": "custom"}, {"type": "nope", "id": "cpmt_abc"}, {"id": "card"}],
+    [
+        {},
+        {"type": "custom"},
+        {"type": "nope", "id": "cpmt_abc"},
+        {"id": "card"},
+        {"type": "custom", "id": 123},
+        {"type": "custom", "id": "paypal"},
+        "cpmt_abc",
+        ["cpmt_abc"],
+    ],
 )
 def test_payment_method_types_bad_data(stripe_gateway, caplog, gateway_data):
     """Test that payment method types with bad gateway data are skipped."""

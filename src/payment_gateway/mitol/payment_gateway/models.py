@@ -4,7 +4,7 @@ import logging
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from mitol.common.models import TimestampedModel
+from mitol.common.models import TimestampedModel, TimestampedModelQuerySet
 from mitol.payment_gateway.constants import (
     MITOL_PAYMENT_GATEWAY_CHOICES,
     MITOL_PAYMENT_GATEWAY_STRIPE,
@@ -119,7 +119,9 @@ class PaymentMethodType(TimestampedModel):
         return f"{self.gateway}: {self.name}"
 
 
-class StripePaymentMethodTypeManager(models.Manager):
+class StripePaymentMethodTypeManager(
+    models.Manager.from_queryset(TimestampedModelQuerySet)
+):
     """Manager that only returns Stripe payment method types."""
 
     def get_queryset(self):
@@ -148,28 +150,34 @@ class StripePaymentMethodType(PaymentMethodType):
         proxy = True
 
     @property
+    def _gateway_data_dict(self) -> dict:
+        """Return the gateway data, or an empty dict if it isn't a dict."""
+
+        return self.gateway_data if isinstance(self.gateway_data, dict) else {}
+
+    @property
     def stripe_type(self) -> str | None:
         """Return the Stripe payment method type (custom or builtin)."""
 
-        return (self.gateway_data or {}).get("type")
+        return self._gateway_data_dict.get("type")
 
     @stripe_type.setter
     def stripe_type(self, value: str):
         """Set the Stripe payment method type."""
 
-        self.gateway_data = {**(self.gateway_data or {}), "type": value}
+        self.gateway_data = {**self._gateway_data_dict, "type": value}
 
     @property
     def stripe_id(self) -> str | None:
         """Return the Stripe ID for the payment method."""
 
-        return (self.gateway_data or {}).get("id")
+        return self._gateway_data_dict.get("id")
 
     @stripe_id.setter
     def stripe_id(self, value: str):
         """Set the Stripe ID for the payment method."""
 
-        self.gateway_data = {**(self.gateway_data or {}), "id": value}
+        self.gateway_data = {**self._gateway_data_dict, "id": value}
 
     @property
     def is_custom(self) -> bool:
@@ -177,10 +185,11 @@ class StripePaymentMethodType(PaymentMethodType):
 
         return self.stripe_type == STRIPE_PAYMENT_METHOD_TYPE_CUSTOM
 
-    def clean(self):
-        """Validate the Stripe-specific data."""
+    def get_validation_errors(self) -> list[str]:
+        """Return a list of problems with the Stripe-specific data."""
 
-        super().clean()
+        if not isinstance(self.gateway_data, dict):
+            return ["gateway_data must be a JSON object."]
 
         errors = []
         if self.stripe_type not in STRIPE_PAYMENT_METHOD_TYPES:
@@ -197,6 +206,14 @@ class StripePaymentMethodType(PaymentMethodType):
                 f"{STRIPE_CUSTOM_PAYMENT_METHOD_ID_PREFIX}."
             )
 
+        return errors
+
+    def clean(self):
+        """Validate the Stripe-specific data."""
+
+        super().clean()
+
+        errors = self.get_validation_errors()
         if errors:
             raise ValidationError({"gateway_data": errors})
 

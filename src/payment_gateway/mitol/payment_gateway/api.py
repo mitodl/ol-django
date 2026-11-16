@@ -1026,15 +1026,14 @@ class StripePaymentGateway(
             )
             raise TypeError(msg)
 
-        if (
-            not method.stripe_id
-            or method.stripe_type not in constants.STRIPE_PAYMENT_METHOD_TYPES
-        ):
+        errors = method.get_validation_errors()
+        if errors:
             log.warning(
                 "prepare_checkout: skipping payment method type %s (%s): "
-                "invalid gateway data",
+                "invalid gateway data: %s",
                 method.name,
                 method.id,
+                " ".join(errors),
             )
             return None
 

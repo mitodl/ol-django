@@ -58,6 +58,18 @@ def test_stripe_payment_method_type_manager():
     assert PaymentMethodType.objects.count() == 2  # noqa: PLR2004
 
 
+def test_stripe_payment_method_type_manager_update_bumps_timestamp():
+    """Test that .update() on the Stripe manager still sets updated_on."""
+
+    method = StripePaymentMethodTypeFactory.create()
+    original_updated_on = method.updated_on
+
+    StripePaymentMethodType.objects.filter(pk=method.pk).update(is_default=False)
+    method.refresh_from_db()
+
+    assert method.updated_on > original_updated_on
+
+
 @pytest.mark.parametrize(
     ("gateway_data", "is_valid"),
     [
@@ -69,6 +81,9 @@ def test_stripe_payment_method_type_manager():
         ({"type": "other", "id": "card"}, False),
         ({"id": "cpmt_123"}, False),
         ({}, False),
+        ({"type": "custom", "id": 123}, False),
+        ("cpmt_123", False),
+        (["cpmt_123"], False),
     ],
 )
 def test_stripe_payment_method_type_clean(gateway_data, is_valid):
