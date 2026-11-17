@@ -139,7 +139,8 @@ def mock_search_requests(settings, users: Users, responses: RequestsMock):
                         "schemas": [SchemaURI.SERACH_REQUEST],
                         "filter": " OR ".join(
                             [
-                                f"emails.value EQ {json.dumps(user.email.lower())}"
+                                "emails.value EQ "
+                                + json.dumps(user.email.lower(), ensure_ascii=False)
                                 for user in batch
                             ]
                         ),
@@ -506,5 +507,25 @@ def test_sync_users_to_scim_remote_escapes_email_in_filter(responses: RequestsMo
     search = next(c for c in responses.calls if c.request.url == SEARCH_URL)
     assert json.loads(search.request.body)["filter"] == (
         r'emails.value EQ "\"x\"@example.com"'
+    )
+    assert state.success
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("mock_client_init_requests")
+def test_sync_users_to_scim_remote_keeps_non_ascii_email_literal(
+    responses: RequestsMock,
+):
+    """Non-ASCII stays literal in the filter, as it was before escaping"""
+    user = UserFactory.create(
+        email="a@ex\u00e4mple.com", global_id=None, scim_external_id=None
+    )
+    _mock_search_pages(responses, [("keycloak-1", user)])
+
+    [state] = api.sync_users_to_scim_remote([user])
+
+    search = next(c for c in responses.calls if c.request.url == SEARCH_URL)
+    assert json.loads(search.request.body)["filter"] == (
+        'emails.value EQ "a@ex\u00e4mple.com"'
     )
     assert state.success

@@ -139,8 +139,13 @@ def _user_search_by_email_batch(
         # so json.dumps quotes it. Interpolated raw, an email with a quote in
         # its local part (valid, and accepted by Django's EmailValidator)
         # would end the string early and rewrite the rest of the filter.
+        # ensure_ascii=False keeps non-ASCII literal, as it was before, rather
+        # than relying on the server's filter parser to decode \uXXXX.
         "filter": " OR ".join(
-            [f"emails.value EQ {json.dumps(email)}" for email in users_by_email]
+            [
+                f"emails.value EQ {json.dumps(email, ensure_ascii=False)}"
+                for email in users_by_email
+            ]
         ),
     }
 
