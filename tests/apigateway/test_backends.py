@@ -507,3 +507,39 @@ def test_authenticate_refuses_inactive_email_when_email_is_the_lookup_field(
     assert result is None
     assert User.objects.count() == 1
     assert f"inactive_user_id={inactive.pk}" in caplog.text
+
+
+@pytest.mark.django_db
+def test_authenticate_creates_user_with_settable_property_in_one_insert(
+    settings, monkeypatch
+):
+    """A mapped settable property is part of the INSERT, not a second save."""
+    monkeypatch.setattr(
+        User, "display_name", property(_display_name, _set_display_name), raising=False
+    )
+    # Options caches the model's property names on first use.
+    monkeypatch.delitem(User._meta.__dict__, "_property_names", raising=False)  # noqa: SLF001
+    settings.MITOL_APIGATEWAY_USERINFO_MODEL_MAP = {
+        "user_fields": {
+            "email": "email",
+            "preferred_username": "username",
+            "name": "display_name",
+        },
+        "additional_models": {},
+    }
+    settings.MITOL_APIGATEWAY_USERINFO_CREATE = True
+    _, user_info = generate_fake_apisix_payload()
+    request = _userinfo_request({**user_info, "name": "Mary Smith"})
+
+    with CaptureQueriesContext(connection) as queries:
+        result = ApisixRemoteUserBackend().authenticate(
+            request, remote_user=user_info["sub"]
+        )
+
+    assert (result.first_name, result.last_name) == ("Mary", "Smith")
+    # The testapp's SCIM mixin stamps scim_id after create; nothing else writes.
+    assert not [
+        update
+        for update in _user_updates(queries.captured_queries)
+        if '"first_name"' in update or '"last_name"' in update
+    ]

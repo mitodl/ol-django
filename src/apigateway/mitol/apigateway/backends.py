@@ -223,16 +223,21 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
 
     def mapped_user_defaults(self, request):
         """
-        Map the header values present in the request onto user model columns.
+        Map the header values present in the request onto user model fields.
 
-        Only concrete columns are returned: these feed get_or_create(), which
-        can't take an arbitrary attribute. configure_user() applies the rest.
+        These feed get_or_create(), which accepts concrete fields and settable
+        properties, so only those are returned. Any other mapped name is an
+        attribute nothing persists.
 
         :param request: the HTTP request, or a Channels scope dict
         :returns: a dict of model field values
         """
         decoded_headers = decode_x_header(request) or {}
-        concrete_fields = _concrete_field_names(User)
+        settable = _concrete_field_names(User) | {
+            name
+            for name in User._meta._property_names  # noqa: SLF001
+            if getattr(User, name).fset is not None
+        }
         defaults = {}
         for header_field, model_field in settings.MITOL_APIGATEWAY_USERINFO_MODEL_MAP[
             "user_fields"
@@ -242,7 +247,7 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
             )
             if (
                 header_field in decoded_headers
-                and field_name in concrete_fields
+                and field_name in settable
                 and field_name != self.lookup_field
             ):
                 defaults[field_name] = decoded_headers[header_field]
