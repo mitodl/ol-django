@@ -497,7 +497,7 @@ def test_sync_users_to_scim_remote_refuses_taken_global_id(responses: RequestsMo
 def test_sync_users_to_scim_remote_escapes_email_in_filter(responses: RequestsMock):
     """A quote in an email stays inside the filter's comparison value"""
     user = UserFactory.create(
-        email='a"b@example.com', global_id=None, scim_external_id=None
+        email='"x"@example.com', global_id=None, scim_external_id=None
     )
     _mock_search_pages(responses, [("keycloak-1", user)])
 
@@ -505,6 +505,6 @@ def test_sync_users_to_scim_remote_escapes_email_in_filter(responses: RequestsMo
 
     search = next(c for c in responses.calls if c.request.url == SEARCH_URL)
     assert json.loads(search.request.body)["filter"] == (
-        r'emails.value EQ "a\"b@example.com"'
+        r'emails.value EQ "\"x\"@example.com"'
     )
     assert state.success
