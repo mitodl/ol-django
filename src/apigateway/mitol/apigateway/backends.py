@@ -197,7 +197,7 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
             return None
         email_field = User.get_email_field_name()
         email = self.mapped_user_defaults(request).get(email_field)
-        if not email:
+        if not email or not isinstance(email, str):
             return None
         matches = list(
             User.objects.alias(_email_lower=Lower(email_field))
