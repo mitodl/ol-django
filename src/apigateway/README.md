@@ -103,7 +103,9 @@ These settings are unlikely to need adjustment:
 >
 > Remote users are matched to users in the app database based on the `ID_FIELD` setting above. If the middleware can't find the user, it can optionally create a new user. You may want to turn this off if the application syncs the user database with the identity provider in some way (e.g. SCIM) or if users have to be vetted through some other means. This does mean that users will either be denied access to the system or will be unrecognized (and thus anonymous) until their accounts are created.
 >
-> When an existing user is matched to the remote user, the backend can update the user's data with what has been attached to the request. This is an easy way to keep your user database up to date. However, if you have a process that manages that for you, you may want to turn this off to prevent potential conflicts. (But be warned: if you do turn this off, you should make sure to configure the back-channel update process or your userdata will fall out of sync quickly.)
+> A new user is created with the mapped userinfo values, an unusable password (the identity provider holds the credentials) and `is_active=True`. An unknown identity whose email matches an _inactive_ account is refused and logged as `refused_inactive_email_match` rather than given a second, active account; whether to reactivate or relink the old account is an administrator's decision.
+>
+> When an existing user is matched to the remote user, the backend can update the user's data with what has been attached to the request. Only fields whose values changed are written. This is an easy way to keep your user database up to date. However, if you have a process that manages that for you, you may want to turn this off to prevent potential conflicts. (But be warned: if you do turn this off, you should make sure to configure the back-channel update process or your userdata will fall out of sync quickly.)
 
 _If you've turned on user creation or update_, you should additionally check the field mappings. The fields present in the user info attached to the request are often not a 1-to-1 map to what's in your `User` model, so the backend uses a setting that contains a map between the userinfo field and the `User` model field. This mapping is in `MITOL_APIGATEWAY_USERINFO_MODEL_MAP`.
 
@@ -112,10 +114,11 @@ The `MITOL_APIGATEWAY_USERINFO_MODEL_MAP` is a dict with two root keys:
 - `user_fields`: Maps data into the user model. Contains a dict.
    - Keys are the userinfo field name and values are the target user model field.
    - Ex: `{ "preferred_username": "username", }` maps the `preferred_username` field from your IdP to the `username` field in the user model.
-- `additional_models`: Maps additional data into related models. These will be `update_or_create`d when the user data is updated. Contains a dict.
+- `additional_models`: Maps additional data into related models. A related row is created if the user has none, and otherwise updated when a mapped value changes. Contains a dict.
    - Keys are the model name (like you'd specify a foreign key without directly importing the model class). E.g.: `users.UserProfile`
    - Values are a list of tuples that represent the field maps. The tuples should contain `("userinfo_field", "model_field", "default value")`.
    - Defaults can be specified mainly for `CharField` (since setting these `null=True` is not recommended).
+   - The default applies only when the related row is created. A key absent from the userinfo leaves an existing row's field alone, as it does for `user_fields`.
    - The target model's reference to the user model should be called `user`.
 
 ## Using

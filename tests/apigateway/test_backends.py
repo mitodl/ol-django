@@ -1,15 +1,21 @@
 """Tests for the API gateway authentication backends."""
 
+import base64
+import json
+
 import faker
 import pytest
 from asgiref.sync import sync_to_async
 from django.contrib.auth import get_user_model
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from main.utils import generate_apisix_request, generate_fake_apisix_payload
 from mitol.apigateway.backends import (
     ApisixRemoteUserBackend,
     RemoteUserCustomFieldBackend,
 )
 from mitol.common.factories.defaults import SsoUserFactory
+from users.models import UserProfile
 
 FAKE = faker.Faker()
 User = get_user_model()
@@ -197,3 +203,209 @@ async def test_base_aauthenticate_delegates_to_authenticate():
 
     assert result.pk == test_user.pk
     assert result.configured_as_created is False
+
+
+def _userinfo_request(user_info):
+    """Build a request carrying user_info as the encoded userinfo header."""
+    payload = base64.b64encode(json.dumps(user_info).encode()).decode()
+    return generate_apisix_request("request", payload)
+
+
+def _user_updates(queries):
+    """Return the UPDATE statements on the user table."""
+    table = User._meta.db_table  # noqa: SLF001
+    return [q["sql"] for q in queries if q["sql"].startswith(f'UPDATE "{table}"')]
+
+
+@pytest.mark.django_db
+def test_configure_user_skips_absent_header_keys(settings):
+    """A mapped key missing from the userinfo leaves the field alone."""
+    settings.MITOL_APIGATEWAY_USERINFO_UPDATE = True
+    test_user = SsoUserFactory.create()
+    email = test_user.email
+    request = _userinfo_request(
+        {"sub": test_user.global_id, "preferred_username": "renamed"}
+    )
+
+    ApisixRemoteUserBackend().configure_user(request, test_user, created=False)
+
+    test_user.refresh_from_db()
+    assert test_user.email == email
+    assert test_user.username == "renamed"
+
+
+@pytest.mark.django_db
+def test_configure_user_writes_nothing_when_unchanged(settings):
+    """Headers matching the stored user don't write the row."""
+    settings.MITOL_APIGATEWAY_USERINFO_UPDATE = True
+    test_user = SsoUserFactory.create()
+    payload, _ = generate_fake_apisix_payload(user=test_user)
+    request = generate_apisix_request("request", payload)
+
+    with CaptureQueriesContext(connection) as queries:
+        ApisixRemoteUserBackend().configure_user(request, test_user, created=False)
+
+    assert _user_updates(queries.captured_queries) == []
+
+
+@pytest.mark.django_db
+def test_configure_user_updates_only_changed_columns(settings):
+    """A changed header writes that column and updated_on, nothing else."""
+    settings.MITOL_APIGATEWAY_USERINFO_UPDATE = True
+    test_user = SsoUserFactory.create()
+    updated_on = test_user.updated_on
+    _, user_info = generate_fake_apisix_payload(user=test_user)
+    request = _userinfo_request({**user_info, "email": "changed@example.com"})
+
+    with CaptureQueriesContext(connection) as queries:
+        ApisixRemoteUserBackend().configure_user(request, test_user, created=False)
+
+    [update] = _user_updates(queries.captured_queries)
+    assert '"email"' in update
+    assert '"updated_on"' in update
+    assert '"username"' not in update
+    assert '"first_name"' not in update
+    test_user.refresh_from_db()
+    assert test_user.email == "changed@example.com"
+    assert test_user.updated_on > updated_on
+
+
+@pytest.mark.django_db
+def test_authenticate_creates_user_from_header_values(settings):
+    """A new user is inserted with its mapped values, active, without a password."""
+    settings.MITOL_APIGATEWAY_USERINFO_CREATE = True
+    _, user_info = generate_fake_apisix_payload()
+    request = _userinfo_request(user_info)
+
+    result = ApisixRemoteUserBackend().authenticate(
+        request, remote_user=user_info["sub"]
+    )
+
+    user = User.objects.get(global_id=user_info["sub"])
+    assert result == user
+    assert user.username == user_info["preferred_username"]
+    assert user.email == user_info["email"]
+    assert user.is_active
+    assert not user.has_usable_password()
+
+
+@pytest.mark.django_db
+def test_authenticate_creates_user_beside_a_blank_username(settings):
+    """
+    Creating a user doesn't insert placeholder values first.
+
+    An insert with username="" would collide with an existing blank username,
+    as two concurrent first logins collide with each other.
+    """
+    settings.MITOL_APIGATEWAY_USERINFO_CREATE = True
+    SsoUserFactory.create(username="")
+    _, user_info = generate_fake_apisix_payload()
+    request = _userinfo_request(user_info)
+
+    result = ApisixRemoteUserBackend().authenticate(
+        request, remote_user=user_info["sub"]
+    )
+
+    assert result is not None
+    assert result.username == user_info["preferred_username"]
+
+
+@pytest.mark.django_db
+def test_authenticate_refuses_unknown_identity_with_inactive_email(settings, caplog):
+    """An unknown identity with an inactive account's email gets no new account."""
+    settings.MITOL_APIGATEWAY_USERINFO_CREATE = True
+    inactive = SsoUserFactory.create(is_active=False, email="Someone@Example.com")
+    _, user_info = generate_fake_apisix_payload()
+    request = _userinfo_request({**user_info, "email": "someone@example.com"})
+
+    result = ApisixRemoteUserBackend().authenticate(
+        request, remote_user=user_info["sub"]
+    )
+
+    assert result is None
+    assert User.objects.count() == 1
+    assert "refused_inactive_email_match" in caplog.text
+    assert f"inactive_user_id={inactive.pk}" in caplog.text
+
+
+@pytest.mark.django_db
+def test_authenticate_known_identity_unaffected_by_inactive_email(settings):
+    """The inactive-email refusal applies only to identities with no user."""
+    settings.MITOL_APIGATEWAY_USERINFO_CREATE = True
+    SsoUserFactory.create(
+        is_active=False, email="someone@example.com", username="retired"
+    )
+    test_user = SsoUserFactory.create(email="someone@example.com")
+    payload, _ = generate_fake_apisix_payload(user=test_user)
+    request = generate_apisix_request("request", payload)
+
+    result = ApisixRemoteUserBackend().authenticate(
+        request, remote_user=test_user.global_id
+    )
+
+    assert result == test_user
+
+
+@pytest.fixture
+def profile_map(settings):
+    """Map country_code and email_optin onto users.UserProfile."""
+    settings.MITOL_APIGATEWAY_USERINFO_MODEL_MAP = {
+        **settings.MITOL_APIGATEWAY_USERINFO_MODEL_MAP,
+        "additional_models": {
+            "users.UserProfile": [
+                ("country_code", "country_code", ""),
+                ("email_optin", "email_optin", False),
+            ],
+        },
+    }
+    settings.MITOL_APIGATEWAY_USERINFO_UPDATE = True
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("profile_map")
+def test_configure_user_creates_additional_model_with_defaults():
+    """An absent key takes the mapped default when the related row is created."""
+    test_user = SsoUserFactory.create()
+    _, user_info = generate_fake_apisix_payload(user=test_user)
+    request = _userinfo_request({**user_info, "country_code": "US"})
+
+    ApisixRemoteUserBackend().configure_user(request, test_user, created=False)
+
+    profile = UserProfile.objects.get(user=test_user)
+    assert profile.country_code == "US"
+    assert profile.email_optin is False
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("profile_map")
+def test_configure_user_additional_model_keeps_absent_and_unchanged():
+    """An existing related row isn't written for absent or matching keys."""
+    test_user = SsoUserFactory.create()
+    UserProfile.objects.create(user=test_user, country_code="US", email_optin=True)
+    _, user_info = generate_fake_apisix_payload(user=test_user)
+    request = _userinfo_request({**user_info, "country_code": "US"})
+
+    with CaptureQueriesContext(connection) as queries:
+        ApisixRemoteUserBackend().configure_user(request, test_user, created=False)
+
+    table = UserProfile._meta.db_table  # noqa: SLF001
+    assert not [
+        q for q in queries.captured_queries if q["sql"].startswith(f'UPDATE "{table}"')
+    ]
+    assert UserProfile.objects.get(user=test_user).email_optin is True
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("profile_map")
+def test_configure_user_additional_model_updates_changed_field():
+    """A changed key on an existing related row writes only that field."""
+    test_user = SsoUserFactory.create()
+    UserProfile.objects.create(user=test_user, country_code="US", email_optin=True)
+    _, user_info = generate_fake_apisix_payload(user=test_user)
+    request = _userinfo_request({**user_info, "country_code": "CA"})
+
+    ApisixRemoteUserBackend().configure_user(request, test_user, created=False)
+
+    profile = UserProfile.objects.get(user=test_user)
+    assert profile.country_code == "CA"
+    assert profile.email_optin is True
