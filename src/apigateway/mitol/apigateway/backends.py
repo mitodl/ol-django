@@ -10,6 +10,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import RemoteUserBackend
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
+from django.db.models.functions import Lower
 from mitol.apigateway.api import decode_x_header
 from mitol.common.utils.config import SettingsRef
 
@@ -18,8 +19,9 @@ User = get_user_model()
 
 
 def _concrete_field_names(model) -> set[str]:
-    """Return the names of the model's concrete fields."""
-    return {field.name for field in model._meta.concrete_fields}  # noqa: SLF001
+    """Return the names and attnames (e.g. ``org_id``) of the concrete fields."""
+    fields = model._meta.concrete_fields  # noqa: SLF001
+    return {field.name for field in fields} | {field.attname for field in fields}
 
 
 def _save_changed(instance, changed: list[str]):
@@ -30,9 +32,9 @@ def _save_changed(instance, changed: list[str]):
     a timestamp like updated_on would otherwise go stale.
     """
     auto_now = [
-        field.name
+        field.attname
         for field in instance._meta.concrete_fields  # noqa: SLF001
-        if getattr(field, "auto_now", False) and field.name not in changed
+        if getattr(field, "auto_now", False) and field.attname not in changed
     ]
     instance.save(update_fields=[*changed, *auto_now])
 
@@ -156,12 +158,13 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
         """
         See RemoteUserCustomFieldBackend.get_or_create_user().
 
-        An unknown identity whose email belongs to an inactive account is
+        An unknown identity whose email belongs only to inactive accounts is
         refused rather than given a new, active account. The inactive account
         was deactivated deliberately (retired, merged, banned), and a second
         account with the same email would undo that and split the person's
         data. Reactivating or relinking the old account is an administrator's
-        call.
+        call. An email that an active account also holds is not refused here;
+        matching an existing account by email is a separate adoption policy.
         """
         with contextlib.suppress(User.DoesNotExist):
             return User.objects.get(**{self.lookup_field: username}), False
@@ -181,10 +184,14 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
 
     def inactive_user_with_email(self, request):
         """
-        Return the pk of an inactive user with the header's email, if any.
+        Return the pk of an inactive user with the header's email.
+
+        Emails compare case-insensitively through Lower(), which an index on
+        LOWER(email) can serve; __iexact compiles to UPPER() on Postgres.
 
         :param request: the HTTP request, or a Channels scope dict
-        :returns: the inactive user's pk, or None
+        :returns: an inactive user's pk, or None if there is none or an active
+            user also holds the email
         """
         if "is_active" not in _concrete_field_names(User):
             return None
@@ -192,11 +199,15 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
         email = self.mapped_user_defaults(request).get(email_field)
         if not email:
             return None
-        return (
-            User.objects.filter(**{f"{email_field}__iexact": email, "is_active": False})
-            .values_list("pk", flat=True)
-            .first()
+        matches = list(
+            User.objects.alias(_email_lower=Lower(email_field))
+            .filter(_email_lower=email.lower())
+            .order_by("pk")
+            .values_list("pk", "is_active")
         )
+        if any(is_active for _, is_active in matches):
+            return None
+        return next((pk for pk, _ in matches), None)
 
     def new_user_defaults(self, request):
         """Add the mapped header values to the base defaults."""
@@ -266,10 +277,16 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
         return user
 
     def _sync_user_fields(self, user, user_fields, decoded_headers):
-        """Copy the mapped header values onto the user, saving only changes."""
-        concrete_fields = _concrete_field_names(User)
-        changed = []
-        changed_property = False
+        """
+        Copy the mapped header values onto the user, saving only changed columns.
+
+        Columns are compared before and after, rather than per mapped name, so
+        a mapped settable property (e.g. a name split into first and last)
+        saves the columns it changed, and one whose getter normalizes the value
+        it was given doesn't write on every request.
+        """
+        columns = [field.attname for field in User._meta.concrete_fields]  # noqa: SLF001
+        before = {column: getattr(user, column) for column in columns}
 
         for header_field, model_field in user_fields.items():
             if header_field not in decoded_headers:
@@ -284,20 +301,12 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
             else:
                 field_name = model_field
 
-            if getattr(user, field_name, None) == value:
-                continue
             setattr(user, field_name, value)
-            if field_name in concrete_fields:
-                changed.append(field_name)
-            elif isinstance(getattr(User, field_name, None), property):
-                # A settable property (e.g. a name split into first and last)
-                # writes columns update_fields can't name.
-                changed_property = True
 
-        if changed_property:
-            user.save()
-            log.debug("configure_user: Updated user %s", user)
-        elif changed:
+        changed = [
+            column for column in columns if getattr(user, column) != before[column]
+        ]
+        if changed:
             _save_changed(user, changed)
             log.debug("configure_user: Updated user %s fields %s", user, changed)
 

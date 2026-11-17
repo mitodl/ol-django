@@ -7,6 +7,7 @@ import faker
 import pytest
 from asgiref.sync import sync_to_async
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import is_password_usable
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from main.utils import generate_apisix_request, generate_fake_apisix_payload
@@ -409,3 +410,80 @@ def test_configure_user_additional_model_updates_changed_field():
     profile = UserProfile.objects.get(user=test_user)
     assert profile.country_code == "CA"
     assert profile.email_optin is True
+
+
+def _display_name(user):
+    """Join the name columns, as a settable name property's getter would."""
+    return f"{user.first_name} {user.last_name}"
+
+
+def _set_display_name(user, value):
+    """Split a full name into the name columns, normalizing whitespace."""
+    user.first_name, _, user.last_name = " ".join(value.split()).partition(" ")
+
+
+@pytest.mark.django_db
+def test_configure_user_settable_property_saves_its_columns(settings, monkeypatch):
+    """
+    A mapped settable property saves the columns it changed, once.
+
+    The getter normalizes whitespace, so it never returns the header value
+    as given; a second request with the same header must not write again.
+    """
+    monkeypatch.setattr(
+        User, "display_name", property(_display_name, _set_display_name), raising=False
+    )
+    settings.MITOL_APIGATEWAY_USERINFO_MODEL_MAP = {
+        "user_fields": {"name": "display_name"},
+        "additional_models": {},
+    }
+    settings.MITOL_APIGATEWAY_USERINFO_UPDATE = True
+    test_user = SsoUserFactory.create(first_name="Old", last_name="Name")
+    request = _userinfo_request({"sub": test_user.global_id, "name": "Mary  Smith"})
+    backend = ApisixRemoteUserBackend()
+
+    with CaptureQueriesContext(connection) as first:
+        backend.configure_user(request, test_user, created=False)
+    with CaptureQueriesContext(connection) as second:
+        backend.configure_user(request, test_user, created=False)
+
+    [update] = _user_updates(first.captured_queries)
+    assert '"first_name"' in update
+    assert '"last_name"' in update
+    assert '"email"' not in update
+    assert _user_updates(second.captured_queries) == []
+    test_user.refresh_from_db()
+    assert (test_user.first_name, test_user.last_name) == ("Mary", "Smith")
+
+
+@pytest.mark.django_db
+def test_authenticate_creates_user_when_an_active_account_shares_the_email(settings):
+    """An inactive match is not refused when an active account has the email too."""
+    settings.MITOL_APIGATEWAY_USERINFO_CREATE = True
+    SsoUserFactory.create(
+        is_active=False, email="someone@example.com", username="retired"
+    )
+    SsoUserFactory.create(email="someone@example.com", username="current")
+    _, user_info = generate_fake_apisix_payload()
+    request = _userinfo_request({**user_info, "email": "someone@example.com"})
+
+    result = ApisixRemoteUserBackend().authenticate(
+        request, remote_user=user_info["sub"]
+    )
+
+    assert result is not None
+    assert result.global_id == user_info["sub"]
+
+
+@pytest.mark.django_db
+def test_new_user_defaults_are_active_without_a_usable_password():
+    """A gateway-created user starts active, with an unusable password."""
+    _, user_info = generate_fake_apisix_payload()
+    request = _userinfo_request(user_info)
+
+    defaults = ApisixRemoteUserBackend().new_user_defaults(request)
+
+    assert defaults["is_active"] is True
+    assert not is_password_usable(defaults["password"])
+    assert defaults["username"] == user_info["preferred_username"]
+    assert "global_id" not in defaults
