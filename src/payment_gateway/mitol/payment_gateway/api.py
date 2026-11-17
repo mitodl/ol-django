@@ -193,6 +193,10 @@ class PaymentGateway(abc.ABC):
         Starts the payment process for the given type. See prepare_checkout for
         more detail about these arguments (other than payment_type).
 
+        The only generic kwarg is merchant_fields. Each payment gateway may
+        specify its own additional kwargs - since those will be specific to the
+        underlying payment processor, refer to the gateway for valid kwargs.
+
         Args:
             payment_type    String; gateway class to use
             order           Dict; order information
@@ -201,6 +205,7 @@ class PaymentGateway(abc.ABC):
             cancel_url      String; cancel redirect URL target
         Keyword Args:
             merchant_fields List; additional info for processor
+            see prepare_checkout
         Returns:
             see prepare_checkout
         """  # noqa: D401
@@ -1082,7 +1087,7 @@ class StripePaymentGateway(
         if custom:
             session_data["custom_payment_method_types"] = custom
         if builtin:
-            session_data["payment_method_types"] = builtin
+            session_data["allowed_payment_method_types"] = builtin
 
         return session_data
 

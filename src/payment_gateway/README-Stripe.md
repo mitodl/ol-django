@@ -51,7 +51,13 @@ Payment Gateway returns the full detail of the checkout session in the `payload`
 
 ### Payment Method Types
 
-Stripe normally decides which payment methods to offer from the settings in the Stripe Dashboard. Some payment methods can't be turned on that way and have to be requested when the Checkout Session is created. Custom payment methods (for example, PayPal set up as a custom payment method, with IDs like `cpmt_123`) work like this. Custom payment methods are a preview feature, so the Stripe account needs access to them.
+> [!NOTE]
+> This section describes functionality that requires a Stripe account that supports Private Preview features. (Specifically, specifying custom payment methods is the preview feature.) If the account you're using does not have access to this (which is likely if you're using your own account, rather than a MIT one), you should disable this functionality - see the last paragraph in this section.
+
+Stripe normally decides which payment methods to offer from the settings in the Stripe Dashboard. Some payment methods can't be turned on that way and have to be requested when the Checkout Session is created, such as custom payment methods. PayPal integration is accomplished through a custom payment method.
+
+> [!WARNING]
+> The docs for Checkout Session list the built-in types that are valid (in [the docs](https://docs.stripe.com/api/checkout/sessions/create#create_checkout_session-allowed_payment_method_types)). That lists `paypal` as an option. Specifying this will not work for you - Stripe's native PayPal integration is only enabled for accounts based in [specific European countries](https://docs.stripe.com/payments/paypal) (as of 2026-11-17).
 
 Payment Gateway stores these in the `PaymentMethodType` model. Use the `StripePaymentMethodType` proxy model for Stripe; it only returns Stripe payment methods and decodes the gateway data for you. The gateway data is a JSON object with two keys:
 

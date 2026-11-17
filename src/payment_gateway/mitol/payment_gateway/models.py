@@ -205,6 +205,13 @@ class StripePaymentMethodType(PaymentMethodType):
                 "Custom payment method IDs must start with "
                 f"{STRIPE_CUSTOM_PAYMENT_METHOD_ID_PREFIX}."
             )
+        elif not self.is_custom and self.stripe_id.startswith(
+            STRIPE_CUSTOM_PAYMENT_METHOD_ID_PREFIX
+        ):
+            errors.append(
+                "Built-in method IDs must not start with "
+                f"{STRIPE_CUSTOM_PAYMENT_METHOD_ID_PREFIX}."
+            )
 
         return errors
 
