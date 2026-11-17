@@ -487,3 +487,23 @@ def test_new_user_defaults_are_active_without_a_usable_password():
     assert not is_password_usable(defaults["password"])
     assert defaults["username"] == user_info["preferred_username"]
     assert "global_id" not in defaults
+
+
+@pytest.mark.django_db
+def test_authenticate_refuses_inactive_email_when_email_is_the_lookup_field(
+    settings, caplog
+):
+    """With email as the lookup field, a case variant of an inactive one is refused."""
+    settings.MITOL_APIGATEWAY_USER_LOOKUP_FIELD = "email"
+    settings.MITOL_APIGATEWAY_USERINFO_CREATE = True
+    inactive = SsoUserFactory.create(is_active=False, email="Someone@Example.com")
+    _, user_info = generate_fake_apisix_payload()
+    request = _userinfo_request({**user_info, "email": "someone@example.com"})
+
+    result = ApisixRemoteUserBackend().authenticate(
+        request, remote_user="someone@example.com"
+    )
+
+    assert result is None
+    assert User.objects.count() == 1
+    assert f"inactive_user_id={inactive.pk}" in caplog.text

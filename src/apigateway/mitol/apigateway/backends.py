@@ -169,7 +169,7 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
         with contextlib.suppress(User.DoesNotExist):
             return User.objects.get(**{self.lookup_field: username}), False
 
-        inactive_user_id = self.inactive_user_with_email(request)
+        inactive_user_id = self.inactive_user_with_email(request, username)
         if inactive_user_id is not None:
             log.warning(
                 "get_or_create_user: refused_inactive_email_match %s=%s "
@@ -182,7 +182,7 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
 
         return super().get_or_create_user(request, username)
 
-    def inactive_user_with_email(self, request):
+    def inactive_user_with_email(self, request, username):
         """
         Return the pk of an inactive user with the header's email.
 
@@ -190,13 +190,18 @@ class ApisixRemoteUserBackend(RemoteUserCustomFieldBackend):
         LOWER(email) can serve; __iexact compiles to UPPER() on Postgres.
 
         :param request: the HTTP request, or a Channels scope dict
+        :param username: the cleaned lookup field value, which is the email
+            when the email field is the lookup field
         :returns: an inactive user's pk, or None if there is none or an active
             user also holds the email
         """
         if "is_active" not in _concrete_field_names(User):
             return None
         email_field = User.get_email_field_name()
-        email = self.mapped_user_defaults(request).get(email_field)
+        if self.lookup_field == email_field:
+            email = username
+        else:
+            email = self.mapped_user_defaults(request).get(email_field)
         if not email or not isinstance(email, str):
             return None
         matches = list(
