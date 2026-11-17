@@ -1,4 +1,5 @@
 import http
+import json
 import logging
 from collections.abc import Generator
 from dataclasses import dataclass
@@ -134,8 +135,12 @@ def _user_search_by_email_batch(
 
     payload = {
         "schemas": [SchemaURI.SERACH_REQUEST],  # typo in upstream lib
+        # A SCIM filter's comparison value is a JSON string (RFC 7644 3.4.2.2),
+        # so json.dumps quotes it. Interpolated raw, an email with a quote in
+        # its local part (valid, and accepted by Django's EmailValidator)
+        # would end the string early and rewrite the rest of the filter.
         "filter": " OR ".join(
-            [f'emails.value EQ "{email}"' for email in users_by_email]
+            [f"emails.value EQ {json.dumps(email)}" for email in users_by_email]
         ),
     }
 

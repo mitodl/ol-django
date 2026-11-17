@@ -139,7 +139,7 @@ def mock_search_requests(settings, users: Users, responses: RequestsMock):
                         "schemas": [SchemaURI.SERACH_REQUEST],
                         "filter": " OR ".join(
                             [
-                                f'emails.value EQ "{user.email.lower()}"'
+                                f"emails.value EQ {json.dumps(user.email.lower())}"
                                 for user in batch
                             ]
                         ),
@@ -490,3 +490,21 @@ def test_sync_users_to_scim_remote_refuses_taken_global_id(responses: RequestsMo
     assert (bound.global_id, bound.scim_external_id) == ("keycloak-1", "keycloak-1")
     assert states_by_user_id[other.id].external_id == "keycloak-2"
     assert (other.global_id, other.scim_external_id) == ("keycloak-2", "keycloak-2")
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("mock_client_init_requests")
+def test_sync_users_to_scim_remote_escapes_email_in_filter(responses: RequestsMock):
+    """A quote in an email stays inside the filter's comparison value"""
+    user = UserFactory.create(
+        email='a"b@example.com', global_id=None, scim_external_id=None
+    )
+    _mock_search_pages(responses, [("keycloak-1", user)])
+
+    [state] = api.sync_users_to_scim_remote([user])
+
+    search = next(c for c in responses.calls if c.request.url == SEARCH_URL)
+    assert json.loads(search.request.body)["filter"] == (
+        r'emails.value EQ "a\"b@example.com"'
+    )
+    assert state.success
