@@ -56,6 +56,7 @@ from mitol.payment_gateway.payment_utils import (
     quantize_decimal,
     strip_nones,
 )
+from stripe._api_version import _ApiVersion
 from stripe.checkout import Session as StripeCheckoutSession
 
 log = logging.getLogger(__name__)
@@ -938,16 +939,25 @@ class StripePaymentGateway(
         Custom payment method types are a preview feature, so requests that
         use them need a ".preview" Stripe-Version header. If
         MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION isn't set, this uses
-        the date from the SDK's API version (e.g. "2026-08-26.dahlia" becomes
-        "2026-08-26.preview").
+        the date from the API version the SDK's StripeClient uses by default
+        (e.g. "2026-08-26.dahlia" becomes "2026-08-26.preview"). That's the
+        SDK's pinned version, not the module-level `stripe.api_version`, which
+        StripeClient ignores.
         """
 
+        suffix = f".{constants.STRIPE_PREVIEW_API_VERSION_SUFFIX}"
         configured = settings.MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION
         if configured:
+            if not configured.endswith(suffix):
+                msg = (
+                    "MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION must be a "
+                    f"{suffix} Stripe API version, got {configured!r}"
+                )
+                raise ImproperlyConfigured(msg)
             return configured
 
-        version_date = stripe.api_version.split(".", maxsplit=1)[0]
-        return f"{version_date}.{constants.STRIPE_PREVIEW_API_VERSION_SUFFIX}"
+        version_date = _ApiVersion.CURRENT.split(".", maxsplit=1)[0]
+        return f"{version_date}{suffix}"
 
     def _generate_product_data(self, item: CartItem | LookupCartItem):
         """

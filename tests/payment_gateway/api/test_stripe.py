@@ -7,6 +7,7 @@ from decimal import Decimal
 import faker
 import pytest
 import stripe
+from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse
 from django.test import RequestFactory, override_settings
 from django.urls import path, resolve
@@ -167,7 +168,9 @@ def test_get_preview_api_version(
     """Test the preview API version uses the setting, or the SDK version date."""
 
     settings.MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION = configured
-    mocker.patch("stripe.api_version", "2026-08-26.dahlia")
+    mocker.patch("stripe._api_version._ApiVersion.CURRENT", "2026-08-26.dahlia")
+    # StripeClient ignores the module-level version, so this shouldn't either.
+    mocker.patch("stripe.api_version", "2024-06-20")
 
     assert stripe_gateway._get_preview_api_version() == expected  # noqa: SLF001
 
@@ -790,3 +793,13 @@ def test_invalid_gateway_data_raises():
         _ = new_type._gateway_data_dict  # noqa: SLF001
 
     assert "Invalid gateway data" in str(exc)
+
+
+@pytest.mark.parametrize("configured", ["2026-08-26.dahlia", "2026-08-26"])
+def test_get_preview_api_version_not_preview(settings, stripe_gateway, configured):
+    """Test that a configured version that isn't a .preview version is rejected."""
+
+    settings.MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION = configured
+
+    with pytest.raises(ImproperlyConfigured):
+        stripe_gateway._get_preview_api_version()  # noqa: SLF001
