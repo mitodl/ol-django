@@ -830,15 +830,16 @@ def test_user_search_decodes_escaped_filter_value(scim_client):
     assert [found["id"] for found in resp.json()["Resources"]] == [user.scim_id]
 
 
-def test_user_search_rejects_non_json_escape(scim_client):
-    """A filter value with an escape JSON doesn't define is a 400, not a 500"""
+@pytest.mark.parametrize("filter_value", [r'"\x41@example.com"', r'"a\u0000b"'])
+def test_user_search_rejects_undecodable_value(scim_client, filter_value):
+    """A value that can't be decoded or bound is a 400 naming the filter string"""
     resp = scim_client.post(
         reverse("ol-scim:users-search"),
         content_type="application/scim+json",
         data=json.dumps(
             {
                 "schemas": [constants.SchemaURI.SERACH_REQUEST],
-                "filter": r'emails.value EQ "\x41@example.com"',
+                "filter": f"emails.value EQ {filter_value}",
             }
         ),
     )

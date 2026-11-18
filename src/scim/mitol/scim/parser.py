@@ -167,13 +167,20 @@ def _decode_string(tokens):
 
     dbl_quoted_string also matches escapes JSON doesn't define (e.g. ``\\x41``
     or a doubled quote). Those raise ValueError, which the search view returns
-    as a 400.
+    as a 400. So do a NUL and a lone surrogate: JSON allows both, but the
+    database driver can't bind either one.
     """
+    raw = tokens[0]
     try:
-        return json.loads(tokens[0])
-    except json.JSONDecodeError as exc:
-        msg = f"Invalid filter string {tokens[0]}: {exc.msg}"
+        value = json.loads(raw)
+        value.encode()
+    except ValueError as exc:
+        msg = f"Invalid filter string {raw}: {exc}"
         raise ValueError(msg) from exc
+    if "\x00" in value:
+        msg = f"Invalid filter string {raw}: NUL is not allowed"
+        raise ValueError(msg)
+    return value
 
 
 ValueString = dbl_quoted_string.set_parse_action(_decode_string) + _tag_value_type(

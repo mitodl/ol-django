@@ -80,8 +80,10 @@ def test_string_value_is_json_decoded(filter_value, expected):
     assert parsed[0].value == expected
 
 
-@pytest.mark.parametrize("filter_value", [r'"\x41"', '"a""b"'])
+@pytest.mark.parametrize(
+    "filter_value", [r'"\x41"', '"a""b"', '"a\\u0000b"', '"\\ud800"']
+)
 def test_string_value_rejects_non_json_escapes(filter_value):
-    """An escape JSON doesn't define is a ValueError, which the view returns as 400"""
+    """A non-JSON escape, NUL, or lone surrogate is a ValueError (a 400 in the view)"""
     with pytest.raises(ValueError, match="filter string"):
         Filters.parse_string(f"userName eq {filter_value}", parse_all=True)
