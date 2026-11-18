@@ -25,7 +25,7 @@ from mitol.payment_gateway.factories import (
     StripeWebhookSecretRouteFactory,
 )
 from mitol.payment_gateway.fixtures import stripe_event
-from mitol.payment_gateway.models import PaymentMethodType
+from mitol.payment_gateway.models import PaymentMethodType, StripePaymentMethodType
 
 FAKE = faker.Factory.create()
 pytestmark = [pytest.mark.django_db]
@@ -734,3 +734,24 @@ def test_payment_method_types_disabled(stripe_gateway, settings, caplog):
         assert stripe_gateway._generate_payment_method_types([method]) == {}  # noqa: SLF001
 
     assert "ignoring" in caplog.text
+
+
+def test_invalid_gateway_data_raises():
+    """Test that we get an error if the gateway data is invalid (i.e. not a dict)"""
+
+    new_type = StripePaymentMethodType()
+
+    assert new_type._gateway_data_dict == {}  # noqa: SLF001
+
+    new_type.stripe_type = "builtin"
+    # The id isn't validated for builtin against the actual types Stripe
+    # allows.
+    new_type.stripe_id = "fancy-card"
+    new_type.save()
+
+    new_type.gateway_data = ""
+
+    with pytest.raises(TypeError) as exc:
+        _ = new_type._gateway_data_dict  # noqa: SLF001
+
+    assert "Invalid gateway data" in str(exc)

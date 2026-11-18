@@ -153,7 +153,11 @@ class StripePaymentMethodType(PaymentMethodType):
     def _gateway_data_dict(self) -> dict:
         """Return the gateway data, or an empty dict if it isn't a dict."""
 
-        return self.gateway_data if isinstance(self.gateway_data, dict) else {}
+        if not isinstance(self.gateway_data, dict):
+            msg = f"Invalid gateway data for StripePaymentMethodType {self.id}"
+            raise TypeError(msg)
+
+        return self.gateway_data
 
     @property
     def stripe_type(self) -> str | None:

@@ -1070,18 +1070,18 @@ class StripePaymentGateway(
                 is_default=True
             ).order_by("id")
 
-        builtin = []
-        custom = []
+        builtin = set()
+        custom = set()
 
         for method in payment_method_types:
             decoded = self._decode_payment_method_type(method)
-            if decoded is None:
+            if not decoded:
                 continue
 
             method_id, is_custom = decoded
             target = custom if is_custom else builtin
             if method_id not in target:
-                target.append(method_id)
+                target.add(method_id)
 
         session_data = {}
         if custom:
