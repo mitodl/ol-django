@@ -1,6 +1,7 @@
 """Tests for the Stripe Payment Gateway"""
 
 import logging
+import sys
 from dataclasses import asdict
 from decimal import Decimal
 
@@ -803,3 +804,15 @@ def test_get_preview_api_version_not_preview(settings, stripe_gateway, configure
 
     with pytest.raises(ImproperlyConfigured):
         stripe_gateway._get_preview_api_version()  # noqa: SLF001
+
+
+def test_get_preview_api_version_private_module_missing(
+    mocker, settings, stripe_gateway
+):
+    """Test the fallback uses stripe.api_version if the SDK internals move."""
+
+    settings.MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION = None
+    mocker.patch.dict(sys.modules, {"stripe._api_version": None})
+    mocker.patch("stripe.api_version", "2026-01-28.clover")
+
+    assert stripe_gateway._get_preview_api_version() == "2026-01-28.preview"  # noqa: SLF001

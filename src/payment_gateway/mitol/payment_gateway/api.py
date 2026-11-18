@@ -56,7 +56,6 @@ from mitol.payment_gateway.payment_utils import (
     quantize_decimal,
     strip_nones,
 )
-from stripe._api_version import _ApiVersion
 from stripe.checkout import Session as StripeCheckoutSession
 
 log = logging.getLogger(__name__)
@@ -956,7 +955,15 @@ class StripePaymentGateway(
                 raise ImproperlyConfigured(msg)
             return configured
 
-        version_date = _ApiVersion.CURRENT.split(".", maxsplit=1)[0]
+        try:
+            # _ApiVersion is private; if it moves, fall back to the global.
+            from stripe._api_version import _ApiVersion  # noqa: PLC0415
+
+            sdk_version = _ApiVersion.CURRENT
+        except (ImportError, AttributeError):
+            sdk_version = stripe.api_version
+
+        version_date = sdk_version.split(".", maxsplit=1)[0]
         return f"{version_date}{suffix}"
 
     def _generate_product_data(self, item: CartItem | LookupCartItem):
