@@ -124,8 +124,8 @@ def test_start_payment(mocker, settings, enable_payment_method_types):
     }
 
     if enable_payment_method_types:
-        stripe_session_data["custom_payment_method_types"] = [custom_method.stripe_id]
-        stripe_session_data["allowed_payment_method_types"] = [builtin_method.stripe_id]
+        stripe_session_data["custom_payment_method_types"] = {custom_method.stripe_id}
+        stripe_session_data["allowed_payment_method_types"] = {builtin_method.stripe_id}
 
     mocked_stripe_session_create = mocker.patch(
         "stripe.checkout._session_service.SessionService.create",
@@ -646,8 +646,8 @@ def test_payment_method_types_defaults(stripe_gateway):
     )
 
     assert stripe_gateway._generate_payment_method_types(None) == {  # noqa: SLF001
-        "custom_payment_method_types": [method.stripe_id for method in custom],
-        "allowed_payment_method_types": [builtin.stripe_id],
+        "custom_payment_method_types": {method.stripe_id for method in custom},
+        "allowed_payment_method_types": {builtin.stripe_id},
     }
 
 
@@ -681,8 +681,8 @@ def test_payment_method_types_explicit(stripe_gateway):
     )
 
     assert result == {
-        "custom_payment_method_types": [custom.stripe_id, "cpmt_explicit"],
-        "allowed_payment_method_types": ["card"],
+        "custom_payment_method_types": {custom.stripe_id, "cpmt_explicit"},
+        "allowed_payment_method_types": {"card"},
     }
 
 
@@ -709,7 +709,11 @@ def test_payment_method_types_bad_data(stripe_gateway, caplog, gateway_data):
     with caplog.at_level(logging.WARNING):
         result = stripe_gateway._generate_payment_method_types(None)  # noqa: SLF001
 
-    assert result == {"custom_payment_method_types": [good.stripe_id]}
+    assert result == {
+        "custom_payment_method_types": {
+            good.stripe_id,
+        }
+    }
     assert "invalid gateway data" in caplog.text
 
 
