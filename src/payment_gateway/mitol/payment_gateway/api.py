@@ -923,6 +923,10 @@ class StripePaymentGateway(
         if not api_key:
             msg = "Stripe API key not set"
             raise ImproperlyConfigured(msg)
+
+        # Fail fast on a bad preview version, not mid-checkout.
+        StripePaymentGateway._get_preview_api_version()
+
         self.stripe_client = stripe.StripeClient(api_key)
 
     def _get_stripe_checkout_session_v1(self):
@@ -1183,7 +1187,7 @@ class StripePaymentGateway(
 
         # Only use the preview API version when it's needed, so accounts
         # without access to preview features can still create sessions.
-        sessions = self.stripe_client.v1.checkout.sessions
+        sessions = self._get_stripe_checkout_session_v1()
         if "custom_payment_method_types" in stripe_session_data:
             response = sessions.create(
                 stripe_session_data,

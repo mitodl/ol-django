@@ -797,13 +797,16 @@ def test_invalid_gateway_data_raises():
 
 
 @pytest.mark.parametrize("configured", ["2026-08-26.dahlia", "2026-08-26"])
-def test_get_preview_api_version_not_preview(settings, stripe_gateway, configured):
-    """Test that a configured version that isn't a .preview version is rejected."""
+def test_get_preview_api_version_not_preview(settings, configured):
+    """Test that a version that isn't a .preview version fails at gateway init."""
 
     settings.MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION = configured
 
-    with pytest.raises(ImproperlyConfigured):
-        stripe_gateway._get_preview_api_version()  # noqa: SLF001
+    with pytest.raises(ImproperlyConfigured, match="PREVIEW_API_VERSION"):
+        api.PaymentGateway.get_gateway_class(constants.MITOL_PAYMENT_GATEWAY_STRIPE)
+
+    with pytest.raises(ImproperlyConfigured, match="PREVIEW_API_VERSION"):
+        api.StripePaymentGateway._get_preview_api_version()  # noqa: SLF001
 
 
 def test_get_preview_api_version_private_module_missing(
