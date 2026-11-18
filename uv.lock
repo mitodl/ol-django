@@ -9,31 +9,31 @@ resolution-markers = [
 ]
 
 [options]
-exclude-newer = "2026-11-06T19:15:46.357650197Z"
+exclude-newer = "2026-11-11T18:51:24.378422956Z"
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
-mitol-django-google-sheets = { timestamp = "2026-11-13T19:15:46.357693197Z", span = "PT0S" }
-edx-api-client = { timestamp = "2026-11-13T19:15:46.357686072Z", span = "PT0S" }
-mitol-django-hubspot-api = { timestamp = "2026-11-13T19:15:46.357694072Z", span = "PT0S" }
-mitol-django-common = { timestamp = "2026-11-13T19:15:46.357692488Z", span = "PT0S" }
-mitol-django-olposthog = { timestamp = "2026-11-13T19:15:46.357694988Z", span = "PT0S" }
-mitol-django-google-sheets-deferrals = { timestamp = "2026-11-13T19:15:46.357693613Z", span = "PT0S" }
-mitol-django-mail = { timestamp = "2026-11-13T19:15:46.35769428Z", span = "PT0S" }
-mitol-django-oauth-toolkit-extensions = { timestamp = "2026-11-13T19:15:46.35769453Z", span = "PT0S" }
-mitol-django-payment-gateway = { timestamp = "2026-11-13T19:15:46.357696363Z", span = "PT0S" }
-mitol-django-transcoding = { timestamp = "2026-11-13T19:15:46.357696822Z", span = "PT0S" }
-mitol-release-tools = { timestamp = "2026-11-13T19:15:46.357697238Z", span = "PT0S" }
-mitol-django-google-sheets-refunds = { timestamp = "2026-11-13T19:15:46.357693863Z", span = "PT0S" }
-mitol-django-apigateway = { timestamp = "2026-11-13T19:15:46.357691447Z", span = "PT0S" }
-mitol-drf-lint = { timestamp = "2026-11-13T19:15:46.35769703Z", span = "PT0S" }
-mitol-django-observability = { timestamp = "2026-11-13T19:15:46.35769478Z", span = "PT0S" }
-mitol-django-authentication = { timestamp = "2026-11-13T19:15:46.35769178Z", span = "PT0S" }
-mitol-django-openedx = { timestamp = "2026-11-13T19:15:46.357696113Z", span = "PT0S" }
-mitol-django-benchmark = { timestamp = "2026-11-13T19:15:46.357692072Z", span = "PT0S" }
-mitol-django-geoip = { timestamp = "2026-11-13T19:15:46.357692947Z", span = "PT0S" }
-mitol-django-digital-credentials = { timestamp = "2026-11-13T19:15:46.35769278Z", span = "PT0S" }
-mitol-django-scim = { timestamp = "2026-11-13T19:15:46.357696572Z", span = "PT0S" }
+mitol-django-google-sheets = { timestamp = "2026-11-18T18:51:24.378442997Z", span = "PT0S" }
+edx-api-client = { timestamp = "2026-11-18T18:51:24.378437039Z", span = "PT0S" }
+mitol-django-hubspot-api = { timestamp = "2026-11-18T18:51:24.378443956Z", span = "PT0S" }
+mitol-django-common = { timestamp = "2026-11-18T18:51:24.378442331Z", span = "PT0S" }
+mitol-django-olposthog = { timestamp = "2026-11-18T18:51:24.378444831Z", span = "PT0S" }
+mitol-django-google-sheets-deferrals = { timestamp = "2026-11-18T18:51:24.378443456Z", span = "PT0S" }
+mitol-django-mail = { timestamp = "2026-11-18T18:51:24.378444164Z", span = "PT0S" }
+mitol-django-oauth-toolkit-extensions = { timestamp = "2026-11-18T18:51:24.378444414Z", span = "PT0S" }
+mitol-django-payment-gateway = { timestamp = "2026-11-18T18:51:24.378446122Z", span = "PT0S" }
+mitol-django-transcoding = { timestamp = "2026-11-18T18:51:24.378446539Z", span = "PT0S" }
+mitol-release-tools = { timestamp = "2026-11-18T18:51:24.378446956Z", span = "PT0S" }
+mitol-django-google-sheets-refunds = { timestamp = "2026-11-18T18:51:24.378443747Z", span = "PT0S" }
+mitol-django-apigateway = { timestamp = "2026-11-18T18:51:24.378441456Z", span = "PT0S" }
+mitol-drf-lint = { timestamp = "2026-11-18T18:51:24.378446706Z", span = "PT0S" }
+mitol-django-observability = { timestamp = "2026-11-18T18:51:24.378444622Z", span = "PT0S" }
+mitol-django-authentication = { timestamp = "2026-11-18T18:51:24.378441706Z", span = "PT0S" }
+mitol-django-openedx = { timestamp = "2026-11-18T18:51:24.378445872Z", span = "PT0S" }
+mitol-django-benchmark = { timestamp = "2026-11-18T18:51:24.378441914Z", span = "PT0S" }
+mitol-django-geoip = { timestamp = "2026-11-18T18:51:24.378442789Z", span = "PT0S" }
+mitol-django-digital-credentials = { timestamp = "2026-11-18T18:51:24.378442581Z", span = "PT0S" }
+mitol-django-scim = { timestamp = "2026-11-18T18:51:24.378446331Z", span = "PT0S" }
 
 [manifest]
 members = [
@@ -2673,7 +2673,7 @@ requires-dist = [
 
 [[package]]
 name = "mitol-django-payment-gateway"
-version = "2026.10.30"
+version = "2026.11.18"
 source = { editable = "src/payment_gateway" }
 dependencies = [
     { name = "certifi" },
