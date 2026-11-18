@@ -930,6 +930,25 @@ class StripePaymentGateway(
 
         return self.stripe_client.v1.checkout.sessions
 
+    @staticmethod
+    def _get_preview_api_version() -> str:
+        """
+        Return the Stripe API version to use for preview features.
+
+        Custom payment method types are a preview feature, so requests that
+        use them need a ".preview" Stripe-Version header. If
+        MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION isn't set, this uses
+        the date from the SDK's API version (e.g. "2026-08-26.dahlia" becomes
+        "2026-08-26.preview").
+        """
+
+        configured = settings.MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION
+        if configured:
+            return configured
+
+        version_date = stripe.api_version.split(".", maxsplit=1)[0]
+        return f"{version_date}.{constants.STRIPE_PREVIEW_API_VERSION_SUFFIX}"
+
     def _generate_product_data(self, item: CartItem | LookupCartItem):
         """
         Generate the Stripe product data for the line.
@@ -1145,7 +1164,16 @@ class StripePaymentGateway(
             **self._generate_payment_method_types(payment_method_types),
         }
 
-        response = self.stripe_client.v1.checkout.sessions.create(stripe_session_data)
+        # Only use the preview API version when it's needed, so accounts
+        # without access to preview features can still create sessions.
+        sessions = self.stripe_client.v1.checkout.sessions
+        if "custom_payment_method_types" in stripe_session_data:
+            response = sessions.create(
+                stripe_session_data,
+                options={"stripe_version": self._get_preview_api_version()},
+            )
+        else:
+            response = sessions.create(stripe_session_data)
 
         return {
             "payload": response,

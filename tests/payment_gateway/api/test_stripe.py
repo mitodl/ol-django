@@ -72,14 +72,18 @@ def stripe_gateway():
     return api.PaymentGateway.get_gateway_class(constants.MITOL_PAYMENT_GATEWAY_STRIPE)
 
 
-@pytest.mark.parametrize("enable_payment_method_types", [True, False])
-def test_start_payment(mocker, settings, enable_payment_method_types):
+@pytest.mark.parametrize(
+    ("enable_payment_method_types", "include_custom"),
+    [(True, True), (True, False), (False, True)],
+)
+def test_start_payment(mocker, settings, enable_payment_method_types, include_custom):
     """
     Test that calling start_payment generates the proper payload for Stripe.
 
     This should exercise the order payload generation code, ensure the gateway
     API is calling the proper Stripe API, and check to make sure the returned
-    data has the correct return type.
+    data has the correct return type. The preview API version should only be
+    requested if the session includes custom payment method types.
     """
 
     receipt_url = FAKE.url()
@@ -88,7 +92,8 @@ def test_start_payment(mocker, settings, enable_payment_method_types):
     settings.MITOL_PAYMENT_GATEWAY_STRIPE_ENABLE_PAYMENT_METHOD_TYPES = (
         enable_payment_method_types
     )
-    custom_method = StripePaymentMethodTypeFactory.create()
+    settings.MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION = "2026-01-28.preview"
+    custom_method = StripePaymentMethodTypeFactory.create(is_default=include_custom)
     builtin_method = StripePaymentMethodTypeFactory.create(builtin=True)
 
     order = OrderFactory.create()
@@ -123,8 +128,10 @@ def test_start_payment(mocker, settings, enable_payment_method_types):
         "metadata": {},
     }
 
-    if enable_payment_method_types:
+    use_preview = enable_payment_method_types and include_custom
+    if use_preview:
         stripe_session_data["custom_payment_method_types"] = {custom_method.stripe_id}
+    if enable_payment_method_types:
         stripe_session_data["allowed_payment_method_types"] = {builtin_method.stripe_id}
 
     mocked_stripe_session_create = mocker.patch(
@@ -138,7 +145,31 @@ def test_start_payment(mocker, settings, enable_payment_method_types):
 
     assert "method" in result
     assert result["method"] == "GET"
-    mocked_stripe_session_create.assert_called_with(stripe_session_data)
+    if use_preview:
+        mocked_stripe_session_create.assert_called_with(
+            stripe_session_data, options={"stripe_version": "2026-01-28.preview"}
+        )
+    else:
+        mocked_stripe_session_create.assert_called_with(stripe_session_data)
+
+
+@pytest.mark.parametrize(
+    ("configured", "expected"),
+    [
+        ("2026-01-28.preview", "2026-01-28.preview"),
+        (None, "2026-08-26.preview"),
+        ("", "2026-08-26.preview"),
+    ],
+)
+def test_get_preview_api_version(
+    mocker, settings, stripe_gateway, configured, expected
+):
+    """Test the preview API version uses the setting, or the SDK version date."""
+
+    settings.MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION = configured
+    mocker.patch("stripe.api_version", "2026-08-26.dahlia")
+
+    assert stripe_gateway._get_preview_api_version() == expected  # noqa: SLF001
 
 
 def _setup_webhook_test(mocker):
