@@ -6,6 +6,27 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.11.18'></a>
+## [2026.11.18] - 2026-11-18
+
+### Added
+
+- Added a `PaymentMethodType` model, and a `StripePaymentMethodType` proxy model
+  that decodes its Stripe data, for payment methods a gateway has to request
+  explicitly at checkout (such as a custom PayPal payment method in Stripe).
+- `StripePaymentGateway.prepare_checkout` accepts a `payment_method_types` keyword
+  argument. Without it, the default `StripePaymentMethodType`s are sent to Stripe
+  as `custom_payment_method_types` and `payment_method_types`; an empty list sends
+  none.
+- Added the `MITOL_PAYMENT_GATEWAY_STRIPE_ENABLE_PAYMENT_METHOD_TYPES` setting
+  (off by default). Payment method types are only sent to Stripe when it is on.
+
+### Changed
+
+- Raised the minimum supported Django to 5.2. Django 4.2 reached end of life on
+  2026-04-07, and 5.0 and 5.1 before it (2025-04-02 and 2025-12-03), leaving
+  5.2 as the only supported LTS, so the 4.2, 5.0 and 5.1 CI legs are gone.
+
 <a id='changelog-2026.10.30'></a>
 ## [2026.10.30] - 2026-10-30
 
