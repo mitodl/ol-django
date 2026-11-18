@@ -49,6 +49,25 @@ Stripe sends a URL that your app should use to redirect the user to start the pa
 
 Payment Gateway returns the full detail of the checkout session in the `payload` key in the data returned from `start_payment`. It also pulls the target URL out and returns it in `url`. Within the session data, there is an `id` key - this contains the unique identifier for the checkout session, which can be used to retrieve status information about the checkout session or cancel it. Your app should ideally retain at least `url` and `payload["id"]` but the remaining data in `payload` specifically need not be retained.
 
+### Payment Method Types
+
+> [!NOTE]
+> This section describes functionality that requires a Stripe account that supports Private Preview features. (Specifically, specifying custom payment methods is the preview feature.) If the account you're using does not have access to this (which is likely if you're using your own account, rather than a MIT one), you should disable this functionality - see the last paragraph in this section.
+
+Stripe normally decides which payment methods to offer from the settings in the Stripe Dashboard. Some payment methods can't be turned on that way and have to be requested when the Checkout Session is created, such as custom payment methods. PayPal integration is accomplished through a custom payment method.
+
+> [!WARNING]
+> The docs for Checkout Session list the built-in types that are valid (in [the docs](https://docs.stripe.com/api/checkout/sessions/create#create_checkout_session-allowed_payment_method_types)). That lists `paypal` as an option. Specifying this will not work for you - Stripe's native PayPal integration is only enabled for accounts based in [specific European countries](https://docs.stripe.com/payments/paypal) (as of 2026-11-17).
+
+Payment Gateway stores these in the `PaymentMethodType` model. Use the `StripePaymentMethodType` proxy model for Stripe; it only returns Stripe payment methods and decodes the gateway data for you. The gateway data is a JSON object with two keys:
+
+- `type`: `custom` for a custom payment method, or `builtin` for one of Stripe's own payment method types.
+- `id`: the custom payment method type ID (`cpmt_...`) for `custom`, or the Stripe payment method type (e.g. `card`) for `builtin`.
+
+Payment method types marked as default are used when `prepare_checkout` (or `start_payment`) is called without the `payment_method_types` keyword argument. Pass `payment_method_types` to choose them yourself: it takes a list of `StripePaymentMethodType` objects or Stripe IDs (IDs starting with `cpmt_` are treated as custom). An empty list sends none. Custom payment methods are sent in `custom_payment_method_types`, and builtin ones in `payment_method_types`. Sending `payment_method_types` replaces the payment methods configured in the Dashboard, so add a `builtin` entry for `card` if you add any other builtin payment method and still want to take cards.
+
+This is off unless `MITOL_PAYMENT_GATEWAY_STRIPE_ENABLE_PAYMENT_METHOD_TYPES` is `True`. Leave it off for Stripe accounts that don't have custom payment methods, so a stored payment method type can't break checkout. The app doesn't register an admin for these models; register `StripePaymentMethodType` in your app's admin, as with `StripeWebhookSecret`.
+
 ### Higher Reliance on Webhooks
 
 Stripe relies pretty heavily on webhooks for communicating event status back to the integrated application. When integrating, it's imperative that your app identify the events that it will need to care about and implement a webhook handler (or several of them) to handle these events.
