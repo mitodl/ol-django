@@ -61,3 +61,27 @@ def test_large_filter(count):
 
     # run_tests will output error messages
     assert success
+
+
+@pytest.mark.parametrize(
+    ("filter_value", "expected"),
+    [
+        (r'"\"x\"@example.com"', '"x"@example.com'),
+        (r'"back\\slash"', "back\\slash"),
+        ('"caf\\u00e9"', "café"),
+        ('"café"', "café"),
+        ('"O\'Malley"', "O'Malley"),
+    ],
+)
+def test_string_value_is_json_decoded(filter_value, expected):
+    """A compValue string is a JSON string, so its escapes are decoded"""
+    parsed = Filters.parse_string(f"userName eq {filter_value}", parse_all=True)
+
+    assert parsed[0].value == expected
+
+
+@pytest.mark.parametrize("filter_value", [r'"\x41"', '"a""b"'])
+def test_string_value_rejects_non_json_escapes(filter_value):
+    """An escape JSON doesn't define is a ValueError, which the view returns as 400"""
+    with pytest.raises(ValueError, match="filter string"):
+        Filters.parse_string(f"userName eq {filter_value}", parse_all=True)

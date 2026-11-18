@@ -350,7 +350,7 @@ def test_user_search(large_user_set, scim_client, sort_by, sort_order, count):
                 {
                     "schemas": [constants.SchemaURI.SERACH_REQUEST],
                     "filter": " OR ".join(
-                        [f'emails.value EQ "{email}"' for email in emails]
+                        [f"emails.value EQ {json.dumps(email)}" for email in emails]
                     ),
                     # SCIM API is 1-based index
                     # Additionally, scim-for-keycloak sends this as a string,
@@ -798,7 +798,7 @@ def test_search_without_enclosing_transaction(autocommit_scim_client):
             {
                 "schemas": [constants.SchemaURI.SERACH_REQUEST],
                 "filter": " OR ".join(
-                    [f'emails.value EQ "{user.email}"' for user in users]
+                    [f"emails.value EQ {json.dumps(user.email)}" for user in users]
                 ),
                 "startIndex": "1",
             }
@@ -807,6 +807,44 @@ def test_search_without_enclosing_transaction(autocommit_scim_client):
 
     assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
     assert resp.json()["totalResults"] == len(users)
+
+
+def test_user_search_decodes_escaped_filter_value(scim_client):
+    """An escaped quote in a filter value matches the unescaped email"""
+    email = '"x"@example.com'
+    user = UserFactory.create(username="quoted-local-part", email=email)
+    UserFactory.create()
+
+    resp = scim_client.post(
+        reverse("ol-scim:users-search"),
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.SERACH_REQUEST],
+                "filter": f"emails.value EQ {json.dumps(email)}",
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.OK, f"Error response: {resp.content}"
+    assert [found["id"] for found in resp.json()["Resources"]] == [user.scim_id]
+
+
+def test_user_search_rejects_non_json_escape(scim_client):
+    """A filter value with an escape JSON doesn't define is a 400, not a 500"""
+    resp = scim_client.post(
+        reverse("ol-scim:users-search"),
+        content_type="application/scim+json",
+        data=json.dumps(
+            {
+                "schemas": [constants.SchemaURI.SERACH_REQUEST],
+                "filter": r'emails.value EQ "\x41@example.com"',
+            }
+        ),
+    )
+
+    assert resp.status_code == HTTPStatus.BAD_REQUEST, f"Response: {resp.content}"
+    assert "Invalid filter string" in resp.json()["detail"]
 
 
 @pytest.mark.django_db(transaction=True)
@@ -1575,7 +1613,7 @@ def test_scim_group_search_is_not_shadowed_by_group_detail(scim_client):
         data=json.dumps(
             {
                 "schemas": [constants.SchemaURI.SERACH_REQUEST],
-                "filter": f'id eq "{group.pk}"',
+                "filter": f"id eq {json.dumps(str(group.pk))}",
             }
         ),
     )
