@@ -1080,8 +1080,7 @@ class StripePaymentGateway(
 
             method_id, is_custom = decoded
             target = custom if is_custom else builtin
-            if method_id not in target:
-                target.add(method_id)
+            target.add(method_id)
 
         session_data = {}
         if custom:
