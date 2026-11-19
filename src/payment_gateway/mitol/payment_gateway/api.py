@@ -1124,9 +1124,9 @@ class StripePaymentGateway(
 
         session_data = {}
         if custom:
-            session_data["custom_payment_method_types"] = custom
+            session_data["custom_payment_method_types"] = list(custom)
         if builtin:
-            session_data["allowed_payment_method_types"] = builtin
+            session_data["allowed_payment_method_types"] = list(builtin)
 
         return session_data
 
