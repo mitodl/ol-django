@@ -6,6 +6,22 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.11.19'></a>
+## [2026.11.19] - 2026-11-19
+
+### Added
+
+- Added the `MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION` setting to choose
+  the preview API version. If it is not set, the Stripe SDK's API version date is
+  used with a `.preview` suffix (e.g. `2026-08-26.preview`).
+
+### Fixed
+
+- `StripePaymentGateway.prepare_checkout` now sends a `.preview` Stripe API
+  version when the Checkout Session includes `custom_payment_method_types`, which
+  Stripe rejects otherwise. Sessions without custom payment methods still use the
+  default API version.
+
 <a id='changelog-2026.11.18'></a>
 ## [2026.11.18] - 2026-11-18
 
