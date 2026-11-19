@@ -15,6 +15,7 @@ Filter. As a result of this, some definitions are collapsed and removed
 (e.g. valFilter => FilterExpr).
 """
 
+import json
 from enum import auto
 
 try:
@@ -39,7 +40,6 @@ from pyparsing import (
     dbl_quoted_string,
     nested_expr,
     one_of,
-    remove_quotes,
     ungroup,
 )
 
@@ -159,7 +159,31 @@ ValueNull = Literal("null").set_parse_action(lambda: None) + _tag_value_type(
     ValueType.null
 )
 ValueNumber = (common.integer | common.fnumber) + _tag_value_type(ValueType.number)
-ValueString = dbl_quoted_string.set_parse_action(remove_quotes) + _tag_value_type(
+
+
+def _decode_string(tokens):
+    """
+    Decode a quoted compValue, which RFC 7644 3.4.2.2 defines as a JSON string.
+
+    dbl_quoted_string also matches escapes JSON doesn't define (e.g. ``\\x41``
+    or a doubled quote). Those raise ValueError, which the search view returns
+    as a 400. So do a NUL and a lone surrogate: JSON allows both, but the
+    database driver can't bind either one.
+    """
+    raw = tokens[0]
+    try:
+        value = json.loads(raw)
+        value.encode()
+    except ValueError as exc:
+        msg = f"Invalid filter string {raw}: {exc}"
+        raise ValueError(msg) from exc
+    if "\x00" in value:
+        msg = f"Invalid filter string {raw}: NUL is not allowed"
+        raise ValueError(msg)
+    return value
+
+
+ValueString = dbl_quoted_string.set_parse_action(_decode_string) + _tag_value_type(
     ValueType.string
 )
 
