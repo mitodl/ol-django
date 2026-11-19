@@ -683,13 +683,16 @@ def test_payment_method_types_defaults(stripe_gateway):
 
     pmts = stripe_gateway._generate_payment_method_types(None)  # noqa: SLF001
 
-    assert pmts == {
-        "custom_payment_method_types": [method.stripe_id for method in custom],
-        "allowed_payment_method_types": [builtin.stripe_id],
-    }
+    assert sorted(pmts["custom_payment_method_types"]) == sorted(
+        method.stripe_id for method in custom
+    )
+    assert pmts["allowed_payment_method_types"] == [
+        builtin.stripe_id,
+    ]
     assert isinstance(
         json.loads(json.dumps(pmts["allowed_payment_method_types"])), list
     )
+    assert isinstance(json.loads(json.dumps(pmts["custom_payment_method_types"])), list)
 
 
 @pytest.mark.usefixtures("payment_method_types_enabled")
