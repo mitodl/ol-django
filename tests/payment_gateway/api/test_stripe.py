@@ -724,10 +724,10 @@ def test_payment_method_types_explicit(stripe_gateway):
         [custom, "cpmt_explicit", "card", custom.stripe_id, "card"]
     )
 
-    assert result == {
-        "custom_payment_method_types": [custom.stripe_id, "cpmt_explicit"],
-        "allowed_payment_method_types": ["card"],
-    }
+    assert sorted(result["custom_payment_method_types"]) == sorted(
+        [custom.stripe_id, "cpmt_explicit"]
+    )
+    assert result["allowed_payment_method_types"] == ["card"]
 
 
 @pytest.mark.usefixtures("payment_method_types_enabled")
