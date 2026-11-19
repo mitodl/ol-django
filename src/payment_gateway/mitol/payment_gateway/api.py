@@ -923,12 +923,52 @@ class StripePaymentGateway(
         if not api_key:
             msg = "Stripe API key not set"
             raise ImproperlyConfigured(msg)
+
+        # Fail fast on a bad preview version, not mid-checkout.
+        StripePaymentGateway._get_preview_api_version()
+
         self.stripe_client = stripe.StripeClient(api_key)
 
     def _get_stripe_checkout_session_v1(self):
         """Return the checkout session v1 client (mostly to make testing easier)."""
 
         return self.stripe_client.v1.checkout.sessions
+
+    @staticmethod
+    def _get_preview_api_version() -> str:
+        """
+        Return the Stripe API version to use for preview features.
+
+        Custom payment method types are a preview feature, so requests that
+        use them need a ".preview" Stripe-Version header. If
+        MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION isn't set, this uses
+        the date from the API version the SDK's StripeClient uses by default
+        (e.g. "2026-08-26.dahlia" becomes "2026-08-26.preview"). That's the
+        SDK's pinned version, not the module-level `stripe.api_version`, which
+        StripeClient ignores.
+        """
+
+        suffix = f".{constants.STRIPE_PREVIEW_API_VERSION_SUFFIX}"
+        configured = settings.MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION
+        if configured:
+            if not configured.endswith(suffix):
+                msg = (
+                    "MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION must be a "
+                    f"{suffix} Stripe API version, got {configured!r}"
+                )
+                raise ImproperlyConfigured(msg)
+            return configured
+
+        try:
+            # _ApiVersion is private; if it moves, fall back to the global.
+            from stripe._api_version import _ApiVersion  # noqa: PLC0415
+
+            sdk_version = _ApiVersion.CURRENT
+        except (ImportError, AttributeError):
+            sdk_version = stripe.api_version
+
+        version_date = sdk_version.split(".", maxsplit=1)[0]
+        return f"{version_date}{suffix}"
 
     def _generate_product_data(self, item: CartItem | LookupCartItem):
         """
@@ -1145,7 +1185,16 @@ class StripePaymentGateway(
             **self._generate_payment_method_types(payment_method_types),
         }
 
-        response = self.stripe_client.v1.checkout.sessions.create(stripe_session_data)
+        # Only use the preview API version when it's needed, so accounts
+        # without access to preview features can still create sessions.
+        sessions = self._get_stripe_checkout_session_v1()
+        if "custom_payment_method_types" in stripe_session_data:
+            response = sessions.create(
+                stripe_session_data,
+                options={"stripe_version": self._get_preview_api_version()},
+            )
+        else:
+            response = sessions.create(stripe_session_data)
 
         return {
             "payload": response,

@@ -66,6 +66,8 @@ Payment Gateway stores these in the `PaymentMethodType` model. Use the `StripePa
 
 Payment method types marked as default are used when `prepare_checkout` (or `start_payment`) is called without the `payment_method_types` keyword argument. Pass `payment_method_types` to choose them yourself: it takes a list of `StripePaymentMethodType` objects or Stripe IDs (IDs starting with `cpmt_` are treated as custom). An empty list sends none. Custom payment methods are sent in `custom_payment_method_types`, and builtin ones in `payment_method_types`. Sending `payment_method_types` replaces the payment methods configured in the Dashboard, so add a `builtin` entry for `card` if you add any other builtin payment method and still want to take cards.
 
+Custom payment method types are a preview feature, so Stripe only accepts `custom_payment_method_types` when the request asks for a `.preview` API version. When a Checkout Session includes custom payment methods, Payment Gateway sends that request with the API version in `MITOL_PAYMENT_GATEWAY_STRIPE_PREVIEW_API_VERSION` (for example, `2026-08-26.preview`). If that isn't set, it uses the date from the Stripe SDK's API version with a `.preview` suffix. Sessions without custom payment methods, including sessions with only builtin types, use the default API version.
+
 This is off unless `MITOL_PAYMENT_GATEWAY_STRIPE_ENABLE_PAYMENT_METHOD_TYPES` is `True`. Leave it off for Stripe accounts that don't have custom payment methods, so a stored payment method type can't break checkout. The app doesn't register an admin for these models; register `StripePaymentMethodType` in your app's admin, as with `StripeWebhookSecret`.
 
 ### Higher Reliance on Webhooks
