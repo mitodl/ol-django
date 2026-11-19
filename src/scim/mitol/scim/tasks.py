@@ -28,6 +28,15 @@ def sync_users_to_scim_remote_batch(*, user_ids: list[int]):
 
 @app.task(bind=True, acks_late=True)
 def sync_all_users_to_scim_remote(self, *, never_synced_only: bool = False):
+    """
+    Sync every active user to the SCIM remote.
+
+    Inactive users are left out on purpose. A user with no Keycloak match by
+    email is created in Keycloak, so syncing a retired or merged account
+    would create a (disabled) Keycloak identity for it and claim its email
+    there. An unlinked inactive account therefore stays unlinked; one linked
+    before it was deactivated keeps its link.
+    """
     user_q = (
         User.objects.values_list("id", flat=True).filter(is_active=True).order_by("id")
     )
