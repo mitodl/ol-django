@@ -20,9 +20,7 @@ INSTALLED_APPS = [
 
 
 ```python
-MITOL_GOOGLE_SHEETS_REFUNDS_PLUGINS = [
-    "ecommerce.plugins.RefundPlugin"
-]
+MITOL_GOOGLE_SHEETS_REFUNDS_PLUGINS = ["ecommerce.plugins.RefundPlugin"]
 ```
 
 #### In `ecommerce/plugins.py`
@@ -95,6 +93,7 @@ Here are two main ways that we are currently getting our Google Sheets Refunds p
 ```python
 from mitol.google_sheets_refunds.api import RefundRequestHandler
 from main.celery import app
+
 
 @app.task
 def process_refund_requests():
