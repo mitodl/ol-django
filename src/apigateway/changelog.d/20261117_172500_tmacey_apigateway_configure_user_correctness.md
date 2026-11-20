@@ -1,0 +1,10 @@
+### Fixed
+
+- `ApisixRemoteUserBackend.configure_user` skips a mapped userinfo key that is absent from the header instead of writing `None` to the field (a `NOT NULL` column raised, which failed the login). On an existing `additional_models` row an absent key now leaves the field alone; its default applies only when the row is created.
+- `configure_user` writes the user only when a column's value changed, and then saves only those columns plus any `auto_now` timestamp. Columns are compared before and after applying the map, so a mapped settable property or FK attname saves the columns it touched. With `MITOL_APIGATEWAY_USERINFO_UPDATE` on it runs on every request, so it used to write the whole row each time and could overwrite concurrent writes to unmapped columns. `additional_models` rows are dirty-checked the same way. Apps with `post_save` receivers on these models (e.g. a CRM sync on a profile or address model) no longer get a save signal on requests where nothing changed.
+- A user created from the gateway is inserted with its mapped header values (columns and settable properties), an unusable password and `is_active=True`, and gets one `post_save(created=True)` carrying that data. It used to be inserted with only the lookup field and filled in by a second save, so the row briefly held `username=""`, two concurrent first logins collided on it, and Django counted the empty password as usable. Users created before this release keep their empty password. A unique column whose header key is missing still gets the field's default on insert.
+
+### Changed
+
+- An unknown gateway identity whose email (compared case-insensitively on the user model's `EMAIL_FIELD`) belongs only to inactive accounts is refused, logged as `refused_inactive_email_match`, rather than given a new active account. Reactivating or relinking the old account is left to an administrator. An email that an active account also holds is not refused.
+- `RemoteUserCustomFieldBackend` creates users through two new overridable methods, `get_or_create_user()` and `new_user_defaults()`.
