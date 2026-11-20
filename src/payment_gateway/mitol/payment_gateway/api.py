@@ -1091,8 +1091,8 @@ class StripePaymentGateway(
         Generate the payment method type data for the checkout session.
 
         Custom payment methods go in `custom_payment_method_types` and builtin
-        ones go in `payment_method_types`. Keys are only included if there's
-        something in them, since sending `payment_method_types` overrides the
+        ones go in `allowed_payment_method_types`. Keys are only included if there's
+        something in them, since sending `allowed_payment_method_types` overrides the
         payment methods configured in the Stripe dashboard.
         """
 
@@ -1124,9 +1124,9 @@ class StripePaymentGateway(
 
         session_data = {}
         if custom:
-            session_data["custom_payment_method_types"] = custom
+            session_data["custom_payment_method_types"] = list(custom)
         if builtin:
-            session_data["allowed_payment_method_types"] = builtin
+            session_data["allowed_payment_method_types"] = list(builtin)
 
         return session_data
 
