@@ -6,6 +6,13 @@ and this project uses date-based versioning.
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2026.11.23'></a>
+## [2026.11.23] - 2026-11-23
+
+### Changed
+
+- Fix return values for custom payment type generation
+
 <a id='changelog-2026.11.19'></a>
 ## [2026.11.19] - 2026-11-19
 
