@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django_scim.adapters import SCIMUser
 from django_scim.utils import get_user_adapter
-from mitol.scim.constants import SchemaURI
+from mitol.scim.constants import SchemaURI, is_service_account_email
 from mitol.scim.requests import InMemoryHttpRequest
 from more_itertools import chunked, first, partition
 from oauthlib.oauth2 import BackendApplicationClient
@@ -99,7 +99,12 @@ def sync_users_to_scim_remote(users: list["User"]) -> StateGenerator:
     generator: it does nothing until iterated. A caller that needs a
     concrete list (e.g. to report a count) should wrap a single, bounded
     call in ``list(...)`` itself.
+
+    Service accounts made by ``create_scim_token`` are skipped: syncing one
+    would create a Keycloak user for it and stamp that user's id onto its
+    ``global_id``, after which the command refuses to refresh its token.
     """
+    users = [user for user in users if not is_service_account_email(user.email)]
     with get_session() as session:
         found_users = _user_search_by_email(session, users)
         state_or_operations = _get_sync_operations(users, found_users)

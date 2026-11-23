@@ -8,6 +8,8 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.utils import timezone
+from mitol.scim import api
+from mitol.scim.constants import is_service_account_email
 from mitol.scim.utils import is_authenticated_predicate
 from oauth2_provider.models import get_access_token_model
 from oauth2_provider.oauth2_validators import OAuth2Validator
@@ -39,13 +41,52 @@ def test_creates_staff_service_account_and_token():
     assert token.expires > timezone.now() + timedelta(days=364)
 
 
-def test_email_option_and_default_local_part():
-    """--email is used on creation; the default keeps only the username's local part"""
+def test_email_is_the_username_local_part_at_the_service_domain():
+    """The email is always the service-account marker, never a person's address"""
     _run(username="a@ol.test", token="t1")  # noqa: S106
-    _run(username="b", email="b@example.com", token="t2")  # noqa: S106
 
     assert User.objects.get(username="a@ol.test").email == "a@scim.invalid"
-    assert User.objects.get(username="b").email == "b@example.com"
+    assert is_service_account_email("a@scim.invalid")
+    assert is_service_account_email("A@SCIM.INVALID")
+    assert not is_service_account_email("a@scim.invalid.example.com")
+    assert not is_service_account_email(None)
+
+
+def test_refuses_a_username_whose_email_is_taken():
+    """Two usernames with one local part would share an email; the second is refused"""
+    _run(username="scim@ol.test", token="t1")  # noqa: S106
+
+    with pytest.raises(CommandError, match="already has the email"):
+        _run(username="scim@other.test", token="t2")  # noqa: S106
+
+    assert not User.objects.filter(username="scim@other.test").exists()
+
+
+def test_sync_skips_service_accounts(monkeypatch: pytest.MonkeyPatch):
+    """The client sync never sends a service account to Keycloak"""
+    _run(username="scim-service", token="t")  # noqa: S106
+    person = User.objects.create(username="person", email="person@example.com")
+    synced = []
+
+    class Session:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    def search(_session, users):
+        synced.extend(users)
+        return []
+
+    monkeypatch.setattr(api, "get_session", Session)
+    monkeypatch.setattr(api, "_user_search_by_email", search)
+    monkeypatch.setattr(api, "_get_sync_operations", lambda *_args: [])
+    monkeypatch.setattr(api, "_perform_sync_operations", lambda *_args: [])
+
+    list(api.sync_users_to_scim_remote(list(User.objects.all())))
+
+    assert synced == [person]
 
 
 def test_rerun_refreshes_instead_of_duplicating():
@@ -66,6 +107,7 @@ def test_rerun_refreshes_instead_of_duplicating():
 @pytest.mark.parametrize(
     ("changes", "reason"),
     [
+        ({"email": "person@example.com"}, "email outside"),
         ({"password": "pbkdf2_sha256$1$salt$hash"}, "usable password"),
         ({"last_login": timezone.now()}, "logged in"),
         ({"global_id": "a1b2"}, "global_id"),
