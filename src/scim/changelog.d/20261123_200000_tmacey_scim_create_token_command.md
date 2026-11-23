@@ -1,0 +1,3 @@
+### Added
+
+- `create_scim_token` management command: creates or refreshes the django-oauth-toolkit access token a SCIM client (e.g. scim-for-keycloak's remote provider) sends as its bearer token, owned by a staff service account with no usable password and an `@scim.invalid` email. Re-running with the same `--token` refreshes its scope and expiry instead of adding a row; without `--token` it generates one and prints it. It refuses a `--username` that belongs to a person (usable password, a past login, an SSO `global_id`, or inactive) and a `--token` already issued to another user or OAuth application. `django-oauth-toolkit>=3.0` is now a declared dependency, since the SCIM views already authenticate through its access tokens.

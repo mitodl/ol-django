@@ -6,6 +6,7 @@ dependencies = [
   "certifi>=2026.10.19",
   "django-stubs>=1.13.1",
   "django>=5.2",
+  "django-oauth-toolkit>=3.0",
   "django_scim2>=0.19.1",
   "mitol-django-common",
   "pyparsing>=3.2",

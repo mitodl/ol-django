@@ -20,7 +20,12 @@ In the SCIM admin console, do the following:
 
 ### Configure Remote SCIM Provider
 
-- In django-admin, go to OAuth Toolkit and create a new access token
+- Create the access token Keycloak will send, owned by a staff service account:
+  `./manage.py create_scim_token --username scim-service`. It prints the
+  generated token; pass `--token <value>` to set a known one instead (the
+  command is idempotent for a given token). The default scope is `scim`.
+  Re-running without `--token` adds a token and leaves the earlier ones valid
+  until they expire, so delete the old one in django-admin when rotating.
 - Go to Remote SCIM Provider
 - Click the `+` button
 - Specify a base URL for your learn API backend:
