@@ -11,6 +11,7 @@ readme = "README.md"
 dependencies = [
     "GitPython>=3.1.62",
     "bumpver>=2026.1132",
+    "certifi>=2026.10.19",
     "click>=8.5.0",
     "click-log>=0.4.0",
     "cloup>=4.0.0",
