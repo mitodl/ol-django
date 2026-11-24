@@ -126,7 +126,7 @@ advisory = "https://github.com/advisories/GHSA-6q48-6c7w-9gw2"
 # dependencies. The rest inherit it from a sibling, and pin that sibling so
 # an older, pre-floor release cannot satisfy them.
 policy = "entry-point"
-providers = { mitol-django-common = "2026.10.28" }
+providers = { mitol-django-common = "2026.10.29" }
 
 [tool.hatch.metadata]
 allow-direct-references = true

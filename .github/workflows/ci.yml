@@ -30,10 +30,30 @@ jobs:
     - name: Versions
       run: uv run ol-release version check
 
-      # A floor that is declared but not published propagates nothing, and a
-      # package that gains a floored dependency indirectly needs a floor it
-      # never had. Both are invisible to a vulnerability scanner, because the
-      # version this repo resolves is fine either way.
+
+  # A floor that is declared but not published propagates nothing, and a package
+  # that gains a floored dependency indirectly needs a floor it never had. Both
+  # are invisible to a vulnerability scanner, because the version this repo
+  # resolves is fine either way.
+  #
+  # Its own job, rather than a step in `changelog`, because fixing a violation
+  # means releasing the package that declares the floor. Anything
+  # `detect-releases` needs would hold that release hostage to the very
+  # violation it fixes, and with it every other package waiting to publish.
+  dependency-floors:
+    runs-on: ubuntu-24.04
+    name: Dependency floors
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+
+    - name: Install dependencies
+      run: uv sync
+
     - name: Dependency floors
       run: uv run dependency-floors check
 
@@ -110,7 +130,7 @@ jobs:
   # anywhere. `detect-releases`/`publish` are excluded: both only run on a push to main
   # (`if: github.ref == 'refs/heads/main'`), so they contribute nothing to gating a PR.
   ci-gate:
-    needs: [changelog, tests]
+    needs: [changelog, dependency-floors, tests]
     # Without this the gate is skipped when a dependency fails, and GitHub treats a
     # skipped required job as successful, allowing the PR to merge despite the failure.
     if: always()
