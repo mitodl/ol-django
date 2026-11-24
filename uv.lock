@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -13,27 +13,27 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
-mitol-django-google-sheets = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 edx-api-client = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-django-hubspot-api = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-apigateway = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-authentication = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-benchmark = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-common = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-django-olposthog = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-digital-credentials = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-geoip = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-google-sheets = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-google-sheets-deferrals = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-google-sheets-refunds = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-hubspot-api = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-mail = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-oauth-toolkit-extensions = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-django-payment-gateway = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-django-transcoding = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-release-tools = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-django-google-sheets-refunds = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-django-apigateway = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-drf-lint = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-observability = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-django-authentication = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-olposthog = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-openedx = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-django-benchmark = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-django-geoip = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-mitol-django-digital-credentials = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-payment-gateway = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mitol-django-scim = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-django-transcoding = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-drf-lint = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mitol-release-tools = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 
 [manifest]
 members = [
@@ -1019,7 +1019,7 @@ wheels = [
 
 [[package]]
 name = "cybersource-rest-client-python"
-version = "0.0.79"
+version = "0.0.81"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -1033,7 +1033,7 @@ dependencies = [
     { name = "standard-imghdr", marker = "python_full_version >= '3.13'" },
     { name = "urllib3-future" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7f/d7/1c6c5bd378f7bce1d35ac4a336ebc4a49180ce163d3f535af7dc1c27c6dd/cybersource_rest_client_python-0.0.79.tar.gz", hash = "sha256:a6a63062b5dc3c9a79d201a8465d5ebc9fe08a35150bf8fe03077062bb95d013", size = 1894661, upload-time = "2026-09-15T05:20:53.13Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/98/10/6fb59844f777315cdede19bc0f8b9addb33b73fc3da2f952fcb66ead0158/cybersource_rest_client_python-0.0.81.tar.gz", hash = "sha256:0bf4c2f34c2cf0819a2d8fed6d8b8b30647e9fcbe2076a02fabccbdb4e8b65ff", size = 1964877, upload-time = "2026-11-13T10:54:26.611Z" }
 
 [[package]]
 name = "datetime"
@@ -2687,7 +2687,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "certifi", specifier = ">=2026.10.19" },
-    { name = "cybersource-rest-client-python", specifier = ">=0.0.79,<0.0.80" },
+    { name = "cybersource-rest-client-python", specifier = ">=0.0.81,<0.0.82" },
     { name = "django", specifier = ">=5.2" },
     { name = "django-stubs", specifier = ">=1.13.1" },
     { name = "mitol-django-common", editable = "src/common" },
